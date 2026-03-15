@@ -2,80 +2,167 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { Menu, X, ChevronDown, User, LogOut } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { signout } from '@/app/login/actions';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
   const pathname = usePathname();
+  const supabase = createClient();
+
+  useEffect(() => {
+    const getUser = async () => {
+       const { data: { user } } = await supabase.auth.getUser();
+       setUser(user);
+    };
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+       setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const isActive = (path: string) => pathname === path;
+
+  const toggleDropdown = (name: string) => {
+    if (activeDropdown === name) {
+      setActiveDropdown(null);
+    } else {
+      setActiveDropdown(name);
+    }
+  };
 
   return (
     <nav className="fixed w-full z-50 top-0 start-0 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-[1400px] flex flex-wrap items-center justify-between mx-auto p-4 sm:px-6 lg:px-8 h-20">
-        
-        {/* LOGO */}
-        <Link href="/" className="flex items-center space-x-2 rtl:space-x-reverse group">
-          <div className="w-8 h-8 rounded-full bg-[#b50a0a] flex items-center justify-center shrink-0 shadow-sm relative overflow-hidden">
-             {/* CenterKick SVG Logo Placeholder (Using a stylistic 'C' or soccer ball motif) */}
-             <svg className="w-4 h-4 text-white font-black" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5c-2.49 0-4.5-2.01-4.5-4.5S8.51 7.5 11 7.5s4.5 2.01 4.5 4.5c0 .34-.04.68-.11 1h-2.12c.15-.31.23-.65.23-1 0-1.38-1.12-2.5-2.5-2.5S8.5 10.62 8.5 12 9.62 14.5 11 14.5c.66 0 1.25-.26 1.7-.68l1.45 1.45c-.83.76-1.92 1.23-3.15 1.23z"/>
-             </svg>
-          </div>
-          <span className="self-center text-xl font-bold whitespace-nowrap text-gray-900 group-hover:text-[#b50a0a] transition-colors">
-            CenterKick
-          </span>
-        </Link>
+         
+         {/* LOGO */}
+         <Link href="/" className="flex items-center space-x-2 rtl:space-x-reverse group">
+           <div className="w-8 h-8 rounded-full bg-[#b50a0a] flex items-center justify-center shrink-0 shadow-sm relative overflow-hidden">
+              <svg className="w-4 h-4 text-white font-black" viewBox="0 0 24 24" fill="currentColor">
+                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5c-2.49 0-4.5-2.01-4.5-4.5S8.51 7.5 11 7.5s4.5 2.01 4.5 4.5c0 .34-.04.68-.11 1h-2.12c.15-.31.23-.65.23-1 0-1.38-1.12-2.5-2.5-2.5S8.5 10.62 8.5 12 9.62 14.5 11 14.5c.66 0 1.25-.26 1.7-.68l1.45 1.45c-.83.76-1.92 1.23-3.15 1.23z"/>
+              </svg>
+           </div>
+           <span className="self-center text-xl font-bold whitespace-nowrap text-gray-900 group-hover:text-[#b50a0a] transition-colors">
+             CenterKick
+           </span>
+         </Link>
 
-        {/* MOBILE MENU BUTTON */}
-        <div className="flex md:hidden order-2">
-          <button 
-             onClick={() => setIsOpen(!isOpen)} 
-             className="inline-flex items-center p-2 w-10 h-10 justify-center text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none"
-          >
-            <span className="sr-only">Open main menu</span>
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
+         {/* MOBILE MENU BUTTON */}
+         <div className="flex md:hidden order-2">
+           <button 
+              onClick={() => setIsOpen(!isOpen)} 
+              className="inline-flex items-center p-2 w-10 h-10 justify-center text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none"
+           >
+             <span className="sr-only">Open main menu</span>
+             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+           </button>
+         </div>
 
-        {/* DESKTOP LINKS */}
-        <div className={`items-center justify-center w-full md:flex md:w-auto md:order-1 ${isOpen ? 'block' : 'hidden'} absolute md:relative top-20 md:top-0 left-0 bg-white md:bg-transparent shadow-md md:shadow-none border-t md:border-0 border-gray-100`}>
-          <ul className="flex flex-col p-6 md:p-0 mt-0 font-medium md:space-x-8 rtl:space-x-reverse md:flex-row text-sm">
-            <li>
-              <Link href="/" className={`block py-2 ${isActive('/') ? 'text-[#b50a0a] font-bold' : 'text-gray-700 hover:text-gray-900 transition-colors'}`}>Home</Link>
-            </li>
-            <li>
-              <Link href="/news" className={`block py-2 ${isActive('/news') ? 'text-[#b50a0a] font-bold' : 'text-gray-700 hover:text-gray-900 transition-colors'}`}>News</Link>
-            </li>
-            <li>
-              <Link href="/athletes" className={`block py-2 ${isActive('/athletes') ? 'text-[#b50a0a] font-bold' : 'text-gray-700 hover:text-gray-900 transition-colors'}`}>Athletes</Link>
-            </li>
-            <li>
-              <Link href="/transfer-focus" className={`block py-2 ${isActive('/transfer-focus') ? 'text-[#b50a0a] font-bold' : 'text-gray-700 hover:text-gray-900 transition-colors'}`}>Transfer Focus</Link>
-            </li>
-            <li>
-              <Link href="/about" className={`block py-2 ${isActive('/about') ? 'text-[#b50a0a] font-bold' : 'text-gray-700 hover:text-gray-900 transition-colors'}`}>About us</Link>
-            </li>
-            <li>
-              <Link href="/contact" className={`block py-2 ${isActive('/contact') ? 'text-[#b50a0a] font-bold' : 'text-gray-700 hover:text-gray-900 transition-colors'}`}>Contact us</Link>
-            </li>
-            <li className="md:hidden mt-4">
-              <Link href="/login" className="block w-full text-center text-white bg-[#b50a0a] hover:bg-[#990000] font-bold rounded text-sm px-6 py-3 transition-colors">
-                Get Started
-              </Link>
-            </li>
-          </ul>
-        </div>
+         {/* NAVIGATION LINKS */}
+         <div className={`items-center justify-center w-full md:flex md:w-auto md:order-1 ${isOpen ? 'block' : 'hidden'} absolute md:relative top-20 md:top-0 left-0 bg-white md:bg-transparent shadow-lg md:shadow-none border-t md:border-0 border-gray-100 max-h-[calc(100vh-80px)] overflow-y-auto md:overflow-visible`}>
+           <ul className="flex flex-col p-6 md:p-0 mt-0 font-medium md:space-x-8 rtl:space-x-reverse md:flex-row text-sm uppercase tracking-widest text-[11px] font-black">
+             <li>
+               <Link href="/" className={`block py-4 md:py-2 ${isActive('/') ? 'text-[#b50a0a]' : 'text-gray-700 hover:text-[#b50a0a] transition-colors'}`}>Home</Link>
+             </li>
 
-        {/* CTA BUTTON */}
-        <div className="hidden md:flex order-3">
-          <Link href="/login">
-            <button type="button" className="text-white bg-[#b50a0a] hover:bg-[#990000] font-bold rounded-md text-xs tracking-widest uppercase px-6 py-2.5 shadow-sm transition-all hover:shadow-md">
-              Get Started
-            </button>
-          </Link>
-        </div>
+             {/* Profiles Dropdown */}
+             <li className="relative group/drop">
+                <button 
+                   onClick={() => toggleDropdown('profiles')}
+                   className={`flex items-center justify-between w-full py-4 md:py-2 ${pathname.includes('/athletes') || pathname.includes('/coaches') || pathname.includes('/agents') ? 'text-[#b50a0a]' : 'text-gray-700 hover:text-[#b50a0a]'} transition-colors gap-1`}
+                >
+                   Profiles <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === 'profiles' ? 'rotate-180' : ''}`} />
+                </button>
+                {/* Dropdown Content */}
+                <div className={`${activeDropdown === 'profiles' ? 'block' : 'hidden'} md:group-hover/drop:block md:absolute top-full left-0 bg-white md:shadow-xl md:border border-gray-100 rounded-xl md:min-w-[200px] overflow-hidden z-[100] transition-all animate-in fade-in slide-in-from-top-2 duration-300`}>
+                   <div className="flex flex-col md:py-2">
+                      <Link href="/athletes" className="px-6 py-4 md:py-3 hover:bg-gray-50 text-gray-700 hover:text-[#b50a0a] transition-colors border-l-4 border-transparent hover:border-[#b50a0a]">Athletes</Link>
+                      <Link href="/coaches" className="px-6 py-4 md:py-3 hover:bg-gray-50 text-gray-700 hover:text-[#b50a0a] transition-colors border-l-4 border-transparent hover:border-[#b50a0a]">Coaches</Link>
+                      <Link href="/agents" className="px-6 py-4 md:py-3 hover:bg-gray-50 text-gray-700 hover:text-[#b50a0a] transition-colors border-l-4 border-transparent hover:border-[#b50a0a]">Agents</Link>
+                   </div>
+                </div>
+             </li>
+
+             {/* Updates Dropdown */}
+             <li className="relative group/drop">
+                <button 
+                   onClick={() => toggleDropdown('updates')}
+                   className={`flex items-center justify-between w-full py-4 md:py-2 ${isActive('/news') || isActive('/transfer-focus') ? 'text-[#b50a0a]' : 'text-gray-700 hover:text-[#b50a0a]'} transition-colors gap-1`}
+                >
+                   Updates <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === 'updates' ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`${activeDropdown === 'updates' ? 'block' : 'hidden'} md:group-hover/drop:block md:absolute top-full left-0 bg-white md:shadow-xl md:border border-gray-100 rounded-xl md:min-w-[200px] overflow-hidden z-[100] transition-all animate-in fade-in slide-in-from-top-2 duration-300`}>
+                   <div className="flex flex-col md:py-2">
+                      <Link href="/news" className="px-6 py-4 md:py-3 hover:bg-gray-50 text-gray-700 hover:text-[#b50a0a] transition-colors border-l-4 border-transparent hover:border-[#b50a0a]">News</Link>
+                      <Link href="/transfer-focus" className="px-6 py-4 md:py-3 hover:bg-gray-50 text-gray-700 hover:text-[#b50a0a] transition-colors border-l-4 border-transparent hover:border-[#b50a0a]">Transfer Focus</Link>
+                   </div>
+                </div>
+             </li>
+
+             {/* About Dropdown */}
+             <li className="relative group/drop">
+                <button 
+                   onClick={() => toggleDropdown('about')}
+                   className={`flex items-center justify-between w-full py-4 md:py-2 ${isActive('/about') || isActive('/contact') ? 'text-[#b50a0a]' : 'text-gray-700 hover:text-[#b50a0a]'} transition-colors gap-1`}
+                >
+                   About <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === 'about' ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`${activeDropdown === 'about' ? 'block' : 'hidden'} md:group-hover/drop:block md:absolute top-full left-0 bg-white md:shadow-xl md:border border-gray-100 rounded-xl md:min-w-[200px] overflow-hidden z-[100] transition-all animate-in fade-in slide-in-from-top-2 duration-300`}>
+                   <div className="flex flex-col md:py-2">
+                      <Link href="/about" className="px-6 py-4 md:py-3 hover:bg-gray-50 text-gray-700 hover:text-[#b50a0a] transition-colors border-l-4 border-transparent hover:border-[#b50a0a]">Who We Are</Link>
+                      <Link href="/contact" className="px-6 py-4 md:py-3 hover:bg-gray-50 text-gray-700 hover:text-[#b50a0a] transition-colors border-l-4 border-transparent hover:border-[#b50a0a]">Contact Us</Link>
+                   </div>
+                </div>
+             </li>
+
+             {user && (
+               <li className="relative group/drop">
+                  <button 
+                     onClick={() => toggleDropdown('user')}
+                     className="flex items-center justify-between w-full py-4 md:py-2 text-gray-700 hover:text-[#b50a0a] transition-colors gap-2"
+                  >
+                     <User className="w-4 h-4" /> <span className="md:hidden">Profile</span> <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === 'user' ? 'rotate-180' : ''}`} />
+                  </button>
+                  <div className={`${activeDropdown === 'user' ? 'block' : 'hidden'} md:group-hover/drop:block md:absolute top-full right-0 bg-white md:shadow-xl md:border border-gray-100 rounded-xl md:min-w-[200px] overflow-hidden z-[100] transition-all animate-in fade-in slide-in-from-top-2 duration-300`}>
+                     <div className="flex flex-col md:py-2">
+                        <div className="px-6 py-3 border-b border-gray-50">
+                           <p className="text-[9px] text-gray-400 font-bold uppercase truncate">{user.email}</p>
+                        </div>
+                        <Link href="/profile" className="px-6 py-3 hover:bg-gray-50 text-gray-700 hover:text-[#b50a0a] transition-colors border-l-4 border-transparent hover:border-[#b50a0a]">Dashboard</Link>
+                        <button 
+                           onClick={() => signout()}
+                           className="flex items-center gap-2 px-6 py-3 hover:bg-red-50 text-red-600 transition-colors border-l-4 border-transparent hover:border-red-600 text-left"
+                        >
+                           <LogOut className="w-3 h-3" /> Sign Out
+                        </button>
+                     </div>
+                  </div>
+               </li>
+             )}
+
+             <li className="md:hidden mt-8">
+                <Link href={user ? "/profile" : "/login"} className="block w-full text-center text-white bg-[#b50a0a] hover:bg-[#990000] font-black rounded-lg text-xs px-6 py-4 transition-all">
+                   {user ? 'Dashboard' : 'Get Started'}
+                </Link>
+             </li>
+           </ul>
+         </div>
+
+         {/* CTA BUTTON */}
+         <div className="hidden md:flex order-3">
+           <Link href={user ? "/profile" : "/login"}>
+             <button type="button" className="text-white bg-[#b50a0a] hover:bg-[#990000] font-black rounded-lg text-[10px] tracking-widest uppercase px-8 py-3.5 shadow-md transition-all hover:shadow-xl transform active:scale-95">
+               {user ? 'Dashboard' : 'Get Started'}
+             </button>
+           </Link>
+         </div>
 
       </div>
     </nav>

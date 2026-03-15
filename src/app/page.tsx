@@ -5,7 +5,19 @@ import Link from 'next/link';
 import { PlayCircle, ArrowRight, ArrowLeft, Star, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+// Dummy profiles for carousel (8 items)
+const DUMMY_PLAYERS = [
+   { name: 'Bamidele\nAdeniyi', num: 16, img: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=600&q=80" },
+   { name: 'Yemi Daniel\nOlanrewaju', num: 24, img: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?auto=format&fit=crop&w=600&q=80" },
+   { name: 'Akere\nSamuel', num: 16, img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=600&q=80" },
+   { name: 'Chinedu\nOkonkwo', num: 9, img: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=600&q=80" },
+   { name: 'Ibrahim\nMusa', num: 7, img: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?auto=format&fit=crop&w=600&q=80" },
+   { name: 'Olumide\nAjayi', num: 10, img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=600&q=80" },
+   { name: 'Tunde\nBello', num: 11, img: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=600&q=80" },
+   { name: 'Emeka\nUche', num: 4, img: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?auto=format&fit=crop&w=600&q=80" }
+];
 
 // Dummy images provided via Unsplash
 const IMG_HERO = "https://images.unsplash.com/photo-1518605368461-1ee7e537d45c?auto=format&fit=crop&w=1200&q=80"; // Football / World Cup
@@ -17,6 +29,14 @@ const IMG_NEWS = "https://images.unsplash.com/photo-1431324155629-1a6d0a11f472?a
 export default function Home() {
    const [heroSlide, setHeroSlide] = useState(0);
    const [storyPage, setStoryPage] = useState(1);
+   const [currentIdx, setCurrentIdx] = useState(0);
+
+   useEffect(() => {
+      const interval = setInterval(() => {
+         setCurrentIdx((prev) => (prev + 1) % (DUMMY_PLAYERS.length - 3));
+      }, 3000);
+      return () => clearInterval(interval);
+   }, []);
 
    const handleHeroScroll = (e: React.UIEvent<HTMLDivElement>) => {
       const scrollLeft = e.currentTarget.scrollLeft;
@@ -193,7 +213,7 @@ export default function Home() {
          {/* =======================
           PLAYER PROFILES
       ======================== */}
-         <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-24 mb-16">
+         <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-24 mb-16 overflow-hidden">
             <div className="flex items-center justify-between mb-8">
                <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-[#b50a0a] flex items-center justify-center shadow-lg shadow-red-900/20">
@@ -205,45 +225,54 @@ export default function Home() {
                   </div>
                </div>
                <div className="flex gap-2">
-                  <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-[#b50a0a] hover:text-[#b50a0a] transition-colors bg-white shadow-sm">
+                  <button
+                     onClick={() => setCurrentIdx(prev => Math.max(0, prev - 1))}
+                     className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-[#b50a0a] hover:text-[#b50a0a] transition-colors bg-white shadow-sm"
+                  >
                      <ChevronLeft className="w-5 h-5" />
                   </button>
-                  <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-[#b50a0a] hover:text-[#b50a0a] transition-colors bg-white shadow-sm">
+                  <button
+                     onClick={() => setCurrentIdx(prev => (prev + 1) % (DUMMY_PLAYERS.length - 3))}
+                     className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-[#b50a0a] hover:text-[#b50a0a] transition-colors bg-white shadow-sm"
+                  >
                      <ChevronRight className="w-5 h-5" />
                   </button>
                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-               {[
-                  { name: 'Bamidele\nAdeniyi', num: 16, img: IMG_PLAYER_1 },
-                  { name: 'Yemi Daniel\nOlanrewaju', num: 24, img: IMG_PLAYER_2 },
-                  { name: 'Akere\nSamuel', num: 16, img: IMG_PLAYER_3 }
-               ].map((player, idx) => (
-                  <div key={idx} className="relative rounded-xl overflow-hidden aspect-[4/5] bg-gray-900 shadow-xl group border border-gray-800">
-                     <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={{ backgroundImage: `url(${player.img})` }} />
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                     <div className="absolute inset-0 bg-[#b50a0a]/30 mix-blend-multiply opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative w-full overflow-hidden">
+               <div
+                  className="flex transition-transform duration-700 ease-in-out gap-6"
+                  style={{ transform: `translateX(calc(-${currentIdx * 25}% - ${currentIdx * 6}px))` }}
+               >
+                  {DUMMY_PLAYERS.map((player, idx) => (
+                     <div key={idx} className="relative rounded-xl overflow-hidden aspect-[4/5] bg-gray-900 shadow-xl group border border-gray-800 shrink-0 w-[calc((100%-18px)/1)] md:w-[calc((100%-48px)/3)] lg:w-[calc((100%-72px)/4)]">
+                        <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={{ backgroundImage: `url(${player.img})` }} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                        <div className="absolute inset-0 bg-[#b50a0a]/30 mix-blend-multiply opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                     {/* Flag Icon */}
-                     <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-green-600 border-[1.5px] border-white/40 shadow-xl shrink-0 flex items-center justify-center overflow-hidden">
-                        <div className="w-2 h-full bg-white block absolute left-1/2 -translate-x-1/2"></div>
-                     </div>
+                        {/* Flag Icon */}
+                        <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-green-600 border-[1.5px] border-white/40 shadow-xl shrink-0 flex items-center justify-center overflow-hidden">
+                           <div className="w-2 h-full bg-white block absolute left-1/2 -translate-x-1/2"></div>
+                        </div>
 
-                     <div className="absolute bottom-0 left-0 p-6">
-                        <span className="text-[#b50a0a] text-5xl font-black italic block leading-none drop-shadow-lg opacity-90 group-hover:opacity-100 transition-opacity">{player.num}</span>
-                        <h3 className="text-2xl font-bold text-white leading-tight mt-2 whitespace-pre-line drop-shadow-md">
-                           {player.name}
-                        </h3>
+                        <div className="absolute bottom-0 left-0 p-6">
+                           <span className="text-[#b50a0a] text-5xl font-black italic block leading-none drop-shadow-lg opacity-90 group-hover:opacity-100 transition-opacity">{player.num}</span>
+                           <h3 className="text-2xl font-bold text-white leading-tight mt-2 whitespace-pre-line drop-shadow-md">
+                              {player.name}
+                           </h3>
+                        </div>
                      </div>
-                  </div>
-               ))}
+                  ))}
+               </div>
             </div>
 
             <div className="flex justify-center mt-10">
-               <button className="bg-[#b50a0a] hover:bg-[#8b0000] text-white px-8 py-3 rounded-md text-sm font-bold uppercase tracking-widest shadow-lg shadow-red-900/20 transition-all hover:-translate-y-0.5">
-                  View More Players
-               </button>
+               <Link href="/athletes">
+                  <button className="bg-[#b50a0a] hover:bg-[#8b0000] text-white px-8 py-3 rounded-md text-sm font-bold uppercase tracking-widest shadow-lg shadow-red-900/20 transition-all hover:-translate-y-0.5">
+                     View More Players
+                  </button>
+               </Link>
             </div>
          </section>
 
