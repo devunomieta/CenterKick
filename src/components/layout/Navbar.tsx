@@ -1,11 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  const isActive = (path: string) => pathname === path;
 
   return (
     <nav className="fixed w-full z-50 top-0 start-0 bg-white border-b border-gray-100 shadow-sm">
@@ -39,22 +43,22 @@ export function Navbar() {
         <div className={`items-center justify-center w-full md:flex md:w-auto md:order-1 ${isOpen ? 'block' : 'hidden'} absolute md:relative top-20 md:top-0 left-0 bg-white md:bg-transparent shadow-md md:shadow-none border-t md:border-0 border-gray-100`}>
           <ul className="flex flex-col p-6 md:p-0 mt-0 font-medium md:space-x-8 rtl:space-x-reverse md:flex-row text-sm">
             <li>
-              <Link href="/" className="block py-2 text-[#b50a0a] font-bold" aria-current="page">Home</Link>
+              <Link href="/" className={`block py-2 ${isActive('/') ? 'text-[#b50a0a] font-bold' : 'text-gray-700 hover:text-gray-900 transition-colors'}`}>Home</Link>
             </li>
             <li>
-              <Link href="/news" className="block py-2 text-gray-700 hover:text-gray-900 transition-colors">News</Link>
+              <Link href="/news" className={`block py-2 ${isActive('/news') ? 'text-[#b50a0a] font-bold' : 'text-gray-700 hover:text-gray-900 transition-colors'}`}>News</Link>
             </li>
             <li>
-              <Link href="/athletes" className="block py-2 text-gray-700 hover:text-gray-900 transition-colors">Athletes</Link>
+              <Link href="/athletes" className={`block py-2 ${isActive('/athletes') ? 'text-[#b50a0a] font-bold' : 'text-gray-700 hover:text-gray-900 transition-colors'}`}>Athletes</Link>
             </li>
             <li>
-              <Link href="/transfer-focus" className="block py-2 text-gray-700 hover:text-gray-900 transition-colors">Transfer Focus</Link>
+              <Link href="/transfer-focus" className={`block py-2 ${isActive('/transfer-focus') ? 'text-[#b50a0a] font-bold' : 'text-gray-700 hover:text-gray-900 transition-colors'}`}>Transfer Focus</Link>
             </li>
             <li>
-              <Link href="/about" className="block py-2 text-gray-700 hover:text-gray-900 transition-colors">About us</Link>
+              <Link href="/about" className={`block py-2 ${isActive('/about') ? 'text-[#b50a0a] font-bold' : 'text-gray-700 hover:text-gray-900 transition-colors'}`}>About us</Link>
             </li>
             <li>
-              <Link href="/contact" className="block py-2 text-gray-700 hover:text-gray-900 transition-colors">Contact us</Link>
+              <Link href="/contact" className={`block py-2 ${isActive('/contact') ? 'text-[#b50a0a] font-bold' : 'text-gray-700 hover:text-gray-900 transition-colors'}`}>Contact us</Link>
             </li>
             <li className="md:hidden mt-4">
               <Link href="/login" className="block w-full text-center text-white bg-[#b50a0a] hover:bg-[#990000] font-bold rounded text-sm px-6 py-3 transition-colors">
