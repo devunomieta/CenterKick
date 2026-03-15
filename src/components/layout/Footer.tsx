@@ -2,60 +2,82 @@ import Link from 'next/link';
 
 export function Footer() {
   return (
-    <footer className="bg-[#8b0000] text-gray-200">
-      <div className="max-w-screen-xl mx-auto p-8 lg:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2 space-y-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-                <span className="text-[#8b0000] font-bold italic text-lg">C</span>
-              </div>
-              <span className="self-center text-2xl font-bold whitespace-nowrap text-white">CenterKick</span>
-            </Link>
-            <p className="max-w-sm mt-4 text-sm text-gray-300">
-              Centerkick is a platform designed to connect aspiring football talents, scouts, and agents globally. Start your professional football journey with us today.
-            </p>
-            <div className="flex space-x-4 pt-4">
-              <a href="#" className="text-gray-300 hover:text-white">
-                <span className="sr-only">Facebook page</span>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" /></svg>
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white">
-                <span className="sr-only">Twitter page</span>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" /></svg>
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white">
-                <span className="sr-only">Instagram</span>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.036 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z"/></svg>
-              </a>
-            </div>
+    <footer className="bg-[#a20000] text-white pt-16 pb-20">
+      <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
+        <div className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8">
+          
+          {/* Column 1: Logo & Description */}
+          <div className="w-full lg:w-[45%]">
+             <Link href="/" className="inline-flex items-center gap-2 mb-6 group">
+                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0">
+                   <svg className="w-4 h-4 text-[#a20000]" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5c-2.49 0-4.5-2.01-4.5-4.5S8.51 7.5 11 7.5s4.5 2.01 4.5 4.5c0 .34-.04.68-.11 1h-2.12c.15-.31.23-.65.23-1 0-1.38-1.12-2.5-2.5-2.5S8.5 10.62 8.5 12 9.62 14.5 11 14.5c.66 0 1.25-.26 1.7-.68l1.45 1.45c-.83.76-1.92 1.23-3.15 1.23z"/>
+                   </svg>
+                </div>
+                <span className="text-[22px] font-bold tracking-wide">
+                   CenterKick
+                </span>
+             </Link>
+             <p className="text-white/80 text-[13px] leading-[1.8] pr-8 mb-8 font-light">
+                Lörem ipsum od ohet dilogi. Bell trabel, samuligt, ohöbel utom diska. Jinesade bel när feras redorade i belogi. FAR paratyp i muvåning, och pesask vyfisat. Viktiga poddradio har un mad och inde.
+             </p>
+             
+             {/* Social Icons */}
+             <div className="flex items-center gap-5">
+                <a href="#" className="text-white hover:text-white/70 transition-colors">
+                   <svg width="12" height="18" viewBox="0 0 320 512" fill="currentColor"><path d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z"/></svg>
+                </a>
+                <a href="#" className="text-white hover:text-white/70 transition-colors">
+                   <svg width="18" height="15" viewBox="0 0 512 512" fill="currentColor"><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.671 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
+                </a>
+                <a href="#" className="text-white hover:text-white/70 transition-colors">
+                   <svg width="16" height="15" viewBox="0 0 448 512" fill="currentColor"><path d="M100.28 448H7.4V148.9h92.88zM53.79 108.1C24.09 108.1 0 83.5 0 53.8a53.79 53.79 0 0 1 107.58 0c0 29.7-24.1 54.3-53.79 54.3zM447.9 448h-92.68V302.4c0-34.7-.7-79.2-48.29-79.2-48.29 0-55.69 37.7-55.69 76.7V448h-92.78V148.9h89.08v40.8h1.3c12.4-23.5 42.69-48.3 87.88-48.3 94 0 111.28 61.9 111.28 142.3V448z"/></svg>
+                </a>
+                <a href="#" className="text-white hover:text-white/70 transition-colors">
+                   <svg width="18" height="18" viewBox="0 0 448 512" fill="currentColor"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>
+                </a>
+             </div>
           </div>
-          <div>
-            <h2 className="mb-6 text-sm font-semibold text-white uppercase mt-4 md:mt-0">Pages</h2>
-            <ul className="text-gray-300 font-medium space-y-3 text-sm">
-              <li><Link href="/" className="hover:text-white transition-colors">Home</Link></li>
-              <li><Link href="/news" className="hover:text-white transition-colors">News</Link></li>
-              <li><Link href="/matches" className="hover:text-white transition-colors">Matches</Link></li>
-              <li><Link href="/players" className="hover:text-white transition-colors">Players Directory</Link></li>
+          
+          {/* Column 2: Pages Links */}
+          <div className="w-full lg:w-[15%]">
+            <h3 className="mb-5 text-[14px] font-bold text-white tracking-wide">Pages</h3>
+            <ul className="text-white/80 space-y-3 text-[12px] font-light">
+               <li><Link href="/" className="hover:text-white transition-colors">FAQ</Link></li>
+               <li><Link href="/news" className="hover:text-white transition-colors">Agency</Link></li>
+               <li><Link href="/matches" className="hover:text-white transition-colors">Legal</Link></li>
+               <li><Link href="/players" className="hover:text-white transition-colors">Matches</Link></li>
             </ul>
           </div>
-          <div>
-            <h2 className="mb-6 text-sm font-semibold text-white uppercase mt-4 md:mt-0">Contact</h2>
-            <ul className="text-gray-300 font-medium space-y-3 text-sm">
-              <li className="flex items-center gap-2">
-                <svg className="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16.5A5.5 5.5 0 0 1 5.5 11M16.5 11A5.5 5.5 0 0 1 11 16.5m0 0v5m0-5a5.5 5.5 0 0 0 5.5-5.5M11 11V6m0 0a5.5 5.5 0 0 0-5.5 5.5m5.5-5.5A5.5 5.5 0 0 1 16.5 11M6 11H3m3 8h12m-3-8h3m-8 3h0"/></svg>
-                <span>centerkickdev@gmail.com</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <svg className="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a9 9 0 0 0 5-8.5 4 4 0 0 0-4-4h-2a4 4 0 0 0-4 4 9 9 0 0 0 5 8.5Z"/></svg>
-                <span>+1 234 567 8900</span>
-              </li>
+
+          {/* Column 3: Service Links */}
+          <div className="w-full lg:w-[18%]">
+            <h3 className="mb-5 text-[14px] font-bold text-white tracking-wide">Service</h3>
+            <ul className="text-white/80 space-y-3 text-[12px] font-light">
+               <li><Link href="/" className="hover:text-white transition-colors">Coaching</Link></li>
+               <li><Link href="/news" className="hover:text-white transition-colors">Find a Football Academy</Link></li>
+               <li><Link href="/matches" className="hover:text-white transition-colors">Agency</Link></li>
             </ul>
           </div>
-        </div>
-        <hr className="my-6 border-red-800 sm:mx-auto lg:my-8" />
-        <div className="sm:flex sm:items-center sm:justify-between text-center sm:text-left">
-          <span className="text-sm text-gray-400 sm:text-center">© 2026 <Link href="/" className="hover:underline">CenterKick™</Link>. All Rights Reserved.</span>
+          
+          {/* Column 4: Contact Info */}
+          <div className="w-full lg:w-[22%]">
+            <h3 className="mb-5 text-[14px] font-bold text-white tracking-wide">Contact</h3>
+            <ul className="text-white/80 space-y-3 text-[12px] font-light">
+               <li className="flex items-center gap-2">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 512 512"><path d="M164.9 24.6c-7.7-18.6-28-28.5-47.4-23.2l-88 24C12.1 30.2 0 46 0 64C0 311.4 200.6 512 448 512c18 0 33.8-12.1 38.6-29.5l24-88c5.3-19.4-4.6-39.7-23.2-47.4l-96-40c-16.3-6.8-35.2-2.1-46.3 11.6L304.7 368C234.3 334.7 177.3 277.7 144 207.3L193.3 167c13.7-11.2 18.4-30 11.6-46.3l-40-96z"/></svg>
+                  <span>(406) 555-0120</span>
+               </li>
+               <li className="flex items-center gap-2">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 512 512"><path d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0L492.8 150.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48H48zM0 176V384c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V176L294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176z"/></svg>
+                  <a href="mailto:centrekick123@gmail.com" className="hover:text-white transition-colors">centrekick123@gmail.com</a>
+               </li>
+               <li className="flex items-start gap-2 mt-1">
+                  <svg className="w-3 h-3 text-white mt-1 shrink-0" fill="currentColor" viewBox="0 0 384 512"><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>
+                  <span className="leading-[1.4]">2972 Westheimer Rd. Santa Ana, Illinois 85486</span>
+               </li>
+            </ul>
+          </div>
         </div>
       </div>
     </footer>
