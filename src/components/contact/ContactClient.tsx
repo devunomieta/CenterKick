@@ -1,0 +1,161 @@
+'use client';
+
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { 
+   Mail, 
+   Briefcase, 
+   Megaphone, 
+   MapPin, 
+   Send,
+   ChevronDown,
+   MessageSquare,
+   Globe,
+   Instagram,
+   Twitter,
+   Facebook,
+   ShieldCheck,
+   ArrowRight
+} from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+
+interface FAQ {
+  q: string;
+  a: string;
+}
+
+interface ContactClientProps {
+  header?: { title?: string; description?: string };
+  faqs?: FAQ[];
+}
+
+export function ContactClient({ header, faqs }: ContactClientProps) {
+   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+   const defaultHeader = header || {
+      title: "Get in Touch",
+      description: "Have questions? Need support? Want to work with CenterKick? We’re here to help."
+   };
+
+   const defaultFaqs = faqs || [
+      { q: "What is CenterKick?", a: "CenterKick is a football media and talent exposure platform." }
+   ];
+
+   return (
+      <div className="min-h-screen bg-white flex flex-col font-sans selection:bg-[#b50a0a] selection:text-white">
+         <Navbar />
+
+         <main className="flex-grow pt-[104px]">
+            
+            {/* Header Section */}
+            <div className="w-full bg-gray-50 py-24 md:py-32 relative overflow-hidden border-b border-gray-100">
+               <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#b50a0a]/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+               
+               <div className="max-w-[1200px] mx-auto px-6 text-center relative z-10">
+                  <span className="text-[#b50a0a] font-bold tracking-[0.2em] uppercase mb-4 block text-sm">Contact Us</span>
+                  <h1 className="text-5xl md:text-7xl font-black text-gray-900 uppercase tracking-tighter mb-8 drop-shadow-sm">
+                     {defaultHeader.title?.split(' ').map((word, i) => (
+                        <span key={i} className={word === 'Touch' ? 'text-[#ff4d4d]' : ''}>{word} </span>
+                     ))}
+                  </h1>
+                  <p className="text-gray-600 text-lg md:text-xl leading-relaxed max-w-[600px] mx-auto font-medium">
+                     {defaultHeader.description}
+                  </p>
+               </div>
+            </div>
+
+            {/* Contact Split Layout */}
+            <div className="max-w-[1200px] mx-auto px-6 py-24 md:py-32">
+               <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
+                  
+                  {/* Left Side: Contact Info */}
+                  <div className="w-full lg:w-1/3 flex flex-col gap-12">
+                     <div>
+                        <h2 className="text-2xl font-black text-gray-900 mb-8 tracking-tight">Direct Contacts</h2>
+                        <div className="space-y-8">
+                           <div className="group flex items-start gap-4 p-4 -ml-4 rounded-2xl hover:bg-gray-50 transition-colors">
+                              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:bg-[#b50a0a]/10 group-hover:text-[#b50a0a] transition-colors border border-gray-200 group-hover:border-[#b50a0a]/20">
+                                 <Mail className="w-5 h-5 text-gray-600 group-hover:text-[#b50a0a]" />
+                              </div>
+                              <div>
+                                 <h3 className="font-bold text-gray-900 mb-1">General Support</h3>
+                                 <a href="mailto:support@centerkick.com" className="block text-gray-500 hover:text-[#b50a0a] font-medium transition-colors">support@centerkick.com</a>
+                              </div>
+                           </div>
+                           <div className="group flex items-start gap-4 p-4 -ml-4 rounded-2xl hover:bg-gray-50 transition-colors">
+                              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center shrink-0 group-hover:bg-[#b50a0a]/10 group-hover:text-[#b50a0a] transition-colors border border-gray-200 group-hover:border-[#b50a0a]/20">
+                                 <Briefcase className="w-5 h-5 text-gray-600 group-hover:text-[#b50a0a]" />
+                              </div>
+                              <div>
+                                 <h3 className="font-bold text-gray-900 mb-1">Partnerships</h3>
+                                 <a href="mailto:partnerships@centerkick.com" className="block text-gray-500 hover:text-[#b50a0a] font-medium transition-colors">partnerships@centerkick.com</a>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                     <div className="flex gap-4">
+                        {[Instagram, Twitter, Facebook, Globe].map((Icon, i) => (
+                           <a key={i} href="#" className="w-12 h-12 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-[#b50a0a]/5 hover:text-[#b50a0a] transition-all hover:scale-110 shadow-sm">
+                              <Icon className="w-5 h-5" />
+                           </a>
+                        ))}
+                     </div>
+                  </div>
+
+                  {/* Right Side: Form */}
+                  <div className="w-full lg:w-2/3">
+                     <div className="bg-white rounded-3xl p-8 md:p-12 border border-gray-100 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.05)] relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#b50a0a] to-[#ff4d4d]"></div>
+                        <h2 className="text-3xl font-black text-gray-900 mb-8 tracking-tight flex items-center gap-3">
+                           <MessageSquare className="w-8 h-8 text-[#b50a0a]" /> Send a Message
+                        </h2>
+                        <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <input type="text" placeholder="Full Name" className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#b50a0a]" />
+                              <input type="email" placeholder="Email Address" className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#b50a0a]" />
+                           </div>
+                           <input type="text" placeholder="Subject" className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#b50a0a]" />
+                           <textarea rows={6} placeholder="Message" className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#b50a0a] resize-none"></textarea>
+                           <button type="submit" className="bg-[#b50a0a] text-white font-black uppercase tracking-widest px-10 py-5 rounded-xl shadow-lg transition-all hover:-translate-y-1 group flex items-center gap-3">
+                               Send Message <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                           </button>
+                        </form>
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            {/* FAQ Section */}
+            <div className="w-full bg-gray-50 py-32 px-6 border-y border-gray-200">
+               <div className="max-w-[800px] mx-auto">
+                  <div className="text-center mb-16">
+                     <span className="text-[#b50a0a] font-bold tracking-[0.2em] uppercase mb-4 block text-sm">Got Questions?</span>
+                     <h2 className="text-4xl md:text-5xl font-black text-gray-900 uppercase tracking-tight">❔ FAQs</h2>
+                  </div>
+                  <div className="space-y-4">
+                     {defaultFaqs.map((faq, idx) => (
+                        <div key={idx} className={`bg-white border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 ${openFaq === idx ? 'border-[#b50a0a]' : 'border-gray-200'}`}>
+                           <button onClick={() => setOpenFaq(openFaq === idx ? null : idx)} className="w-full flex items-center justify-between p-6 md:p-8 text-left outline-none">
+                              <div className="flex items-center gap-4">
+                                 <span className={`font-black text-lg ${openFaq === idx ? 'text-[#b50a0a]' : 'text-gray-300'}`}>{(idx + 1).toString().padStart(2, '0')}</span>
+                                 <h3 className="font-bold text-gray-900">{faq.q}</h3>
+                              </div>
+                              <ChevronDown className={`w-6 h-6 transition-transform ${openFaq === idx ? 'rotate-180 text-[#b50a0a]' : 'text-gray-400'}`} />
+                           </button>
+                           {openFaq === idx && (
+                              <div className="p-6 md:p-8 pt-0 border-t border-gray-50">
+                                 <p className="text-gray-600 ml-12">{faq.a}</p>
+                              </div>
+                           )}
+                        </div>
+                     ))}
+                  </div>
+               </div>
+            </div>
+
+         </main>
+         <Footer />
+      </div>
+   );
+}

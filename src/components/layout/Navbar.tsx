@@ -11,6 +11,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string>('player');
   const pathname = usePathname();
   const supabase = createClient();
 
@@ -18,11 +19,27 @@ export function Navbar() {
     const getUser = async () => {
        const { data: { user } } = await supabase.auth.getUser();
        setUser(user);
+       if (user) {
+          const { data } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          setUserRole(data?.role || 'player');
+       }
     };
     getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
        setUser(session?.user ?? null);
+       if (session?.user) {
+          const { data } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+          setUserRole(data?.role || 'player');
+       }
     });
 
     return () => subscription.unsubscribe();
@@ -135,7 +152,12 @@ export function Navbar() {
                         <div className="px-6 py-3 border-b border-gray-50">
                            <p className="text-[9px] text-gray-400 font-bold uppercase truncate">{user.email}</p>
                         </div>
-                        <Link href="/profile" className="px-6 py-3 hover:bg-gray-50 text-gray-700 hover:text-[#b50a0a] transition-colors border-l-4 border-transparent hover:border-[#b50a0a]">Dashboard</Link>
+                <Link
+                  href={userRole === 'superadmin' ? '/admin' : '/dashboard'}
+                  className="px-8 py-3 bg-gray-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-black hover:-translate-y-0.5 transition-all shadow-xl shadow-gray-200"
+                >
+                  Dashboard
+                </Link>
                         <button 
                            onClick={() => signout()}
                            className="flex items-center gap-2 px-6 py-3 hover:bg-red-50 text-red-600 transition-colors border-l-4 border-transparent hover:border-red-600 text-left"
@@ -148,7 +170,7 @@ export function Navbar() {
              )}
 
              <li className="md:hidden mt-8">
-                <Link href={user ? "/profile" : "/login"} className="block w-full text-center text-white bg-[#b50a0a] hover:bg-[#990000] font-black rounded-lg text-xs px-6 py-4 transition-all">
+                <Link href={user ? (userRole === 'superadmin' ? "/admin" : "/dashboard") : "/login"} className="block w-full text-center text-white bg-[#b50a0a] hover:bg-[#990000] font-black rounded-lg text-xs px-6 py-4 transition-all">
                    {user ? 'Dashboard' : 'Get Started'}
                 </Link>
              </li>
@@ -156,13 +178,13 @@ export function Navbar() {
          </div>
 
          {/* CTA BUTTON */}
-         <div className="hidden md:flex order-3">
-           <Link href={user ? "/profile" : "/login"}>
-             <button type="button" className="text-white bg-[#b50a0a] hover:bg-[#990000] font-black rounded-lg text-[10px] tracking-widest uppercase px-8 py-3.5 shadow-md transition-all hover:shadow-xl transform active:scale-95">
-               {user ? 'Dashboard' : 'Get Started'}
-             </button>
-           </Link>
-         </div>
+          <div className="hidden md:flex order-3">
+            <Link href={user ? (userRole === 'superadmin' ? "/admin" : "/dashboard") : "/login"}>
+              <button type="button" className="text-white bg-[#b50a0a] hover:bg-[#990000] font-black rounded-lg text-[10px] tracking-widest uppercase px-8 py-3.5 shadow-md transition-all hover:shadow-xl transform active:scale-95">
+                {user ? 'Dashboard' : 'Get Started'}
+              </button>
+            </Link>
+          </div>
 
       </div>
     </nav>

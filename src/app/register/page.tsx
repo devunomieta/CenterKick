@@ -79,10 +79,6 @@ export default function RegisterPage() {
                      <div className="w-12 h-12 rounded-full bg-[#a20000] text-white flex items-center justify-center font-black">1</div>
                      <div className="w-16 h-1 bg-gray-100 rounded-full"></div>
                      <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-black">2</div>
-                     <div className="w-16 h-1 bg-gray-100 rounded-full"></div>
-                     <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-black">3</div>
-                     <div className="w-16 h-1 bg-gray-100 rounded-full"></div>
-                     <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-black">4</div>
                   </div>
                </div>
 

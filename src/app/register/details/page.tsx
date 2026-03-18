@@ -3,17 +3,20 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { ChevronRight, Camera, MapPin } from "lucide-react";
+import { ChevronRight, Camera, MapPin, ArrowRight } from "lucide-react";
 import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { getRegistrationData, saveRegistrationData } from '@/lib/registrationStore';
 
+import { completeRegistration } from '../actions';
+
 function RegisterDetailsContent() {
    const searchParams = useSearchParams();
-   const router = useRouter();
    const roleFromUrl = searchParams.get('role');
    const [role, setRole] = useState(roleFromUrl || 'athlete');
    const [formData, setFormData] = useState<any>({});
+   const [isLoading, setIsLoading] = useState(false);
+   const [error, setError] = useState<string | null>(null);
 
    useEffect(() => {
       const data = getRegistrationData();
@@ -32,6 +35,20 @@ function RegisterDetailsContent() {
       saveRegistrationData({ details: updatedData, step: 2 });
    };
 
+   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      setIsLoading(true);
+      setError(null);
+      
+      const form = new FormData(e.currentTarget);
+      const result = await completeRegistration(form);
+      
+      if (result?.error) {
+         setError(result.error);
+         setIsLoading(false);
+      }
+   };
+
    return (
       <main className="pt-32 pb-24">
          <div className="max-w-[800px] mx-auto px-4 lg:px-0">
@@ -42,25 +59,28 @@ function RegisterDetailsContent() {
                   <div className="w-12 h-12 rounded-full border-2 border-green-500 text-green-500 flex items-center justify-center font-black">✓</div>
                   <div className="w-16 h-1 bg-green-500 rounded-full"></div>
                   <div className="w-12 h-12 rounded-full bg-[#a20000] text-white flex items-center justify-center font-black animate-pulse">2</div>
-                  <div className="w-16 h-1 bg-gray-100 rounded-full"></div>
-                  <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-black">3</div>
-                  <div className="w-16 h-1 bg-gray-100 rounded-full"></div>
-                  <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-black">4</div>
                </div>
             </div>
 
             <div className="text-center mb-16 px-4">
                <span className="text-[#a20000] font-black text-xs uppercase tracking-[0.4em] mb-4 block underline underline-offset-4">{role} Profile</span>
                <h1 className="text-4xl lg:text-7xl font-black text-gray-900 uppercase tracking-tighter leading-none mb-6">
-                  Tell Us More <br />
-                  <span className="text-[#a20000]">About Yourself</span>
+                  Final <br />
+                  <span className="text-[#a20000]">Onboarding</span>
                </h1>
             </div>
+
+            {error && (
+               <div className="max-w-[800px] mx-auto mb-8 p-5 bg-red-50 border border-red-100 rounded-2xl text-red-700 text-xs font-black uppercase tracking-widest animate-in fade-in slide-in-from-top-2">
+                  {error}
+               </div>
+            )}
 
             <div className="bg-white border border-gray-100 rounded-[40px] p-8 md:p-16 shadow-[0_60px_100px_rgba(0,0,0,0.06)] relative overflow-hidden">
                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#a20000] to-black opacity-20"></div>
                
-               <form className="space-y-10">
+               <form onSubmit={handleSubmit} className="space-y-10">
+                  <input type="hidden" name="role" value={role} />
                   
                   {/* Photo Upload Placeholder */}
                   <div className="flex flex-col items-center">
@@ -75,6 +95,7 @@ function RegisterDetailsContent() {
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
                         <input 
                            name="fullName"
+                           required
                            value={formData.fullName || ''}
                            onChange={handleInputChange}
                            type="text" 
@@ -86,6 +107,7 @@ function RegisterDetailsContent() {
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Date of Birth</label>
                         <input 
                            name="dob"
+                           required
                            value={formData.dob || ''}
                            onChange={handleInputChange}
                            type="date" 
@@ -100,6 +122,7 @@ function RegisterDetailsContent() {
                         <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input 
                            name="location"
+                           required
                            value={formData.location || ''}
                            onChange={handleInputChange}
                            type="text" 
@@ -114,6 +137,7 @@ function RegisterDetailsContent() {
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
                         <input 
                            name="email"
+                           required
                            value={formData.email || ''}
                            onChange={handleInputChange}
                            type="email" 
@@ -122,30 +146,43 @@ function RegisterDetailsContent() {
                         />
                      </div>
                      <div className="space-y-4">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Account Password</label>
                         <input 
-                           name="phone"
-                           value={formData.phone || ''}
-                           onChange={handleInputChange}
-                           type="tel" 
-                           placeholder="+234..." 
+                           name="password"
+                           required
+                           type="password" 
+                           placeholder="••••••••" 
                            className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
                         />
                      </div>
                   </div>
 
-                  {/* Role Specific Fields */}
+                  <div className="space-y-4">
+                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
+                     <input 
+                        name="phone"
+                        required
+                        value={formData.phone || ''}
+                        onChange={handleInputChange}
+                        type="tel" 
+                        placeholder="+234..." 
+                        className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
+                     />
+                  </div>
+
+                  {/* Role Specific Fields (Minimizing for Basic Step) */}
                   {role === 'athlete' && (
                      <div className="pt-12 border-t border-gray-100 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <div className="flex items-center gap-4 mb-2">
                            <div className="h-0.5 w-8 bg-[#a20000]"></div>
                            <h3 className="text-xs font-black uppercase tracking-widest text-gray-900">Career Stats</h3>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                            <div className="space-y-4">
                               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Position</label>
                               <select 
                                  name="position"
+                                 required
                                  value={formData.position || ''}
                                  onChange={handleInputChange}
                                  className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none appearance-none"
@@ -156,17 +193,6 @@ function RegisterDetailsContent() {
                                  <option>Defender</option>
                                  <option>Goalkeeper</option>
                               </select>
-                           </div>
-                           <div className="space-y-4">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Jersey Number</label>
-                              <input 
-                                 name="jerseyNumber"
-                                 value={formData.jerseyNumber || ''}
-                                 onChange={handleInputChange}
-                                 type="number" 
-                                 placeholder="10" 
-                                 className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
-                              />
                            </div>
                            <div className="space-y-4">
                               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Preferred Foot</label>
@@ -186,42 +212,6 @@ function RegisterDetailsContent() {
                      </div>
                   )}
 
-                  {role === 'coach' && (
-                     <div className="pt-12 border-t border-gray-100 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="flex items-center gap-4 mb-2">
-                           <div className="h-0.5 w-8 bg-[#a20000]"></div>
-                           <h3 className="text-xs font-black uppercase tracking-widest text-gray-900">Technical Data</h3>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                           <div className="space-y-4">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Experience (Years)</label>
-                              <input 
-                                 name="experience"
-                                 value={formData.experience || ''}
-                                 onChange={handleInputChange}
-                                 type="number" 
-                                 placeholder="5" 
-                                 className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
-                              />
-                           </div>
-                           <div className="space-y-4">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">UEFA / FIFA License</label>
-                              <select 
-                                 name="license"
-                                 value={formData.license || ''}
-                                 onChange={handleInputChange}
-                                 className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none appearance-none"
-                              >
-                                 <option value="">Select License</option>
-                                 <option>Pro License</option>
-                                 <option>A License</option>
-                                 <option>B License</option>
-                              </select>
-                           </div>
-                        </div>
-                     </div>
-                  )}
-
                   {role === 'agent' && (
                      <div className="pt-12 border-t border-gray-100 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <div className="flex items-center gap-4 mb-2">
@@ -232,21 +222,11 @@ function RegisterDetailsContent() {
                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Agency Name</label>
                            <input 
                               name="agencyName"
+                              required
                               value={formData.agencyName || ''}
                               onChange={handleInputChange}
                               type="text" 
                               placeholder="Apex Sports Management" 
-                              className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
-                           />
-                        </div>
-                        <div className="space-y-4">
-                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">FIFA License Number</label>
-                           <input 
-                              name="fifaLicense"
-                              value={formData.fifaLicense || ''}
-                              onChange={handleInputChange}
-                              type="text" 
-                              placeholder="EX-12345678" 
                               className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
                            />
                         </div>
@@ -259,11 +239,17 @@ function RegisterDetailsContent() {
                            Back
                         </button>
                      </Link>
-                     <Link href={`/register/pricing?role=${role}`} className="flex-1">
-                        <button type="button" className="w-full bg-[#a20000] text-white py-6 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-[#8a0000] transition-all flex items-center justify-center gap-4 shadow-[0_30px_60px_rgba(162,0,0,0.2)] transform active:scale-95">
-                           Next Step <ChevronRight className="w-5 h-5" />
-                        </button>
-                     </Link>
+                     <button 
+                        type="submit" 
+                        disabled={isLoading}
+                        className="flex-[2] bg-black text-white py-6 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-gray-900 transition-all flex items-center justify-center gap-4 shadow-[0_30px_60px_rgba(0,0,0,0.1)] transform active:scale-95 disabled:opacity-50"
+                     >
+                        {isLoading ? (
+                           <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                           <>Complete Registration & Access Dashboard <ArrowRight className="w-5 h-5" /></>
+                        )}
+                     </button>
                   </div>
 
                </form>

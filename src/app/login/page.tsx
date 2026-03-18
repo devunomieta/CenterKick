@@ -159,16 +159,12 @@ export default function LoginPage() {
                      </form>
 
                      <div className="mt-12 text-center">
-                        <button 
-                           onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                        <Link 
+                           href="/register"
                            className="text-[11px] font-black text-gray-400 uppercase tracking-widest hover:text-[#a20000] transition-colors"
                         >
-                           {mode === 'login' ? (
-                              <>No account yet? <span className="text-[#a20000] ml-2">Register as Professional</span></>
-                           ) : (
-                              <>Already a member? <span className="text-[#a20000] ml-2">Sign in here</span></>
-                           )}
-                        </button>
+                           No account yet? <span className="text-[#a20000] ml-2">Register as Professional</span>
+                        </Link>
                      </div>
                   </div>
                </div>
