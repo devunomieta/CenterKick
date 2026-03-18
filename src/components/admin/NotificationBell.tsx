@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, Check, ExternalLink, Info, AlertTriangle, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { markNotificationRead, markAllNotificationsRead } from '@/app/admin/notifications/actions';
+import { DateDisplay } from '@/components/common/DateDisplay';
 import Link from 'next/link';
 
 interface Notification {
@@ -110,7 +111,7 @@ export function NotificationBell({ initialNotifications }: { initialNotification
                              </h4>
                              <span className="text-[8px] font-bold text-gray-300 whitespace-nowrap flex items-center gap-1">
                                 <Clock className="w-2.5 h-2.5" />
-                                {new Date(notif.created_at).toLocaleDateString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                <DateDisplay date={notif.created_at} showTime={true} />
                              </span>
                           </div>
                           <p className={`text-[10px] mt-1 leading-relaxed ${!notif.is_read ? 'text-gray-600' : 'text-gray-400'}`}>

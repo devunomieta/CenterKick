@@ -1,12 +1,29 @@
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { createClient } from '@/lib/supabase/server';
 import BlogFeedClient from "@/components/news/BlogFeedClient";
+import { getGlobalCMSData } from '@/app/admin/manage-ui/actions';
 
 export default async function NewsPage() {
    const supabase = await createClient();
+   const { navContent, footerContent } = await getGlobalCMSData();
+
+   // Fetch layout
+   const { data: pageData } = await supabase
+      .from('site_pages')
+      .select('*')
+      .eq('slug', '/news')
+      .single();
+
+   const layout = pageData?.layout || ["header", "featured", "feed"];
+
+   // Fetch all site content for this page
+   const { data: siteContentData } = await supabase
+      .from('site_content')
+      .select('*')
+      .eq('page', '/news');
+
+   const siteContent = Object.fromEntries(siteContentData?.map(c => [c.section, c.content]) || []);
    
-   // Fetch All Posts with Category and Tag data
+   // Fetch All Posts for the feed
    const { data: posts } = await supabase
       .from('cms_posts')
       .select('*, category:blog_categories(name), post_tags(tag_id)')
@@ -24,28 +41,14 @@ export default async function NewsPage() {
       .order('name');
 
    return (
-      <div className="min-h-screen bg-white">
-         <Navbar />
-
-         <main className="pt-20">
-            {/* Page Header */}
-            <div className="bg-[#383838] py-12">
-               <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
-                  <h1 className="text-white text-5xl font-black tracking-tighter uppercase italic">Platform <span className="text-[#b50a0a]">Newsroom</span></h1>
-                  <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Exclusive updates, transfer focus, and match highlights from centerkick.</p>
-               </div>
-            </div>
-
-            <BlogFeedClient 
-               initialPosts={posts || []} 
-               categories={categories || []} 
-               tags={tags || []} 
-            />
-
-            <div className="h-32" />
-         </main>
-
-         <Footer />
-      </div>
+      <BlogFeedClient 
+         layout={layout}
+         siteContent={siteContent}
+         initialPosts={posts || []} 
+         categories={categories || []} 
+         tags={tags || []} 
+         navContent={navContent}
+         footerContent={footerContent}
+      />
    );
 }

@@ -1,5 +1,6 @@
 import { HomeClient } from '@/components/home/HomeClient';
 import { createClient } from '@/lib/supabase/server';
+import { getGlobalCMSData } from '@/app/admin/manage-ui/actions';
 
 // Dummy profiles for carousel (8 items) - keep these in server to avoid cluttering client bundle if too big
 const DUMMY_PLAYERS = [
@@ -15,43 +16,61 @@ const DUMMY_PLAYERS = [
 
 export default async function Home() {
    const supabase = await createClient();
+   const { navContent, footerContent } = await getGlobalCMSData();
 
-   // Fetch featured posts for Hero (up to 3)
+   // Fetch layout
+   const { data: pageData } = await supabase
+      .from('site_pages')
+      .select('*')
+      .eq('slug', '/')
+      .single();
+
+   const layout = pageData?.layout || ["hero", "stories", "news", "highlights", "cta", "testimonials"];
+
+   // Fetch all site content for this page
+   const { data: siteContentData } = await supabase
+      .from('site_content')
+      .select('*')
+      .eq('page', '/');
+
+   const getSectionContent = (section: string) => siteContentData?.find(c => c.section === section)?.content || {};
+
+   // Fetch posts based on section configurations
+   const heroContent = getSectionContent('hero');
    const { data: heroPosts } = await supabase
       .from('cms_posts')
       .select('*')
-      .eq('published_at', 'not.is.null')
+      .eq('is_draft', false)
+      .eq('category_id', heroContent.category_id || '999d1e43-1e43-1e43-1e43-1e431e431e43') 
       .order('published_at', { ascending: false })
       .limit(3);
 
-   // Fetch top stories (up to 9 for 3 pages of pagination)
+   // Fallback for Hero
+   let finalHeroPosts = heroPosts || [];
+   if (finalHeroPosts.length === 0) {
+      const { data: fallbackHero } = await supabase
+         .from('cms_posts')
+         .select('*')
+         .eq('is_draft', false)
+         .order('published_at', { ascending: false })
+         .limit(3);
+      finalHeroPosts = fallbackHero || [];
+   }
+
    const { data: storyPosts } = await supabase
       .from('cms_posts')
       .select('*')
-      .eq('type', 'story')
-      .eq('published_at', 'not.is.null')
+      .eq('is_draft', false)
       .order('published_at', { ascending: false })
       .limit(9);
 
-   // Fetch news for the 4-card row
-   const { data: newsPosts } = await supabase
-      .from('cms_posts')
-      .select('*')
-      .eq('type', 'news')
-      .eq('published_at', 'not.is.null')
-      .order('published_at', { ascending: false })
-      .limit(4);
-
-   // Fetch highlights for the 4-card row
    const { data: highlightPosts } = await supabase
       .from('cms_posts')
       .select('*')
-      .eq('type', 'highlight')
-      .eq('published_at', 'not.is.null')
+      .eq('is_draft', false)
       .order('published_at', { ascending: false })
       .limit(4);
 
-   // Fetch active profiles for carousel (up to 8)
    const { data: activeProfiles } = await supabase
       .from('profiles')
       .select('id, full_name, avatar_url')
@@ -61,31 +80,20 @@ export default async function Home() {
    const playersForCarousel = activeProfiles?.map(p => ({
      id: p.id,
      name: p.full_name || 'CenterKick Player',
-     num: 0, // Profile table doesn't have 'jersey_number' yet, we can add it later or use 0
+     num: 0,
      img: p.avatar_url || "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=600&q=80"
    })) || DUMMY_PLAYERS;
 
-   // Fetch site content (CTA, etc.)
-   const { data: siteContent } = await supabase
-      .from('site_content')
-      .select('*')
-      .eq('page', 'landing');
-
-   // Helper to find specific section content
-   const getContent = (section: string) => siteContent?.find(c => c.section === section)?.content || {};
-
    return (
       <HomeClient 
-        heroPosts={heroPosts || []}
+        layout={layout}
+        heroPosts={finalHeroPosts}
         storyPosts={storyPosts || []}
-        newsPosts={newsPosts || []}
-        dummyPlayers={playersForCarousel}
         highlightPosts={highlightPosts || []}
-        siteContent={{
-          cta: getContent('cta'),
-          testimonials: getContent('testimonials'),
-          highlightsIntro: getContent('highlights_intro')
-        }}
+        dummyPlayers={playersForCarousel}
+        siteContent={Object.fromEntries(siteContentData?.map(c => [c.section, c.content]) || [])}
+        navContent={navContent}
+        footerContent={footerContent}
       />
    );
 }

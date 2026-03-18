@@ -1,25 +1,34 @@
 import { ContactClient } from '@/components/contact/ContactClient';
 import { createClient } from '@/lib/supabase/server';
+import { getGlobalCMSData } from '@/app/admin/manage-ui/actions';
 
 export default async function ContactPage() {
    const supabase = await createClient();
+   const { navContent, footerContent } = await getGlobalCMSData();
 
-   // Fetch site content for contact page
-   const { data: siteContent } = await supabase
+   // Fetch layout
+   const { data: pageData } = await supabase
+      .from('site_pages')
+      .select('*')
+      .eq('slug', '/contact')
+      .single();
+
+   const layout = pageData?.layout || ["header", "info", "form", "faqs"];
+
+   // Fetch all site content for this page
+   const { data: siteContentData } = await supabase
       .from('site_content')
       .select('*')
-      .eq('page', 'contact');
+      .eq('page', '/contact');
 
-   // Helper to find specific section content
-   const getContent = (section: string) => siteContent?.find(c => c.section === section)?.content || null;
-
-   const header = getContent('header');
-   const faqs = getContent('faqs') as any[];
+   const siteContent = Object.fromEntries(siteContentData?.map(c => [c.section, c.content]) || []);
 
    return (
       <ContactClient 
-         header={header || undefined}
-         faqs={faqs || undefined}
+         layout={layout}
+         content={siteContent}
+         navContent={navContent}
+         footerContent={footerContent}
       />
    );
 }

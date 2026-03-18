@@ -29,7 +29,7 @@ export function AdminSidebar() {
       group: 'Content',
       items: [
         { label: 'Blog / CMS', href: '/admin/blog', icon: FileText },
-        { label: 'Manage UI', href: '/admin/ui', icon: PenTool }
+        { label: 'Manage UI', href: '/admin/manage-ui', icon: PenTool }
       ]
     },
     {

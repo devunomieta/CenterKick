@@ -7,6 +7,7 @@ import {
   ChevronLeft, ChevronRight, X, User, ChevronDown,
   Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard
 } from 'lucide-react';
+import { DateDisplay } from '@/components/common/DateDisplay';
 import { deletePlayer, updatePlayer } from '@/app/admin/players/actions';
 import Link from 'next/link';
 import { COUNTRIES } from '@/lib/constants/countries';
@@ -329,7 +330,7 @@ export function PlayersClient({
                    <div className="space-y-1">
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Registration Date</p>
                       <p className="text-sm font-black text-gray-900 uppercase flex items-center gap-2">
-                         <Calendar className="w-3.5 h-3.5 text-gray-300" /> {new Date(selectedPlayer.created_at).toLocaleDateString()}
+                         <Calendar className="w-3.5 h-3.5 text-gray-300" /> <DateDisplay date={selectedPlayer.created_at} />
                       </p>
                    </div>
                    <div className="space-y-1 md:col-span-2 pt-2 border-t border-gray-50">
