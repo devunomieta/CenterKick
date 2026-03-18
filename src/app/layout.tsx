@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: "Premium sports profile management and subscription platform.",
 };
 
+import { ToastProvider } from "@/context/ToastContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -17,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );
