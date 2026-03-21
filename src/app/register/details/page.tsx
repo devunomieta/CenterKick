@@ -9,6 +9,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { getRegistrationData, saveRegistrationData } from '@/lib/registrationStore';
 
 import { completeRegistration } from '../actions';
+import { checkAccountStatus, AccountStatus } from '@/app/actions/auth';
+import { Info, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 function RegisterDetailsContent() {
    const searchParams = useSearchParams();
@@ -17,6 +19,8 @@ function RegisterDetailsContent() {
    const [formData, setFormData] = useState<any>({});
    const [isLoading, setIsLoading] = useState(false);
    const [error, setError] = useState<string | null>(null);
+   const [emailStatus, setEmailStatus] = useState<AccountStatus>('NONE');
+   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
    useEffect(() => {
       const data = getRegistrationData();
@@ -35,11 +39,35 @@ function RegisterDetailsContent() {
       saveRegistrationData({ details: updatedData, step: 2 });
    };
 
+   useEffect(() => {
+      const email = formData.email;
+      if (!email || !email.includes('@')) {
+         setEmailStatus('NONE');
+         return;
+      }
+
+      const timer = setTimeout(async () => {
+         setIsCheckingEmail(true);
+         const res = await checkAccountStatus(email);
+         setEmailStatus(res.status);
+         setIsCheckingEmail(false);
+      }, 500);
+
+      return () => clearTimeout(timer);
+   }, [formData.email]);
+
    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       setIsLoading(true);
       setError(null);
       
+      // Add email status verification
+      if (emailStatus === 'REGISTERED') {
+         setError("This email is already registered. Please use a different email or log in.");
+         setIsLoading(false);
+         return;
+      }
+
       const form = new FormData(e.currentTarget);
       const result = await completeRegistration(form);
       
@@ -84,7 +112,7 @@ function RegisterDetailsContent() {
                   
                   {/* Photo Upload Placeholder */}
                   <div className="flex flex-col items-center">
-                     <div className="w-32 h-32 rounded-[40px] bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 group cursor-pointer hover:border-[#a20000] hover:bg-red-50 transition-all shadow-sm">
+                     <div className="w-32 h-32 rounded-[40px] bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-900 group cursor-pointer hover:border-[#a20000] hover:bg-red-50 transition-all shadow-sm">
                         <Camera className="w-8 h-8 mb-1 group-hover:text-[#a20000] transition-colors" />
                         <span className="text-[10px] font-black uppercase tracking-widest">Upload Photo</span>
                      </div>
@@ -92,7 +120,7 @@ function RegisterDetailsContent() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                      <div className="space-y-4">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
+                        <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Full Name</label>
                         <input 
                            name="fullName"
                            required
@@ -100,65 +128,80 @@ function RegisterDetailsContent() {
                            onChange={handleInputChange}
                            type="text" 
                            placeholder="John Doe" 
-                           className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
+                           className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
                         />
                      </div>
                      <div className="space-y-4">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Date of Birth</label>
+                        <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Date of Birth</label>
                         <input 
                            name="dob"
                            required
                            value={formData.dob || ''}
                            onChange={handleInputChange}
                            type="date" 
-                           className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
+                           className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black" 
                         />
                      </div>
                   </div>
 
                   <div className="space-y-4">
-                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Location / City</label>
+                     <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Country</label>
                      <div className="relative">
-                        <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
                         <input 
-                           name="location"
+                           name="country"
                            required
-                           value={formData.location || ''}
+                           value={formData.country || ''}
                            onChange={handleInputChange}
                            type="text" 
-                           placeholder="Lagos, Nigeria" 
-                           className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
+                           placeholder="Nigeria" 
+                           className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
                         />
                      </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-4">
+                         <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1 flex justify-between">
+                            <span>Email Address</span>
+                            {isCheckingEmail && <span className="text-[7px] text-[#a20000] animate-pulse">Checking...</span>}
+                         </label>
+                         <input 
+                            name="email"
+                            required
+                            value={formData.email || ''}
+                            onChange={handleInputChange}
+                            type="email" 
+                            placeholder="john@example.com" 
+                            className={`w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900 ${emailStatus === 'REGISTERED' ? 'ring-2 ring-red-500 bg-red-50/10' : ''}`} 
+                         />
+                         {emailStatus === 'REGISTERED' && (
+                           <div className="flex items-center gap-2 mt-2 px-4 py-2 bg-red-50 rounded-xl border border-red-100">
+                              <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                              <p className="text-[9px] font-black text-red-600 uppercase tracking-widest">Email already registered. Please login.</p>
+                           </div>
+                         )}
+                         {emailStatus === 'PROSPECT' && (
+                           <div className="flex items-center gap-2 mt-2 px-4 py-2 bg-green-50 rounded-xl border border-green-100 animate-in fade-in zoom-in">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                              <p className="text-[9px] font-black text-green-600 uppercase tracking-widest">Welcome back! We found your profile.</p>
+                           </div>
+                         )}
+                      </div>
                      <div className="space-y-4">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
-                        <input 
-                           name="email"
-                           required
-                           value={formData.email || ''}
-                           onChange={handleInputChange}
-                           type="email" 
-                           placeholder="john@example.com" 
-                           className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
-                        />
-                     </div>
-                     <div className="space-y-4">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Account Password</label>
+                        <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Account Password</label>
                         <input 
                            name="password"
                            required
                            type="password" 
                            placeholder="••••••••" 
-                           className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
+                           className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
                         />
                      </div>
                   </div>
 
                   <div className="space-y-4">
-                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
+                     <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Phone Number</label>
                      <input 
                         name="phone"
                         required
@@ -166,7 +209,7 @@ function RegisterDetailsContent() {
                         onChange={handleInputChange}
                         type="tel" 
                         placeholder="+234..." 
-                        className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
+                        className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
                      />
                   </div>
 
@@ -179,34 +222,34 @@ function RegisterDetailsContent() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                            <div className="space-y-4">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Position</label>
-                              <select 
-                                 name="position"
-                                 required
-                                 value={formData.position || ''}
-                                 onChange={handleInputChange}
-                                 className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none appearance-none"
-                              >
-                                 <option value="">Select Position</option>
-                                 <option>Forward</option>
-                                 <option>Midfielder</option>
-                                 <option>Defender</option>
-                                 <option>Goalkeeper</option>
-                              </select>
+                               <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Position</label>
+                               <select 
+                                  name="position"
+                                  required
+                                  value={formData.position || ''}
+                                  onChange={handleInputChange}
+                                  className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none appearance-none text-black"
+                               >
+                                  <option value="" className="text-black">Select Position</option>
+                                  <option className="text-black">Forward</option>
+                                  <option className="text-black">Midfielder</option>
+                                  <option className="text-black">Defender</option>
+                                  <option className="text-black">Goalkeeper</option>
+                               </select>
                            </div>
                            <div className="space-y-4">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Preferred Foot</label>
-                              <select 
-                                 name="preferredFoot"
-                                 value={formData.preferredFoot || ''}
-                                 onChange={handleInputChange}
-                                 className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none appearance-none"
-                              >
-                                 <option value="">Select Foot</option>
-                                 <option>Right</option>
-                                 <option>Left</option>
-                                 <option>Both</option>
-                              </select>
+                               <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Preferred Foot</label>
+                               <select 
+                                  name="preferredFoot"
+                                  value={formData.preferredFoot || ''}
+                                  onChange={handleInputChange}
+                                  className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none appearance-none text-black"
+                               >
+                                  <option value="" className="text-black">Select Foot</option>
+                                  <option className="text-black">Right</option>
+                                  <option className="text-black">Left</option>
+                                  <option className="text-black">Both</option>
+                               </select>
                            </div>
                         </div>
                      </div>
@@ -219,23 +262,23 @@ function RegisterDetailsContent() {
                            <h3 className="text-xs font-black uppercase tracking-widest text-gray-900">Agency Data</h3>
                         </div>
                         <div className="space-y-4">
-                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Agency Name</label>
-                           <input 
-                              name="agencyName"
-                              required
-                              value={formData.agencyName || ''}
-                              onChange={handleInputChange}
-                              type="text" 
-                              placeholder="Apex Sports Management" 
-                              className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
-                           />
+                            <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Agency Name</label>
+                            <input 
+                               name="agencyName"
+                               required
+                               value={formData.agencyName || ''}
+                               onChange={handleInputChange}
+                               type="text" 
+                               placeholder="Apex Sports Management" 
+                               className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
+                            />
                         </div>
                      </div>
                   )}
 
                   <div className="pt-10 flex gap-6">
                      <Link href="/register" className="flex-1">
-                        <button type="button" className="w-full bg-gray-100 text-gray-500 py-6 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-gray-200 transition-all transform active:scale-95">
+                        <button type="button" className="w-full bg-gray-100 text-gray-900 py-6 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-gray-200 transition-all transform active:scale-95">
                            Back
                         </button>
                      </Link>

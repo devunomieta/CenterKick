@@ -12,6 +12,7 @@ export function Navbar({ content }: { content?: any }) {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>('player');
+  const [siteSettings, setSiteSettings] = useState<any>(null);
   const pathname = usePathname();
   const supabase = createClient();
 
@@ -37,6 +38,17 @@ export function Navbar({ content }: { content?: any }) {
   };
 
   useEffect(() => {
+    const getSettings = async () => {
+       const { data } = await supabase
+         .from('site_content')
+         .select('content')
+         .eq('page', 'settings')
+         .eq('section', 'system')
+         .single();
+       if (data?.content) setSiteSettings(data.content);
+    };
+    getSettings();
+
     const getUser = async () => {
        const { data: { user } } = await supabase.auth.getUser();
        setUser(user);
@@ -76,20 +88,38 @@ export function Navbar({ content }: { content?: any }) {
     }
   };
 
+  const resolveUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    return `${baseUrl}/storage/v1/object/public${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
+  const brandName = siteSettings?.siteTitle || navContent.brand;
+  const logoUrl = resolveUrl(siteSettings?.logoUrl);
+
   return (
     <nav className="fixed w-full z-50 top-0 start-0 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-[1400px] flex flex-wrap items-center justify-between mx-auto p-4 sm:px-6 lg:px-8 h-20">
          
          {/* LOGO */}
-         <Link href="/" className="flex items-center space-x-2 rtl:space-x-reverse group">
-           <div className="w-8 h-8 rounded-full bg-[#b50a0a] flex items-center justify-center shrink-0 shadow-sm relative overflow-hidden">
-              <svg className="w-4 h-4 text-white font-black" viewBox="0 0 24 24" fill="currentColor">
-                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5c-2.49 0-4.5-2.01-4.5-4.5S8.51 7.5 11 7.5s4.5 2.01 4.5 4.5c0 .34-.04.68-.11 1h-2.12c.15-.31.23-.65.23-1 0-1.38-1.12-2.5-2.5-2.5S8.5 10.62 8.5 12 9.62 14.5 11 14.5c.66 0 1.25-.26 1.7-.68l1.45 1.45c-.83.76-1.92 1.23-3.15 1.23z"/>
-              </svg>
-           </div>
-           <span className="self-center text-xl font-bold whitespace-nowrap text-gray-900 group-hover:text-[#b50a0a] transition-colors uppercase tracking-tight">
-             {navContent.brand}
-           </span>
+         <Link href="/" className="flex items-center group">
+           {logoUrl ? (
+             <div className="relative h-7 w-auto min-w-[2rem] flex items-center justify-center transition-all">
+               <img src={logoUrl} alt={brandName} className="h-full w-auto object-contain" />
+             </div>
+           ) : (
+             <div className="flex items-center gap-3">
+               <div className="w-8 h-8 rounded-full bg-[#b50a0a] flex items-center justify-center shrink-0 shadow-sm relative overflow-hidden">
+                  <svg className="w-4 h-4 text-white font-black" viewBox="0 0 24 24" fill="currentColor">
+                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5c-2.49 0-4.5-2.01-4.5-4.5S8.51 7.5 11 7.5s4.5 2.01 4.5 4.5c0 .34-.04.68-.11 1h-2.12c.15-.31.23-.65.23-1 0-1.38-1.12-2.5-2.5-2.5S8.5 10.62 8.5 12 9.62 14.5 11 14.5c.66 0 1.25-.26 1.7-.68l1.45 1.45c-.83.76-1.92 1.23-3.15 1.23z"/>
+                  </svg>
+               </div>
+               <span className="self-center text-xl font-black whitespace-nowrap text-gray-900 group-hover:text-[#b50a0a] transition-all uppercase tracking-tighter">
+                 {brandName}
+               </span>
+             </div>
+           )}
          </Link>
 
          {/* MOBILE MENU BUTTON */}

@@ -33,26 +33,31 @@ export default async function AdminAgentsPage({
 
   const unsubscribedCount = (totalCount || 0) - (subscribedCount || 0);
 
-  // 2. Fetch Agents with Filters
+  // 2. Fetch Agents from PROFILES (to include unlinked)
   let query = supabase
-    .from('users')
-    .select('*, profiles!inner(*)', { count: 'exact' })
-    .eq('role', 'agent')
-    .order('created_at', { ascending: false })
-    .range(offset, offset + pageSize - 1);
+    .from('profiles')
+    .select('*, users(role, email)', { count: 'exact' });
 
-  if (tab === 'subscribed') query = query.eq('profiles.is_subscribed', true);
-  if (tab === 'unsubscribed') query = query.eq('profiles.is_subscribed', false);
-  if (tab === 'pending') query = query.eq('profiles.status', 'pending');
+  // Apply role filter
+  query = query.eq('role', 'agent');
 
-  if (gender) query = query.eq('profiles.gender', gender);
-  if (country) query = query.ilike('profiles.country', `%${country}%`);
+  // Apply tab filters
+  if (tab === 'subscribed') query = query.eq('is_subscribed', true);
+  if (tab === 'unsubscribed') query = query.eq('is_subscribed', false);
+  if (tab === 'pending') query = query.eq('status', 'pending');
 
+  // Apply filters
+  if (gender) query = query.eq('gender', gender);
+  if (country) query = query.ilike('country', `%${country}%`);
+
+  // Apply search
   if (q) {
-    query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%,agency_name.ilike.%${q}%`, { foreignTable: 'profiles' });
+    query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,users.email.ilike.%${q}%,agency_name.ilike.%${q}%`);
   }
 
-  const { data: agents, count: filteredTotal } = await query;
+  const { data: agents, count: filteredTotal } = await query
+    .order('created_at', { ascending: false })
+    .range(offset, offset + pageSize - 1);
 
   // 3. Fetch Client Counts for each agent
   const agentIds = agents?.map(a => a.id) || [];
@@ -61,8 +66,10 @@ export default async function AdminAgentsPage({
     .select('agent_id')
     .in('agent_id', agentIds);
 
-  const agentsWithCounts = agents?.map(agent => ({
+  const agentsWithCounts = (agents || []).map(agent => ({
     ...agent,
+    email: agent.users?.email || 'N/A',
+    profiles: { ...agent }, // Compatibility wrapper
     clientCount: clientCounts?.filter(c => c.agent_id === agent.id).length || 0
   })) || [];
 
@@ -72,6 +79,14 @@ export default async function AdminAgentsPage({
     { label: 'Unsubscribed', value: unsubscribedCount || 0, tab: 'unsubscribed', color: 'text-gray-400', bg: 'bg-gray-50', icon: Users },
     { label: 'Pending Requests', value: pendingCount || 0, tab: 'pending', color: 'text-[#b50a0a]', bg: 'bg-red-50', icon: Clock },
   ];
+
+  // 4. Fetch current admin role for RBAC
+  const { data: { session } } = await supabase.auth.getSession();
+  const { data: userRecord } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', session?.user.id)
+    .single();
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -115,6 +130,7 @@ export default async function AdminAgentsPage({
         totalCount={filteredTotal || 0}
         currentPage={page}
         pageSize={pageSize}
+        role={userRecord?.role || 'player'}
       />
     </div>
   );

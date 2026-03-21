@@ -59,7 +59,7 @@ export default async function AgentsPage() {
 
                {!agents || agents.length === 0 ? (
                   <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                     <p className="text-gray-400 font-bold uppercase tracking-widest">No active agents found.</p>
+                     <p className="text-gray-900 font-bold uppercase tracking-widest">No active agents found.</p>
                   </div>
                ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
@@ -80,18 +80,18 @@ export default async function AgentsPage() {
                            </div>
 
                            <div className="p-8">
-                              <span className="text-[#a20000] text-[9px] font-black uppercase tracking-widest block mb-3">{agent.nationality || 'Global Agent'}</span>
+                              <span className="text-[#a20000] text-[9px] font-black uppercase tracking-widest block mb-3">{agent.country || 'Global Agent'}</span>
                               <h3 className="text-2xl font-black text-gray-900 mb-6 group-hover:text-[#a20000] transition-colors leading-tight">
                                  {agent.full_name}
                               </h3>
                               
                               <div className="flex items-center justify-between pt-6 border-t border-gray-100">
-                                 <div className="flex items-center gap-2 text-gray-400">
+                                 <div className="flex items-center gap-2 text-gray-900">
                                     <Globe className="w-3 h-3" />
                                     <span className="text-[10px] font-bold uppercase tracking-widest">{agent.bio?.substring(0, 20) || 'Verified Agent'}...</span>
                                  </div>
                                  <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[#a20000] transition-colors">
-                                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
+                                    <ArrowRight className="w-4 h-4 text-black group-hover:text-white transition-colors" />
                                  </div>
                               </div>
                            </div>

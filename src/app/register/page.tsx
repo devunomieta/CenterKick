@@ -76,9 +76,9 @@ export default function RegisterPage() {
                {/* Progress Indicator */}
                <div className="flex items-center justify-center mb-16">
                   <div className="flex items-center gap-4">
-                     <div className="w-12 h-12 rounded-full bg-[#a20000] text-white flex items-center justify-center font-black">1</div>
+                     <div className="w-2 h-2 rounded-full bg-[#a20000] animate-pulse"></div>
                      <div className="w-16 h-1 bg-gray-100 rounded-full"></div>
-                     <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-black">2</div>
+                     <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-900 flex items-center justify-center font-black">2</div>
                   </div>
                </div>
 
@@ -94,7 +94,7 @@ export default function RegisterPage() {
                      Choose Your <br />
                      <span className="text-[#a20000]">Professional Identity</span>
                   </h1>
-                  <p className="text-gray-500 text-lg font-medium max-w-2xl mx-auto leading-relaxed">
+                  <p className="text-gray-900 text-lg font-medium max-w-2xl mx-auto leading-relaxed">
                      Select the role that best fits your career in football. Each profile type is designed to maximize your visibility and professional networking opportunities.
                   </p>
                </div>
@@ -114,7 +114,7 @@ export default function RegisterPage() {
 
                         <div className="p-10 flex-1 flex flex-col">
                            <h2 className="text-3xl font-black text-gray-900 mb-2 uppercase tracking-tight">{role.title}</h2>
-                           <p className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-10">{role.subtitle}</p>
+                           <p className="text-gray-900 text-sm font-bold uppercase tracking-widest mb-10">{role.subtitle}</p>
                            
                            <div className="space-y-4 mb-12">
                               {role.benefits.map((benefit, i) => (
@@ -122,7 +122,7 @@ export default function RegisterPage() {
                                     <div className="w-5 h-5 rounded-full bg-green-50 flex items-center justify-center border border-green-100 shrink-0">
                                        <CheckCircle2 className="w-3 h-3 text-green-500" />
                                     </div>
-                                    <span className="text-sm font-semibold text-gray-600 tracking-tight">{benefit}</span>
+                                    <span className="text-sm font-semibold text-gray-900 tracking-tight">{benefit}</span>
                                  </div>
                               ))}
                            </div>
@@ -143,7 +143,7 @@ export default function RegisterPage() {
 
                {/* Help Section */}
                <div className="mt-24 text-center">
-                  <p className="text-gray-400 font-bold text-xs uppercase tracking-widest">
+                  <p className="text-gray-900 font-bold text-xs uppercase tracking-widest">
                      Already have an account? <Link href="/login" className="text-[#a20000] hover:underline ml-2">Login Now</Link>
                   </p>
                </div>

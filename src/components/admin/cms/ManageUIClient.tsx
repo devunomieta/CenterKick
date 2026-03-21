@@ -62,7 +62,7 @@ export default function ManageUIClient({ pages }: ManageUIClientProps) {
            <h1 className="text-4xl font-black text-gray-900 uppercase tracking-tighter italic">
              Site <span className="text-[#b50a0a]">Manager</span>
            </h1>
-           <p className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.25em] mt-3 flex items-center gap-3">
+           <p className="text-gray-900 text-[11px] font-bold uppercase tracking-[0.25em] mt-3 flex items-center gap-3">
               <span className="w-2 h-2 rounded-full bg-[#b50a0a] animate-pulse"></span>
               Full control over frontend layouts and content
            </p>
@@ -80,7 +80,7 @@ export default function ManageUIClient({ pages }: ManageUIClientProps) {
               </button>
            )}
            <div className="bg-gray-50 px-6 py-4 rounded-3xl border border-gray-100">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 text-center">Manageable Views</p>
+              <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest mb-1 text-center">Manageable Views</p>
               <p className="text-2xl font-black text-gray-900 italic tracking-tight text-center">{pages.length}</p>
            </div>
         </div>
@@ -93,7 +93,7 @@ export default function ManageUIClient({ pages }: ManageUIClientProps) {
         <div className="bg-white p-20 rounded-[3.5rem] border border-gray-100 shadow-sm text-center">
            <Layout className="w-20 h-20 text-gray-100 mx-auto mb-8" />
            <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tighter italic">No manageable pages found</h3>
-           <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-2 px-12">It seems the database hasn't been initialized with the layout schema yet. Click the button above to seed the default system pages.</p>
+           <p className="text-gray-900 text-[10px] font-black uppercase tracking-widest mt-2 px-12">It seems the database hasn't been initialized with the layout schema yet. Click the button above to seed the default system pages.</p>
         </div>
       )}
 
@@ -112,7 +112,7 @@ export default function ManageUIClient({ pages }: ManageUIClientProps) {
             <div className="space-y-2">
                <p className="text-[10px] font-black text-[#b50a0a] uppercase tracking-widest italic">{getCategory(page.slug)}</p>
                <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tighter group-hover:italic transition-all">{page.name}</h3>
-               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">{page.slug === '/' ? 'Main Entry Point' : page.slug}</p>
+               <p className="text-[9px] font-bold text-gray-900 uppercase tracking-[0.2em]">{page.slug === '/' ? 'Main Entry Point' : page.slug}</p>
             </div>
 
             <div className="mt-10 w-full pt-8 border-t border-gray-50 flex items-center justify-between">

@@ -5,52 +5,114 @@ import {
   Users, Search, Filter, Shield, UserPlus, 
   MoreHorizontal, Edit, Trash2, ExternalLink, 
   ChevronLeft, ChevronRight, X, User, ChevronDown,
-  Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard
+  Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard, Lock
 } from 'lucide-react';
+import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/RestrictedAccess';
 import { DateDisplay } from '@/components/common/DateDisplay';
-import { deletePlayer, updatePlayer } from '@/app/admin/players/actions';
+import { deletePlayer, updatePlayer, addPlayer } from '@/app/admin/players/actions';
+import { checkAccountStatus, resendInvitation } from '@/app/actions/auth';
 import Link from 'next/link';
 import { COUNTRIES } from '@/lib/constants/countries';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { addPlayer } from '@/app/admin/players/actions';
+import { useToast } from '@/context/ToastContext';
+import { Info, AlertCircle } from 'lucide-react';
 
 interface Player {
   id: string;
-  email: string;
+  user_id: string | null;
+  email: string | null;
+  first_name: string;
+  last_name: string;
+  status: string;
+  position: string;
+  country: string;
+  age?: number;
+  date_of_birth: string | null;
+  gender: string;
+  is_subscribed: boolean;
+  agent_id?: string;
+  agent_status?: 'pending' | 'accepted' | 'rejected';
   created_at: string;
-  profiles: {
-    first_name: string;
-    last_name: string;
-    status: string;
-    position: string;
-    country: string;
-    age: number;
-    gender: string;
-    is_subscribed: boolean;
-    agent_id?: string;
+  users: {
+    email: string;
+    role: string;
   } | null;
 }
+
+const calculateDetailedAgeString = (day: string, month: string, year: string) => {
+  if (!day || !month || !year || day === 'DD' || month === 'MM' || year === 'YYYY') return null;
+  const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  const today = new Date();
+  
+  let years = today.getFullYear() - birthDate.getFullYear();
+  let months = today.getMonth() - birthDate.getMonth();
+  let days = today.getDate() - birthDate.getDate();
+
+  if (days < 0) {
+    months--;
+    const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+    days += lastMonth.getDate();
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  // Convert total days for the "Days" part to be cumulative for the current year
+  const startOfCurrentYearAge = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+  if (today < startOfCurrentYearAge) {
+    startOfCurrentYearAge.setFullYear(today.getFullYear() - 1);
+  }
+  const diffTime = Math.abs(today.getTime() - startOfCurrentYearAge.getTime());
+  const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  return `${years}Y, ${totalDays}D`;
+};
+
+const calculateSimpleAge = (dobString: string | null) => {
+  if (!dobString) return '--';
+  const birthDate = new Date(dobString);
+  if (isNaN(birthDate.getTime())) return '--';
+  const today = new Date();
+  let years = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    years--;
+  }
+  return years;
+};
 
 export function PlayersClient({ 
   initialPlayers,
   agents,
   totalCount,
   currentPage,
-  pageSize
+  pageSize,
+  role
 }: { 
   initialPlayers: Player[],
   agents: any[],
   totalCount: number,
   currentPage: number,
-  pageSize: number
+  pageSize: number,
+  role: string
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const searchParams = useSearchParams();
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [email, setEmail] = useState('');
+  const [emailStatus, setEmailStatus] = useState<AccountStatus>('NONE');
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [agentSearch, setAgentSearch] = useState('');
+  const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [isAgentSearchOpen, setIsAgentSearchOpen] = useState(false);
+  const [dob, setDob] = useState({ day: '', month: '', year: '' });
+  const [calculatedAge, setCalculatedAge] = useState<string | null>(null);
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -59,6 +121,39 @@ export function PlayersClient({
       setIsAddModalOpen(true);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!email || !email.includes('@')) {
+      setEmailStatus('NONE');
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingEmail(true);
+      const res = await checkAccountStatus(email);
+      setEmailStatus(res.status);
+      setIsCheckingEmail(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [email]);
+
+  useEffect(() => {
+    const ageStr = calculateDetailedAgeString(dob.day, dob.month, dob.year);
+    setCalculatedAge(ageStr);
+  }, [dob]);
+
+  const handleResendInv = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    const lastName = (document.querySelector('input[name="last_name"]') as HTMLInputElement)?.value || 'User';
+    const res = await resendInvitation(email, 'player', lastName);
+    if (res.success) {
+      showToast("Invitation email resent successfully.", "success");
+    } else {
+      const errorMsg = (res as any).error || "Failed to resend invitation.";
+      showToast(errorMsg, "error");
+    }
+  };
 
   const closeAddModal = () => {
     setIsAddModalOpen(false);
@@ -94,11 +189,47 @@ export function PlayersClient({
     if (confirm('Are you sure you want to delete this player?')) {
       const res = await deletePlayer(id);
       if (res.success) {
+        showToast('Player deleted successfully', 'success');
         setIsProfileOpen(false);
-        window.location.reload();
+        router.refresh();
+      } else {
+        showToast(res.error || 'Failed to delete player', 'error');
       }
     }
   };
+
+  useEffect(() => {
+    if (dob.day && dob.month && dob.year) {
+      const birthDate = new Date(`${dob.year}-${dob.month}-${dob.day}`);
+      const today = new Date();
+      
+      if (isNaN(birthDate.getTime())) {
+        setCalculatedAge(null);
+        return;
+      }
+
+      let years = today.getFullYear() - birthDate.getFullYear();
+      let lastBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+      
+      if (today < lastBirthday) {
+        years--;
+        lastBirthday = new Date(today.getFullYear() - 1, birthDate.getMonth(), birthDate.getDate());
+      }
+      
+      const diffTime = today.getTime() - lastBirthday.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      setCalculatedAge(`${years}Y, ${diffDays}D`);
+    } else {
+      setCalculatedAge(null);
+    }
+  }, [dob]);
+
+  const filteredAgents = agents.filter(agent => 
+    `${agent.first_name} ${agent.last_name}`.toLowerCase().includes(agentSearch.toLowerCase()) ||
+    agent.email?.toLowerCase().includes(agentSearch.toLowerCase()) ||
+    agent.agency_name?.toLowerCase().includes(agentSearch.toLowerCase())
+  );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -109,13 +240,13 @@ export function PlayersClient({
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-6 space-y-6">
         <form onSubmit={handleSearch} className="flex flex-wrap gap-3">
            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black" />
               <input 
                 type="text" 
                 placeholder="Search name or email..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-[11px] font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all text-gray-900 placeholder:text-gray-300"
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-[11px] font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all text-gray-900 placeholder:text-gray-900"
               />
            </div>
            <div className="flex flex-wrap gap-2">
@@ -149,13 +280,6 @@ export function PlayersClient({
                  <option value="Right" className="text-gray-900">Right</option>
                  <option value="Both" className="text-gray-900">Both</option>
               </select>
-              <input 
-                type="number"
-                placeholder="Age"
-                onChange={(e) => handleFilterChange('age', e.target.value)}
-                value={searchParams.get('age') || ''}
-                className="w-16 bg-gray-50 border-none rounded-lg text-[9px] font-black uppercase tracking-widest px-3 py-2 focus:ring-2 focus:ring-[#b50a0a] text-gray-900 placeholder:text-gray-300"
-              />
               <div className="relative">
                  <input 
                    list="countries"
@@ -182,10 +306,10 @@ export function PlayersClient({
           <table className="w-full text-left text-sm text-gray-600">
             <thead className="bg-[#f8f9fa] border-b border-gray-100">
               <tr>
-                <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-gray-400">Athlete Information</th>
-                <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-gray-400">Role / Position</th>
-                <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-gray-400">Subscription</th>
-                <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-[#b50a0a]">Athlete Information</th>
+                <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-[#b50a0a]">Role / Position</th>
+                <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-[#b50a0a]">Subscription</th>
+                <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-[#b50a0a] text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -205,34 +329,38 @@ export function PlayersClient({
                   >
                     <td className="px-6 py-4">
                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-gray-900 flex items-center justify-center font-black text-white text-xs shrink-0">
-                             {player.email?.[0].toUpperCase()}
+                           <div className="w-9 h-9 rounded-lg bg-gray-900 flex items-center justify-center font-black text-white text-xs shrink-0">
+                             {(player.users?.email || player.email || 'P')[0].toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                             <p className="font-black text-gray-900 leading-none truncate text-[11px] mb-1">{player.profiles?.first_name} {player.profiles?.last_name}</p>
+                             <p className="font-black text-gray-900 leading-none truncate text-[11px] mb-1">{player.first_name} {player.last_name}</p>
                              <div className="flex items-center gap-1.5">
                                 <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                                   <Globe className="w-2.5 h-2.5" /> {player.profiles?.country || 'N/A'}
+                                   <Globe className="w-2.5 h-2.5" /> {player.country || 'N/A'}
                                 </span>
-                                <span className="text-[8px] font-bold text-gray-400">•</span>
-                                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{player.profiles?.age || '--'} YRS</span>
+                                 <span className="text-[8px] font-bold text-gray-400">•</span>
+                                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{calculateSimpleAge(player.date_of_birth)} YRS</span>
                              </div>
                           </div>
                        </div>
                     </td>
                     <td className="px-6 py-4">
                        <div className="flex flex-col">
-                          <span className="text-[10px] font-black text-gray-900 uppercase tracking-tighter">{player.profiles?.position || 'Unset'}</span>
+                          <span className="text-[10px] font-black text-gray-900 uppercase tracking-tighter">{player.position || 'Unset'}</span>
                           <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5 italic">Prospect</span>
                        </div>
                     </td>
                     <td className="px-6 py-4">
-                       <div className="flex items-center gap-2">
-                          <div className={`w-1.5 h-1.5 rounded-full ${player.profiles?.is_subscribed ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-gray-300'}`}></div>
-                          <span className={`text-[9px] font-black uppercase tracking-widest ${player.profiles?.is_subscribed ? 'text-green-600' : 'text-gray-400'}`}>
-                             {player.profiles?.is_subscribed ? 'Pro' : 'Free'}
-                          </span>
-                       </div>
+                       {role === 'operations' ? (
+                         <RestrictedAccessInline />
+                       ) : (
+                         <div className="flex items-center gap-2">
+                            <div className={`w-1.5 h-1.5 rounded-full ${player.is_subscribed ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-gray-300'}`}></div>
+                            <span className={`text-[9px] font-black uppercase tracking-widest ${player.is_subscribed ? 'text-green-600' : 'text-gray-400'}`}>
+                               {player.is_subscribed ? 'Pro' : 'Free'}
+                            </span>
+                         </div>
+                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
                        <button className="p-1.5 text-gray-300 hover:text-black transition-colors">
@@ -298,14 +426,14 @@ export function PlayersClient({
                 
                 <div className="flex items-end gap-6 relative z-10">
                    <div className="w-24 h-24 rounded-3xl bg-white border-4 border-gray-800 flex items-center justify-center font-black text-gray-900 text-3xl shadow-2xl">
-                      {selectedPlayer.email?.[0].toUpperCase()}
+                      {(selectedPlayer.users?.email || selectedPlayer.email || 'P')[0].toUpperCase()}
                    </div>
                    <div className="pb-2">
                       <div className="flex items-center gap-3">
-                         <h2 className="text-3xl font-black italic uppercase tracking-tighter">{selectedPlayer.profiles?.first_name} {selectedPlayer.profiles?.last_name}</h2>
-                         {selectedPlayer.profiles?.status === 'active' && <CheckCircle className="w-6 h-6 text-green-500" />}
+                         <h2 className="text-3xl font-black italic uppercase tracking-tighter">{selectedPlayer.first_name} {selectedPlayer.last_name}</h2>
+                         {selectedPlayer.status === 'active' && <CheckCircle className="w-6 h-6 text-green-500" />}
                       </div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{selectedPlayer.email}</p>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{selectedPlayer.users?.email || selectedPlayer.email}</p>
                    </div>
                 </div>
              </div>
@@ -315,18 +443,18 @@ export function PlayersClient({
                 <div className="grid grid-cols-2 gap-8">
                    <div className="space-y-1">
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Football Position</p>
-                      <p className="text-sm font-black text-gray-900 uppercase">{selectedPlayer.profiles?.position || 'Not specified'}</p>
+                      <p className="text-sm font-black text-gray-900 uppercase">{selectedPlayer.position || 'Not specified'}</p>
                    </div>
                    <div className="space-y-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Origin / Nationality</p>
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Origin / Country</p>
                       <p className="text-sm font-black text-gray-900 uppercase flex items-center gap-2">
-                         <MapPin className="w-3.5 h-3.5 text-[#b50a0a]" /> {selectedPlayer.profiles?.country || 'Globetrotter'}
+                         <MapPin className="w-3.5 h-3.5 text-[#b50a0a]" /> {selectedPlayer.country || 'Globetrotter'}
                       </p>
                    </div>
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Age Performance</p>
-                      <p className="text-sm font-black text-gray-900 uppercase">{selectedPlayer.profiles?.age || '--'} Years Old</p>
-                   </div>
+                    <div className="space-y-1">
+                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Age Performance</p>
+                       <p className="text-sm font-black text-gray-900 uppercase">{calculateSimpleAge(selectedPlayer.date_of_birth)} Years Old</p>
+                    </div>
                    <div className="space-y-1">
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Registration Date</p>
                       <p className="text-sm font-black text-gray-900 uppercase flex items-center gap-2">
@@ -334,37 +462,56 @@ export function PlayersClient({
                       </p>
                    </div>
                    <div className="space-y-1 md:col-span-2 pt-2 border-t border-gray-50">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Managing Agent</p>
-                      {selectedPlayer.profiles?.agent_id ? (
-                        <Link 
-                          href={`/admin/agents?q=${agents.find(a => a.id === selectedPlayer.profiles?.agent_id)?.email}`}
-                          className="text-[11px] font-black text-[#b50a0a] uppercase flex items-center gap-2 hover:underline"
-                        >
-                           <Shield className="w-3.5 h-3.5" />
-                           {agents.find(a => a.id === selectedPlayer.profiles?.agent_id)?.profiles?.first_name} {agents.find(a => a.id === selectedPlayer.profiles?.agent_id)?.profiles?.last_name || 'View Agent Profile'}
-                        </Link>
-                      ) : (
-                        <p className="text-[11px] font-black text-gray-300 uppercase italic">Independent / Unrepresented</p>
-                      )}
-                   </div>
+                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Managing Agent</p>
+                       <div className="flex flex-col gap-2">
+                          {selectedPlayer.agent_id ? (
+                            <div className="flex items-center justify-between">
+                               <Link 
+                                 href={`/admin/agents?q=${agents.find(a => a.id === selectedPlayer.agent_id)?.users?.email || agents.find(a => a.id === selectedPlayer.agent_id)?.email}`}
+                                 className="text-[11px] font-black text-[#b50a0a] uppercase flex items-center gap-2 hover:underline"
+                               >
+                                  <Shield className="w-3.5 h-3.5" />
+                                  {agents.find(a => a.id === selectedPlayer.agent_id)?.first_name} {agents.find(a => a.id === selectedPlayer.agent_id)?.last_name || 'View Agent Profile'}
+                               </Link>
+                               
+                               <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 ${
+                                  selectedPlayer.agent_status === 'accepted' ? 'bg-green-50 text-green-600 border border-green-100' :
+                                  selectedPlayer.agent_status === 'rejected' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                  'bg-orange-50 text-orange-600 border border-orange-100'
+                               }`}>
+                                  {selectedPlayer.agent_status === 'pending' && <Clock className="w-2.5 h-2.5" />}
+                                  {selectedPlayer.agent_status === 'accepted' && <CheckCircle className="w-2.5 h-2.5" />}
+                                  {selectedPlayer.agent_status === 'rejected' && <X className="w-2.5 h-2.5" />}
+                                  {selectedPlayer.agent_status || 'Pending'}
+                               </div>
+                            </div>
+                          ) : (
+                            <p className="text-[11px] font-black text-gray-300 uppercase italic">Independent / Unrepresented</p>
+                          )}
+                       </div>
+                    </div>
                 </div>
 
-                <div className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-between">
-                   <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${selectedPlayer.profiles?.is_subscribed ? 'bg-green-600 shadow-lg shadow-green-900/20' : 'bg-gray-200'}`}>
-                         <CreditCard className="w-6 h-6 text-white" />
+                 {role === 'operations' ? (
+                   <RestrictedAccess description="Subscription data is locked for operations." />
+                 ) : (
+                   <div className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${selectedPlayer.is_subscribed ? 'bg-green-600 shadow-lg shadow-green-900/20' : 'bg-gray-200'}`}>
+                            <CreditCard className="w-6 h-6 text-white" />
+                         </div>
+                         <div>
+                            <p className="text-[10px] font-black text-gray-900 uppercase tracking-tight">CenterKick Pro Subscription</p>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase mt-0.5 tracking-widest">
+                               {selectedPlayer.is_subscribed ? 'Active Premium Member' : 'Standard Free Tier'}
+                            </p>
+                         </div>
                       </div>
-                      <div>
-                         <p className="text-[10px] font-black text-gray-900 uppercase tracking-tight">CenterKick Pro Subscription</p>
-                         <p className="text-[9px] font-bold text-gray-400 uppercase mt-0.5 tracking-widest">
-                            {selectedPlayer.profiles?.is_subscribed ? 'Active Premium Member' : 'Standard Free Tier'}
-                         </p>
-                      </div>
+                      <button className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">
+                         Manage Plan
+                      </button>
                    </div>
-                   <button className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">
-                      Manage Plan
-                   </button>
-                </div>
+                 )}
 
                 <div className="space-y-4">
                    <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.2em] border-l-4 border-[#b50a0a] pl-4">Administrative Tools</h3>
@@ -401,75 +548,208 @@ export function PlayersClient({
                     <h3 className="text-xl font-black italic uppercase tracking-tighter">
                        <span className="text-gray-900">Enroll New</span> <span className="text-[#b50a0a]">Athlete</span>
                     </h3>
-                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">Direct enrollment & automated onboarding</p>
+                    <p className="text-[8px] font-bold text-gray-900 uppercase tracking-widest mt-1">Direct enrollment & automated onboarding</p>
                  </div>
                  <button onClick={closeAddModal} className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center hover:bg-gray-100 transition-all border border-gray-100">
                     <X className="w-4 h-4 text-gray-400" />
                  </button>
               </div>
               <form action={async (formData) => {
+                 // Real-time validation for Birthdate
+                 if (!dob.day || !dob.month || !dob.year || dob.day === 'DD' || dob.month === 'MM' || dob.year === 'YYYY') {
+                    showToast('Please select a complete birthdate (DD/MM/YYYY)', 'error');
+                    return;
+                 }
+
+                  if (emailStatus === 'REGISTERED') {
+                     showToast("This email is already registered. Please use a different email.", "error");
+                     return;
+                  }
+
                  const res = await addPlayer(formData);
                  if (res.success) {
+                    showToast('Player enrolled successfully', 'success');
                     closeAddModal();
+                    router.refresh();
                  } else {
-                    alert(res.error);
+                    showToast(res.error || 'Failed to enroll player', 'error');
                  }
               }} className="p-6 space-y-4 overflow-y-auto">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
                     <div className="space-y-1">
                        <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">First Name</label>
-                       <input name="first_name" required type="text" className="w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="Ex: John" />
+                       <input name="first_name" required type="text" className="w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-900" placeholder="Ex: John" />
                     </div>
                     <div className="space-y-1">
                        <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Last Name</label>
-                       <input name="last_name" required type="text" className="w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="Ex: Doe" />
+                       <input name="last_name" required type="text" className="w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-900" placeholder="Ex: Doe" />
                     </div>
                     <div className="md:col-span-2 space-y-1">
-                       <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Email Address</label>
-                       <input name="email" required type="email" className="w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="athlete@centerkick.com" />
+                       <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1 flex justify-between">
+                          <span>Email Address</span>
+                          {isCheckingEmail && <span className="text-[7px] text-[#b50a0a] animate-pulse">Checking status...</span>}
+                       </label>
+                       <input 
+                         name="email" 
+                         required 
+                         type="email" 
+                         value={email}
+                         onChange={(e) => setEmail(e.target.value)}
+                         className={`w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-900 ${emailStatus === 'REGISTERED' ? 'ring-1 ring-red-500 bg-red-50/10' : ''}`} 
+                         placeholder="athlete@centerkick.com" 
+                       />
+                       {emailStatus === 'REGISTERED' && (
+                         <div className="flex items-center gap-2 mt-1 px-2 py-1 bg-red-50 rounded-lg border border-red-100">
+                            <AlertCircle className="w-3 h-3 text-red-500" />
+                            <p className="text-[8px] font-black text-red-600 uppercase tracking-widest">Email already registered as a member.</p>
+                         </div>
+                       )}
+                       {emailStatus === 'PROSPECT' && (
+                         <div className="flex items-center justify-between mt-1 px-2 py-1 bg-blue-50 rounded-lg border border-blue-100">
+                            <div className="flex items-center gap-2">
+                               <Info className="w-3 h-3 text-blue-500" />
+                               <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">Enrolled as prospect (Not yet joined).</p>
+                            </div>
+                            <button 
+                              onClick={handleResendInv}
+                              className="text-[8px] font-black underline text-[#b50a0a] hover:text-black uppercase tracking-widest"
+                            >
+                               Resend Invitation?
+                            </button>
+                         </div>
+                       )}
                     </div>
                     <div className="p-4 bg-gray-50/50 rounded-2xl md:col-span-2 grid grid-cols-2 gap-4 border border-gray-100">
                         <div className="space-y-1">
                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Position</label>
-                           <select name="position" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">
-                              <option value="Forward">Forward</option>
-                              <option value="Midfielder">Midfielder</option>
-                              <option value="Defender">Defender</option>
-                              <option value="Goalkeeper">Goalkeeper</option>
+                           <select name="position" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black">
+                              <option value="Forward" className="text-black">Forward</option>
+                              <option value="Midfielder" className="text-black">Midfielder</option>
+                              <option value="Defender" className="text-black">Defender</option>
+                              <option value="Goalkeeper" className="text-black">Goalkeeper</option>
                            </select>
                         </div>
                         <div className="space-y-1">
                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Main Foot</label>
-                           <select name="foot" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">
-                              <option value="Right">Right</option>
-                              <option value="Left">Left</option>
-                              <option value="Both">Both</option>
+                           <select name="foot" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black">
+                              <option value="Right" className="text-black">Right</option>
+                              <option value="Left" className="text-black">Left</option>
+                              <option value="Both" className="text-black">Both</option>
                            </select>
                         </div>
                         <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Country</label>
-                           <input name="country" list="countries-modal" required type="text" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="Ex: Nigeria" />
+                           <div className="flex items-center justify-between ml-1">
+                              <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest">Country</label>
+                           </div>
+                           <input name="country" list="countries-modal" required type="text" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-900" placeholder="Ex: Nigeria" />
                            <datalist id="countries-modal">
                               {COUNTRIES.map(country => (
-                                 <option key={country} value={country} />
+                                 <option key={country} value={country} className="text-black" />
                               ))}
                            </datalist>
                         </div>
-                        <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Age</label>
-                           <input name="age" required type="number" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="18" />
-                        </div>
-                        <div className="space-y-1 md:col-span-2">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Associated Agent</label>
-                           <select name="agent_id" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">
-                              <option value="">Independent (No Agent)</option>
-                              {agents.map(agent => (
-                                <option key={agent.id} value={agent.id}>
-                                   {agent.profiles?.first_name} {agent.profiles?.last_name} ({agent.profiles?.agency_name || 'Independent'})
-                                </option>
-                              ))}
-                           </select>
-                        </div>
+                         <div className="space-y-1">
+                             <div className="flex items-center justify-between ml-1">
+                                <label className="text-[8px] font-black text-red-500 uppercase tracking-widest">Birthdate</label>
+                                {calculatedAge && (
+                                   <span className="text-[9px] font-black text-[#b50a0a] italic bg-red-50 px-2 py-0.5 rounded-md border border-red-100 animate-in fade-in zoom-in duration-300">
+                                      {calculatedAge}
+                                   </span>
+                                )}
+                             </div>
+                             <div className="flex gap-2">
+                                <select 
+                                  className="flex-1 bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black"
+                                  onChange={(e) => setDob(prev => ({ ...prev, day: e.target.value }))}
+                                  required
+                                >
+                                   <option value="" className="text-black">DD</option>
+                                   {Array.from({ length: 31 }, (_, i) => (
+                                      <option key={i+1} value={String(i+1).padStart(2, '0')} className="text-black">{i+1}</option>
+                                   ))}
+                                </select>
+                                <select 
+                                  className="flex-1 bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black"
+                                  onChange={(e) => setDob(prev => ({ ...prev, month: e.target.value }))}
+                                  required
+                                >
+                                   <option value="" className="text-black">MM</option>
+                                   {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, i) => (
+                                      <option key={m} value={String(i+1).padStart(2, '0')} className="text-black">{m}</option>
+                                   ))}
+                                </select>
+                                <select 
+                                  className="flex-1 bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black"
+                                  onChange={(e) => setDob(prev => ({ ...prev, year: e.target.value }))}
+                                  required
+                                >
+                                   <option value="" className="text-black">YYYY</option>
+                                   {Array.from({ length: 50 }, (_, i) => (
+                                      <option key={i} value={String(new Date().getFullYear() - i)} className="text-black">{new Date().getFullYear() - i}</option>
+                                   ))}
+                                </select>
+                             </div>
+                             <input type="hidden" name="date_of_birth" value={`${dob.year}-${dob.month}-${dob.day}`} />
+                          </div>
+                         <div className="space-y-1 md:col-span-2 relative">
+                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Associated Agent (Searchable)</label>
+                            <div className="relative group">
+                               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                  <Search className="w-3 h-3" />
+                               </div>
+                               <input 
+                                 type="text" 
+                                 value={agentSearch}
+                                 onChange={(e) => {
+                                    setAgentSearch(e.target.value);
+                                    setIsAgentSearchOpen(true);
+                                 }}
+                                 onFocus={() => setIsAgentSearchOpen(true)}
+                                 placeholder="Search by name, email or agency..."
+                                 className="w-full bg-white border border-gray-100 rounded-lg pl-9 pr-3 py-2.5 text-[10px] font-black focus:ring-2 focus:ring-[#b50a0a] text-black placeholder:text-gray-900" 
+                               />
+                               <input type="hidden" name="agent_id" value={selectedAgentId} />
+                               
+                               {isAgentSearchOpen && (
+                                 <div className="absolute bottom-full left-0 w-full bg-white border border-gray-100 rounded-2xl shadow-2xl mb-2 z-50 max-h-64 overflow-y-auto animate-in slide-in-from-bottom-2">
+                                    <div className="p-3 border-b border-gray-50 bg-gray-50/50 flex items-center justify-between">
+                                       <span className="text-[8px] font-black uppercase text-gray-400">Agent Directory</span>
+                                       <button type="button" onClick={() => setIsAgentSearchOpen(false)}><X className="w-3 h-3" /></button>
+                                    </div>
+                                    <div 
+                                      className="p-3 hover:bg-red-50 transition-colors cursor-pointer border-b border-gray-50"
+                                      onClick={() => {
+                                         setSelectedAgentId('');
+                                         setAgentSearch('Independent (No Agent)');
+                                         setIsAgentSearchOpen(false);
+                                      }}
+                                    >
+                                       <p className="text-[10px] font-black text-gray-800 uppercase italic leading-none">Independent</p>
+                                       <p className="text-[8px] font-bold text-gray-400 uppercase mt-1">No formal representation</p>
+                                    </div>
+                                    {filteredAgents.map(agent => (
+                                       <div 
+                                          key={agent.id} 
+                                          className="p-3 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50"
+                                          onClick={() => {
+                                             setSelectedAgentId(agent.id);
+                                             setAgentSearch(`${agent.first_name} ${agent.last_name}`);
+                                             setIsAgentSearchOpen(false);
+                                          }}
+                                       >
+                                          <p className="text-[10px] font-black text-gray-900 uppercase leading-none">{agent.first_name} {agent.last_name}</p>
+                                          <p className="text-[8px] font-bold text-[#b50a0a] uppercase mt-1 tracking-tight">{agent.agency_name || 'Individual Agent'} • {agent.users?.email || agent.email}</p>
+                                       </div>
+                                    ))}
+                                    {filteredAgents.length === 0 && (
+                                       <div className="p-10 text-center">
+                                          <p className="text-[9px] font-bold text-gray-400 uppercase italic">No agents found</p>
+                                       </div>
+                                    )}
+                                 </div>
+                               )}
+                            </div>
+                         </div>
                     </div>
                     <div className="space-y-1 md:col-span-2">
                        <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Gender</label>
@@ -487,7 +767,7 @@ export function PlayersClient({
                     <button type="submit" className="w-full bg-[#b50a0a] text-white py-3.5 rounded-xl font-black uppercase tracking-widest shadow-xl shadow-red-900/10 hover:bg-black transition-all text-[10px] active:scale-[0.98]">
                         Create Profile
                     </button>
-                    <p className="text-[7px] text-gray-400 text-center uppercase font-bold tracking-widest mt-2 italic opacity-60">An automated enrollment email will be sent immediately.</p>
+                    <p className="text-[7px] text-gray-900 text-center uppercase font-bold tracking-widest mt-2 italic opacity-60">An automated enrollment email will be sent immediately.</p>
                  </div>
               </form>
            </div>

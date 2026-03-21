@@ -37,32 +37,52 @@ export default async function AdminCoachesPage({
 
   // 2. Fetch Coaches with Filters
   let query = supabase
-    .from('users')
-    .select('*, profiles!inner(*)', { count: 'exact' })
-    .eq('role', 'coach')
-    .order('created_at', { ascending: false })
-    .range(offset, offset + pageSize - 1);
+    .from('profiles')
+    .select('*, users(role, email)', { count: 'exact' });
 
-  if (tab === 'subscribed') query = query.eq('profiles.is_subscribed', true);
-  if (tab === 'unsubscribed') query = query.eq('profiles.is_subscribed', false);
-  if (tab === 'pending') query = query.eq('profiles.status', 'pending');
+  // Apply role filter
+  query = query.eq('role', 'coach');
 
-  if (position) query = query.eq('profiles.position', position);
-  if (gender) query = query.eq('profiles.gender', gender);
-  if (country) query = query.ilike('profiles.country', `%${country}%`);
-  if (age) query = query.eq('profiles.age', parseInt(age));
+  // Apply tab filters
+  if (tab === 'subscribed') query = query.eq('is_subscribed', true);
+  if (tab === 'unsubscribed') query = query.eq('is_subscribed', false);
+  if (tab === 'pending') query = query.eq('status', 'pending');
 
+  // Apply filters
+  if (position) query = query.eq('position', position);
+  if (gender) query = query.eq('gender', gender);
+  if (age) query = query.eq('age', parseInt(age));
+  if (country) query = query.ilike('country', `%${country}%`);
+
+  // Apply search
   if (q) {
-    query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%,league.ilike.%${q}%`, { foreignTable: 'profiles' });
+    query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,users.email.ilike.%${q}%,league.ilike.%${q}%`);
   }
 
-  const { data: coaches, count: filteredTotal } = await query;
+  const { data: profiles, error, count: filteredTotal } = await query
+    .order('created_at', { ascending: false })
+    .range(offset, offset + (pageSize - 1));
 
-  // 3. Fetch Agents for linking
+  if (error) {
+    console.error('Error fetching coaches:', error);
+    return <div>Error loading coaches. Please try again.</div>;
+  }
+
+  // 2. Fetch Agents for the enrollment modal
   const { data: agents } = await supabase
-    .from('users')
-    .select('*, profiles!inner(*)')
+    .from('profiles')
+    .select('*, users(role, email)')
     .eq('role', 'agent');
+
+  // Format profiles to match the expected Coach interface if needed
+  // The CoachesClient expects { id, email, created_at, profiles: { ... } }
+  // We can adapt the client later, but for now let's map it to keep it working
+  const formattedCoaches = (profiles || []).map(p => ({
+    id: p.id,
+    email: p.users?.email || 'N/A', // Access email from the joined users table
+    created_at: p.created_at,
+    profiles: { ...p } // Flattened but kept for compatibility
+  }));
 
   const stats = [
     { label: 'All Coaches', value: totalCount || 0, tab: 'all', color: 'text-gray-900', bg: 'bg-gray-100', icon: UserCheck },
@@ -70,6 +90,14 @@ export default async function AdminCoachesPage({
     { label: 'Unsubscribed', value: unsubscribedCount || 0, tab: 'unsubscribed', color: 'text-gray-400', bg: 'bg-gray-50', icon: Users },
     { label: 'Pending Requests', value: pendingCount || 0, tab: 'pending', color: 'text-[#b50a0a]', bg: 'bg-red-50', icon: Clock },
   ];
+
+  // 4. Fetch current admin role for RBAC
+  const { data: { session } } = await supabase.auth.getSession();
+  const { data: userRecord } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', session?.user.id)
+    .single();
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -109,11 +137,12 @@ export default async function AdminCoachesPage({
 
       {/* Client Management Portal */}
       <CoachesClient
-        initialCoaches={(coaches as any) || []}
-        agents={(agents as any) || []}
+        initialCoaches={formattedCoaches}
+        agents={agents || []}
         totalCount={filteredTotal || 0}
         currentPage={page}
         pageSize={pageSize}
+        role={userRecord?.role || 'player'}
       />
     </div>
   );

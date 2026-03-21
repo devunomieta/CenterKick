@@ -32,8 +32,8 @@ export default function PlayerDashboard() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
-            <input type="text" className="w-full rounded-lg border-gray-300 border px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Nigerian" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+            <input type="text" className="w-full rounded-lg border-gray-300 border px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Nigeria" />
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Bio & Experience</label>

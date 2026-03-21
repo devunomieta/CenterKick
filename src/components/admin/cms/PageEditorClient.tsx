@@ -70,7 +70,7 @@ export default function PageEditorClient({ page, content, categories }: PageEdit
                  <ChevronUp className="w-3 h-3 -rotate-90" /> Back to Dashboard
               </Link>
               <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tighter italic">{page.name}</h2>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Manage Section Layout</p>
+              <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest mt-1">Manage Section Layout</p>
            </div>
 
            <div className="space-y-3">
@@ -139,7 +139,7 @@ export default function PageEditorClient({ page, content, categories }: PageEdit
            <div className="bg-white p-20 rounded-[3.5rem] border border-gray-100 shadow-sm text-center">
               <Layout className="w-20 h-20 text-gray-100 mx-auto mb-8" />
               <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tighter italic">Select a section to edit</h3>
-              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-2">All changes will be reflected on the live site almost instantly.</p>
+              <p className="text-gray-900 text-[10px] font-black uppercase tracking-widest mt-2">All changes will be reflected on the live site almost instantly.</p>
            </div>
          )}
       </div>
@@ -179,7 +179,7 @@ function SectionEditor({ page, section, initialContent, categories }: { page: st
              </div>
              <div>
                 <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tighter italic">Editing: {section.replace('_', ' ')}</h3>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Modify text, visuals, and dynamic connections</p>
+                <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest mt-1">Modify text, visuals, and dynamic connections</p>
              </div>
           </div>
           <button 
@@ -197,7 +197,7 @@ function SectionEditor({ page, section, initialContent, categories }: { page: st
             renderFields(section, content, updateField, categories)
           ) : (
             <div className="p-12 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">No configurable fields for this section yet.</p>
+               <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest">No configurable fields for this section yet.</p>
             </div>
           )}
        </form>
@@ -297,14 +297,14 @@ function renderFields(section: string, content: any, onChange: (f: string, v: an
       return (
         <div className="space-y-6">
            <TextInput label="Brand Name" field="brand" placeholder="CenterKick" />
-           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest italic mt-4">Navigation links are currently managed via JSON in the database for version 1.</p>
+           <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest italic mt-4">Navigation links are currently managed via JSON in the database for version 1.</p>
         </div>
       );
     case 'footer':
       return (
         <div className="space-y-6">
            <TextInput label="Footer Description" field="description" placeholder="CenterKick is a football media platform..." multiline />
-           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest italic mt-4">Columns and social links are managed via JSON in the database for version 1.</p>
+           <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest italic mt-4">Columns and social links are managed via JSON in the database for version 1.</p>
         </div>
       );
     default:

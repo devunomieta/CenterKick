@@ -28,7 +28,7 @@ export async function completeRegistration(formData: FormData) {
         first_name: firstName,
         last_name: lastName,
         role: role,
-        nationality: location,
+        country: role === 'athlete' ? formData.get('country') || '' : '',
         dob: dob
       }
     },

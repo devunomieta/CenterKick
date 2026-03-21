@@ -4,11 +4,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Users, UserCheck, Briefcase, FileText, PenTool,
-  ShieldCheck, CreditCard, Settings, LayoutDashboard
+  ShieldCheck, CreditCard, Settings, LayoutDashboard, Clock
 } from 'lucide-react';
 
-export function AdminSidebar() {
+export function AdminSidebar({ role }: { role: string }) {
   const pathname = usePathname();
+
+  const isBlogger = role === 'blogger';
+  const isOperations = role === 'operations';
+  const isFinance = role === 'finance';
+  const isSuperOrAdmin = ['superadmin', 'admin'].includes(role);
 
   const menuItems = [
     {
@@ -17,27 +22,31 @@ export function AdminSidebar() {
         { label: 'Overview', href: '/admin', icon: LayoutDashboard }
       ]
     },
-    {
+    ...(!isBlogger && !isFinance ? [{
       group: 'Directories',
       items: [
         { label: 'Players', href: '/admin/players', icon: Users },
         { label: 'Coaches', href: '/admin/coaches', icon: UserCheck },
-        { label: 'Agents', href: '/admin/agents', icon: Briefcase }
+        { label: 'Agents', href: '/admin/agents', icon: Briefcase },
+        { label: 'Prospects', href: '/admin/prospects', icon: Clock }
       ]
-    },
-    {
+    }] : []),
+    ...(isBlogger || isSuperOrAdmin ? [{
       group: 'Content',
       items: [
         { label: 'Blog / CMS', href: '/admin/blog', icon: FileText },
-        { label: 'Manage UI', href: '/admin/manage-ui', icon: PenTool }
+        ...(!isBlogger ? [{ label: 'Manage UI', href: '/admin/manage-ui', icon: PenTool }] : [])
       ]
-    },
+    }] : []),
     {
       group: 'Infrastructure',
       items: [
-        { label: 'Manage Roles', href: '/admin/roles', icon: ShieldCheck },
-        { label: 'Payments', href: '/admin/payments', icon: CreditCard },
-        { label: 'System Settings', href: '/admin/settings', icon: Settings }
+        ...(isSuperOrAdmin ? [{ label: 'Manage Roles', href: '/admin/roles', icon: ShieldCheck }] : []),
+        ...(isFinance || isSuperOrAdmin ? [
+          { label: 'Transactions', href: '/admin/payments/transactions', icon: CreditCard },
+          { label: 'Subscriptions', href: '/admin/payments/subscriptions', icon: Settings }
+        ] : []),
+        ...(isSuperOrAdmin ? [{ label: 'System Settings', href: '/admin/settings', icon: Settings }] : [])
       ]
     }
   ];

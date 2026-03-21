@@ -78,7 +78,7 @@ export default function ProfileEditor() {
       first_name: formData.get('first_name'),
       last_name: formData.get('last_name'),
       date_of_birth: formData.get('date_of_birth') || null,
-      nationality: formData.get('nationality'),
+      country: formData.get('country'),
       bio: formData.get('bio'),
       contact_email: formData.get('contact_email'),
       phone_number: formData.get('phone_number'),
@@ -125,7 +125,7 @@ export default function ProfileEditor() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8">
         <div>
           <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">My <span className="text-[#b50a0a]">Profile</span></h1>
-          <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">Manage your professional data & public appearance.</p>
+          <p className="text-gray-900 text-[10px] font-bold uppercase tracking-widest mt-1">Manage your professional data & public appearance.</p>
         </div>
         <button 
           onClick={handleSave}
@@ -157,7 +157,7 @@ export default function ProfileEditor() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap lg:w-full ${activeTab === tab.id ? 'bg-[#b50a0a] text-white shadow-lg shadow-red-900/20' : 'text-gray-500 hover:bg-gray-100'}`}
+                className={`flex items-center gap-3 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap lg:w-full ${activeTab === tab.id ? 'bg-[#b50a0a] text-white shadow-lg shadow-red-900/20' : 'text-gray-900 hover:bg-gray-100'}`}
               >
                 <tab.icon className="w-4 h-4" />
                 {tab.id}
@@ -174,7 +174,7 @@ export default function ProfileEditor() {
               <div className="space-y-10 animate-in fade-in duration-500">
                 <div className="flex flex-col items-center justify-center md:items-start md:justify-start">
                    <div className="relative group cursor-pointer">
-                      <div className="w-24 h-24 rounded-3xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 group-hover:border-[#b50a0a] group-hover:bg-red-50 transition-all overflow-hidden">
+                      <div className="w-24 h-24 rounded-3xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-900 group-hover:border-[#b50a0a] group-hover:bg-red-50 transition-all overflow-hidden">
                         {profile?.avatar_url ? (
                           <img src={profile.avatar_url} className="w-full h-full object-cover" />
                         ) : (
@@ -192,45 +192,45 @@ export default function ProfileEditor() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">First Name</label>
-                    <input name="first_name" type="text" defaultValue={profile?.first_name} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none" />
+                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">First Name</label>
+                    <input name="first_name" type="text" defaultValue={profile?.first_name} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                   </div>
                   <div className="space-y-4">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Last Name</label>
-                    <input name="last_name" type="text" defaultValue={profile?.last_name} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none" />
+                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Last Name</label>
+                    <input name="last_name" type="text" defaultValue={profile?.last_name} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Date of Birth</label>
+                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Date of Birth</label>
                     <div className="relative">
-                      <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input name="date_of_birth" type="date" defaultValue={profile?.date_of_birth} className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none" />
+                      <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
+                      <input name="date_of_birth" type="date" defaultValue={profile?.date_of_birth} className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Place of Birth</label>
+                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Country</label>
                     <div className="relative">
-                      <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input name="nationality" type="text" defaultValue={profile?.nationality} className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none" />
+                      <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
+                      <input name="country" type="text" defaultValue={profile?.country} className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-gray-50">
                   <div className="space-y-4">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 text-gray-400">Public Contact Email</label>
+                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Public Contact Email</label>
                     <div className="relative">
-                       <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                       <input name="contact_email" type="email" defaultValue={profile?.contact_email} placeholder="public@agency.com" className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none" />
+                       <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
+                       <input name="contact_email" type="email" defaultValue={profile?.contact_email} placeholder="public@agency.com" className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" />
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Public Phone</label>
+                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Public Phone</label>
                     <div className="relative">
-                       <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                       <input name="phone_number" type="tel" defaultValue={profile?.phone_number} placeholder="+234..." className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none" />
+                       <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
+                       <input name="phone_number" type="tel" defaultValue={profile?.phone_number} placeholder="+234..." className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" />
                     </div>
                   </div>
                 </div>
@@ -243,82 +243,82 @@ export default function ProfileEditor() {
                   <div className="w-2 h-10 bg-[#b50a0a] rounded-full"></div>
                   <div>
                     <h3 className="text-sm font-black uppercase tracking-widest text-gray-900">Professional Stats</h3>
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-0.5">Role Specific Performance Identifiers</p>
+                    <p className="text-[9px] font-bold text-gray-900 uppercase tracking-[0.2em] mt-0.5">Role Specific Performance Identifiers</p>
                   </div>
                 </div>
 
                 {role === 'athlete' || role === 'player' ? (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-4">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Primary Position</label>
-                      <select name="position" defaultValue={profile?.position} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer">
-                        <option value="Striker">Striker</option>
-                        <option value="Midfielder">Midfielder</option>
-                        <option value="Defender">Defender</option>
-                        <option value="Goalkeeper">Goalkeeper</option>
+                      <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Primary Position</label>
+                      <select name="position" defaultValue={profile?.position} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
+                        <option value="Striker" className="text-black">Striker</option>
+                        <option value="Midfielder" className="text-black">Midfielder</option>
+                        <option value="Defender" className="text-black">Defender</option>
+                        <option value="Goalkeeper" className="text-black">Goalkeeper</option>
                       </select>
                     </div>
                     <div className="space-y-4">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Main Foot</label>
-                      <select name="foot" defaultValue={profile?.foot} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer">
-                        <option value="Right">Right</option>
-                        <option value="Left">Left</option>
-                        <option value="Both">Both</option>
+                      <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Main Foot</label>
+                      <select name="foot" defaultValue={profile?.foot} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
+                        <option value="Right" className="text-black">Right</option>
+                        <option value="Left" className="text-black">Left</option>
+                        <option value="Both" className="text-black">Both</option>
                       </select>
                     </div>
                     <div className="space-y-4">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Jersey #</label>
-                      <input name="jersey_number" type="number" defaultValue={profile?.jersey_number} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none" />
+                      <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Jersey #</label>
+                      <input name="jersey_number" type="number" defaultValue={profile?.jersey_number} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                     </div>
                     <div className="space-y-4">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Height (cm)</label>
-                      <input name="height_cm" type="number" defaultValue={profile?.height_cm} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none" />
+                      <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Height (cm)</label>
+                      <input name="height_cm" type="number" defaultValue={profile?.height_cm} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                     </div>
                     <div className="space-y-4">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Weight (kg)</label>
-                      <input name="weight_kg" type="number" defaultValue={profile?.weight_kg} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none" />
+                      <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Weight (kg)</label>
+                      <input name="weight_kg" type="number" defaultValue={profile?.weight_kg} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                     </div>
                     <div className="space-y-4">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Market Value ($)</label>
-                      <input name="market_value" type="text" defaultValue={profile?.market_value} placeholder="12,000,000" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none font-mono" />
+                      <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Market Value ($)</label>
+                      <input name="market_value" type="text" defaultValue={profile?.market_value} placeholder="12,000,000" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none font-mono text-black placeholder:text-gray-900" />
                     </div>
                   </div>
                 ) : role === 'coach' ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Preferred Formation</label>
-                      <select name="formation" defaultValue={profile?.formation} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer">
-                        <option value="4-3-3">4-3-3 Offensive</option>
-                        <option value="4-4-2">4-4-2 Classic</option>
-                        <option value="3-5-2">3-5-2 Wingbacks</option>
-                        <option value="4-2-3-1">4-2-3-1 Modern</option>
+                      <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Preferred Formation</label>
+                      <select name="formation" defaultValue={profile?.formation} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
+                        <option value="4-3-3" className="text-black">4-3-3 Offensive</option>
+                        <option value="4-4-2" className="text-black">4-4-2 Classic</option>
+                        <option value="3-5-2" className="text-black">3-5-2 Wingbacks</option>
+                        <option value="4-2-3-1" className="text-black">4-2-3-1 Modern</option>
                       </select>
                     </div>
                     <div className="space-y-4">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Technical License</label>
-                      <select name="license" defaultValue={profile?.license} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer">
-                        <option value="UEFA Pro">UEFA Pro</option>
-                        <option value="UEFA A">UEFA A</option>
-                        <option value="UEFA B">UEFA B</option>
-                        <option value="CAF A">CAF A</option>
+                      <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Technical License</label>
+                      <select name="license" defaultValue={profile?.license} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
+                        <option value="UEFA Pro" className="text-black">UEFA Pro</option>
+                        <option value="UEFA A" className="text-black">UEFA A</option>
+                        <option value="UEFA B" className="text-black">UEFA B</option>
+                        <option value="CAF A" className="text-black">CAF A</option>
                       </select>
                     </div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Agency Name</label>
-                      <input name="agency_name" type="text" defaultValue={profile?.agency_name} placeholder="Global Talent Management" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none" />
+                      <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Agency Name</label>
+                      <input name="agency_name" type="text" defaultValue={profile?.agency_name} placeholder="Global Talent Management" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" />
                     </div>
                     <div className="space-y-4">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">FIFA License Code</label>
-                      <input name="license_code" type="text" defaultValue={profile?.license_code} placeholder="FL-XXXXXXXX" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none font-mono" />
+                      <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">FIFA License Code</label>
+                      <input name="license_code" type="text" defaultValue={profile?.license_code} placeholder="FL-XXXXXXXX" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none font-mono text-black placeholder:text-gray-900" />
                     </div>
                   </div>
                 )}
 
                 <div className="pt-8 border-t border-gray-50">
-                   <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Social Proof & Recognition</h4>
+                   <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-6">Social Proof & Recognition</h4>
                    <div className="space-y-4">
                       {achievements.map((item, i) => (
                         <div key={i} className="flex items-center gap-6 p-6 bg-gray-50 rounded-2xl border border-gray-100 group transition-all hover:bg-white hover:shadow-xl hover:border-white">
@@ -327,7 +327,7 @@ export default function ProfileEditor() {
                            </div>
                            <div className="flex-1">
                               <p className="text-xs font-black uppercase text-gray-900 leading-none mb-1">{item.title}</p>
-                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.year || 'Major Recognition'}</p>
+                              <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest">{item.year || 'Major Recognition'}</p>
                            </div>
                            <button 
                              type="button"
@@ -345,7 +345,7 @@ export default function ProfileEditor() {
                           const year = prompt('Year:');
                           if (title) setAchievements([...achievements, { title, year }]);
                         }}
-                        className="w-full py-4 border-2 border-dashed border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:border-[#b50a0a] hover:text-[#b50a0a] transition-all flex items-center justify-center gap-2"
+                        className="w-full py-4 border-2 border-dashed border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-900 hover:border-[#b50a0a] hover:text-[#b50a0a] transition-all flex items-center justify-center gap-2"
                       >
                         <Plus className="w-4 h-4" /> Add Achievement
                       </button>
@@ -357,20 +357,20 @@ export default function ProfileEditor() {
             {activeTab === 'Bio & Portfolio' && (
                <div className="space-y-10 animate-in fade-in duration-500">
                   <div className="space-y-4">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Professional Bio</label>
-                    <textarea name="bio" rows={8} defaultValue={profile?.bio} placeholder="Describe your professional journey, skills, and ambitions..." className="w-full bg-gray-50 border-none rounded-3xl px-8 py-6 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none leading-relaxed" />
+                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Professional Bio</label>
+                    <textarea name="bio" rows={8} defaultValue={profile?.bio} placeholder="Describe your professional journey, skills, and ambitions..." className="w-full bg-gray-50 border-none rounded-3xl px-8 py-6 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none leading-relaxed text-black placeholder:text-gray-900" />
                   </div>
 
                   {role === 'agent' && (
                     <div className="pt-8 border-t border-gray-50">
-                       <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Represented Talent Portfolio</h4>
+                       <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-6">Represented Talent Portfolio</h4>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {[1, 2, 3].map((_, i) => (
                             <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                <div className="w-10 h-10 rounded-full bg-gray-200"></div>
                                <div className="flex-1">
                                   <p className="text-[11px] font-black uppercase text-gray-900">Player Name {i + 1}</p>
-                                  <p className="text-[9px] font-bold text-gray-400">Position • Market Value</p>
+                                  <p className="text-[9px] font-bold text-gray-900">Position • Market Value</p>
                                </div>
                                <button className="text-gray-300 hover:text-[#b50a0a]">
                                   <Trash2 className="w-4 h-4" />
@@ -390,7 +390,7 @@ export default function ProfileEditor() {
                <div className="space-y-10 animate-in fade-in duration-500">
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                       <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Video Highlights</h4>
+                       <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Video Highlights</h4>
                        <span className="text-[9px] font-bold bg-gray-900 text-white px-2 py-1 rounded">MP4 • max 50MB</span>
                     </div>
                     <div className="h-64 border-2 border-dashed border-gray-200 rounded-[40px] flex flex-col items-center justify-center text-center p-12 hover:bg-gray-50 hover:border-[#b50a0a] transition-all cursor-pointer group">
@@ -398,12 +398,12 @@ export default function ProfileEditor() {
                           <Camera className="w-8 h-8" />
                        </div>
                        <p className="text-xs font-black uppercase tracking-widest text-gray-900 mb-2">Upload Highlight Reel</p>
-                       <p className="text-[10px] font-medium text-gray-500 leading-relaxed max-w-[250px]">Drag and drop your best match clips here or click to browse files.</p>
+                       <p className="text-[10px] font-medium text-gray-900 leading-relaxed max-w-[250px]">Drag and drop your best match clips here or click to browse files.</p>
                     </div>
                   </div>
 
                   <div className="space-y-6 pt-10 border-t border-gray-50">
-                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Action Photos</h4>
+                    <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Action Photos</h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                        {[1, 2, 3].map((_, i) => (
                          <div key={i} className="aspect-square bg-gray-100 rounded-2xl relative group overflow-hidden">
@@ -412,7 +412,7 @@ export default function ProfileEditor() {
                             </div>
                          </div>
                        ))}
-                       <button className="aspect-square border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-300 hover:border-[#b50a0a] hover:text-[#b50a0a] transition-all">
+                       <button className="aspect-square border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-900 hover:border-[#b50a0a] hover:text-[#b50a0a] transition-all">
                           <Plus className="w-6 h-6 mb-2" />
                           <span className="text-[8px] font-black uppercase tracking-[0.2em]">Add Photo</span>
                        </button>
@@ -431,15 +431,15 @@ export default function ProfileEditor() {
                         { name: 'LinkedIn', id: 'social_linkedin', icon: Globe, placeholder: 'linkedin.com/in/name', value: profile?.social_links?.linkedin },
                      ].map((social, i) => (
                        <div key={i} className="space-y-4">
-                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{social.name}</label>
+                          <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">{social.name}</label>
                           <div className="relative">
-                             <social.icon className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                             <social.icon className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
                              <input 
                                name={social.id}
                                type="text" 
                                defaultValue={social.value}
                                placeholder={social.placeholder} 
-                               className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none" 
+                               className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
                              />
                           </div>
                        </div>

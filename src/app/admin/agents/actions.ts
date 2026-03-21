@@ -16,20 +16,20 @@ export async function addAgent(formData: FormData) {
   const gender = formData.get('gender') as string;
   const age = parseInt(formData.get('age') as string);
 
-  // 1. Create User
-  const { data: userData, error: userError } = await supabase
+  // 1. Check if user already exists
+  const { data: existingUser } = await supabase
     .from('users')
-    .insert([{ email, role: 'agent' }])
-    .select()
+    .select('id')
+    .eq('email', email)
     .single();
 
-  if (userError) return { success: false, error: userError.message };
-
-  // 2. Profile Creation
+  // 2. Profile Creation (Unlinked enrollment)
   const { error: profileError } = await supabase
     .from('profiles')
     .insert([{
-      user_id: userData.id,
+      user_id: existingUser?.id || null,
+      email: email,
+      role: 'agent',
       first_name: firstName,
       last_name: lastName,
       agency_name: agencyName,
@@ -46,7 +46,7 @@ export async function addAgent(formData: FormData) {
   await sendEmailNotification(
     email, 
     "Complete your CenterKick Agent Registration", 
-    `Hello ${firstName}, an admin has registered your agency profile. Use this link to set your password and access your dashboard: https://centerkick.com/complete-registration?id=${userData.id}`
+    `Hello ${firstName}, an admin has registered your agency profile on CenterKick. Use this link to set your password and access your dashboard: ${process.env.NEXT_PUBLIC_SITE_URL}/register?email=${encodeURIComponent(email)}&role=agent`
   );
 
   revalidatePath('/admin/agents');
@@ -59,7 +59,7 @@ export async function updateAgent(id: string, data: any) {
   const { error } = await supabase
     .from('profiles')
     .update(data)
-    .eq('user_id', id);
+    .eq('id', id);
 
   if (error) return { success: false, error: error.message };
 
@@ -70,12 +70,28 @@ export async function updateAgent(id: string, data: any) {
 export async function deleteAgent(id: string) {
   const supabase = await createClient();
   
-  const { error } = await supabase
-    .from('users')
-    .delete()
-    .eq('id', id);
+  // Get profile to check for linked user
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('user_id')
+    .eq('id', id)
+    .single();
 
-  if (error) return { success: false, error: error.message };
+  if (profile?.user_id) {
+    // Deleting from 'users' cascades to 'profiles'
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', profile.user_id);
+    if (error) return { success: false, error: error.message };
+  } else {
+    // Just delete the unlinked profile
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', id);
+    if (error) return { success: false, error: error.message };
+  }
 
   revalidatePath('/admin/agents');
   return { success: true };

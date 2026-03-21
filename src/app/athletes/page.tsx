@@ -28,7 +28,7 @@ export default async function AthletesPage() {
                      </svg>
                   </div>
                   <div>
-                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">PROFILING</span>
+                     <span className="text-[10px] font-bold text-gray-900 uppercase tracking-widest block mb-1">PROFILING</span>
                      <h1 className="text-2xl font-black text-gray-800 tracking-wide">Players Profile</h1>
                   </div>
                </div>
@@ -52,7 +52,7 @@ export default async function AthletesPage() {
             <div className="max-w-[1200px] mx-auto px-4 lg:px-0 mb-16">
                {!athletes || athletes.length === 0 ? (
                   <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                     <p className="text-gray-400 font-bold uppercase tracking-widest">No active profiles found.</p>
+                     <p className="text-gray-900 font-bold uppercase tracking-widest">No active profiles found.</p>
                   </div>
                ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

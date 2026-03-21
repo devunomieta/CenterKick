@@ -193,7 +193,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
       <div className="flex items-center justify-between mb-12">
         <Link 
           href="/admin/blog" 
-          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black transition-all group"
+          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#b50a0a] hover:text-black transition-all group"
         >
           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Back to Dashboard
@@ -229,7 +229,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                  value={formData.title}
                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               />
-              <div className="flex items-center gap-2 text-[10px] font-bold text-gray-300 uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-[10px] font-bold text-gray-900 uppercase tracking-widest">
                  <LinkIcon className="w-3 h-3" />
                  https://centerkick.com/news/
                  <input 
@@ -280,7 +280,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                  </h4>
                  
                  <div className="space-y-2">
-                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Primary Category</label>
+                    <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest">Primary Category</label>
                     <select 
                       className="w-full bg-gray-50 border-none rounded-xl p-3 text-[10px] font-black uppercase tracking-widest text-black"
                       value={formData.category_id}
@@ -294,7 +294,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                  </div>
 
                  <div className="space-y-3">
-                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Tags</label>
+                    <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest">Tags</label>
                     <div className="flex flex-wrap gap-2">
                        {tags.map(tag => (
                           <button 
@@ -309,7 +309,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                             className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
                                selectedTags.includes(tag.id) 
                                ? 'bg-black text-white' 
-                               : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                               : 'bg-gray-50 text-gray-900 hover:bg-gray-100'
                             }`}
                           >
                              {tag.name}
@@ -367,17 +367,17 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                      ) : (
                         <>
                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform">
-                              <Plus className="w-6 h-6 text-gray-300" />
+                              <Plus className="w-6 h-6 text-gray-900" />
                            </div>
                            <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Set Cover Image</p>
-                           <p className="text-[8px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1 italic">Click to upload premium visual</p>
+                           <p className="text-[8px] font-bold text-gray-900 uppercase tracking-[0.2em] mt-1 italic">Click to upload premium visual</p>
                         </>
                      )}
                   </div>
                   <input 
                      type="text" 
                      placeholder="Or paste direct image URL..." 
-                     className="w-full bg-gray-50 border-none rounded-xl p-3 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-400"
+                     className="w-full bg-gray-50 border-none rounded-xl p-3 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-900"
                      value={formData.cover_image_url}
                      onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
                   />
@@ -390,7 +390,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
               </h4>
               <div className="space-y-4">
                  <div className="space-y-1">
-                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Meta Title</label>
+                    <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Meta Title</label>
                     <input 
                       type="text" 
                       className="w-full bg-gray-50 border-none rounded-xl p-3 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-300" 
@@ -400,7 +400,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                     />
                  </div>
                  <div className="space-y-1">
-                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Meta Description</label>
+                    <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Meta Description</label>
                     <textarea 
                       rows={4} 
                       className="w-full bg-gray-50 border-none rounded-xl p-3 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-300 resize-none" 

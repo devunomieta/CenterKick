@@ -29,7 +29,7 @@ export default async function CoachesPage() {
                         Elevate <br />
                         <span className="text-[#a20000]">Your Career</span>
                      </h1>
-                     <p className="text-gray-600 text-lg leading-relaxed mb-8 max-w-lg">
+                     <p className="text-gray-900 text-lg leading-relaxed mb-8 max-w-lg">
                         Connect with top-tier football coaches and technical directors. Our verified network of professionals is dedicated to scouting and developing the next generation of football stars.
                      </p>
                      <button className="bg-[#a20000] hover:bg-[#8a0000] text-white px-8 py-4 rounded-lg font-bold uppercase tracking-widest text-xs transition-all transform hover:scale-105 shadow-xl">
@@ -72,15 +72,15 @@ export default async function CoachesPage() {
             <div className="max-w-[1200px] mx-auto px-4 lg:px-0 py-24">
                <div className="flex items-center justify-between mb-12">
                   <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">Verified Coaches</h2>
-                  <div className="flex items-center gap-2 text-sm font-bold text-gray-500 uppercase tracking-widest">
-                     Filter By <ChevronDown className="w-4 h-4" />
-                  </div>
+                   <div className="flex items-center gap-2 text-sm font-bold text-gray-900 uppercase tracking-widest">
+                      Filter By <ChevronDown className="w-4 h-4" />
+                   </div>
                </div>
 
-               {!coaches || coaches.length === 0 ? (
-                  <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                     <p className="text-gray-400 font-bold uppercase tracking-widest">No active coaches found.</p>
-                  </div>
+                {!coaches || coaches.length === 0 ? (
+                   <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                      <p className="text-gray-900 font-bold uppercase tracking-widest">No active coaches found.</p>
+                   </div>
                ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                      {coaches.map((coach) => (

@@ -29,42 +29,49 @@ export default async function AdminPlayersPage({
     { count: subscribedCount },
     { count: pendingCount }
   ] = await Promise.all([
-    supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'player'),
-    supabase.from('profiles').select('*, users!inner(role)', { count: 'exact', head: true }).eq('users.role', 'player').eq('is_subscribed', true),
-    supabase.from('profiles').select('*, users!inner(role)', { count: 'exact', head: true }).eq('users.role', 'player').eq('status', 'pending')
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'player'),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'player').eq('is_subscribed', true),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'player').eq('status', 'pending')
   ]);
 
   const unsubscribedCount = (totalCount || 0) - (subscribedCount || 0);
 
   // 2. Fetch Players with Filters
   let query = supabase
-    .from('users')
-    .select('*, profiles!inner(*)', { count: 'exact' }) // Using inner join for profile filtering
+    .from('profiles')
+    .select('*, users(role, email)', { count: 'exact' })
     .eq('role', 'player')
     .order('created_at', { ascending: false })
     .range(offset, offset + pageSize - 1);
 
-  if (tab === 'subscribed') query = query.eq('profiles.is_subscribed', true);
-  if (tab === 'unsubscribed') query = query.eq('profiles.is_subscribed', false);
-  if (tab === 'pending') query = query.eq('profiles.status', 'pending');
+  if (tab === 'subscribed') query = query.eq('is_subscribed', true);
+  if (tab === 'unsubscribed') query = query.eq('is_subscribed', false);
+  if (tab === 'pending') query = query.eq('status', 'pending');
 
-  if (position) query = query.eq('profiles.position', position);
-  if (gender) query = query.eq('profiles.gender', gender);
-  if (country) query = query.ilike('profiles.country', `%${country}%`);
-  if (age) query = query.eq('profiles.age', parseInt(age));
-  if (foot) query = query.eq('profiles.foot', foot);
+  if (position) query = query.eq('position', position);
+  if (gender) query = query.eq('gender', gender);
+  if (country) query = query.ilike('country', `%${country}%`);
+  if (foot) query = query.eq('foot', foot);
 
   if (q) {
-    query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%`, { foreignTable: 'profiles' });
+    query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%`);
   }
 
   const { data: players, count: filteredTotal } = await query;
 
   // 3. Fetch Agents for linking
   const { data: agents } = await supabase
-    .from('users')
-    .select('*, profiles!inner(*)')
+    .from('profiles')
+    .select('*, users(role, email)')
     .eq('role', 'agent');
+
+  // 4. Fetch current admin role for RBAC
+  const { data: { session } } = await supabase.auth.getSession();
+  const { data: userRecord } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', session?.user.id)
+    .single();
 
   const stats = [
     { label: 'All Players', value: totalCount || 0, tab: 'all', color: 'text-gray-900', bg: 'bg-gray-100', icon: Users },
@@ -116,6 +123,7 @@ export default async function AdminPlayersPage({
         totalCount={filteredTotal || 0}
         currentPage={page}
         pageSize={pageSize}
+        role={userRecord?.role || 'player'}
       />
     </div>
   );

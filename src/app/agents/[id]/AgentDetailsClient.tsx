@@ -69,7 +69,7 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
                         </div>
                         <div className="flex items-center gap-2">
                            <Globe className="w-4 h-4 text-[#a20000]" />
-                           <span className="text-xs font-bold uppercase tracking-widest">{profile.nationality || 'Global Operations'}</span>
+                           <span className="text-xs font-bold uppercase tracking-widest">{profile.country || 'Global Operations'}</span>
                         </div>
                      </div>
                   </div>
@@ -170,7 +170,7 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
                                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                           <div className="flex items-center gap-2">
                                              <Globe className="w-3 h-3" />
-                                             {client.nationality || 'Nigeria'}
+                                             {client.country || 'Nigeria'}
                                           </div>
                                           <ArrowRight className="w-4 h-4 text-gray-200 group-hover:text-[#a20000] group-hover:translate-x-1 transition-all" />
                                        </div>
@@ -213,7 +213,7 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
                               {[
                                  { label: "License", value: profile.license_code || "FIFA Licensed Agent" },
                                  { label: "Agency", value: profile.agency_name || "Independent" },
-                                 { label: "Nationality", value: profile.nationality || "Global" }
+                                 { label: "Country", value: profile.country || "Global" }
                               ].map((item, i) => (
                                  <div key={i}>
                                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">{item.label}</span>

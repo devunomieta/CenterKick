@@ -195,7 +195,7 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                                  ) : "Independent" 
                               },
                               { label: "Date Of Birth", value: profile.date_of_birth || "N/A" },
-                              { label: "Nationality", value: profile.nationality || "N/A" },
+                              { label: "Country", value: profile.country || "N/A" },
                               { label: "Height", value: profile.height_cm ? `${profile.height_cm}cm` : "N/A" },
                               { label: "Weight", value: profile.weight_kg ? `${profile.weight_kg}kg` : "N/A" },
                               { label: "Manager Title", value: "Verified Coach" },

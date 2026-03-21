@@ -1,6 +1,33 @@
+'use client';
+
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 export function Footer({ content }: { content?: any }) {
+  const [siteSettings, setSiteSettings] = useState<any>(null);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const getSettings = async () => {
+       const { data } = await supabase
+         .from('site_content')
+         .select('content')
+         .eq('page', 'settings')
+         .eq('section', 'system')
+         .single();
+       if (data?.content) setSiteSettings(data.content);
+    };
+    getSettings();
+  }, []);
+
+  const resolveUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    return `${baseUrl}/storage/v1/object/public${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   const footerContent = content || {
      description: "CenterKick is a football media and talent exposure platform built to empower footballers at all levels.",
      columns: [
@@ -32,6 +59,9 @@ export function Footer({ content }: { content?: any }) {
      ]
   };
 
+  const footerLogoUrl = resolveUrl(siteSettings?.footerLogoUrl || siteSettings?.logoUrl);
+  const brandName = siteSettings?.siteTitle || "CenterKick";
+
   return (
     <footer className="bg-[#a20000] text-white pt-16 pb-20">
       <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
@@ -40,12 +70,20 @@ export function Footer({ content }: { content?: any }) {
           {/* Column 1: Logo & Description */}
           <div className="w-full lg:w-[45%]">
              <Link href="/" className="inline-flex items-center gap-2 mb-6 group">
-                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0">
-                   <svg className="w-4 h-4 text-[#a20000]" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5c-2.49 0-4.5-2.01-4.5-4.5S8.51 7.5 11 7.5s4.5 2.01 4.5 4.5c0 .34-.04.68-.11 1h-2.12c.15-.31.23-.65.23-1 0-1.38-1.12-2.5-2.5-2.5S8.5 10.62 8.5 12 9.62 14.5 11 14.5c.66 0 1.25-.26 1.7-.68l1.45 1.45c-.83.76-1.92 1.23-3.15 1.23z"/>
-                   </svg>
-                </div>
-                <span className="text-[22px] font-bold tracking-wide">CenterKick</span>
+                {footerLogoUrl ? (
+                   <div className="relative h-7 w-auto flex items-center justify-center">
+                      <img src={footerLogoUrl} alt={brandName} className="h-full w-auto object-contain" />
+                   </div>
+                ) : (
+                   <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0">
+                         <svg className="w-4 h-4 text-[#a20000]" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5c-2.49 0-4.5-2.01-4.5-4.5S8.51 7.5 11 7.5s4.5 2.01 4.5 4.5c0 .34-.04.68-.11 1h-2.12c.15-.31.23-.65.23-1 0-1.38-1.12-2.5-2.5-2.5S8.5 10.62 8.5 12 9.62 14.5 11 14.5c.66 0 1.25-.26 1.7-.68l1.45 1.45c-.83.76-1.92 1.23-3.15 1.23z"/>
+                         </svg>
+                      </div>
+                      <span className="text-[22px] font-bold tracking-wide">{brandName}</span>
+                   </div>
+                )}
              </Link>
              <p className="text-white/80 text-[13px] leading-[1.8] pr-8 mb-8 font-light italic">
                 {footerContent.description}

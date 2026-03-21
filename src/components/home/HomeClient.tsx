@@ -66,7 +66,7 @@ export function HomeClient({ layout, heroPosts, storyPosts, dummyPlayers, highli
       switch (key) {
          case 'hero':
             return (
-               <div key={key} className="lg:col-span-6 relative rounded-xl bg-gray-900 border border-transparent overflow-hidden h-[400px] md:h-[420px]">
+               <div key={key} className="lg:col-span-12 relative rounded-xl bg-gray-900 border border-transparent overflow-hidden h-[450px] md:h-[500px]">
                   {heroPosts.length === 0 ? (
                     <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 bg-gray-900">
                        <PlayCircle className="w-12 h-12 mb-4 opacity-20" />
@@ -105,7 +105,7 @@ export function HomeClient({ layout, heroPosts, storyPosts, dummyPlayers, highli
             );
          case 'stories':
             return (
-               <div key={key} className="lg:col-span-3 flex flex-col bg-white rounded-xl shadow-[0_2px_15px_rgba(0,0,0,0.06)] border border-gray-100 p-8 h-[400px] md:h-[420px] justify-between relative overflow-hidden">
+               <div key={key} className="lg:col-span-12 flex flex-col bg-white rounded-xl shadow-[0_2px_15px_rgba(0,0,0,0.06)] border border-gray-100 p-8 h-auto justify-between relative overflow-hidden mt-8">
                   <div>
                      <h2 className="text-xs font-black tracking-widest uppercase mb-8 text-gray-900 border-b border-gray-50 pb-4">
                         {siteContent.stories?.title || 'TOP STORIES'}
@@ -142,9 +142,70 @@ export function HomeClient({ layout, heroPosts, storyPosts, dummyPlayers, highli
                   )}
                </div>
             );
+         case 'players':
+            return (
+               <section key={key} className="w-full lg:col-span-12 mt-16 mb-8 overflow-hidden">
+                  <div className="flex items-center justify-between mb-8">
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-[#b50a0a] flex items-center justify-center shadow-lg shadow-red-900/20"><Star className="w-5 h-5 text-white" /></div>
+                        <div>
+                           <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{siteContent.highlights_intro?.subtitle || 'Featured'}</span>
+                           <h2 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tighter italic">
+                              {siteContent.highlights_intro?.title?.split(' ')[0] || 'Players'} <span className="text-[#b50a0a]">{siteContent.highlights_intro?.title?.split(' ').slice(1).join(' ') || 'Profiles'}</span>
+                           </h2>
+                        </div>
+                     </div>
+                     <div className="flex gap-2">
+                        <button onClick={() => setCurrentIdx(prev => Math.max(0, prev - 1))} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 bg-white hover:bg-gray-50 transition-colors"><ChevronLeft className="w-5 h-5" /></button>
+                        <button onClick={() => setCurrentIdx(prev => (prev + 1) % (dummyPlayers.length - 3))} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 bg-white hover:bg-gray-50 transition-colors"><ChevronRight className="w-5 h-5" /></button>
+                     </div>
+                  </div>
+                  <div className="relative w-full overflow-hidden">
+                     <div className="flex transition-transform duration-700 ease-in-out gap-6" style={{ transform: `translateX(calc(-${currentIdx * 25}% - ${currentIdx * 6}px))` }}>
+                        {dummyPlayers.map((player, idx) => (
+                           <div key={idx} className="relative rounded-xl overflow-hidden aspect-[4/5] bg-gray-900 shadow-xl group border border-gray-800 shrink-0 w-[calc((100%-18px)/1)] md:w-[calc((100%-48px)/3)] lg:w-[calc((100%-72px)/4)]">
+                              <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={{ backgroundImage: `url(${player.img})` }} />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                              <div className="absolute bottom-0 left-0 p-6">
+                                 <span className="text-[#b50a0a] text-5xl font-black italic block leading-none">{player.num}</span>
+                                 <h3 className="text-2xl font-black text-white leading-tight mt-2 whitespace-pre-line italic uppercase tracking-tighter">{player.name}</h3>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+               </section>
+            );
+         case 'coach_agents':
+            return (
+               <section key={key} className="w-full lg:col-span-12 mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <Link href="/coaches" className="group relative h-[450px] rounded-[40px] overflow-hidden shadow-2xl border border-gray-100 block transform transition-all hover:-translate-y-2 hover:shadow-red-900/10">
+                     <div className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110" style={{ backgroundImage: `url('/images/coach_card.png')` }} />
+                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
+                     <div className="absolute bottom-0 left-0 p-12 w-full z-10">
+                        <span className="text-[#b50a0a] text-[10px] font-black uppercase tracking-[0.4em] mb-4 block">Professional Elite</span>
+                        <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter italic leading-none mb-6">Expert <br /><span className="text-[#b50a0a]">Coaches</span></h3>
+                        <div className="flex items-center gap-3 text-white/60 text-xs font-bold uppercase tracking-widest group-hover:text-white transition-colors">
+                           Explore Coaching Staff <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+                        </div>
+                     </div>
+                  </Link>
+                  <Link href="/agents" className="group relative h-[450px] rounded-[40px] overflow-hidden shadow-2xl border border-gray-100 block transform transition-all hover:-translate-y-2 hover:shadow-blue-900/10">
+                     <div className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110" style={{ backgroundImage: `url('/images/agent_card.png')` }} />
+                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
+                     <div className="absolute bottom-0 left-0 p-12 w-full z-10">
+                        <span className="text-blue-500 text-[10px] font-black uppercase tracking-[0.4em] mb-4 block">Dedicated Representation</span>
+                        <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter italic leading-none mb-6">Global <br /><span className="text-blue-500">Agents</span></h3>
+                        <div className="flex items-center gap-3 text-white/60 text-xs font-bold uppercase tracking-widest group-hover:text-white transition-colors">
+                           Meet Our Agents <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+                        </div>
+                     </div>
+                  </Link>
+               </section>
+            );
          case 'news':
             return (
-               <div key={key} className="lg:col-span-3 flex flex-col relative overflow-hidden bg-white border border-gray-100 rounded-xl shadow-[0_2px_15px_rgba(0,0,0,0.06)] p-5 h-[400px] md:h-[420px]">
+               <div key={key} className="lg:col-span-12 flex flex-col relative overflow-hidden bg-white border border-gray-100 rounded-xl shadow-[0_2px_15px_rgba(0,0,0,0.06)] p-5 h-auto mt-8">
                   <div className="mb-4">
                     <h2 className="text-xs font-black tracking-widest uppercase text-gray-900 underline underline-offset-8 decoration-[#b50a0a] decoration-2">{siteContent.news?.title || 'Match Fixtures'}</h2>
                   </div>
@@ -267,38 +328,6 @@ export function HomeClient({ layout, heroPosts, storyPosts, dummyPlayers, highli
             </div>
          </main>
          
-         {/* Players Section (Kept static for now as it's logic-heavy) */}
-         <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-24 mb-16 overflow-hidden">
-            <div className="flex items-center justify-between mb-8">
-               <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-[#b50a0a] flex items-center justify-center shadow-lg shadow-red-900/20"><Star className="w-5 h-5 text-white" /></div>
-                  <div>
-                     <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{siteContent.highlights_intro?.subtitle || 'Featured'}</span>
-                     <h2 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tighter italic">
-                        {siteContent.highlights_intro?.title?.split(' ')[0] || 'Players'} <span className="text-[#b50a0a]">{siteContent.highlights_intro?.title?.split(' ').slice(1).join(' ') || 'Profiles'}</span>
-                     </h2>
-                  </div>
-               </div>
-               <div className="flex gap-2">
-                  <button onClick={() => setCurrentIdx(prev => Math.max(0, prev - 1))} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 bg-white"><ChevronLeft className="w-5 h-5" /></button>
-                  <button onClick={() => setCurrentIdx(prev => (prev + 1) % (dummyPlayers.length - 3))} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 bg-white"><ChevronRight className="w-5 h-5" /></button>
-               </div>
-            </div>
-            <div className="relative w-full overflow-hidden">
-               <div className="flex transition-transform duration-700 ease-in-out gap-6" style={{ transform: `translateX(calc(-${currentIdx * 25}% - ${currentIdx * 6}px))` }}>
-                  {dummyPlayers.map((player, idx) => (
-                     <div key={idx} className="relative rounded-xl overflow-hidden aspect-[4/5] bg-gray-900 shadow-xl group border border-gray-800 shrink-0 w-[calc((100%-18px)/1)] md:w-[calc((100%-48px)/3)] lg:w-[calc((100%-72px)/4)]">
-                        <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={{ backgroundImage: `url(${player.img})` }} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                        <div className="absolute bottom-0 left-0 p-6">
-                           <span className="text-[#b50a0a] text-5xl font-black italic block leading-none">{player.num}</span>
-                           <h3 className="text-2xl font-black text-white leading-tight mt-2 whitespace-pre-line italic uppercase tracking-tighter">{player.name}</h3>
-                        </div>
-                     </div>
-                  ))}
-               </div>
-            </div>
-         </section>
 
          <Footer content={footerContent} />
       </div>

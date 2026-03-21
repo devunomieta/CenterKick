@@ -26,3 +26,58 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
     throw error;
   }
 }
+
+export async function sendAdminInvitationEmail(email: string, role: string, invitationLink: string) {
+  try {
+    const data = await resend.emails.send({
+      from: 'CenterKick Admin <admin@centerkick.com>',
+      to: [email],
+      subject: 'Invitation to Join CenterKick Admin Dashboard',
+      html: `
+        <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; color: #1f2937; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px;">
+            <div style="text-align: center; margin-bottom: 32px;">
+                <div style="display: inline-block; padding: 12px; border-radius: 12px; background-color: #b50a0a; margin-bottom: 16px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h1 style="font-size: 24px; font-weight: 800; color: #111827; margin: 0; text-transform: uppercase; letter-spacing: -0.025em;">CenterKick Admin</h1>
+                <p style="font-size: 14px; font-weight: 600; color: #b50a0a; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em;">Secure Invitation</p>
+            </div>
+            
+            <div style="margin-bottom: 32px;">
+                <p style="font-size: 16px; line-height: 24px; color: #4b5563; margin-bottom: 24px;">
+                    Hello, <br/><br/>
+                    You have been invited to join the CenterKick administrative team as a <strong>${role.toUpperCase()}</strong>.
+                </p>
+                
+                <div style="background-color: #f9fafb; border: 1px solid #f3f4f6; border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center;">
+                    <p style="font-size: 13px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Your Role</p>
+                    <p style="font-size: 18px; font-weight: 800; color: #111827; margin: 0;">${role.toUpperCase()}</p>
+                </div>
+                
+                <div style="text-align: center;">
+                    <a href="${invitationLink}" style="display: inline-block; padding: 16px 32px; background-color: #b50a0a; color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s ease;">
+                        Complete Your Signup
+                    </a>
+                </div>
+            </div>
+            
+            <div style="border-top: 1px solid #f3f4f6; padding-top: 24px; text-align: center;">
+                <p style="font-size: 12px; color: #9ca3af; margin-bottom: 8px;">
+                    If the button above doesn't work, copy and paste this link into your browser:
+                </p>
+                <p style="font-size: 12px; color: #6b7280; word-break: break-all; margin-bottom: 24px;">
+                    ${invitationLink}
+                </p>
+                <p style="font-size: 11px; color: #9ca3af; text-transform: uppercase; font-weight: 700;">
+                    &copy; 2026 CenterKick. All rights reserved.
+                </p>
+            </div>
+        </div>
+      `,
+    });
+    return data;
+  } catch (error) {
+    console.error('Failed to send admin invitation email:', error);
+    throw error;
+  }
+}

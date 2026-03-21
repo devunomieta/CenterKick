@@ -52,15 +52,15 @@ export function AthleteDetailsClient({ athlete }: AthleteDetailsClientProps) {
 
                      <div className="flex gap-4 mb-10 flex-wrap">
                         <div className="backdrop-blur-xl bg-white/5 border border-white/10 px-6 py-3.5 rounded-2xl flex flex-col hover:bg-white/10 transition-colors shadow-2xl">
-                           <span className="text-[9px] uppercase font-bold text-gray-400 tracking-[0.2em] mb-1">Status</span>
+                           <span className="text-[9px] uppercase font-bold text-gray-200 tracking-[0.2em] mb-1">Status</span>
                            <span className="text-xl font-black text-white capitalize">{athlete.status}</span>
                         </div>
                         <div className="backdrop-blur-xl bg-white/5 border border-white/10 px-6 py-3.5 rounded-2xl flex flex-col hover:bg-white/10 transition-colors shadow-2xl">
-                           <span className="text-[9px] uppercase font-bold text-gray-400 tracking-[0.2em] mb-1">Height</span>
+                           <span className="text-[9px] uppercase font-bold text-gray-200 tracking-[0.2em] mb-1">Height</span>
                            <span className="text-xl font-black text-white">{athlete.height_cm ? `${athlete.height_cm}cm` : 'N/A'}</span>
                         </div>
                         <div className="backdrop-blur-xl bg-white/5 border border-white/10 px-6 py-3.5 rounded-2xl flex flex-col hover:bg-white/10 transition-colors shadow-2xl">
-                           <span className="text-[9px] uppercase font-bold text-gray-400 tracking-[0.2em] mb-1">Main Foot</span>
+                           <span className="text-[9px] uppercase font-bold text-gray-200 tracking-[0.2em] mb-1">Main Foot</span>
                            <span className="text-xl font-black text-white">{athlete.foot || 'Right'}</span>
                         </div>
                      </div>
@@ -142,7 +142,7 @@ export function AthleteDetailsClient({ athlete }: AthleteDetailsClientProps) {
                                  ))}
                               </div>
                            ) : (
-                              <p className="text-gray-400 text-sm font-medium italic lg:pl-4">No honours recorded yet.</p>
+                              <p className="text-gray-900 text-sm font-medium italic lg:pl-4">No honours recorded yet.</p>
                            )}
                         </div>
                      </div>
@@ -154,7 +154,7 @@ export function AthleteDetailsClient({ athlete }: AthleteDetailsClientProps) {
                            </div>
                            <div className="space-y-6">
                               {[
-                                 { label: 'Citizenship', value: athlete.nationality || 'Nigeria' },
+                                 { label: 'Country', value: athlete.country || 'N/A' },
                                  { label: 'Position', value: athlete.position || 'Attack' },
                                  { label: 'Weight', value: athlete.weight_kg ? `${athlete.weight_kg}kg` : 'N/A' },
                                  { label: 'Height', value: athlete.height_cm ? `${athlete.height_cm}cm` : 'N/A' },
@@ -165,13 +165,13 @@ export function AthleteDetailsClient({ athlete }: AthleteDetailsClientProps) {
                                    value: athlete.agent?.profiles ? (
                                      <Link href={`/agents/${athlete.agent.id}`} className="hover:text-[#b50a0a] transition-colors underline">
                                        {athlete.agent.profiles.first_name} {athlete.agent.profiles.last_name}
-                                       <span className="text-[10px] ml-2 text-gray-400 font-bold">({athlete.agent.profiles.agency_name || 'Independent'})</span>
+                                       <span className="text-[10px] ml-2 text-gray-900 font-bold">({athlete.agent.profiles.agency_name || 'Independent'})</span>
                                      </Link>
                                    ) : 'Independent' 
                                  }
                               ].map((item, i) => (
                                  <div key={i} className="flex">
-                                    <span className="w-1/3 text-[13px] font-bold text-gray-500">{item.label}</span>
+                                    <span className="w-1/3 text-[13px] font-bold text-gray-900">{item.label}</span>
                                     <span className="w-2/3 text-[14px] font-black text-gray-900">{item.value}</span>
                                  </div>
                               ))}

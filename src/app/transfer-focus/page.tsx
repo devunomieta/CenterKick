@@ -8,12 +8,12 @@ import { useState } from "react";
 
 // Mock data for the transfer table
 const transferData = [
-   { id: 1, name: "Peter Odu", position: "Center - Forward", nationality: "ng", age: 19, outOfContract: "August 7th, 2022", avatar: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=150&auto=format&fit=crop" },
-   { id: 2, name: "Aashish Yunik", position: "Center - Back", nationality: "ng,tz", age: 28, outOfContract: "May 27th, 2022", avatar: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=150&auto=format&fit=crop" },
-   { id: 3, name: "Beau Beere", position: "Goalkeeper", nationality: "ng", age: 24, outOfContract: "March 7th, 2022", avatar: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=150&auto=format&fit=crop" },
-   { id: 4, name: "Soren Holli", position: "Winger", nationality: "ng,es", age: 23, outOfContract: "Jan 31st, 2022", avatar: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=150&auto=format&fit=crop" },
-   { id: 5, name: "Iman Jan", position: "Midfielder", nationality: "ng", age: 20, outOfContract: "Dec 10th, 2021", avatar: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=150&auto=format&fit=crop" },
-   { id: 6, name: "Zarah Rambo", position: "Right - Winger", nationality: "ng,it", age: 30, outOfContract: "Oct 12th, 2021", avatar: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=150&auto=format&fit=crop" }
+   { id: 1, name: "Peter Odu", position: "Center - Forward", country: "ng", age: 19, outOfContract: "August 7th, 2022", avatar: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=150&auto=format&fit=crop" },
+   { id: 2, name: "Aashish Yunik", position: "Center - Back", country: "ng,tz", age: 28, outOfContract: "May 27th, 2022", avatar: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=150&auto=format&fit=crop" },
+   { id: 3, name: "Beau Beere", position: "Goalkeeper", country: "ng", age: 24, outOfContract: "March 7th, 2022", avatar: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=150&auto=format&fit=crop" },
+   { id: 4, name: "Soren Holli", position: "Winger", country: "ng,es", age: 23, outOfContract: "Jan 31st, 2022", avatar: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=150&auto=format&fit=crop" },
+   { id: 5, name: "Iman Jan", position: "Midfielder", country: "ng", age: 20, outOfContract: "Dec 10th, 2021", avatar: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=150&auto=format&fit=crop" },
+   { id: 6, name: "Zarah Rambo", position: "Right - Winger", country: "ng,it", age: 30, outOfContract: "Oct 12th, 2021", avatar: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=150&auto=format&fit=crop" }
 ];
 
 // Mock data for news cards
@@ -24,8 +24,8 @@ const newsData = [
 ];
 
 // Helper to render flags based on string code
-const renderFlags = (nationalityString: string) => {
-   const codes = nationalityString.split(',');
+const renderFlags = (countryString: string) => {
+   const codes = countryString.split(',');
    const flagUrls: Record<string, string> = {
       'ng': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Flag_of_Nigeria.svg/1200px-Flag_of_Nigeria.svg.png',
       'tz': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Flag_of_Tanzania.svg/1200px-Flag_of_Tanzania.svg.png',
@@ -111,7 +111,7 @@ export default function TransferFocusPage() {
                            <tr className="bg-[#a20000] text-white">
                               <th className="font-bold text-[10px] uppercase tracking-wider px-8 py-3 w-[25%] border-r border-white/20">Player</th>
                               <th className="font-bold text-[10px] uppercase tracking-wider px-6 py-3 w-[20%] border-r border-white/20">Position</th>
-                              <th className="font-bold text-[10px] uppercase tracking-wider px-6 py-3 w-[15%] text-center border-r border-white/20">Nationality</th>
+                              <th className="font-bold text-[10px] uppercase tracking-wider px-6 py-3 w-[15%] text-center border-r border-white/20">Country</th>
                               <th className="font-bold text-[10px] uppercase tracking-wider px-6 py-3 w-[10%] text-center border-r border-white/20">Age</th>
                               <th className="font-bold text-[10px] uppercase tracking-wider px-8 py-3 w-[30%] text-right">Out of contract since</th>
                            </tr>
@@ -134,7 +134,7 @@ export default function TransferFocusPage() {
                                  </td>
                                  <td className="px-6 py-4 border-r border-gray-100">
                                     <div className="flex justify-center">
-                                       {renderFlags(player.nationality)}
+                                       {renderFlags(player.country)}
                                     </div>
                                  </td>
                                  <td className="px-6 py-4 text-center border-r border-gray-100">

@@ -55,7 +55,7 @@ export default function LoginPage() {
                         ENTER THE <br />
                         <span className="text-[#a20000]">ARENA.</span>
                      </h1>
-                     <p className="text-gray-500 text-xl font-medium max-w-lg leading-relaxed">
+                     <p className="text-gray-800 text-xl font-medium max-w-lg leading-relaxed">
                         Access your professional football dashboard. Manage your talent, track performances, and connect with global scouts.
                      </p>
                   </div>
@@ -64,12 +64,12 @@ export default function LoginPage() {
                      <div className="space-y-3">
                         <CheckCircle2 className="w-6 h-6 text-[#a20000]" />
                         <h4 className="font-black uppercase text-xs tracking-tight">Verified Talents</h4>
-                        <p className="text-[11px] text-gray-400 font-bold leading-relaxed">Over 5,000+ professionals already on board.</p>
+                        <p className="text-[11px] text-gray-900 font-bold leading-relaxed">Over 5,000+ professionals already on board.</p>
                      </div>
                      <div className="space-y-3">
                         <CheckCircle2 className="w-6 h-6 text-[#a20000]" />
                         <h4 className="font-black uppercase text-xs tracking-tight">Global Network</h4>
-                        <p className="text-[11px] text-gray-400 font-bold leading-relaxed">Direct links to agents in 50+ countries.</p>
+                        <p className="text-[11px] text-gray-900 font-bold leading-relaxed">Direct links to agents in 50+ countries.</p>
                      </div>
                   </div>
                </div>
@@ -85,7 +85,7 @@ export default function LoginPage() {
                         <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight mb-2">
                            {mode === 'login' ? 'Welcome Back' : 'Create Account'}
                         </h2>
-                        <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">
+                        <p className="text-gray-900 text-sm font-bold uppercase tracking-widest">
                            {mode === 'login' ? 'Please sign in to continue.' : 'Join the elite network today.'}
                         </p>
                      </div>
@@ -99,34 +99,34 @@ export default function LoginPage() {
 
                      <form onSubmit={handleSubmit} className="space-y-8">
                         <div className="space-y-3">
-                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Work Email</label>
+                           <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Work Email</label>
                            <div className="relative">
-                              <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                              <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
                               <input 
                                  name="email"
                                  type="email" 
                                  required
                                  placeholder="name@agency.com" 
-                                 className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
+                                 className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
                               />
                            </div>
                         </div>
 
                         <div className="space-y-3">
                            <div className="flex justify-between items-center px-1">
-                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Security Password</label>
+                              <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Security Password</label>
                               {mode === 'login' && (
                                  <Link href="/forgot-password" title="Coming soon!" className="text-[10px] font-black text-[#a20000] uppercase tracking-widest hover:underline">Forgot?</Link>
                               )}
                            </div>
                            <div className="relative">
-                              <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                              <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
                               <input 
                                  name="password"
                                  type="password" 
                                  required
                                  placeholder="••••••••" 
-                                 className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none" 
+                                 className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
                               />
                            </div>
                         </div>
@@ -147,7 +147,7 @@ export default function LoginPage() {
 
                         <div className="relative py-4 flex items-center gap-4">
                            <div className="flex-1 h-px bg-gray-100"></div>
-                           <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Third Party Entry</span>
+                           <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Third Party Entry</span>
                            <div className="flex-1 h-px bg-gray-100"></div>
                         </div>
 
@@ -161,7 +161,7 @@ export default function LoginPage() {
                      <div className="mt-12 text-center">
                         <Link 
                            href="/register"
-                           className="text-[11px] font-black text-gray-400 uppercase tracking-widest hover:text-[#a20000] transition-colors"
+                           className="text-[11px] font-black text-gray-900 uppercase tracking-widest hover:text-[#a20000] transition-colors"
                         >
                            No account yet? <span className="text-[#a20000] ml-2">Register as Professional</span>
                         </Link>

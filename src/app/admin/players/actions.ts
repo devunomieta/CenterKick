@@ -12,36 +12,42 @@ export async function addPlayer(formData: FormData) {
   const lastName = formData.get('last_name') as string;
   const position = formData.get('position') as string;
   const country = formData.get('country') as string;
-  const age = parseInt(formData.get('age') as string);
+  const dob = formData.get('date_of_birth') as string; // YYYY-MM-DD
   const gender = formData.get('gender') as string;
   const foot = formData.get('foot') as string;
   const agentId = formData.get('agent_id') as string || null;
 
-  // 1. Create User (Simplified for admin-add, usually you'd use auth.admin.createUser)
-  // For now, we'll focus on the profile creation if the user exists or handle as invitation
-  // Note: auth.admin requires service_role which is not recommended in basic server components
-  
-  // 2. Profile Creation/Update
-  const { data: userData, error: userError } = await supabase
+  // Calculate age from DOB
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+  }
+
+  // 1. Check if user already exists
+  const { data: existingUser } = await supabase
     .from('users')
-    .insert([{ email, role: 'player' }])
-    .select()
+    .select('id')
+    .eq('email', email)
     .single();
 
-  if (userError) return { success: false, error: userError.message };
-
+  // 2. Profile Creation (Unlinked enrollment)
   const { error: profileError } = await supabase
     .from('profiles')
     .insert([{
-      user_id: userData.id,
+      user_id: existingUser?.id || null,
+      email: email,
       first_name: firstName,
       last_name: lastName,
       position,
       country,
-      age,
+      date_of_birth: dob,
       gender,
       foot,
       agent_id: agentId,
+      agent_status: agentId ? 'pending' : 'accepted',
       status: 'active'
     }]);
 
@@ -50,8 +56,8 @@ export async function addPlayer(formData: FormData) {
   // 3. Send Registration Email
   await sendEmailNotification(
     email, 
-    "Complete your CenterKick Registration", 
-    `Hello ${firstName}, an admin has created your expert profile. Use this link to set your password and access your dashboard: https://centerkick.com/complete-registration?id=${userData.id}`
+    "Welcome to CenterKick - Your Profile is Ready", 
+    `Hello ${firstName}, an admin has enrolled you in CenterKick. Click here to complete your registration and access your dashboard: https://centerkick.com/register?email=${encodeURIComponent(email)}`
   );
 
   revalidatePath('/admin/players');

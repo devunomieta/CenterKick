@@ -19,7 +19,7 @@ export default function ScoutDashboard() {
             <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input 
               type="text" 
-              placeholder="Search players by name, nationality, or club..." 
+              placeholder="Search players by name, country, or club..." 
               className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none"
             />
           </div>

@@ -25,7 +25,13 @@ export default async function Home() {
       .eq('slug', '/')
       .single();
 
-   const layout = pageData?.layout || ["hero", "stories", "news", "highlights", "cta", "testimonials"];
+   const defaultLayout = ["hero", "stories", "players", "coach_agents", "testimonials", "highlights", "cta"];
+   let layout = pageData?.layout || defaultLayout;
+   
+   // Ensure new design is applied even if DB has old layout
+   if (layout.includes('news') || !layout.includes('coach_agents')) {
+     layout = defaultLayout;
+   }
 
    // Fetch all site content for this page
    const { data: siteContentData } = await supabase
