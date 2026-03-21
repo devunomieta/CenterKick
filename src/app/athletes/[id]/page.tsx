@@ -14,7 +14,7 @@ export default async function AthleteDetailsPage({ params }: AthletePageProps) {
    const { data: athlete, error } = await supabase
       .from('profiles')
       .select('*, agent:users!profiles_agent_id_fkey(id, profiles(*))')
-      .eq('id', id)
+      .or(`id.eq.${id},slug.eq.${id}`)
       .single();
 
    // If not found or restricted (optional: check status)

@@ -9,7 +9,7 @@ export default async function AgentPage({ params }: { params: { id: string } }) 
    const { data: profile, error } = await supabase
       .from('profiles')
       .select('*, users!inner(role)')
-      .eq('id', params.id)
+      .or(`id.eq.${params.id},slug.eq.${params.id}`)
       .single();
 
     // Fetch managed clients (Players & Coaches)

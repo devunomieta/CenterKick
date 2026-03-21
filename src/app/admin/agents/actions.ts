@@ -3,6 +3,23 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { sendEmailNotification } from '../notifications/actions';
+import { generateBaseSlug, generateRandomSuffix } from '@/lib/utils/slug';
+
+async function getUniqueSlug(supabase: any, role: string, firstName: string, lastName: string) {
+  const baseSlug = generateBaseSlug(role, firstName, lastName);
+  
+  // Check if slug exists
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('slug')
+    .eq('slug', baseSlug)
+    .maybeSingle();
+
+  if (!existing) return baseSlug;
+
+  // If exists, add random suffix
+  return `${baseSlug}-${generateRandomSuffix()}`;
+}
 
 export async function addAgent(formData: FormData) {
   const supabase = await createClient();
@@ -21,7 +38,10 @@ export async function addAgent(formData: FormData) {
     .from('users')
     .select('id')
     .eq('email', email)
-    .single();
+    .maybeSingle();
+
+  // Generate unique slug
+  const slug = await getUniqueSlug(supabase, 'agent', firstName, lastName);
 
   // 2. Profile Creation (Unlinked enrollment)
   const { error: profileError } = await supabase
@@ -32,6 +52,7 @@ export async function addAgent(formData: FormData) {
       role: 'agent',
       first_name: firstName,
       last_name: lastName,
+      slug,
       agency_name: agencyName,
       country,
       license_code: licenseCode,
@@ -56,6 +77,21 @@ export async function addAgent(formData: FormData) {
 export async function updateAgent(id: string, data: any) {
   const supabase = await createClient();
   
+  if (data.first_name || data.last_name) {
+    let fname = data.first_name;
+    let lname = data.last_name;
+    
+    if (!fname || !lname) {
+      const { data: current } = await supabase.from('profiles').select('first_name, last_name, role').eq('id', id).single();
+      fname = fname || current?.first_name;
+      lname = lname || current?.last_name;
+      data.slug = await getUniqueSlug(supabase, current?.role || 'agent', fname, lname);
+    } else {
+       const { data: current } = await supabase.from('profiles').select('role').eq('id', id).single();
+       data.slug = await getUniqueSlug(supabase, current?.role || 'agent', fname, lname);
+    }
+  }
+
   const { error } = await supabase
     .from('profiles')
     .update(data)

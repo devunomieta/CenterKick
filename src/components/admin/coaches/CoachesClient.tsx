@@ -5,7 +5,7 @@ import {
   Users, Search, Filter, Shield, UserPlus, 
   MoreHorizontal, Edit, Trash2, ExternalLink, 
   ChevronLeft, ChevronRight, X, User, ChevronDown,
-  Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard, UserCheck, Briefcase, Lock
+  Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard, UserCheck, Briefcase, Lock, Mail
 } from 'lucide-react';
 import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/RestrictedAccess';
 import { DateDisplay } from '@/components/common/DateDisplay';
@@ -17,6 +17,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { Info, AlertCircle } from 'lucide-react';
+import { FlagIcon } from '@/components/common/FlagIcon';
 
 interface Coach {
   id: string;
@@ -51,13 +52,12 @@ export function CoachesClient({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [email, setEmail] = useState('');
   const [emailStatus, setEmailStatus] = useState<AccountStatus>('NONE');
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState('');
   const { showToast } = useToast();
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -91,7 +91,7 @@ export function CoachesClient({
     if (res.success) {
       showToast("Invitation email resent successfully.", "success");
     } else {
-      const errorMsg = (res as any).error || "Failed to resend invitation.";
+      const errorMsg = res.error || "Failed to resend invitation.";
       showToast(errorMsg, "error");
     }
   };
@@ -122,15 +122,13 @@ export function CoachesClient({
   };
 
   const handleOpenProfile = (coach: Coach) => {
-    setSelectedCoach(coach);
-    setIsProfileOpen(true);
+    router.push(`/admin/coaches/${coach.id}`);
   };
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this coach?')) {
       const res = await deleteCoach(id);
       if (res.success) {
-        setIsProfileOpen(false);
         showToast("The coach profile has been successfully removed.", "success");
         window.location.reload();
       } else {
@@ -238,7 +236,7 @@ export function CoachesClient({
                              <p className="font-black text-gray-900 leading-none truncate text-[11px] mb-1">{coach.first_name} {coach.last_name}</p>
                              <div className="flex items-center gap-1.5">
                                 <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                                   <Globe className="w-2.5 h-2.5" /> {coach.country || 'N/A'}
+                                   <FlagIcon country={coach.country || ''} className="w-3 h-2" /> {coach.country || 'N/A'}
                                 </span>
                                 <span className="text-[8px] font-bold text-gray-400">•</span>
                                 <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{coach.age || '--'} YRS</span>
@@ -262,7 +260,7 @@ export function CoachesClient({
                                <>
                                  <div className={`w-1.5 h-1.5 rounded-full ${coach.is_subscribed ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-gray-300'}`}></div>
                                  <span className={`text-[8px] font-black uppercase tracking-widest ${coach.is_subscribed ? 'text-green-600' : 'text-gray-400'}`}>
-                                    {coach.is_subscribed ? 'Pro Verified' : 'Standard'}
+                                    {coach.is_subscribed ? 'PRO' : 'Standard'}
                                  </span>
                                </>
                              )}
@@ -314,124 +312,7 @@ export function CoachesClient({
               </button>
            </div>
         </div>
-      </div>
-
-      {/* Profile Detail Side-panel */}
-      {isProfileOpen && selectedCoach && (
-        <>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] animate-in fade-in duration-300" onClick={() => setIsProfileOpen(false)}></div>
-          <div className="fixed top-0 right-0 h-screen w-full max-w-xl bg-white z-[110] shadow-2xl p-0 animate-in slide-in-from-right duration-500 flex flex-col">
-             {/* Profile Header Card */}
-             <div className="relative h-64 shrink-0 bg-gray-900 overflow-hidden text-white flex flex-col justify-end p-10">
-                <button 
-                  onClick={() => setIsProfileOpen(false)}
-                  className="absolute top-8 right-8 w-10 h-10 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full flex items-center justify-center transition-all z-10"
-                >
-                   <X className="w-5 h-5" />
-                </button>
-                <div className="absolute top-0 right-0 w-96 h-96 bg-[#b50a0a]/20 blur-[100px] rounded-full -mr-32 -mt-32"></div>
-                
-                <div className="flex items-end gap-6 relative z-10">
-                   <div className="w-24 h-24 rounded-3xl bg-white border-4 border-gray-800 flex items-center justify-center font-black text-gray-900 text-3xl shadow-2xl">
-                      {selectedCoach.email?.[0].toUpperCase()}
-                   </div>
-                   <div className="pb-2">
-                      <div className="flex items-center gap-3">
-                         <h2 className="text-3xl font-black italic uppercase tracking-tighter">{selectedCoach.first_name} {selectedCoach.last_name}</h2>
-                         {selectedCoach.status === 'active' && <CheckCircle className="w-6 h-6 text-green-500" />}
-                      </div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{selectedCoach.email}</p>
-                   </div>
-                </div>
-             </div>
-
-             {/* Profile Body */}
-             <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
-                <div className="grid grid-cols-2 gap-8">
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Coaching Specialty</p>
-                      <p className="text-sm font-black text-gray-900 uppercase">{selectedCoach.position || 'Head Coach'}</p>
-                   </div>
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Region / Country</p>
-                      <p className="text-sm font-black text-gray-900 uppercase flex items-center gap-2">
-                         <MapPin className="w-3.5 h-3.5 text-[#b50a0a]" /> {selectedCoach.country || 'Globetrotter'}
-                      </p>
-                   </div>
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">League / Affiliation</p>
-                      <p className="text-sm font-black text-gray-900 uppercase">{selectedCoach.league || 'Independent'}</p>
-                   </div>
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Registration Date</p>
-                      <p className="text-sm font-black text-gray-900 uppercase flex items-center gap-2">
-                         <Calendar className="w-3.5 h-3.5 text-gray-300" /> <DateDisplay date={selectedCoach.created_at} />
-                      </p>
-                   </div>
-                   <div className="space-y-1 md:col-span-2 pt-2 border-t border-gray-50">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Managing Agent</p>
-                      {selectedCoach.agent_id ? (
-                        <Link 
-                          href={`/admin/agents?q=${agents.find(a => a.id === selectedCoach.agent_id)?.email}`}
-                          className="text-[11px] font-black text-[#b50a0a] uppercase flex items-center gap-2 hover:underline"
-                        >
-                           <Shield className="w-3.5 h-3.5" />
-                           {agents.find(a => a.id === selectedCoach.agent_id)?.first_name} {agents.find(a => a.id === selectedCoach.agent_id)?.last_name || 'View Agent Profile'}
-                        </Link>
-                      ) : (
-                        <p className="text-[11px] font-black text-gray-300 uppercase italic">Independent / Unrepresented</p>
-                      )}
-                   </div>
-                </div>
-
-                 {role === 'operations' ? (
-                   <RestrictedAccess description="Subscription data is locked for operations." />
-                 ) : (
-                   <div className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${selectedCoach.is_subscribed ? 'bg-green-600 shadow-lg shadow-green-900/20' : 'bg-gray-200'}`}>
-                            <CreditCard className="w-6 h-6 text-white" />
-                         </div>
-                         <div>
-                            <p className="text-[10px] font-black text-gray-900 uppercase tracking-tight">CenterKick Pro Subscription</p>
-                            <p className="text-[9px] font-bold text-gray-400 uppercase mt-0.5 tracking-widest">
-                               {selectedCoach.is_subscribed ? 'Active Premium Member' : 'Standard Tier'}
-                            </p>
-                         </div>
-                      </div>
-                      <button className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">
-                         Manage Plan
-                      </button>
-                   </div>
-                 )}
-
-                <div className="space-y-4">
-                   <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.2em] border-l-4 border-[#b50a0a] pl-4">Administrative Tools</h3>
-                   <div className="grid grid-cols-2 gap-4">
-                      <button className="flex items-center justify-center gap-2 p-4 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all text-[10px] font-black uppercase tracking-widest group">
-                         <Edit className="w-4 h-4 text-gray-300 group-hover:text-[#b50a0a]" /> Edit Profile
-                      </button>
-                      <button 
-                         onClick={() => handleDelete(selectedCoach.id)}
-                         className="flex items-center justify-center gap-2 p-4 bg-white border border-gray-200 rounded-2xl hover:bg-red-50 hover:border-red-100 transition-all text-[10px] font-black uppercase tracking-widest group"
-                      >
-                         <Trash2 className="w-4 h-4 text-gray-300 group-hover:text-[#b50a0a]" /> Delete Account
-                      </button>
-                   </div>
-                   <Link 
-                     href={`/coaches/${selectedCoach.id}`} 
-                     target="_blank"
-                     className="w-full flex items-center justify-center gap-2 p-5 bg-black text-white rounded-2xl hover:bg-[#b50a0a] transition-all text-xs font-black uppercase tracking-widest shadow-xl shadow-gray-200/20"
-                   >
-                      View Public Profile <ExternalLink className="w-4 h-4" />
-                   </Link>
-                </div>
-             </div>
-          </div>
-        </>
-      )}
-
-      {/* Add Coach Modal */}
+      </div>      {/* Add Coach Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
            <div className="bg-white w-full max-w-xl max-h-[90vh] rounded-[1.5rem] shadow-2xl overflow-hidden relative flex flex-col">
@@ -496,8 +377,8 @@ export function CoachesClient({
                                 <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">Enrolled as prospect (Not yet joined).</p>
                              </div>
                              <button 
-                               onClick={handleResendInv}
-                               className="text-[8px] font-black underline text-[#b50a0a] hover:text-black uppercase tracking-widest"
+                                onClick={handleResendInv}
+                                className="text-[8px] font-black underline text-[#b50a0a] hover:text-black uppercase tracking-widest"
                              >
                                 Resend Invitation?
                              </button>
@@ -520,7 +401,24 @@ export function CoachesClient({
                         </div>
                         <div className="space-y-1">
                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Country</label>
-                           <input name="country" list="countries-coach-modal" required type="text" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="Ex: Nigeria" />
+                           <div className="relative group">
+                              <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                                <FlagIcon 
+                                  country={selectedCountry} 
+                                  className="w-4 h-2.5" 
+                                />
+                              </div>
+                              <input 
+                                name="country" 
+                                list="countries-coach-modal" 
+                                required 
+                                type="text" 
+                                value={selectedCountry}
+                                onChange={(e) => setSelectedCountry(e.target.value)}
+                                className="w-full bg-white border border-gray-100 rounded-lg pl-9 pr-3 py-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900 placeholder:text-gray-900" 
+                                placeholder="Ex: Nigeria" 
+                              />
+                           </div>
                            <datalist id="countries-coach-modal">
                               {COUNTRIES.map(country => (
                                  <option key={country} value={country} />
@@ -561,7 +459,7 @@ export function CoachesClient({
                     </button>
                     <p className="text-[7px] text-gray-900 text-center uppercase font-bold tracking-widest mt-2 italic opacity-60">An automated enrollment email will be sent immediately.</p>
                  </div>
-              </form>
+               </form>
            </div>
         </div>
       )}

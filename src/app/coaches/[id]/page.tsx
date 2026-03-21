@@ -9,7 +9,7 @@ export default async function CoachPage({ params }: { params: { id: string } }) 
    const { data: profile, error } = await supabase
       .from('profiles')
       .select('*, users!inner(role), agent:users!profiles_agent_id_fkey(id, profiles(*))')
-      .eq('id', params.id)
+      .or(`id.eq.${params.id},slug.eq.${params.id}`)
       .single();
 
    if (error || !profile) {

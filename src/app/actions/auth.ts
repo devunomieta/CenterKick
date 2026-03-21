@@ -34,17 +34,23 @@ export async function checkAccountStatus(email: string): Promise<{ status: Accou
 }
 
 /**
- * Retrieves all "prospect" profiles (those not yet linked to an auth user)
+ * Retrieves "prospect" profiles (those not yet linked to an auth user)
+ * Supports optional filtering by role.
  */
-export async function getProspects() {
+export async function getProspects(role?: string) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('profiles')
-    .select('*')
+    .select('*, transactions(status)')
     .is('user_id', null)
-    .not('email', 'is', null)
-    .order('created_at', { ascending: false });
+    .not('email', 'is', null);
+
+  if (role) {
+    query = query.eq('role', role);
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching prospects:', error);
@@ -55,9 +61,9 @@ export async function getProspects() {
 }
 
 /**
- * Resends the invitation/onboarding email to a prospect
+ * Resends the invitation/onboarding email or a subscription reminder
  */
-export async function resendInvitation(email: string, role: string, lastName: string) {
+export async function resendInvitation(email: string, role: string, lastName: string, type: 'invite' | 'reminder' = 'invite') {
   const supabase = await createClient();
   
   // Get the profile to ensure we have the right ID for the link
@@ -71,8 +77,22 @@ export async function resendInvitation(email: string, role: string, lastName: st
 
   const link = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://centerkick.com'}/register?email=${encodeURIComponent(email)}&role=${role}`;
   
-  const subject = `Complete your CenterKick ${role} Registration`;
-  const message = `Hello ${profile.first_name || role === 'athlete' ? 'Player' : role} ${lastName}, 
+  const subject = type === 'reminder' 
+    ? `Action Required: Renew your CenterKick ${role} Subscription`
+    : `Complete your CenterKick ${role} Registration`;
+
+  const message = type === 'reminder'
+    ? `Hello ${profile.first_name || lastName}, 
+
+We noticed your CenterKick ${role} subscription has expired. 
+To continue enjoying full access to our professional network and tools, please re-activate your account.
+
+You can log in and manage your subscription here:
+${link}
+
+Best regards,
+The CenterKick Team`
+    : `Hello ${profile.first_name || (role === 'athlete' ? 'Player' : role)} ${lastName}, 
   
 An admin has invited you to join CenterKick as a ${role}. 
 Your professional profile is ready and waiting for you!

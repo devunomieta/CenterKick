@@ -6,8 +6,9 @@ import {
   MoreHorizontal, Edit, Trash2, ExternalLink, 
   ChevronLeft, ChevronRight, X, User, ChevronDown,
   Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard, Briefcase, Link2, Lock,
-  Info, AlertCircle
+  Info, AlertCircle, Mail
 } from 'lucide-react';
+import { FlagIcon } from '@/components/common/FlagIcon';
 import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/RestrictedAccess';
 import { deleteAgent, updateAgent, addAgent } from '@/app/admin/agents/actions';
 import { checkAccountStatus, resendInvitation, AccountStatus } from '@/app/actions/auth';
@@ -47,14 +48,12 @@ export function AgentsClient({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [email, setEmail] = useState('');
   const [emailStatus, setEmailStatus] = useState<AccountStatus>('NONE');
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState('');
   const { showToast } = useToast();
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -88,7 +87,7 @@ export function AgentsClient({
     if (res.success) {
       showToast("Invitation email resent successfully.", "success");
     } else {
-      const errorMsg = (res as any).error || "Failed to resend invitation.";
+      const errorMsg = res.error || "Failed to resend invitation.";
       showToast(errorMsg, "error");
     }
   };
@@ -119,15 +118,13 @@ export function AgentsClient({
   };
 
   const handleOpenProfile = (agent: Agent) => {
-    setSelectedAgent(agent);
-    setIsProfileOpen(true);
+    router.push(`/admin/agents/${agent.id}`);
   };
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this agent?')) {
       const res = await deleteAgent(id);
       if (res.success) {
-        setIsProfileOpen(false);
         showToast("The agent profile has been successfully removed.", "success");
         window.location.reload();
       } else {
@@ -217,7 +214,7 @@ export function AgentsClient({
                              <p className="font-black text-gray-900 leading-none truncate text-[11px] mb-1">{agent.first_name} {agent.last_name}</p>
                              <div className="flex items-center gap-1.5">
                                 <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                                   <Globe className="w-2.5 h-2.5" /> {agent.country || 'N/A'}
+                                   <FlagIcon country={agent.country || ''} className="w-3 h-2" /> {agent.country || 'N/A'}
                                 </span>
                                 <span className="text-[8px] font-bold text-gray-400">•</span>
                                 <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Licensed Agent</span>
@@ -236,9 +233,9 @@ export function AgentsClient({
                           <div className="flex flex-col">
                              <span className="text-[10px] font-black text-gray-900 uppercase tracking-tighter">{agent.clientCount || 0} Clients Linked</span>
                              <div className="flex items-center gap-2 mt-1">
-                                <div className={`w-1.5 h-1.5 rounded-full ${agent.is_subscribed ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-gray-300'}`}></div>
-                                <span className={`text-[8px] font-black uppercase tracking-widest ${agent.is_subscribed ? 'text-green-600' : 'text-gray-400'}`}>
-                                   {agent.is_subscribed ? 'Verified Partner' : 'Standard'}
+                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
+                                <span className="text-[8px] font-black uppercase tracking-widest text-green-600">
+                                   PRO
                                 </span>
                              </div>
                           </div>
@@ -289,114 +286,7 @@ export function AgentsClient({
               </button>
            </div>
         </div>
-      </div>
-
-      {/* Profile Detail Side-panel */}
-      {isProfileOpen && selectedAgent && (
-        <>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] animate-in fade-in duration-300" onClick={() => setIsProfileOpen(false)}></div>
-          <div className="fixed top-0 right-0 h-screen w-full max-w-xl bg-white z-[110] shadow-2xl p-0 animate-in slide-in-from-right duration-500 flex flex-col">
-             {/* Profile Header Card */}
-             <div className="relative h-64 shrink-0 bg-gray-900 overflow-hidden text-white flex flex-col justify-end p-10">
-                <button 
-                  onClick={() => setIsProfileOpen(false)}
-                  className="absolute top-8 right-8 w-10 h-10 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full flex items-center justify-center transition-all z-10"
-                >
-                   <X className="w-5 h-5" />
-                </button>
-                <div className="absolute top-0 right-0 w-96 h-96 bg-[#b50a0a]/20 blur-[100px] rounded-full -mr-32 -mt-32"></div>
-                
-                <div className="flex items-end gap-6 relative z-10">
-                   <div className="w-24 h-24 rounded-3xl bg-white border-4 border-gray-800 flex items-center justify-center font-black text-gray-900 text-3xl shadow-2xl">
-                      {selectedAgent.email?.[0].toUpperCase()}
-                   </div>
-                   <div className="pb-2">
-                      <div className="flex items-center gap-3">
-                         <h2 className="text-3xl font-black italic uppercase tracking-tighter">{selectedAgent.first_name} {selectedAgent.last_name}</h2>
-                         {selectedAgent.status === 'active' && <CheckCircle className="w-6 h-6 text-green-500" />}
-                      </div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{selectedAgent.email}</p>
-                   </div>
-                </div>
-             </div>
-
-             {/* Profile Body */}
-             <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
-                <div className="grid grid-cols-2 gap-8">
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Agency Name</p>
-                      <p className="text-sm font-black text-gray-900 uppercase">{selectedAgent.agency_name || 'Independent Agent'}</p>
-                   </div>
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Business Locality</p>
-                      <p className="text-sm font-black text-gray-900 uppercase flex items-center gap-2">
-                         <MapPin className="w-3.5 h-3.5 text-[#b50a0a]" /> {selectedAgent.country || 'International'}
-                       </p>
-                    </div>
-                    <div className="space-y-1">
-                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">License Identifier</p>
-                       <p className="text-sm font-black text-gray-900 uppercase">{selectedAgent.license_code || 'NON-VERIFIED'}</p>
-                    </div>
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Managed Network</p>
-                      <p className="text-sm font-black text-gray-900 uppercase flex items-center gap-2">
-                         <Link2 className="w-3.5 h-3.5 text-gray-300" /> {selectedAgent.clientCount || 0} Active Clients
-                      </p>
-                   </div>
-                </div>
-
-                 {role === 'operations' ? (
-                   <RestrictedAccess description="Subscription data is locked for operations." />
-                 ) : (
-                   <div className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${selectedAgent.is_subscribed ? 'bg-green-600 shadow-lg shadow-green-900/20' : 'bg-gray-200'}`}>
-                            <CreditCard className="w-6 h-6 text-white" />
-                         </div>
-                         <div>
-                            <p className="text-[10px] font-black text-gray-900 uppercase tracking-tight">CenterKick Partner Plan</p>
-                            <p className="text-[9px] font-bold text-gray-400 uppercase mt-0.5 tracking-widest">
-                               {selectedAgent.is_subscribed ? 'Verified Business Partner' : 'Standard Agent Tier'}
-                            </p>
-                         </div>
-                      </div>
-                      <button className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">
-                         Billing Panel
-                      </button>
-                   </div>
-                 )}
-
-                <div className="space-y-4">
-                   <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.2em] border-l-4 border-[#b50a0a] pl-4">Administrative Tools</h3>
-                   <div className="grid grid-cols-2 gap-4">
-                       <button 
-                          onClick={() => {
-                             setIsProfileOpen(false);
-                             setIsEditModalOpen(true);
-                          }}
-                          className="flex items-center justify-center gap-2 p-4 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all text-[10px] font-black uppercase tracking-widest group"
-                       >
-                          <Edit className="w-4 h-4 text-gray-300 group-hover:text-[#b50a0a]" /> Edit Details
-                       </button>
-                      <button 
-                         onClick={() => handleDelete(selectedAgent.id)}
-                         className="flex items-center justify-center gap-2 p-4 bg-white border border-gray-200 rounded-2xl hover:bg-red-50 hover:border-red-100 transition-all text-[10px] font-black uppercase tracking-widest group"
-                      >
-                         <Trash2 className="w-4 h-4 text-gray-300 group-hover:text-[#b50a0a]" /> Revoke Access
-                   </button>
-                   </div>
-                   <Link 
-                     href={`/agents/${selectedAgent.id}`} 
-                     target="_blank"
-                     className="w-full flex items-center justify-center gap-2 p-5 bg-black text-white rounded-2xl hover:bg-[#b50a0a] transition-all text-xs font-black uppercase tracking-widest shadow-xl shadow-gray-200/20"
-                   >
-                      View Public Profile <ExternalLink className="w-4 h-4" />
-                   </Link>
-                </div>
-             </div>
-          </div>
-        </>
-      )}
+      </div>      {/* Profile Detail Modal */}
 
       {/* Add Agent Modal */}
       {isAddModalOpen && (
@@ -463,8 +353,8 @@ export function AgentsClient({
                                 <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">Enrolled as prospect (Not yet joined).</p>
                              </div>
                              <button 
-                               onClick={handleResendInv}
-                               className="text-[8px] font-black underline text-[#b50a0a] hover:text-black uppercase tracking-widest"
+                                onClick={handleResendInv}
+                                className="text-[8px] font-black underline text-[#b50a0a] hover:text-black uppercase tracking-widest"
                              >
                                 Resend Invitation?
                              </button>
@@ -482,7 +372,24 @@ export function AgentsClient({
                         </div>
                         <div className="space-y-1">
                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Country</label>
-                           <input name="country" list="countries-agent-modal" required type="text" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black" placeholder="Ex: Portugal" />
+                           <div className="relative group">
+                              <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                                <FlagIcon 
+                                  country={selectedCountry} 
+                                  className="w-4 h-2.5" 
+                                />
+                              </div>
+                              <input 
+                                name="country" 
+                                list="countries-agent-modal" 
+                                required 
+                                type="text" 
+                                value={selectedCountry}
+                                onChange={(e) => setSelectedCountry(e.target.value)}
+                                className="w-full bg-white border border-gray-100 rounded-lg pl-9 pr-3 py-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-900" 
+                                placeholder="Ex: Portugal" 
+                              />
+                           </div>
                            <datalist id="countries-agent-modal">
                               {COUNTRIES.map(country => (
                                  <option key={country} value={country} className="text-black" />
@@ -508,94 +415,11 @@ export function AgentsClient({
                     </button>
                     <p className="text-[7px] text-gray-900 text-center uppercase font-bold tracking-widest mt-2 italic opacity-60">Partner will receive access links instantly.</p>
                  </div>
-              </form>
+               </form>
            </div>
         </div>
       )}
 
-      {/* Edit Agent Modal */}
-      {isEditModalOpen && selectedAgent && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
-           <div className="bg-white w-full max-w-xl max-h-[90vh] rounded-[1.5rem] shadow-2xl overflow-hidden relative flex flex-col">
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
-                 <div>
-                    <h3 className="text-xl font-black italic uppercase tracking-tighter">
-                       <span className="text-gray-900">Update</span> <span className="text-[#b50a0a]">Agent</span>
-                    </h3>
-                    <p className="text-[8px] font-bold text-gray-900 uppercase tracking-widest mt-1">Modify agency information & details</p>
-                 </div>
-                 <button onClick={() => setIsEditModalOpen(false)} className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center hover:bg-gray-100 transition-all border border-gray-100">
-                    <X className="w-4 h-4 text-gray-400" />
-                 </button>
-              </div>
-              <form action={async (formData) => {
-                 const data = {
-                    first_name: formData.get('first_name'),
-                    last_name: formData.get('last_name'),
-                    agency_name: formData.get('agency_name'),
-                    license_code: formData.get('license_code'),
-                    country: formData.get('country'),
-                    age: parseInt(formData.get('age') as string),
-                    gender: formData.get('gender')
-                 };
-                 const res = await updateAgent(selectedAgent.id, data);
-                 if (res.success) {
-                    showToast("The agent profile has been successfully updated.", "success");
-                    setIsEditModalOpen(false);
-                    window.location.reload();
-                 } else {
-                    showToast(res.error || "Failed to update agent.", "error");
-                 }
-              }} className="p-6 space-y-4 overflow-y-auto">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                    <div className="space-y-1">
-                       <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">First Name</label>
-                       <input name="first_name" defaultValue={selectedAgent.first_name} required type="text" className="w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black" />
-                    </div>
-                    <div className="space-y-1">
-                       <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Last Name</label>
-                       <input name="last_name" defaultValue={selectedAgent.last_name} required type="text" className="w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black" />
-                    </div>
-                    <div className="p-4 bg-gray-50/50 rounded-2xl md:col-span-2 grid grid-cols-2 gap-4 border border-gray-100">
-                        <div className="space-y-1 md:col-span-2">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Agency Name</label>
-                           <input name="agency_name" defaultValue={selectedAgent.agency_name} required type="text" className="w-full bg-white border border-gray-100 rounded-lg p-3 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black" />
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">License Code</label>
-                           <input name="license_code" defaultValue={selectedAgent.license_code} type="text" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black" />
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Country</label>
-                           <input name="country" defaultValue={selectedAgent.country} list="countries-edit-modal" required type="text" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black" />
-                           <datalist id="countries-edit-modal">
-                              {COUNTRIES.map(country => (
-                                 <option key={country} value={country} className="text-black" />
-                              ))}
-                           </datalist>
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Age</label>
-                           <input name="age" defaultValue={selectedAgent.age} required type="number" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black" />
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Gender</label>
-                           <select name="gender" defaultValue={selectedAgent.gender} className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black">
-                              <option value="Male" className="text-black">Male</option>
-                              <option value="Female" className="text-black">Female</option>
-                           </select>
-                        </div>
-                    </div>
-                 </div>
-                 <div className="pt-2">
-                    <button type="submit" className="w-full bg-black text-white py-3.5 rounded-xl font-black uppercase tracking-widest shadow-xl hover:bg-[#b50a0a] transition-all text-[10px]">
-                        Save Changes
-                    </button>
-                 </div>
-              </form>
-           </div>
-        </div>
-      )}
     </div>
   );
 }

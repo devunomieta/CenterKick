@@ -5,18 +5,20 @@ import {
   Users, Search, Filter, Shield, UserPlus, 
   MoreHorizontal, Edit, Trash2, ExternalLink, 
   ChevronLeft, ChevronRight, X, User, ChevronDown,
-  Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard, Lock
+  Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard, Lock, Eye, Mail, Trophy, Activity, MessageSquare,
+  Facebook, Instagram, Twitter
 } from 'lucide-react';
 import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/RestrictedAccess';
 import { DateDisplay } from '@/components/common/DateDisplay';
-import { deletePlayer, updatePlayer, addPlayer } from '@/app/admin/players/actions';
-import { checkAccountStatus, resendInvitation } from '@/app/actions/auth';
+import { deletePlayer, updatePlayer, addPlayer, getPlayerTransactions, getPendingEdits, processProfileEdit } from '@/app/admin/players/actions';
+import { checkAccountStatus, resendInvitation, type AccountStatus } from '@/app/actions/auth';
 import Link from 'next/link';
 import { COUNTRIES } from '@/lib/constants/countries';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { Info, AlertCircle } from 'lucide-react';
+import { FlagIcon } from '@/components/common/FlagIcon';
 
 interface Player {
   id: string;
@@ -30,14 +32,44 @@ interface Player {
   age?: number;
   date_of_birth: string | null;
   gender: string;
+  foot?: string;
   is_subscribed: boolean;
   agent_id?: string;
   agent_status?: 'pending' | 'accepted' | 'rejected';
   created_at: string;
+  place_of_birth?: string;
+  current_club?: string;
+  joined_date?: string;
+  contract_expiry?: string;
+  current_salary?: string;
+  bio?: string;
+  phone_number?: string;
+  jersey_number?: number;
+  height_cm?: number;
+  weight_kg?: number;
+  market_value?: string;
+  formation?: string;
+  league?: string;
+  social_links?: any;
+  achievements?: any[];
   users: {
     email: string;
     role: string;
+    subscriptions?: Array<{
+      current_period_end: string;
+      status: string;
+    }>;
   } | null;
+}
+
+interface ProfileEdit {
+  id: string;
+  profile_id: string;
+  field_name: string;
+  old_value: string;
+  new_value: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
 }
 
 const calculateDetailedAgeString = (day: string, month: string, year: string) => {
@@ -101,9 +133,7 @@ export function PlayersClient({
   const router = useRouter();
   const { showToast } = useToast();
   const searchParams = useSearchParams();
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [email, setEmail] = useState('');
   const [emailStatus, setEmailStatus] = useState<AccountStatus>('NONE');
@@ -113,6 +143,7 @@ export function PlayersClient({
   const [isAgentSearchOpen, setIsAgentSearchOpen] = useState(false);
   const [dob, setDob] = useState({ day: '', month: '', year: '' });
   const [calculatedAge, setCalculatedAge] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState('');
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -138,10 +169,6 @@ export function PlayersClient({
     return () => clearTimeout(timer);
   }, [email]);
 
-  useEffect(() => {
-    const ageStr = calculateDetailedAgeString(dob.day, dob.month, dob.year);
-    setCalculatedAge(ageStr);
-  }, [dob]);
 
   const handleResendInv = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -150,7 +177,7 @@ export function PlayersClient({
     if (res.success) {
       showToast("Invitation email resent successfully.", "success");
     } else {
-      const errorMsg = (res as any).error || "Failed to resend invitation.";
+      const errorMsg = res.error || "Failed to resend invitation.";
       showToast(errorMsg, "error");
     }
   };
@@ -181,8 +208,7 @@ export function PlayersClient({
   };
 
   const handleOpenProfile = (player: Player) => {
-    setSelectedPlayer(player);
-    setIsProfileOpen(true);
+    router.push(`/admin/players/${player.id}`);
   };
 
   const handleDelete = async (id: string) => {
@@ -190,7 +216,6 @@ export function PlayersClient({
       const res = await deletePlayer(id);
       if (res.success) {
         showToast('Player deleted successfully', 'success');
-        setIsProfileOpen(false);
         router.refresh();
       } else {
         showToast(res.error || 'Failed to delete player', 'error');
@@ -233,9 +258,6 @@ export function PlayersClient({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header & Stats Cards would be injected from server for SEO, 
-          but for interactivity we handle the table and modals here */}
-      
       {/* Search & Filters */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-6 space-y-6">
         <form onSubmit={handleSearch} className="flex flex-wrap gap-3">
@@ -282,7 +304,7 @@ export function PlayersClient({
               </select>
               <div className="relative">
                  <input 
-                   list="countries"
+                   list="countries-players"
                    placeholder="Country"
                    onChange={(e) => handleFilterChange('country', e.target.value)}
                    value={searchParams.get('country') || ''}
@@ -290,7 +312,7 @@ export function PlayersClient({
                  />
                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#b50a0a]" />
               </div>
-              <datalist id="countries">
+              <datalist id="countries-players">
                  {COUNTRIES.map(country => (
                     <option key={country} value={country} />
                  ))}
@@ -307,6 +329,8 @@ export function PlayersClient({
             <thead className="bg-[#f8f9fa] border-b border-gray-100">
               <tr>
                 <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-[#b50a0a]">Athlete Information</th>
+                <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-[#b50a0a]">Gender</th>
+                <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-[#b50a0a]">Country</th>
                 <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-[#b50a0a]">Role / Position</th>
                 <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-[#b50a0a]">Subscription</th>
                 <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-[#b50a0a] text-right">Actions</th>
@@ -315,7 +339,7 @@ export function PlayersClient({
             <tbody className="divide-y divide-gray-50">
               {initialPlayers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-20 text-center">
+                  <td colSpan={6} className="px-6 py-20 text-center">
                      <Users className="w-12 h-12 text-gray-100 mx-auto mb-4" />
                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">No players matches your search criteria.</p>
                   </td>
@@ -333,38 +357,64 @@ export function PlayersClient({
                              {(player.users?.email || player.email || 'P')[0].toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                             <p className="font-black text-gray-900 leading-none truncate text-[11px] mb-1">{player.first_name} {player.last_name}</p>
-                             <div className="flex items-center gap-1.5">
-                                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                                   <Globe className="w-2.5 h-2.5" /> {player.country || 'N/A'}
-                                </span>
-                                 <span className="text-[8px] font-bold text-gray-400">•</span>
-                                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{calculateSimpleAge(player.date_of_birth)} YRS</span>
-                             </div>
+                             <p className="font-black text-gray-900 leading-none truncate text-[11px] mb-1.5 flex items-center gap-2">
+                               {player.first_name} {player.last_name} 
+                               <span className="text-[8px] font-bold text-gray-400">•</span>
+                               <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{calculateSimpleAge(player.date_of_birth)} YRS</span>
+                             </p>
+                             <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest truncate">{player.users?.email || player.email || 'No email'}</p>
                           </div>
+                       </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                       <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{player.gender || 'Unset'}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                       <div className="flex items-center gap-1.5">
+                          <FlagIcon country={player.country} className="w-5 h-3.5" />
+                          <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{player.country || 'N/A'}</span>
                        </div>
                     </td>
                     <td className="px-6 py-4">
                        <div className="flex flex-col">
                           <span className="text-[10px] font-black text-gray-900 uppercase tracking-tighter">{player.position || 'Unset'}</span>
-                          <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5 italic">Prospect</span>
+                          <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5 italic">{player.foot || 'N/A'} Foot</span>
                        </div>
                     </td>
                     <td className="px-6 py-4">
                        {role === 'operations' ? (
                          <RestrictedAccessInline />
                        ) : (
-                         <div className="flex items-center gap-2">
-                            <div className={`w-1.5 h-1.5 rounded-full ${player.is_subscribed ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-gray-300'}`}></div>
-                            <span className={`text-[9px] font-black uppercase tracking-widest ${player.is_subscribed ? 'text-green-600' : 'text-gray-400'}`}>
-                               {player.is_subscribed ? 'Pro' : 'Free'}
-                            </span>
+                         <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                               <div className={`w-1.5 h-1.5 rounded-full ${player.is_subscribed ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-gray-300'}`}></div>
+                               <span className={`text-[9px] font-black uppercase tracking-widest ${player.is_subscribed ? 'text-green-600' : 'text-gray-400'}`}>
+                                  {player.is_subscribed ? 'Pro' : 'Free'}
+                               </span>
+                            </div>
+                            {player.is_subscribed && player.users?.subscriptions?.[0]?.current_period_end && (() => {
+                               const expiryDate = new Date(player.users.subscriptions[0].current_period_end);
+                               const diffTime = expiryDate.getTime() - new Date().getTime();
+                               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                               const isExpiringSoon = diffDays <= 7;
+                               return (
+                                 <span className={`text-[8px] font-bold uppercase tracking-widest ${isExpiringSoon ? 'text-red-600' : 'text-gray-400'}`}>
+                                    Expires: {expiryDate.toLocaleDateString()}
+                                 </span>
+                               );
+                            })()}
                          </div>
                        )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                       <button className="p-1.5 text-gray-300 hover:text-black transition-colors">
-                          <MoreHorizontal className="w-4 h-4" />
+                       <button 
+                         onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenProfile(player);
+                         }}
+                         className="p-1.5 text-gray-300 hover:text-[#b50a0a] transition-colors bg-gray-50 rounded-lg"
+                       >
+                          <Eye className="w-4 h-4" />
                        </button>
                     </td>
                   </tr>
@@ -409,137 +459,6 @@ export function PlayersClient({
         </div>
       </div>
 
-      {/* Profile Detail Side-panel */}
-      {isProfileOpen && selectedPlayer && (
-        <>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] animate-in fade-in duration-300" onClick={() => setIsProfileOpen(false)}></div>
-          <div className="fixed top-0 right-0 h-screen w-full max-w-xl bg-white z-[110] shadow-2xl p-0 animate-in slide-in-from-right duration-500 flex flex-col">
-             {/* Profile Header Card */}
-             <div className="relative h-64 shrink-0 bg-gray-900 overflow-hidden text-white flex flex-col justify-end p-10">
-                <button 
-                  onClick={() => setIsProfileOpen(false)}
-                  className="absolute top-8 right-8 w-10 h-10 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full flex items-center justify-center transition-all z-10"
-                >
-                   <X className="w-5 h-5" />
-                </button>
-                <div className="absolute top-0 right-0 w-96 h-96 bg-[#b50a0a]/20 blur-[100px] rounded-full -mr-32 -mt-32"></div>
-                
-                <div className="flex items-end gap-6 relative z-10">
-                   <div className="w-24 h-24 rounded-3xl bg-white border-4 border-gray-800 flex items-center justify-center font-black text-gray-900 text-3xl shadow-2xl">
-                      {(selectedPlayer.users?.email || selectedPlayer.email || 'P')[0].toUpperCase()}
-                   </div>
-                   <div className="pb-2">
-                      <div className="flex items-center gap-3">
-                         <h2 className="text-3xl font-black italic uppercase tracking-tighter">{selectedPlayer.first_name} {selectedPlayer.last_name}</h2>
-                         {selectedPlayer.status === 'active' && <CheckCircle className="w-6 h-6 text-green-500" />}
-                      </div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{selectedPlayer.users?.email || selectedPlayer.email}</p>
-                   </div>
-                </div>
-             </div>
-
-             {/* Profile Body */}
-             <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
-                <div className="grid grid-cols-2 gap-8">
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Football Position</p>
-                      <p className="text-sm font-black text-gray-900 uppercase">{selectedPlayer.position || 'Not specified'}</p>
-                   </div>
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Origin / Country</p>
-                      <p className="text-sm font-black text-gray-900 uppercase flex items-center gap-2">
-                         <MapPin className="w-3.5 h-3.5 text-[#b50a0a]" /> {selectedPlayer.country || 'Globetrotter'}
-                      </p>
-                   </div>
-                    <div className="space-y-1">
-                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Age Performance</p>
-                       <p className="text-sm font-black text-gray-900 uppercase">{calculateSimpleAge(selectedPlayer.date_of_birth)} Years Old</p>
-                    </div>
-                   <div className="space-y-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Registration Date</p>
-                      <p className="text-sm font-black text-gray-900 uppercase flex items-center gap-2">
-                         <Calendar className="w-3.5 h-3.5 text-gray-300" /> <DateDisplay date={selectedPlayer.created_at} />
-                      </p>
-                   </div>
-                   <div className="space-y-1 md:col-span-2 pt-2 border-t border-gray-50">
-                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Managing Agent</p>
-                       <div className="flex flex-col gap-2">
-                          {selectedPlayer.agent_id ? (
-                            <div className="flex items-center justify-between">
-                               <Link 
-                                 href={`/admin/agents?q=${agents.find(a => a.id === selectedPlayer.agent_id)?.users?.email || agents.find(a => a.id === selectedPlayer.agent_id)?.email}`}
-                                 className="text-[11px] font-black text-[#b50a0a] uppercase flex items-center gap-2 hover:underline"
-                               >
-                                  <Shield className="w-3.5 h-3.5" />
-                                  {agents.find(a => a.id === selectedPlayer.agent_id)?.first_name} {agents.find(a => a.id === selectedPlayer.agent_id)?.last_name || 'View Agent Profile'}
-                               </Link>
-                               
-                               <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 ${
-                                  selectedPlayer.agent_status === 'accepted' ? 'bg-green-50 text-green-600 border border-green-100' :
-                                  selectedPlayer.agent_status === 'rejected' ? 'bg-red-50 text-red-600 border border-red-100' :
-                                  'bg-orange-50 text-orange-600 border border-orange-100'
-                               }`}>
-                                  {selectedPlayer.agent_status === 'pending' && <Clock className="w-2.5 h-2.5" />}
-                                  {selectedPlayer.agent_status === 'accepted' && <CheckCircle className="w-2.5 h-2.5" />}
-                                  {selectedPlayer.agent_status === 'rejected' && <X className="w-2.5 h-2.5" />}
-                                  {selectedPlayer.agent_status || 'Pending'}
-                               </div>
-                            </div>
-                          ) : (
-                            <p className="text-[11px] font-black text-gray-300 uppercase italic">Independent / Unrepresented</p>
-                          )}
-                       </div>
-                    </div>
-                </div>
-
-                 {role === 'operations' ? (
-                   <RestrictedAccess description="Subscription data is locked for operations." />
-                 ) : (
-                   <div className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${selectedPlayer.is_subscribed ? 'bg-green-600 shadow-lg shadow-green-900/20' : 'bg-gray-200'}`}>
-                            <CreditCard className="w-6 h-6 text-white" />
-                         </div>
-                         <div>
-                            <p className="text-[10px] font-black text-gray-900 uppercase tracking-tight">CenterKick Pro Subscription</p>
-                            <p className="text-[9px] font-bold text-gray-400 uppercase mt-0.5 tracking-widest">
-                               {selectedPlayer.is_subscribed ? 'Active Premium Member' : 'Standard Free Tier'}
-                            </p>
-                         </div>
-                      </div>
-                      <button className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">
-                         Manage Plan
-                      </button>
-                   </div>
-                 )}
-
-                <div className="space-y-4">
-                   <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.2em] border-l-4 border-[#b50a0a] pl-4">Administrative Tools</h3>
-                   <div className="grid grid-cols-2 gap-4">
-                      <button className="flex items-center justify-center gap-2 p-4 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all text-[10px] font-black uppercase tracking-widest group">
-                         <Edit className="w-4 h-4 text-gray-300 group-hover:text-[#b50a0a]" /> Edit Profile
-                      </button>
-                      <button 
-                         onClick={() => handleDelete(selectedPlayer.id)}
-                         className="flex items-center justify-center gap-2 p-4 bg-white border border-gray-200 rounded-2xl hover:bg-red-50 hover:border-red-100 transition-all text-[10px] font-black uppercase tracking-widest group"
-                      >
-                         <Trash2 className="w-4 h-4 text-gray-300 group-hover:text-[#b50a0a]" /> Delete Account
-                      </button>
-                   </div>
-                   <Link 
-                     href={`/athletes/${selectedPlayer.id}`} 
-                     target="_blank"
-                     className="w-full flex items-center justify-center gap-2 p-5 bg-black text-white rounded-2xl hover:bg-[#b50a0a] transition-all text-xs font-black uppercase tracking-widest shadow-xl shadow-gray-200/20"
-                   >
-                      View Public Profile <ExternalLink className="w-4 h-4" />
-                   </Link>
-                </div>
-             </div>
-          </div>
-        </>
-      )}
-
-      {/* Add Player Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
            <div className="bg-white w-full max-w-xl max-h-[90vh] rounded-[1.5rem] shadow-2xl overflow-hidden relative flex flex-col">
@@ -587,7 +506,7 @@ export function PlayersClient({
                     <div className="md:col-span-2 space-y-1">
                        <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1 flex justify-between">
                           <span>Email Address</span>
-                          {isCheckingEmail && <span className="text-[7px] text-[#b50a0a] animate-pulse">Checking status...</span>}
+                           {isCheckingEmail && <span className="text-[7px] text-[#b50a0a] animate-pulse">Checking status...</span>}
                        </label>
                        <input 
                          name="email" 
@@ -641,8 +560,25 @@ export function PlayersClient({
                            <div className="flex items-center justify-between ml-1">
                               <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest">Country</label>
                            </div>
-                           <input name="country" list="countries-modal" required type="text" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-900" placeholder="Ex: Nigeria" />
-                           <datalist id="countries-modal">
+                           <div className="relative group">
+                              <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                                <FlagIcon 
+                                  country={selectedCountry} 
+                                  className="w-4 h-2.5" 
+                                />
+                              </div>
+                              <input 
+                                name="country" 
+                                list="countries-modal-players" 
+                                required 
+                                type="text" 
+                                value={selectedCountry}
+                                onChange={(e) => setSelectedCountry(e.target.value)}
+                                className="w-full bg-white border border-gray-100 rounded-lg pl-9 pr-3 py-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-900" 
+                                placeholder="Ex: Nigeria" 
+                              />
+                           </div>
+                           <datalist id="countries-modal-players">
                               {COUNTRIES.map(country => (
                                  <option key={country} value={country} className="text-black" />
                               ))}
@@ -776,5 +712,3 @@ export function PlayersClient({
     </div>
   );
 }
-
-import { Sliders } from 'lucide-react';

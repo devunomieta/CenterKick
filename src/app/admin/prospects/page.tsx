@@ -1,10 +1,16 @@
 import { createClient } from '@/lib/supabase/server';
 import { getProspects } from '@/app/actions/auth';
 import { ProspectsClient } from '@/components/admin/prospects/ProspectsClient';
-import { Users, Mail, Clock } from 'lucide-react';
+import { Users, Mail, Clock, CreditCard } from 'lucide-react';
 
-export default async function AdminProspectsPage() {
-  const prospects = await getProspects();
+export default async function AdminProspectsPage({
+  searchParams
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const resolvedParams = await searchParams;
+  const role = (resolvedParams.role as string) || '';
+  const prospects = await getProspects(role);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -21,26 +27,30 @@ export default async function AdminProspectsPage() {
           <div className="w-10 h-10 rounded-xl bg-gray-100 text-gray-900 flex items-center justify-center mb-4">
             <Users className="w-4 h-4" />
           </div>
-          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Prospects</p>
+          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total {role ? role + 's' : 'Prospects'}</p>
           <p className="text-2xl font-black text-gray-900 italic tracking-tighter">{prospects.length}</p>
         </div>
         <div className="bg-white p-5 rounded-[1.5rem] border-2 border-gray-100 shadow-sm">
           <div className="w-10 h-10 rounded-xl bg-red-50 text-[#b50a0a] flex items-center justify-center mb-4">
             <Clock className="w-4 h-4" />
           </div>
-          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Awaiting Link</p>
-          <p className="text-2xl font-black text-[#b50a0a] italic tracking-tighter">{prospects.length}</p>
+          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">New / Awaiting Link</p>
+          <p className="text-2xl font-black text-[#b50a0a] italic tracking-tighter">
+            {prospects.filter(p => !p.transactions || p.transactions.length === 0).length}
+          </p>
         </div>
         <div className="bg-white p-5 rounded-[1.5rem] border-2 border-gray-100 shadow-sm">
           <div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center mb-4">
-            <Mail className="w-4 h-4" />
+            <CreditCard className="w-4 h-4" />
           </div>
-          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Invitations</p>
-          <p className="text-2xl font-black text-green-600 italic tracking-tighter">{prospects.length}</p>
+          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Expired Subscriptions</p>
+          <p className="text-2xl font-black text-green-600 italic tracking-tighter">
+            {prospects.filter(p => p.transactions && p.transactions.some((t: any) => t.status === 'confirmed')).length}
+          </p>
         </div>
       </div>
 
-      <ProspectsClient initialProspects={prospects} />
+      <ProspectsClient initialProspects={prospects} activeRole={role} />
     </div>
   );
 }

@@ -6,16 +6,17 @@ import { AgentsClient } from '@/components/admin/agents/AgentsClient';
 export default async function AdminAgentsPage({
   searchParams
 }: {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const supabase = await createClient();
+  const resolvedParams = await searchParams;
 
   // URL Params for filtering and pagination
-  const tab = (searchParams.tab as string) || 'all';
-  const page = parseInt((searchParams.page as string) || '1');
-  const q = (searchParams.q as string) || '';
-  const gender = (searchParams.gender as string) || '';
-  const country = (searchParams.country as string) || '';
+  const tab = (resolvedParams.tab as string) || 'all';
+  const page = parseInt((resolvedParams.page as string) || '1');
+  const q = (resolvedParams.q as string) || '';
+  const gender = (resolvedParams.gender as string) || '';
+  const country = (resolvedParams.country as string) || '';
 
   const pageSize = 20;
   const offset = (page - 1) * pageSize;
@@ -23,27 +24,23 @@ export default async function AdminAgentsPage({
   // 1. Fetch Stats
   const [
     { count: totalCount },
-    { count: subscribedCount },
     { count: pendingCount }
   ] = await Promise.all([
-    supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'agent'),
-    supabase.from('profiles').select('*, users!inner(role)', { count: 'exact', head: true }).eq('users.role', 'agent').eq('is_subscribed', true),
-    supabase.from('profiles').select('*, users!inner(role)', { count: 'exact', head: true }).eq('users.role', 'agent').eq('status', 'pending')
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'agent').eq('is_subscribed', true).not('email', 'is', null),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'agent').eq('status', 'pending').not('email', 'is', null)
   ]);
 
-  const unsubscribedCount = (totalCount || 0) - (subscribedCount || 0);
+  const subscribedCount = totalCount || 0;
 
   // 2. Fetch Agents from PROFILES (to include unlinked)
   let query = supabase
     .from('profiles')
-    .select('*, users(role, email)', { count: 'exact' });
+    .select('*, users!user_id(role, email)', { count: 'exact' });
 
   // Apply role filter
-  query = query.eq('role', 'agent');
+  query = query.eq('role', 'agent').eq('is_subscribed', true);
 
   // Apply tab filters
-  if (tab === 'subscribed') query = query.eq('is_subscribed', true);
-  if (tab === 'unsubscribed') query = query.eq('is_subscribed', false);
   if (tab === 'pending') query = query.eq('status', 'pending');
 
   // Apply filters
@@ -76,7 +73,7 @@ export default async function AdminAgentsPage({
   const stats = [
     { label: 'All Agents', value: totalCount || 0, tab: 'all', color: 'text-gray-900', bg: 'bg-gray-100', icon: Briefcase },
     { label: 'Subscribed', value: subscribedCount || 0, tab: 'subscribed', color: 'text-green-600', bg: 'bg-green-50', icon: CreditCard },
-    { label: 'Unsubscribed', value: unsubscribedCount || 0, tab: 'unsubscribed', color: 'text-gray-400', bg: 'bg-gray-50', icon: Users },
+    { label: 'Prospects', value: 'VIEW', tab: 'prospects', color: 'text-gray-400', bg: 'bg-gray-50', icon: Users },
     { label: 'Pending Requests', value: pendingCount || 0, tab: 'pending', color: 'text-[#b50a0a]', bg: 'bg-red-50', icon: Clock },
   ];
 
@@ -107,7 +104,7 @@ export default async function AdminAgentsPage({
         {stats.map((stat, i) => (
           <Link
             key={i}
-            href={`/admin/agents?tab=${stat.tab}&page=1`}
+            href={stat.tab === 'prospects' ? `/admin/prospects?role=agent` : `/admin/agents?tab=${stat.tab === 'subscribed' ? 'all' : stat.tab}&page=1`}
             className={`bg-white p-5 rounded-[1.5rem] border-2 transition-all duration-300 relative overflow-hidden group active:scale-95 ${tab === stat.tab ? 'border-[#b50a0a] shadow-xl shadow-red-900/10' : 'border-gray-100 shadow-sm hover:border-gray-200 hover:shadow-md'}`}
           >
             <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
