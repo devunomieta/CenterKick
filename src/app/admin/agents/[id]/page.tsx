@@ -2,8 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import AgentProfileClient from '../../../../components/admin/agents/AgentProfileClient';
 
-export default async function AgentProfilePage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function AgentProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
 
   // Fetch Agent Data
