@@ -15,6 +15,7 @@ import { checkAccountStatus, resendInvitation, type AccountStatus } from '@/app/
 import Link from 'next/link';
 import { COUNTRIES } from '@/lib/constants/countries';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { FOOTBALL_DATA } from '@/lib/constants/football_data';
 import { useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { Info, AlertCircle } from 'lucide-react';
@@ -139,15 +140,14 @@ export function PlayersClient({
   const [email, setEmail] = useState('');
   const [emailStatus, setEmailStatus] = useState<AccountStatus>('NONE');
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const [agentSearch, setAgentSearch] = useState('');
-  const [selectedAgentId, setSelectedAgentId] = useState('');
-  const [isAgentSearchOpen, setIsAgentSearchOpen] = useState(false);
   const [dob, setDob] = useState({ day: '', month: '', year: '' });
+  const [selectedLeague, setSelectedLeague] = useState('');
   const [calculatedAge, setCalculatedAge] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState('');
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [targetAvatarId, setTargetAvatarId] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const agentSearchRef = useRef<HTMLDivElement>(null);
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -205,6 +205,17 @@ export function PlayersClient({
     params.set('page', '1'); // Reset to page 1 on filter
     router.push(`/admin/players?${params.toString()}`);
   };
+  
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      // Form click outside logic...
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -282,16 +293,6 @@ export function PlayersClient({
     }
   }, [dob]);
 
-  const filteredAgents = agents.filter(agent => {
-    const searchLower = agentSearch.toLowerCase();
-    const fullName = `${agent.first_name || ''} ${agent.last_name || ''}`.toLowerCase();
-    const email = (agent.users?.email || agent.email || '').toLowerCase();
-    const agencyName = (agent.agency_name || '').toLowerCase();
-    
-    return fullName.includes(searchLower) || 
-           email.includes(searchLower) || 
-           agencyName.includes(searchLower);
-  });
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -623,10 +624,9 @@ export function PlayersClient({
                             </button>
                          </div>
                        )}
-                    </div>
-                    <div className="p-4 bg-gray-50/50 rounded-2xl md:col-span-2 grid grid-cols-2 gap-4 border border-gray-100">
+                    </div>                     <div className="p-4 bg-gray-50/50 rounded-2xl md:col-span-2 grid grid-cols-2 gap-4 border border-gray-100">
                         <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Position</label>
+                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Primary Role</label>
                            <select name="position" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black">
                               <option value="Forward" className="text-black">Forward</option>
                               <option value="Midfielder" className="text-black">Midfielder</option>
@@ -642,6 +642,31 @@ export function PlayersClient({
                               <option value="Both" className="text-black">Both</option>
                            </select>
                         </div>
+                        
+                        <div className="space-y-1">
+                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">League</label>
+                           <select 
+                             name="league" 
+                             className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black"
+                             onChange={(e) => setSelectedLeague(e.target.value)}
+                             value={selectedLeague}
+                           >
+                              <option value="">No League</option>
+                              {FOOTBALL_DATA.leagues.map(l => (
+                                <option key={l.name} value={l.name}>{l.name}</option>
+                              ))}
+                           </select>
+                        </div>
+                        <div className="space-y-1">
+                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Current Club</label>
+                           <select name="current_club" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black">
+                              <option value="">Unattached</option>
+                              {(FOOTBALL_DATA.leagues.find(l => l.name === selectedLeague)?.clubs || []).map(club => (
+                                <option key={club} value={club}>{club}</option>
+                              ))}
+                           </select>
+                        </div>
+
                         <div className="space-y-1">
                            <div className="flex items-center justify-between ml-1">
                               <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest">Country</label>
@@ -713,65 +738,6 @@ export function PlayersClient({
                              </div>
                              <input type="hidden" name="date_of_birth" value={`${dob.year}-${dob.month}-${dob.day}`} />
                           </div>
-                         <div className="space-y-1 md:col-span-2 relative">
-                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Associated Agent (Searchable)</label>
-                            <div className="relative group">
-                               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                  <Search className="w-3 h-3" />
-                               </div>
-                               <input 
-                                 type="text" 
-                                 value={agentSearch}
-                                 onChange={(e) => {
-                                    setAgentSearch(e.target.value);
-                                    setIsAgentSearchOpen(true);
-                                 }}
-                                 onFocus={() => setIsAgentSearchOpen(true)}
-                                 placeholder="Search by name, email or agency..."
-                                 className="w-full bg-white border border-gray-100 rounded-lg pl-9 pr-3 py-2.5 text-[10px] font-black focus:ring-2 focus:ring-[#b50a0a] text-black placeholder:text-gray-900" 
-                               />
-                               <input type="hidden" name="agent_id" value={selectedAgentId} />
-                               
-                               {isAgentSearchOpen && (
-                                 <div className="absolute bottom-full left-0 w-full bg-white border border-gray-100 rounded-2xl shadow-2xl mb-2 z-50 max-h-64 overflow-y-auto animate-in slide-in-from-bottom-2">
-                                    <div className="p-3 border-b border-gray-50 bg-gray-50/50 flex items-center justify-between">
-                                       <span className="text-[8px] font-black uppercase text-gray-400">Agent Directory</span>
-                                       <button type="button" onClick={() => setIsAgentSearchOpen(false)}><X className="w-3 h-3" /></button>
-                                    </div>
-                                    <div 
-                                      className="p-3 hover:bg-red-50 transition-colors cursor-pointer border-b border-gray-50"
-                                      onClick={() => {
-                                         setSelectedAgentId('');
-                                         setAgentSearch('Independent (No Agent)');
-                                         setIsAgentSearchOpen(false);
-                                      }}
-                                    >
-                                       <p className="text-[10px] font-black text-gray-800 uppercase italic leading-none">Independent</p>
-                                       <p className="text-[8px] font-bold text-gray-400 uppercase mt-1">No formal representation</p>
-                                    </div>
-                                    {filteredAgents.map(agent => (
-                                       <div 
-                                          key={agent.id} 
-                                          className="p-3 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50"
-                                          onClick={() => {
-                                             setSelectedAgentId(agent.user_id);
-                                             setAgentSearch(`${agent.first_name} ${agent.last_name}`);
-                                             setIsAgentSearchOpen(false);
-                                          }}
-                                       >
-                                          <p className="text-[10px] font-black text-gray-900 uppercase leading-none">{agent.first_name} {agent.last_name}</p>
-                                          <p className="text-[8px] font-bold text-[#b50a0a] uppercase mt-1 tracking-tight">{agent.agency_name || 'Individual Agent'} • {agent.users?.email || agent.email}</p>
-                                       </div>
-                                    ))}
-                                    {filteredAgents.length === 0 && (
-                                       <div className="p-10 text-center">
-                                          <p className="text-[9px] font-bold text-gray-400 uppercase italic">No agents found</p>
-                                       </div>
-                                    )}
-                                 </div>
-                               )}
-                            </div>
-                         </div>
                     </div>
                     <div className="space-y-1 md:col-span-2">
                        <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Gender</label>

@@ -26,26 +26,65 @@ export default async function AdminPlayersPage({
 
   // 1. Fetch Stats
   const [
-    { count: totalCount },
-    { count: pendingCount }
+    { count: allPlayersCount },
+    { count: subscribedCount },
+    { count: prospectsCount },
+    { count: pendingEditsCount },
+    { count: pendingTransactionsCount }
   ] = await Promise.all([
+    // Total of all players (subscribed, expired, new)
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'player').not('email', 'is', null),
+    // Current subscribed players
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'player').eq('is_subscribed', true).not('email', 'is', null),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'player').eq('status', 'pending').not('email', 'is', null)
+    // Players in prospects (unlinked profiles)
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'player').is('user_id', null).not('email', 'is', null),
+    // Pending profile edits
+    supabase.from('profile_edits').select('id, profiles!inner(role)', { count: 'exact', head: true }).eq('status', 'pending').eq('profiles.role', 'player'),
+    // Pending direct transfer payments
+    supabase.from('transactions').select('id, profiles!inner(role)', { count: 'exact', head: true }).eq('status', 'pending').eq('method', 'direct_transfer').eq('profiles.role', 'player')
   ]);
 
-  const subscribedCount = totalCount || 0;
+  const totalPendingRequests = (pendingEditsCount || 0) + (pendingTransactionsCount || 0);
 
   // 2. Fetch Players with Filters
   let query = supabase
     .from('profiles')
     .select('*, users!user_id(role, email, subscriptions(current_period_end, status))', { count: 'exact' })
     .eq('role', 'player')
-    .eq('is_subscribed', true)
     .not('email', 'is', null)
     .order('created_at', { ascending: false })
     .range(offset, offset + pageSize - 1);
 
-  if (tab === 'pending') query = query.eq('status', 'pending');
+  // If not on 'pending' tab, default to subscribed only
+  if (tab !== 'pending') {
+    query = query.eq('is_subscribed', true);
+  }
+
+  if (tab === 'pending') {
+    // 1. Get profile IDs with pending edits
+    const { data: editProfiles } = await supabase
+      .from('profile_edits')
+      .select('profile_id')
+      .eq('status', 'pending');
+    
+    // 2. Get user IDs (mapped to profiles) with pending direct transfers
+    const { data: transProfiles } = await supabase
+      .from('transactions')
+      .select('user_id')
+      .eq('status', 'pending')
+      .eq('method', 'direct_transfer');
+
+    const pendingIds = Array.from(new Set([
+      ...(editProfiles?.map(ep => ep.profile_id) || []),
+      ...(transProfiles?.map(tp => tp.user_id) || [])
+    ]));
+
+    if (pendingIds.length > 0) {
+      query = query.or(`status.eq.pending,id.in.(${pendingIds.map(id => `"${id}"`).join(',')})`);
+    } else {
+      query = query.eq('status', 'pending');
+    }
+  }
 
   if (position) query = query.eq('position', position);
   if (gender) query = query.eq('gender', gender);
@@ -61,8 +100,8 @@ export default async function AdminPlayersPage({
   // 3. Fetch Agents for linking
   const { data: agents } = await supabase
     .from('profiles')
-    .select('*, users(role, email)')
-    .eq('role', 'agent');
+    .select('*, users!user_id(role, email)')
+    .or('role.ilike.agent,users.role.ilike.agent');
 
   // 4. Fetch current admin role for RBAC
   const { data: { session } } = await supabase.auth.getSession();
@@ -73,11 +112,12 @@ export default async function AdminPlayersPage({
     .single();
 
   const stats = [
-    { label: 'All Players', value: totalCount || 0, tab: 'all', color: 'text-gray-900', bg: 'bg-gray-100', icon: Users },
+    { label: 'All Players', value: allPlayersCount || 0, tab: 'all', color: 'text-gray-900', bg: 'bg-gray-100', icon: Users },
     { label: 'Subscribed', value: subscribedCount || 0, tab: 'subscribed', color: 'text-green-600', bg: 'bg-green-50', icon: CreditCard },
-    { label: 'Prospects', value: 'VIEW', tab: 'prospects', color: 'text-gray-400', bg: 'bg-gray-50', icon: Users },
-    { label: 'Pending Requests', value: pendingCount || 0, tab: 'pending', color: 'text-[#b50a0a]', bg: 'bg-red-50', icon: Clock },
+    { label: 'Prospects', value: prospectsCount || 0, tab: 'prospects', color: 'text-gray-400', bg: 'bg-gray-50', icon: Users },
+    { label: 'Pending Requests', value: totalPendingRequests, tab: 'pending', color: 'text-[#b50a0a]', bg: 'bg-red-50', icon: Clock },
   ];
+
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">

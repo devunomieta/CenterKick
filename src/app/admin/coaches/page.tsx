@@ -69,8 +69,8 @@ export default async function AdminCoachesPage({
   // 3. Fetch Agents for linking
   const { data: agents } = await supabase
     .from('profiles')
-    .select('*, users(role, email)')
-    .ilike('role', 'agent');
+    .select('*, users!user_id(role, email)')
+    .or('role.ilike.agent,users.role.ilike.agent');
 
   // Format profiles to match the expected Coach interface
   const formattedCoaches = (profiles || []).map(p => ({

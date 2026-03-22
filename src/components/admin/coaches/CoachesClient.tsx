@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Users, Search, Filter, Shield, UserPlus, 
   MoreHorizontal, Edit, Trash2, ExternalLink, 
@@ -12,9 +12,9 @@ import { DateDisplay } from '@/components/common/DateDisplay';
 import { deleteCoach, updateCoach, addCoach } from '@/app/admin/coaches/actions';
 import { checkAccountStatus, resendInvitation, AccountStatus } from '@/app/actions/auth';
 import Link from 'next/link';
+import { FOOTBALL_DATA } from '@/lib/constants/football_data';
 import { COUNTRIES } from '@/lib/constants/countries';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { Info, AlertCircle } from 'lucide-react';
 import { FlagIcon } from '@/components/common/FlagIcon';
@@ -59,6 +59,7 @@ export function CoachesClient({
   const [emailStatus, setEmailStatus] = useState<AccountStatus>('NONE');
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState('');
+  const [selectedLeague, setSelectedLeague] = useState('');
   const { showToast } = useToast();
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -137,6 +138,8 @@ export function CoachesClient({
       }
     }
   };
+
+
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -397,8 +400,27 @@ export function CoachesClient({
                            </select>
                         </div>
                         <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">League / Club</label>
-                           <input name="league" type="text" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="Ex: Premier League" />
+                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">League</label>
+                           <select 
+                             name="league" 
+                             className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900"
+                             onChange={(e) => setSelectedLeague(e.target.value)}
+                             value={selectedLeague}
+                           >
+                              <option value="">No League</option>
+                              {FOOTBALL_DATA.leagues.map(l => (
+                                <option key={l.name} value={l.name}>{l.name}</option>
+                              ))}
+                           </select>
+                        </div>
+                        <div className="space-y-1">
+                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Current Club</label>
+                           <select name="current_club" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">
+                              <option value="">Unattached</option>
+                              {(FOOTBALL_DATA.leagues.find(l => l.name === selectedLeague)?.clubs || []).map(club => (
+                                <option key={club} value={club}>{club}</option>
+                              ))}
+                           </select>
                         </div>
                         <div className="space-y-1">
                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Country</label>
@@ -429,17 +451,6 @@ export function CoachesClient({
                         <div className="space-y-1">
                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Age</label>
                            <input name="age" required type="number" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="35" />
-                        </div>
-                        <div className="space-y-1 md:col-span-2">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Associated Agent</label>
-                           <select name="agent_id" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">
-                              <option value="">Independent (No Agent)</option>
-                              {agents.map(agent => (
-                                <option key={agent.id} value={agent.user_id}>
-                                   {agent.first_name} {agent.last_name} ({agent.agency_name || 'Independent'})
-                                </option>
-                              ))}
-                           </select>
                         </div>
                     </div>
                     <div className="space-y-1 md:col-span-2">
