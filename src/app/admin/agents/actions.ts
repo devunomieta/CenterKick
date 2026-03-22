@@ -132,3 +132,31 @@ export async function deleteAgent(id: string) {
   revalidatePath('/admin/agents');
   return { success: true };
 }
+
+export async function migrateAllAgentSlugs() {
+  const supabase = await createClient();
+  
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('id, first_name, last_name, role, slug')
+    .eq('role', 'agent');
+
+  if (error) return { success: false, error: error.message };
+  
+  let count = 0;
+  for (const profile of (profiles || [])) {
+    const newSlug = await getUniqueSlug(supabase, 'agent', profile.first_name, profile.last_name);
+    
+    // Only update if it's actually different (ignoring case if needed, but getUniqueSlug handles it)
+    if (profile.slug !== newSlug) {
+      await supabase
+        .from('profiles')
+        .update({ slug: newSlug })
+        .eq('id', profile.id);
+      count++;
+    }
+  }
+
+  revalidatePath('/admin/agents');
+  return { success: true, count };
+}

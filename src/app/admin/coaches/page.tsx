@@ -25,41 +25,67 @@ export default async function AdminCoachesPage({
 
   // 1. Fetch Stats
   const [
-    { count: totalCount },
-    { count: pendingCount }
+    { count: allCoachesCount },
+    { count: subscribedCount },
+    { count: prospectsCount },
+    { count: pendingEditsCount },
+    { count: pendingTransactionsCount }
   ] = await Promise.all([
+    // Total of all coaches (subscribed, expired, new)
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'coach').not('email', 'is', null),
+    // Current subscribed coaches
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'coach').eq('is_subscribed', true).not('email', 'is', null),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'coach').eq('status', 'pending').not('email', 'is', null)
+    // Coaches in prospects (unlinked profiles)
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'coach').is('user_id', null).not('email', 'is', null),
+    // Pending profile edits
+    supabase.from('profile_edits').select('id, profiles!inner(role)', { count: 'exact', head: true }).eq('status', 'pending').eq('profiles.role', 'coach'),
+    // Pending direct transfer payments
+    supabase.from('transactions').select('id, profiles!inner(role)', { count: 'exact', head: true }).eq('status', 'pending').eq('method', 'direct_transfer').eq('profiles.role', 'coach')
   ]);
 
-  const subscribedCount = totalCount || 0;
+  const totalPendingRequests = (pendingEditsCount || 0) + (pendingTransactionsCount || 0);
 
   // 2. Fetch Coaches with Filters
   let query = supabase
     .from('profiles')
     .select('*, users!user_id(role, email)', { count: 'exact' })
-    .eq('is_subscribed', true);
+    .eq('role', 'coach')
+    .not('email', 'is', null)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + pageSize - 1);
 
-  // Apply role filter
-  query = query.eq('role', 'coach');
-
-  // Apply tab filters
-  if (tab === 'pending') query = query.eq('status', 'pending');
-
-  // Apply filters
-  if (position) query = query.eq('position', position);
-  if (gender) query = query.eq('gender', gender);
-  if (age) query = query.eq('age', parseInt(age));
-  if (country) query = query.ilike('country', `%${country}%`);
-
-  // Apply search
-  if (q) {
-    query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,users.email.ilike.%${q}%,league.ilike.%${q}%`);
+  // If not on 'pending' tab, default to subscribed only
+  if (tab !== 'pending') {
+    query = query.eq('is_subscribed', true);
   }
 
-  const { data: profiles, error, count: filteredTotal } = await query
-    .order('created_at', { ascending: false })
-    .range(offset, offset + (pageSize - 1));
+  if (tab === 'pending') {
+    // 1. Get profile IDs with pending edits
+    const { data: editProfiles } = await supabase
+      .from('profile_edits')
+      .select('profile_id')
+      .eq('status', 'pending');
+    
+    // 2. Get user IDs (mapped to profiles) with pending direct transfers
+    const { data: transProfiles } = await supabase
+      .from('transactions')
+      .select('user_id')
+      .eq('status', 'pending')
+      .eq('method', 'direct_transfer');
+
+    const pendingIds = Array.from(new Set([
+      ...(editProfiles?.map(ep => ep.profile_id) || []),
+      ...(transProfiles?.map(tp => tp.user_id) || [])
+    ]));
+
+    if (pendingIds.length > 0) {
+      query = query.or(`status.eq.pending,id.in.(${pendingIds.map(id => `"${id}"`).join(',')})`);
+    } else {
+      query = query.eq('status', 'pending');
+    }
+  }
+
+  const { data: profiles, error, count: filteredTotal } = await query;
 
   if (error) {
     console.error('Error fetching coaches:', error);
@@ -73,7 +99,7 @@ export default async function AdminCoachesPage({
     .or('role.ilike.agent,users.role.ilike.agent');
 
   // Format profiles to match the expected Coach interface
-  const formattedCoaches = (profiles || []).map(p => ({
+  const formattedCoaches = (profiles || []).map((p: any) => ({
     id: p.id,
     email: p.users?.email || 'N/A',
     created_at: p.created_at,
@@ -86,15 +112,17 @@ export default async function AdminCoachesPage({
     gender: p.gender,
     is_subscribed: p.is_subscribed,
     league: p.league,
-    agent_id: p.agent_id
+    agent_id: p.agent_id,
+    slug: p.slug
   }));
 
   const stats = [
-    { label: 'All Coaches', value: totalCount || 0, tab: 'all', color: 'text-gray-900', bg: 'bg-gray-100', icon: Users },
+    { label: 'All Coaches', value: allCoachesCount || 0, tab: 'all', color: 'text-gray-900', bg: 'bg-gray-100', icon: Users },
     { label: 'Subscribed', value: subscribedCount || 0, tab: 'subscribed', color: 'text-green-600', bg: 'bg-green-50', icon: CreditCard },
-    { label: 'Prospects', value: 'VIEW', tab: 'prospects', color: 'text-gray-400', bg: 'bg-gray-50', icon: Users },
-    { label: 'Pending Requests', value: pendingCount || 0, tab: 'pending', color: 'text-[#b50a0a]', bg: 'bg-red-50', icon: Clock },
+    { label: 'Prospects', value: prospectsCount || 0, tab: 'prospects', color: 'text-gray-400', bg: 'bg-gray-50', icon: Users },
+    { label: 'Pending Requests', value: totalPendingRequests, tab: 'pending', color: 'text-[#b50a0a]', bg: 'bg-red-50', icon: Clock },
   ];
+
 
   // 4. Fetch current admin role for RBAC
   const { data: { session } } = await supabase.auth.getSession();

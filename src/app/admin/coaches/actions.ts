@@ -29,10 +29,22 @@ export async function addCoach(formData: FormData) {
   const lastName = formData.get('last_name') as string;
   const position = formData.get('position') as string;
   const country = formData.get('country') as string;
-  const age = parseInt(formData.get('age') as string);
-  const agentId = formData.get('agent_id') as string || null;
+  const dob = formData.get('date_of_birth') as string; // YYYY-MM-DD
   const gender = formData.get('gender') as string;
   const league = formData.get('league') as string;
+  const agentId = formData.get('agent_id') as string || null;
+
+  // Calculate age from dob
+  let calculatedAge = 0;
+  if (dob) {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    calculatedAge = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+       calculatedAge--;
+    }
+  }
 
   // 1. Check if user already exists in auth
   const { data: existingUser } = await supabase
@@ -56,12 +68,14 @@ export async function addCoach(formData: FormData) {
       slug,
       position,
       country,
-      age,
+      date_of_birth: dob,
+      age: calculatedAge,
       gender,
       league,
       agent_id: agentId === '' ? null : agentId,
       status: 'active'
     }]);
+
 
   if (profileError) return { success: false, error: profileError.message };
 
@@ -139,4 +153,37 @@ export async function deleteCoach(id: string) {
 
   revalidatePath('/admin/coaches');
   return { success: true };
+}
+
+export async function migrateAllCoachSlugs() {
+  const supabase = await createClient();
+  
+  // Fetch all coaches
+  const { data: profiles, error: fetchError } = await supabase
+    .from('profiles')
+    .select('id, first_name, last_name, role, slug')
+    .ilike('role', 'coach');
+
+  if (fetchError) return { success: false, error: fetchError.message };
+  if (!profiles) return { success: true, count: 0 };
+
+  let updatedCount = 0;
+  for (const profile of profiles) {
+    const targetBase = generateBaseSlug(profile.role || 'coach', profile.first_name || '', profile.last_name || '');
+    
+    // Check if current slug starts with targetBase
+    if (!profile.slug || !profile.slug.startsWith(targetBase)) {
+      const newSlug = await getUniqueSlug(supabase, profile.role || 'coach', profile.first_name || '', profile.last_name || '');
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ slug: newSlug })
+        .eq('id', profile.id);
+      
+      if (!updateError) updatedCount++;
+    }
+  }
+
+  revalidatePath('/admin/coaches');
+  return { success: true, count: updatedCount };
 }

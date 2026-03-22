@@ -2,8 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import CoachProfileClient from '@/components/admin/coaches/CoachProfileClient';
 
-export default async function CoachProfilePage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function CoachProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
 
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);

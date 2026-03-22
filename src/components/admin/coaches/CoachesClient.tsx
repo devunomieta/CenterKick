@@ -9,14 +9,14 @@ import {
 } from 'lucide-react';
 import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/RestrictedAccess';
 import { DateDisplay } from '@/components/common/DateDisplay';
-import { deleteCoach, updateCoach, addCoach } from '@/app/admin/coaches/actions';
+import { deleteCoach, updateCoach, addCoach, migrateAllCoachSlugs } from '@/app/admin/coaches/actions';
 import { checkAccountStatus, resendInvitation, AccountStatus } from '@/app/actions/auth';
 import Link from 'next/link';
 import { FOOTBALL_DATA } from '@/lib/constants/football_data';
 import { COUNTRIES } from '@/lib/constants/countries';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
-import { Info, AlertCircle } from 'lucide-react';
+import { Info, AlertCircle, ImageIcon, Eye, Activity, RefreshCcw } from 'lucide-react';
 import { FlagIcon } from '@/components/common/FlagIcon';
 
 interface Coach {
@@ -60,6 +60,8 @@ export function CoachesClient({
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedLeague, setSelectedLeague] = useState('');
+  const [dob, setDob] = useState({ day: '', month: '', year: '' });
+  const [calculatedAge, setCalculatedAge] = useState<string | null>(null);
   const { showToast } = useToast();
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -85,6 +87,21 @@ export function CoachesClient({
 
     return () => clearTimeout(timer);
   }, [email]);
+
+  useEffect(() => {
+    if (dob.day && dob.month && dob.year) {
+      const birthDate = new Date(`${dob.year}-${dob.month}-${dob.day}`);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      setCalculatedAge(`${age} YRS OLD`);
+    } else {
+      setCalculatedAge(null);
+    }
+  }, [dob]);
 
   const handleResendInv = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -138,8 +155,6 @@ export function CoachesClient({
       }
     }
   };
-
-
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -288,6 +303,20 @@ export function CoachesClient({
            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
               Showing <span className="text-gray-900">{initialCoaches.length}</span> of <span className="text-gray-900">{totalCount}</span> Coaches
            </p>
+           <div className="flex items-center gap-3">
+             <button 
+                onClick={async () => {
+                   if (confirm("Are you sure you want to migrate all coach profile slugs to the new CK format?")) {
+                      const res = await migrateAllCoachSlugs();
+                      if (res.success) showToast(`Successfully migrated ${res.count} coach slugs.`, 'success');
+                      else showToast(res.error || "Migration failed", "error");
+                   }
+                }}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-5 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2"
+             >
+                <RefreshCcw className="w-3.5 h-3.5" /> Fix Slugs
+             </button>
+          </div>
            <div className="flex items-center gap-2">
               <button 
                 onClick={() => navigateToPage(currentPage - 1)}
@@ -316,7 +345,9 @@ export function CoachesClient({
               </button>
            </div>
         </div>
-      </div>      {/* Add Coach Modal */}
+      </div>
+
+      {/* Add Coach Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
            <div className="bg-white w-full max-w-xl max-h-[90vh] rounded-[1.5rem] shadow-2xl overflow-hidden relative flex flex-col">
@@ -448,10 +479,49 @@ export function CoachesClient({
                               ))}
                            </datalist>
                         </div>
-                        <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Age</label>
-                           <input name="age" required type="number" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="35" />
-                        </div>
+                         <div className="space-y-1">
+                            <div className="flex items-center justify-between ml-1">
+                               <label className="text-[8px] font-black text-red-500 uppercase tracking-widest">Birthdate</label>
+                               {calculatedAge && (
+                                  <span className="text-[9px] font-black text-[#b50a0a] italic animate-in fade-in zoom-in duration-300">
+                                     {calculatedAge}
+                                  </span>
+                               )}
+                            </div>
+                            <div className="flex gap-2">
+                               <select 
+                                 className="flex-1 bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900"
+                                 onChange={(e) => setDob(prev => ({ ...prev, day: e.target.value }))}
+                                 required
+                               >
+                                  <option value="" className="text-gray-900">DD</option>
+                                  {Array.from({ length: 31 }, (_, i) => (
+                                     <option key={i+1} value={String(i+1).padStart(2, '0')} className="text-gray-900">{i+1}</option>
+                                  ))}
+                               </select>
+                               <select 
+                                 className="flex-1 bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900"
+                                 onChange={(e) => setDob(prev => ({ ...prev, month: e.target.value }))}
+                                 required
+                               >
+                                  <option value="" className="text-gray-900">MM</option>
+                                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, i) => (
+                                     <option key={m} value={String(i+1).padStart(2, '0')} className="text-gray-900">{m}</option>
+                                  ))}
+                               </select>
+                               <select 
+                                 className="flex-1 bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900"
+                                 onChange={(e) => setDob(prev => ({ ...prev, year: e.target.value }))}
+                                 required
+                               >
+                                  <option value="" className="text-gray-900">YYYY</option>
+                                  {Array.from({ length: 70 }, (_, i) => (
+                                     <option key={i} value={String(new Date().getFullYear() - 15 - i)} className="text-gray-900">{new Date().getFullYear() - 15 - i}</option>
+                                  ))}
+                               </select>
+                            </div>
+                            <input type="hidden" name="date_of_birth" value={`${dob.year}-${dob.month}-${dob.day}`} />
+                         </div>
                     </div>
                     <div className="space-y-1 md:col-span-2">
                        <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Gender</label>

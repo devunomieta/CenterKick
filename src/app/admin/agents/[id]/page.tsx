@@ -7,8 +7,11 @@ export default async function AgentProfilePage({ params }: { params: { id: strin
   const supabase = await createClient();
 
   // Fetch Agent Data
-  const { data: agent, error } = await supabase
-    .from('agents')
+  // Support both ID and Slug lookups
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  
+  let query = supabase
+    .from('profiles')
     .select(`
       *,
       users:user_id (
@@ -20,8 +23,15 @@ export default async function AgentProfilePage({ params }: { params: { id: strin
         )
       )
     `)
-    .eq('id', id)
-    .single();
+    .eq('role', 'agent');
+
+  if (isUUID) {
+    query = query.or(`id.eq.${id},slug.eq.${id}`);
+  } else {
+    query = query.eq('slug', id);
+  }
+
+  const { data: agent, error } = await query.single();
 
   if (error || !agent) {
     notFound();

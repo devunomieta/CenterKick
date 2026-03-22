@@ -6,11 +6,11 @@ import {
   MoreHorizontal, Edit, Trash2, ExternalLink, 
   ChevronLeft, ChevronRight, X, User, ChevronDown,
   Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard, Briefcase, Link2, Lock,
-  Info, AlertCircle, Mail
+  Info, AlertCircle, Mail, RefreshCcw
 } from 'lucide-react';
 import { FlagIcon } from '@/components/common/FlagIcon';
 import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/RestrictedAccess';
-import { deleteAgent, updateAgent, addAgent } from '@/app/admin/agents/actions';
+import { deleteAgent, updateAgent, addAgent, migrateAllAgentSlugs } from '@/app/admin/agents/actions';
 import { checkAccountStatus, resendInvitation, AccountStatus } from '@/app/actions/auth';
 import Link from 'next/link';
 import { COUNTRIES } from '@/lib/constants/countries';
@@ -117,8 +117,8 @@ export function AgentsClient({
     handleFilterChange('q', searchQuery);
   };
 
-  const handleOpenProfile = (agent: Agent) => {
-    router.push(`/admin/agents/${agent.id}`);
+  const handleOpenProfile = (agent: any) => {
+    router.push(`/admin/agents/${agent.slug || agent.id}`);
   };
 
   const handleDelete = async (id: string) => {
@@ -253,11 +253,25 @@ export function AgentsClient({
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination & Tools */}
         <div className="flex items-center justify-between pt-6 border-t border-gray-50">
            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
               Showing <span className="text-gray-900">{initialAgents.length}</span> of <span className="text-gray-900">{totalCount}</span> Agents
            </p>
+           <div className="flex items-center gap-3">
+              <button 
+                 onClick={async () => {
+                    if (confirm("Are you sure you want to migrate all agent slugs to the new CK format?")) {
+                       const res = await migrateAllAgentSlugs();
+                       if (res.success) showToast(`Successfully migrated ${res.count} slugs.`, 'success');
+                       else showToast(res.error || "Migration failed", "error");
+                    }
+                 }}
+                 className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-5 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2"
+              >
+                 <RefreshCcw className="w-3.5 h-3.5" /> Fix Slugs
+              </button>
+           </div>
            <div className="flex items-center gap-2">
               <button 
                 onClick={() => navigateToPage(currentPage - 1)}
