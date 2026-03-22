@@ -66,11 +66,11 @@ export default async function AdminCoachesPage({
     return <div>Error loading coaches. Please try again.</div>;
   }
 
-  // 2. Fetch Agents for the enrollment modal
+  // 3. Fetch Agents for linking
   const { data: agents } = await supabase
     .from('profiles')
     .select('*, users(role, email)')
-    .eq('role', 'agent');
+    .ilike('role', 'agent');
 
   // Format profiles to match the expected Coach interface
   const formattedCoaches = (profiles || []).map(p => ({

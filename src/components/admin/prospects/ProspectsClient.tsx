@@ -25,14 +25,16 @@ interface Prospect {
 
 export function ProspectsClient({ 
   initialProspects,
-  totalCount,
-  currentPage,
-  pageSize
+  totalCount = 0,
+  currentPage = 1,
+  pageSize = 10,
+  activeRole = ''
 }: { 
   initialProspects: Prospect[],
-  totalCount: number,
-  currentPage: number,
-  pageSize: number
+  totalCount?: number,
+  currentPage?: number,
+  pageSize?: number,
+  activeRole?: string
 }) {
   const router = useRouter();
   const { showToast } = useToast();

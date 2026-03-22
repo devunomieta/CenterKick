@@ -10,21 +10,29 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
   const { id } = await params;
   const supabase = await createClient();
 
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  
   // Fetch complete player profile with linked user data
-  const { data: player, error } = await supabase
+  let playerQuery = supabase
     .from('profiles')
-    .select('*, users!profiles_user_id_fkey(email, role, subscriptions(current_period_end, status))')
-    .eq('id', id)
-    .single();
+    .select('*, users!profiles_user_id_fkey(email, role, subscriptions(current_period_end, status))');
 
-  if (error || !player) {
+  if (isUUID) {
+    playerQuery = playerQuery.or(`id.eq.${id},slug.eq.${id}`);
+  } else {
+    playerQuery = playerQuery.eq('slug', id);
+  }
+
+  const { data: player, error: playerError } = await playerQuery.single();
+
+  if (playerError || !player) {
     return notFound();
   }
 
   // Fetch all agents
   const { data: agents } = await supabase
     .from('profiles')
-    .select('id, first_name, last_name, agency_name, email')
+    .select('id, user_id, first_name, last_name, agency_name, email')
     .eq('role', 'agent');
 
   return (

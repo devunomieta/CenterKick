@@ -1,16 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { 
   Users, Search, Filter, Shield, UserPlus, 
   MoreHorizontal, Edit, Trash2, ExternalLink, 
   ChevronLeft, ChevronRight, X, User, ChevronDown,
   Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard, Lock, Eye, Mail, Trophy, Activity, MessageSquare,
-  Facebook, Instagram, Twitter
+  Facebook, Instagram, Twitter, RefreshCcw
 } from 'lucide-react';
 import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/RestrictedAccess';
 import { DateDisplay } from '@/components/common/DateDisplay';
-import { deletePlayer, updatePlayer, addPlayer, getPlayerTransactions, getPendingEdits, processProfileEdit } from '@/app/admin/players/actions';
+import { deletePlayer, updatePlayer, addPlayer, getPlayerTransactions, getPendingEdits, processProfileEdit, updateProfileAvatar, uploadPlayerImage, migrateAllProfileSlugs } from '@/app/admin/players/actions';
 import { checkAccountStatus, resendInvitation, type AccountStatus } from '@/app/actions/auth';
 import Link from 'next/link';
 import { COUNTRIES } from '@/lib/constants/countries';
@@ -52,6 +52,7 @@ interface Player {
   league?: string;
   social_links?: any;
   achievements?: any[];
+  avatar_url?: string;
   users: {
     email: string;
     role: string;
@@ -133,7 +134,7 @@ export function PlayersClient({
   const router = useRouter();
   const { showToast } = useToast();
   const searchParams = useSearchParams();
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [email, setEmail] = useState('');
   const [emailStatus, setEmailStatus] = useState<AccountStatus>('NONE');
@@ -144,12 +145,15 @@ export function PlayersClient({
   const [dob, setDob] = useState({ day: '', month: '', year: '' });
   const [calculatedAge, setCalculatedAge] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [targetAvatarId, setTargetAvatarId] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
   useEffect(() => {
     if (searchParams.get('add') === 'true') {
-      setIsAddModalOpen(true);
+      setIsEnrollModalOpen(true);
     }
   }, [searchParams]);
 
@@ -183,7 +187,7 @@ export function PlayersClient({
   };
 
   const closeAddModal = () => {
-    setIsAddModalOpen(false);
+    setIsEnrollModalOpen(false);
     const params = new URLSearchParams(searchParams.toString());
     params.delete('add');
     router.replace(`/admin/players?${params.toString()}`);
@@ -208,7 +212,35 @@ export function PlayersClient({
   };
 
   const handleOpenProfile = (player: Player) => {
-    router.push(`/admin/players/${player.id}`);
+    router.push(`/admin/players/${player.slug || player.id}`);
+  };
+  
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !targetAvatarId) return;
+    
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await uploadPlayerImage(formData);
+      if (res.url) {
+        const updateRes = await updateProfileAvatar(targetAvatarId, res.url);
+        if (updateRes.success) {
+          showToast('Profile picture updated successfully', 'success');
+          router.refresh();
+        } else {
+          showToast(updateRes.error || 'Failed to update avatar', 'error');
+        }
+      } else {
+        showToast(res.error || 'Upload failed', 'error');
+      }
+    } catch (err) {
+      showToast('An unexpected error occurred', 'error');
+    } finally {
+      setAvatarUploading(false);
+      setTargetAvatarId(null);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -250,11 +282,16 @@ export function PlayersClient({
     }
   }, [dob]);
 
-  const filteredAgents = agents.filter(agent => 
-    `${agent.first_name} ${agent.last_name}`.toLowerCase().includes(agentSearch.toLowerCase()) ||
-    agent.email?.toLowerCase().includes(agentSearch.toLowerCase()) ||
-    agent.agency_name?.toLowerCase().includes(agentSearch.toLowerCase())
-  );
+  const filteredAgents = agents.filter(agent => {
+    const searchLower = agentSearch.toLowerCase();
+    const fullName = `${agent.first_name || ''} ${agent.last_name || ''}`.toLowerCase();
+    const email = (agent.users?.email || agent.email || '').toLowerCase();
+    const agencyName = (agent.agency_name || '').toLowerCase();
+    
+    return fullName.includes(searchLower) || 
+           email.includes(searchLower) || 
+           agencyName.includes(searchLower);
+  });
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -353,9 +390,44 @@ export function PlayersClient({
                   >
                     <td className="px-6 py-4">
                        <div className="flex items-center gap-3">
-                           <div className="w-9 h-9 rounded-lg bg-gray-900 flex items-center justify-center font-black text-white text-xs shrink-0">
-                             {(player.users?.email || player.email || 'P')[0].toUpperCase()}
-                          </div>
+                           <div className="relative group/avatar">
+                             <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-xs shrink-0 overflow-hidden shadow-sm relative">
+                               {player.avatar_url ? (
+                                 <img 
+                                   src={player.avatar_url} 
+                                   className="w-full h-full object-cover" 
+                                   onError={(e) => {
+                                     const target = e.target as HTMLImageElement;
+                                     target.style.display = 'none';
+                                     const parent = target.parentElement;
+                                     if (parent) {
+                                       parent.innerText = (player.users?.email || player.email || 'P')[0].toUpperCase();
+                                     }
+                                   }}
+                                 />
+                               ) : (
+                                 (player.users?.email || player.email || 'P')[0].toUpperCase()
+                               )}
+                               
+                               {avatarUploading && targetAvatarId === player.id && (
+                                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                                   <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                 </div>
+                               )}
+                             </div>
+                             
+                             <button 
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 setTargetAvatarId(player.id);
+                                 avatarInputRef.current?.click();
+                               }}
+                               className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-lg shadow-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-[#b50a0a] transition-all opacity-0 group-hover/avatar:opacity-100 z-10"
+                             >
+                               <Edit className="w-3 h-3" />
+                             </button>
+                           </div>
+
                           <div className="min-w-0">
                              <p className="font-black text-gray-900 leading-none truncate text-[11px] mb-1.5 flex items-center gap-2">
                                {player.first_name} {player.last_name} 
@@ -399,7 +471,7 @@ export function PlayersClient({
                                const isExpiringSoon = diffDays <= 7;
                                return (
                                  <span className={`text-[8px] font-bold uppercase tracking-widest ${isExpiringSoon ? 'text-red-600' : 'text-gray-400'}`}>
-                                    Expires: {expiryDate.toLocaleDateString()}
+                                     Expires: <DateDisplay date={expiryDate} />
                                  </span>
                                );
                             })()}
@@ -429,8 +501,22 @@ export function PlayersClient({
            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
               Showing <span className="text-gray-900">{initialPlayers.length}</span> of <span className="text-gray-900">{totalCount}</span> Players
            </p>
-           <div className="flex items-center gap-2">
-              <button 
+           <div className="flex items-center gap-3">
+             <button 
+                onClick={async () => {
+                   if (confirm("Are you sure you want to migrate all profile slugs to the new CK format?")) {
+                      const res = await migrateAllProfileSlugs();
+                      if (res.success) showToast(`Successfully migrated ${res.count} slugs.`, 'success');
+                      else showToast(res.error || "Migration failed", "error");
+                   }
+                }}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-5 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2"
+             >
+                <RefreshCcw className="w-3.5 h-3.5" /> Fix Slugs
+             </button>
+          </div>
+           <div className="flex items-center gap-2">          
+             <button 
                 onClick={() => navigateToPage(currentPage - 1)}
                 className="p-2 border border-gray-100 rounded-lg text-gray-400 hover:text-black hover:border-black transition-all disabled:opacity-30 disabled:hover:border-gray-100" 
                 disabled={currentPage === 1}
@@ -459,7 +545,7 @@ export function PlayersClient({
         </div>
       </div>
 
-      {isAddModalOpen && (
+      {isEnrollModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
            <div className="bg-white w-full max-w-xl max-h-[90vh] rounded-[1.5rem] shadow-2xl overflow-hidden relative flex flex-col">
               <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
@@ -588,7 +674,7 @@ export function PlayersClient({
                              <div className="flex items-center justify-between ml-1">
                                 <label className="text-[8px] font-black text-red-500 uppercase tracking-widest">Birthdate</label>
                                 {calculatedAge && (
-                                   <span className="text-[9px] font-black text-[#b50a0a] italic bg-red-50 px-2 py-0.5 rounded-md border border-red-100 animate-in fade-in zoom-in duration-300">
+                                   <span className="text-[9px] font-black text-[#b50a0a] italic animate-in fade-in zoom-in duration-300">
                                       {calculatedAge}
                                    </span>
                                 )}
@@ -668,7 +754,7 @@ export function PlayersClient({
                                           key={agent.id} 
                                           className="p-3 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50"
                                           onClick={() => {
-                                             setSelectedAgentId(agent.id);
+                                             setSelectedAgentId(agent.user_id);
                                              setAgentSearch(`${agent.first_name} ${agent.last_name}`);
                                              setIsAgentSearchOpen(false);
                                           }}

@@ -33,6 +33,7 @@ interface Coach {
   is_subscribed: boolean;
   league?: string;
   agent_id?: string;
+  slug?: string;
 }
 
 export function CoachesClient({ 
@@ -122,7 +123,7 @@ export function CoachesClient({
   };
 
   const handleOpenProfile = (coach: Coach) => {
-    router.push(`/admin/coaches/${coach.id}`);
+    router.push(`/admin/coaches/${coach.slug || coach.id}`);
   };
 
   const handleDelete = async (id: string) => {
@@ -434,7 +435,7 @@ export function CoachesClient({
                            <select name="agent_id" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">
                               <option value="">Independent (No Agent)</option>
                               {agents.map(agent => (
-                                <option key={agent.id} value={agent.id}>
+                                <option key={agent.id} value={agent.user_id}>
                                    {agent.first_name} {agent.last_name} ({agent.agency_name || 'Independent'})
                                 </option>
                               ))}

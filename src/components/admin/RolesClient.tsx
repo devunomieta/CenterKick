@@ -5,6 +5,7 @@ import {
   ShieldCheck, UserPlus, Search, Activity, 
   Trash2, Mail, Clock, Shield, CheckCircle, Loader2, X
 } from 'lucide-react';
+import { DateDisplay } from '@/components/common/DateDisplay';
 import { useRouter } from 'next/navigation';
 
 export function RolesClient({ 
@@ -158,7 +159,7 @@ export function RolesClient({
                                   <p className="font-bold text-gray-900 leading-none">{invite.email}</p>
                                   <div className="flex items-center gap-2 mt-1">
                                     <Clock className="w-2.5 h-2.5 text-gray-400" />
-                                    <p className="text-[8px] text-gray-900 uppercase font-black tracking-widest">Expires: {new Date(invite.expires_at).toLocaleDateString()}</p>
+                                    <p className="text-[8px] text-gray-900 uppercase font-black tracking-widest">Expires: <DateDisplay date={invite.expires_at} /></p>
                                   </div>
                                </div>
                             </div>

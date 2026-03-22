@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Users, Search, Filter, Shield, UserPlus, 
   MoreHorizontal, Edit, Trash2, ExternalLink, 
@@ -8,14 +8,25 @@ import {
   Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard, Lock, Eye, Mail, Trophy, Activity, MessageSquare,
   Facebook, Instagram, Twitter, AlertCircle, Save, Undo, Plus,
   LayoutDashboard, UserCircle, Briefcase, FileText, Image as ImageIcon, Newspaper, ShoppingBag, DollarSign, Settings,
-  Star, Award
+  Star, Award, Building2, CheckCircle2
 } from 'lucide-react';
 import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/RestrictedAccess';
 import { DateDisplay } from '@/components/common/DateDisplay';
+
+const DEFAULT_MEDIA = { 
+  highlight_video_url: '', 
+  action_images: ['', '', '', '', ''], 
+  external_gallery_url: '' 
+};
 import { 
+  updateProfileTags,
+  updateProfileAvatar,
+  getPlayerNews,
   getPlayerTransactions, getPendingEdits, processProfileEdit, updatePlayer,
   getPlayerStats, addPlayerStat, updatePlayerStat, deletePlayerStat,
-  getPlayerTransfers, addPlayerTransfer, updatePlayerTransfer, deletePlayerTransfer
+  getPlayerTransfers, addPlayerTransfer, updatePlayerTransfer, deletePlayerTransfer,
+  getPlayerAchievements, addPlayerAchievement, updatePlayerAchievement, deletePlayerAchievement,
+  uploadPlayerImage
 } from '@/app/admin/players/actions';
 import Link from 'next/link';
 import { COUNTRIES } from '@/lib/constants/countries';
@@ -55,7 +66,12 @@ interface Player {
   formation?: string;
   league?: string;
   social_links?: any;
-  achievements?: any[];
+  media_gallery?: {
+    highlight_video_url: string;
+    action_images: string[];
+    external_gallery_url: string;
+  };
+  tags?: string[];
   users: {
     email: string;
     role: string;
@@ -80,6 +96,33 @@ interface CareerStat {
   assists: number;
   yellow_cards: number;
   red_cards: number;
+  created_at?: string;
+}
+
+const getEmbedUrl = (url: string) => {
+  if (!url) return '';
+  // YouTube
+  const ytMatch = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/);
+  if (ytMatch && ytMatch[1]) {
+    const id = ytMatch[1].split('&')[0];
+    return `https://www.youtube.com/embed/${id}`;
+  }
+  // Vimeo
+  const vimeoMatch = url.match(/(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(.+)/);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  }
+  return url;
+};
+
+interface Achievement {
+  id: string;
+  player_id: string;
+  title: string;
+  year: string | null;
+  organization: string | null;
+  category: string;
+  description: string | null;
   created_at?: string;
 }
 
@@ -548,6 +591,336 @@ function TransferFormModal({
   );
 }
 
+function AchievementFormModal({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  initialData 
+}: { 
+  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; initialData?: Achievement | null 
+}) {
+  const [formData, setFormData] = useState<Partial<Achievement>>(initialData || {
+    title: '',
+    year: SEASONS[0],
+    organization: '',
+    category: 'Club',
+    description: ''
+  });
+
+  useEffect(() => {
+    if (initialData) setFormData(initialData);
+    else setFormData({
+        title: '',
+        year: SEASONS[0],
+        organization: '',
+        category: 'Club',
+        description: ''
+    });
+  }, [initialData, isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white rounded-[2.5rem] w-full max-w-xl overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-300">
+        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">
+              {initialData ? 'Edit Career Honour' : 'Add Career Honour'}
+            </h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Official Recognition & Awards</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+            <X className="w-5 h-5 text-slate-400" />
+          </button>
+        </div>
+        
+        <div className="p-10 space-y-6 max-h-[70vh] overflow-y-auto">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Award / Trophy Title</label>
+            <input 
+              type="text"
+              placeholder="e.g. Premier League Winner, Golden Boot"
+              value={formData.title || ''}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Year / Season</label>
+              <select 
+                value={formData.year || ''}
+                onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
+              >
+                {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
+              <select 
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
+              >
+                <option value="Club">Club Honour</option>
+                <option value="Individual">Individual Award</option>
+                <option value="International">International</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Organization / Competition</label>
+            <input 
+              type="text"
+              placeholder="e.g. Manchester City, Premier League, FIFA"
+              value={formData.organization || ''}
+              onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Short Description (Optional)</label>
+            <textarea 
+              placeholder="Brief details about the achievement..."
+              value={formData.description || ''}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all h-24"
+            />
+          </div>
+        </div>
+
+        <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+          <button 
+            onClick={() => onSave(formData)}
+            className="flex-1 bg-slate-900 text-white rounded-2xl py-4 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#b50a0a] transition-all shadow-xl shadow-slate-200"
+          >
+            {initialData ? 'Save Changes' : 'Add Award'}
+          </button>
+          <button 
+            onClick={onClose}
+            className="px-10 bg-white text-slate-400 border border-slate-200 rounded-2xl py-4 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MediaGalleryModal({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  initialData 
+}: { 
+  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; initialData: { highlight_video_url: string; action_images: string[]; external_gallery_url: string }
+}) {
+  const [formData, setFormData] = useState(initialData);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const isInitialized = useRef(false);
+  const toast = useToast();
+
+  useEffect(() => {
+    if (isOpen && !isInitialized.current && initialData) {
+      // Ensure we have a stable array of 5 slots
+      const baseImages = initialData.action_images || [];
+      const paddedImages = [0, 1, 2, 3, 4].map(i => baseImages[i] || '');
+      setFormData({
+        ...initialData,
+        action_images: paddedImages
+      });
+      isInitialized.current = true;
+    }
+    
+    if (!isOpen) {
+      isInitialized.current = false;
+    }
+  }, [isOpen, initialData]);
+
+  if (!isOpen) return null;
+
+  const handleFileChange = async (index: number, file: File | undefined) => {
+    if (!file) return;
+    
+    setUploadingIndex(index);
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+    
+    const res = await uploadPlayerImage(uploadData);
+    if (res.url) {
+      const newImages = [...formData.action_images];
+      newImages[index] = res.url;
+      setFormData({ ...formData, action_images: newImages });
+      toast.showToast(`Image ${index + 1} uploaded`, 'success');
+    } else {
+      toast.showToast(res.error || 'Upload failed', 'error');
+    }
+    setUploadingIndex(null);
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = [...formData.action_images];
+    newImages[index] = '';
+    setFormData({ ...formData, action_images: newImages });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-300">
+        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div>
+            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Manage Media Gallery</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Video, Photos & External Portfolios</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+            <X className="w-5 h-5 text-slate-400" />
+          </button>
+        </div>
+        
+        <div className="p-10 space-y-8 max-h-[70vh] overflow-y-auto">
+          {/* Video Highlight */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Activity className="w-4 h-4 text-red-600" />
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Featured Video URL (YouTube/Vimeo)</label>
+            </div>
+            <input 
+              type="text"
+              placeholder="https://www.youtube.com/watch?v=..."
+              value={formData.highlight_video_url}
+              onChange={(e) => setFormData({ ...formData, highlight_video_url: e.target.value })}
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <ImageIcon className="w-4 h-4 text-indigo-600" />
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Action Images (Upload up to 5)</label>
+            </div>
+            <div className="grid gap-4">
+              {[0, 1, 2, 3, 4].map((idx) => (
+                <div key={idx} className="group relative bg-slate-50 border border-slate-200 rounded-3xl p-4 flex items-center gap-4 transition-all hover:bg-white hover:shadow-md">
+                   <div 
+                      className="w-16 h-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center overflow-hidden shrink-0 shadow-sm cursor-zoom-in hover:ring-2 hover:ring-indigo-500 transition-all"
+                      onClick={() => formData.action_images[idx] && setPreviewUrl(formData.action_images[idx])}
+                   >
+                      {formData.action_images[idx] ? (
+                         <img src={formData.action_images[idx]} className="w-full h-full object-cover" />
+                      ) : (
+                         <span className="text-xs font-black text-slate-300">#{idx + 1}</span>
+                      )}
+                   </div>
+                   
+                   <div className="flex-1 min-w-0">
+                      {formData.action_images[idx] ? (
+                         <div className="flex flex-col gap-1">
+                            <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest flex items-center gap-1.5">
+                               <CheckCircle className="w-3 h-3" /> Image Ready
+                            </p>
+                            <p className="text-[10px] text-slate-400 truncate max-w-full font-medium">
+                               /{formData.action_images[idx].split('/avatars/')[1] || formData.action_images[idx]}
+                            </p>
+                         </div>
+                      ) : (
+                         <div className="flex flex-col gap-1">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No Image selected</p>
+                            <p className="text-[10px] text-slate-300 font-medium">Click button to upload action shot</p>
+                         </div>
+                      )}
+                   </div>
+
+                   <div className="flex items-center gap-3">
+                      {formData.action_images[idx] && (
+                         <button 
+                            onClick={() => removeImage(idx)}
+                            className="p-3 bg-red-50 text-red-500 rounded-2xl hover:bg-red-100 transition-all shadow-sm"
+                            title="Remove Image"
+                         >
+                            <Trash2 className="w-4 h-4" />
+                         </button>
+                      )}
+                      
+                      <div className="relative">
+                         <input 
+                            type="file"
+                            id={`upload-${idx}`}
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                            accept="image/*"
+                            onChange={(e) => handleFileChange(idx, e.target.files?.[0])}
+                            disabled={uploadingIndex === idx}
+                         />
+                         <button className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm ${uploadingIndex === idx ? 'bg-slate-200 text-slate-400 animate-pulse' : 'bg-white text-slate-900 border border-slate-200 hover:bg-slate-50'}`}>
+                            {uploadingIndex === idx ? 'Uploading...' : formData.action_images[idx] ? 'Replace' : 'Upload'}
+                         </button>
+                      </div>
+                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* External Gallery */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <ExternalLink className="w-4 h-4 text-slate-400" />
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">External Portfolio / Channel Link</label>
+            </div>
+            <input 
+              type="text"
+              placeholder="e.g. https://shutterstock.com/athlete-portfolio"
+              value={formData.external_gallery_url}
+              onChange={(e) => setFormData({ ...formData, external_gallery_url: e.target.value })}
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+          <button 
+            onClick={() => onSave(formData)}
+            className="flex-1 bg-slate-900 text-white rounded-2xl py-4 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200"
+          >
+            Save Media Gallery
+          </button>
+          <button 
+            onClick={onClose}
+            className="px-10 bg-white text-slate-400 border border-slate-200 rounded-2xl py-4 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      {/* Large Preview Overlay */}
+      {previewUrl && (
+        <div 
+          className="fixed inset-0 z-[300] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-8 animate-in fade-in duration-300"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <button 
+            onClick={() => setPreviewUrl(null)}
+            className="absolute top-8 right-8 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all transition-transform hover:scale-110"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div className="max-w-5xl max-h-full rounded-3xl overflow-hidden shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500">
+            <img src={previewUrl} className="max-w-full max-h-[85vh] object-contain" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PlayerProfileClient({ player, agents }: PlayerProfileClientProps) {
   const router = useRouter();
   const toast = useToast();
@@ -568,6 +941,35 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
   const [isLoadingTransfers, setIsLoadingTransfers] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [editingTransfer, setEditingTransfer] = useState<PlayerTransfer | null>(null);
+
+  const [playerAchievements, setPlayerAchievements] = useState<Achievement[]>([]);
+  const [isLoadingAchievements, setIsLoadingAchievements] = useState(false);
+  const [showAchievementModal, setShowAchievementModal] = useState(false);
+  const [editingAchievement, setEditingAchievement] = useState<Achievement | null>(null);
+  const [playerNews, setPlayerNews] = useState<any[]>([]);
+  const [isLoadingNews, setIsLoadingNews] = useState(false);
+  const [showMediaModal, setShowMediaModal] = useState(false);
+
+  // Tag Management
+  const [profileTags, setProfileTags] = useState<string[]>(player.tags || []);
+  const [newTagInput, setNewTagInput] = useState('');
+  const [isUpdatingTags, setIsUpdatingTags] = useState(false);
+
+  // Advanced Billing State
+  const [txSearch, setTxSearch] = useState('');
+  const [txStatusFilter, setTxStatusFilter] = useState('all');
+  const [txPage, setTxPage] = useState(1);
+  const txPerPage = 20;
+
+  // Avatar State
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Achievement Search, Filter, Pagination
+  const [achievementSearch, setAchievementSearch] = useState('');
+  const [achievementCategoryFilter, setAchievementCategoryFilter] = useState('All');
+  const [achievementPage, setAchievementPage] = useState(1);
+  const achievementsPerPage = 5;
 
   useEffect(() => {
     // Fetch transactions when on billing tab
@@ -610,7 +1012,43 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
       };
       fetchData();
     }
-  }, [player.id, activeTab]);
+    
+    if (activeTab === 'bio') {
+      const fetchAchievements = async () => {
+        setIsLoadingAchievements(true);
+        const res = await getPlayerAchievements(player.id);
+        if (res.success) setPlayerAchievements(res.data || []);
+        setIsLoadingAchievements(false);
+      };
+      fetchAchievements();
+    }
+    
+    if (activeTab === 'news') {
+      const fetchNews = async () => {
+        setIsLoadingNews(true);
+        // Fetch news based on all profile tags
+        const res = await getPlayerNews(profileTags.length > 0 ? profileTags : [`${player.first_name} ${player.last_name}`]);
+        if (res.success) setPlayerNews(res.data || []);
+        setIsLoadingNews(false);
+      };
+      fetchNews();
+    }
+  }, [player.id, activeTab, player.first_name, player.last_name, profileTags]);
+
+  const handleUpdateTags = async (newTags: string[]) => {
+    setIsUpdatingTags(true);
+    try {
+      const res = await updateProfileTags(player.id, newTags);
+      if (res.success) {
+        setProfileTags(newTags);
+        toast.showToast('Profile tags updated and synced to CMS', 'success');
+      } else {
+        toast.showToast(res.error || 'Failed to update tags', 'error');
+      }
+    } finally {
+      setIsUpdatingTags(false);
+    }
+  };
 
   const groupedStats = playerStats.reduce((acc: { [key: string]: CareerStat[] }, stat) => {
     if (!acc[stat.season]) acc[stat.season] = [];
@@ -618,7 +1056,7 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
     return acc;
   }, {});
 
-  const shortenLeagueName = (name: string) => {
+  const shortenLeagueName = (name: string | null) => {
     if (!name) return 'N/A';
     const common: { [key: string]: string } = {
       'Premier League': 'PL',
@@ -641,11 +1079,61 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
 
   const sortedSeasons = Object.keys(groupedStats).sort((a, b) => b.localeCompare(a));
 
+  const handleSyncTag = async () => {
+    const tagName = `${player.first_name} ${player.last_name}`;
+    if (!profileTags.includes(tagName)) {
+      await handleUpdateTags([...profileTags, tagName]);
+    } else {
+      toast.showToast('Standard tag already exists', 'info');
+    }
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await uploadPlayerImage(formData);
+      if (res.url) {
+        const updateRes = await updateProfileAvatar(player.id, res.url);
+        if (updateRes.success) {
+          toast.showToast('Profile picture updated successfully', 'success');
+          router.refresh();
+        } else {
+          toast.showToast(updateRes.error || 'Failed to update avatar record', 'error');
+        }
+      } else {
+        toast.showToast(res.error || 'Upload failed', 'error');
+      }
+    } catch (err) {
+      toast.showToast('An unexpected error occurred', 'error');
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
+  // Filtered/Paginated Transactions
+  const filteredTransactions = playerTransactions.filter(tx => {
+    const matchesSearch = tx.reference?.toLowerCase().includes(txSearch.toLowerCase());
+    const matchesStatus = txStatusFilter === 'all' || tx.status === txStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const paginatedTransactions = filteredTransactions.slice(
+    (txPage - 1) * txPerPage,
+    txPage * txPerPage
+  );
+
+  useEffect(() => {
+    setTxPage(1);
+  }, [txSearch, txStatusFilter]);
+
   const handleSaveStat = async (data: any) => {
     setIsSaving(true);
     const res = editingStat 
       ? await updatePlayerStat(editingStat.id, data)
-      : await addPlayerStat({ ...data, player_id: player.id });
+      : await addPlayerStat(player.id, data);
 
     if (res.success) {
       toast.showToast(editingStat ? 'Stat updated' : 'Stat added', 'success');
@@ -676,7 +1164,7 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
     setIsSaving(true);
     const res = editingTransfer 
       ? await updatePlayerTransfer(editingTransfer.id, data)
-      : await addPlayerTransfer({ ...data, player_id: player.id });
+      : await addPlayerTransfer(player.id, data);
 
     if (res.success) {
       toast.showToast(editingTransfer ? 'Transfer updated' : 'Transfer added', 'success');
@@ -692,14 +1180,75 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
   };
 
   const handleDeleteTransfer = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this transfer record?')) return;
+    if (!confirm('Are you sure you want to delete this transfer?')) return;
     const res = await deletePlayerTransfer(id);
     if (res.success) {
-      toast.showToast('Transfer deleted', 'success');
-      setPlayerTransfers(prev => prev.filter(t => t.id !== id));
+      toast.showToast('Transfer record deleted', 'success');
+      setPlayerTransfers(playerTransfers.filter(t => t.id !== id));
     } else {
       toast.showToast(res.error || 'Failed to delete', 'error');
     }
+  };
+
+  const handleSaveAchievement = async (data: any) => {
+    setIsSaving(true);
+    const res = editingAchievement 
+      ? await updatePlayerAchievement(editingAchievement.id, data)
+      : await addPlayerAchievement(player.id, data);
+
+    if (res.success) {
+      toast.showToast(editingAchievement ? 'Achievement updated' : 'Achievement added', 'success');
+      setShowAchievementModal(false);
+      setEditingAchievement(null);
+      // Refresh achievements
+      const refreshRes = await getPlayerAchievements(player.id);
+      if (refreshRes.success) setPlayerAchievements(refreshRes.data || []);
+    } else {
+      toast.showToast(res.error || 'Failed to save achievement', 'error');
+    }
+    setIsSaving(false);
+  };
+
+  const handleDeleteAchievement = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this achievement?')) return;
+    const res = await deletePlayerAchievement(id);
+    if (res.success) {
+      toast.showToast('Achievement deleted', 'success');
+      setPlayerAchievements(playerAchievements.filter(a => a.id !== id));
+    } else {
+      toast.showToast(res.error || 'Failed to delete', 'error');
+    }
+  };
+
+  // Achievement Filtered Results
+  const filteredAchievements = playerAchievements.filter(a => {
+    const matchesSearch = achievementSearch === '' || 
+      a.title.toLowerCase().includes(achievementSearch.toLowerCase()) ||
+      (a.organization?.toLowerCase().includes(achievementSearch.toLowerCase())) ||
+      (a.year?.toLowerCase().includes(achievementSearch.toLowerCase()));
+    
+    const matchesCategory = achievementCategoryFilter === 'All' || a.category === achievementCategoryFilter;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  const totalAchievementPages = Math.ceil(filteredAchievements.length / achievementsPerPage);
+  const paginatedAchievements = filteredAchievements.slice(
+    (achievementPage - 1) * achievementsPerPage,
+    achievementPage * achievementsPerPage
+  );
+
+  const handlePlayerUpdate = async (data: Partial<Player>) => {
+    setIsSaving(true);
+    const res = await updatePlayer(player.id, data);
+    if (res.success) {
+      toast.showToast('Profile updated', 'success');
+      setShowMediaModal(false);
+      router.refresh();
+    } else {
+      toast.showToast(res.error || 'Update failed', 'error');
+    }
+    setIsSaving(false);
   };
 
   const handleEditAction = async (editId: string, action: 'approve' | 'reject') => {
@@ -765,6 +1314,13 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f8fafc] animate-in fade-in duration-500">
+      <input 
+        type="file" 
+        ref={avatarInputRef} 
+        className="hidden" 
+        accept="image/*"
+        onChange={(e) => e.target.files?.[0] && handleAvatarUpload(e.target.files[0])}
+      />
       {/* Dashboard Top Bar - Sticky below Admin Nav */}
       <div className="bg-white border-b border-slate-200 px-8 py-4 sticky top-[-32px] z-[100] shadow-sm mx-[-32px] mt-[-32px] mb-8">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between">
@@ -778,16 +1334,22 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
             </Link>
             <div className="h-4 w-[1px] bg-slate-200"></div>
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white overflow-hidden shadow-lg">
+              <div 
+                className={`w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white overflow-hidden shadow-lg cursor-pointer group/avatar relative ${avatarUploading ? 'animate-pulse' : ''}`}
+                onClick={() => !avatarUploading && avatarInputRef.current?.click()}
+              >
                 {player.avatar_url ? (
-                  <img src={player.avatar_url} className="w-full h-full object-cover" />
+                  <img src={player.avatar_url} className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all" />
                 ) : (
-                  <User className="w-5 h-5" />
+                  <User className="w-5 h-5 group-hover/avatar:opacity-50 transition-all" />
                 )}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-all">
+                  <Edit className="w-3 h-3 text-white" />
+                </div>
               </div>
               <div>
                 <h1 className="text-lg font-black text-slate-900 uppercase tracking-tighter leading-none flex items-center gap-3">
-                  {player.first_name} {player.last_name}
+                  {player.first_name} <span className="text-[#b50a0a]">{player.last_name}</span>
                   <span className={`text-[9px] px-2 py-0.5 rounded-full font-black tracking-widest ${
                     player.is_subscribed ? 'bg-emerald-100 text-emerald-600' : 
                     player.users?.subscriptions?.[0]?.status === 'expired' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'
@@ -797,7 +1359,7 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
                   </span>
                 </h1>
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
-                  <FlagIcon countryCode={player.country || ''} className="w-3.5 h-2.5" />
+                  <FlagIcon country={player.country || ''} className="w-3.5 h-2.5" />
                   ID: {player.email || 'NO EMAIL'} • {player.position}
                 </p>
               </div>
@@ -819,12 +1381,19 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
       <div className="max-w-[1400px] mx-auto w-full flex gap-8 px-8 pb-12 flex-1 items-start">
         {/* Left Sidebar - Profile Summary - Sticky */}
         <div className="w-72 bg-white border border-slate-100 p-6 rounded-[2.5rem] flex flex-col gap-8 sticky top-[72px] shadow-sm shadow-slate-200/50">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-[2rem] z-10"></div>
+          <div 
+            className={`relative group cursor-pointer overflow-hidden rounded-[2rem] ${avatarUploading ? 'animate-pulse opacity-50' : ''}`}
+            onClick={() => !avatarUploading && avatarInputRef.current?.click()}
+          >
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+              <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30 transform scale-90 group-hover:scale-100 transition-all">
+                <ImageIcon className="w-8 h-8 text-white" />
+              </div>
+            </div>
             {player.avatar_url ? (
-              <img src={player.avatar_url} alt="" className="w-full aspect-square rounded-[2rem] object-cover border-2 border-slate-50 shadow-inner" />
+              <img src={player.avatar_url} alt="" className="w-full aspect-square object-cover border-2 border-slate-50 shadow-inner transition-transform duration-700 group-hover:scale-110" />
             ) : (
-              <div className="w-full aspect-square bg-slate-100 rounded-[2rem] flex items-center justify-center text-slate-300 text-4xl font-black">
+              <div className="w-full aspect-square bg-slate-100 flex items-center justify-center text-slate-300 text-4xl font-black">
                 {player.first_name[0]}{player.last_name[0]}
               </div>
             )}
@@ -859,7 +1428,7 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Assigned Agent</p>
               {player.agent_id ? (
                 <Link href={`/admin/agents/${player.agent_id}`} className="text-[10px] font-black text-slate-900 uppercase hover:text-[#b50a0a] transition-colors">
-                  {agents.find(a => a.id === player.agent_id)?.first_name ? `${agents.find(a => a.id === player.agent_id)?.first_name} ${agents.find(a => a.id === player.agent_id)?.last_name}` : 'Linked Agent'}
+                  {agents.find(a => a.user_id === player.agent_id)?.first_name ? `${agents.find(a => a.user_id === player.agent_id)?.first_name} ${agents.find(a => a.user_id === player.agent_id)?.last_name}` : 'Linked Agent'}
                 </Link>
               ) : (
                 <p className="text-[10px] font-bold text-slate-400 italic">Independent</p>
@@ -895,8 +1464,10 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
                       {[
                         { label: 'First Name', value: player.first_name, field: 'first_name', type: 'text' },
                         { label: 'Last Name', value: player.last_name, field: 'last_name', type: 'text' },
+                        { label: 'Email Address', value: player.email || 'N/A', field: 'email', type: 'text' },
                         { label: 'Date Of Birth', value: player.date_of_birth, field: 'date_of_birth', type: 'date' },
                         { label: 'Place Of Birth', value: player.place_of_birth || 'N/A', field: 'place_of_birth', type: 'text' },
+                        { label: 'Preferred Foot', value: player.foot || 'Right', field: 'foot', type: 'select', options: ['Right', 'Left', 'Both'] },
                         { label: 'Citizenship', value: player.country, field: 'country', type: 'select', options: COUNTRIES },
                         { label: 'Gender', value: player.gender, field: 'gender', type: 'select', options: ['Male', 'Female', 'Other'] },
                       ].map((item, i) => (
@@ -960,23 +1531,34 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
                     </div>
 
                     <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                      {[
-                        { label: 'Current Club', value: player.current_club || 'Unattached', field: 'current_club', type: 'text' },
-                        { label: 'Primary Role', value: player.position, field: 'position', type: 'select', options: ['Forward', 'Midfielder', 'Defender', 'Goalkeeper'] },
-                        { label: 'Preferred Foot', value: player.foot || 'Right', field: 'foot', type: 'select', options: ['Right', 'Left', 'Both'] },
-                        { label: 'Jersey Number', value: player.jersey_number || '--', field: 'jersey_number', type: 'number' },
-                        { label: 'Market Value', value: player.market_value || 'N/A', field: 'market_value', type: 'text' },
-                        { label: 'Contract Expiry', value: player.contract_expiry, field: 'contract_expiry', type: 'date' },
-                      ].map((item, i) => (
+                      {(() => {
+                        const currentLeague = displayValue('league' as any, player.league);
+                        const availableClubs = FOOTBALL_DATA.leagues.find(l => l.name === currentLeague)?.clubs || [];
+                        
+                        return [
+                          { label: 'League', value: player.league || 'Not Set', field: 'league', type: 'select', options: ['None', ...FOOTBALL_DATA.leagues.map(l => l.name)] },
+                          { label: 'Current Club', value: player.current_club || 'Unattached', field: 'current_club', type: availableClubs.length > 0 ? 'select' : 'text', options: availableClubs },
+                          { label: 'Primary Role', value: player.position, field: 'position', type: 'select', options: ['Forward', 'Midfielder', 'Defender', 'Goalkeeper'] },
+                          { label: 'Market Value', value: player.market_value || 'N/A', field: 'market_value', type: 'text' },
+                          { label: 'Contract Expiry', value: player.contract_expiry, field: 'contract_expiry', type: 'date' },
+                        ];
+                      })().map((item, i) => (
                         <div key={i} className="flex flex-col gap-1">
                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
                           {editingSection === 'pro' ? (
                             item.type === 'select' ? (
                               <select 
                                 value={displayValue(item.field as any, item.value)}
-                                onChange={(e) => updateField(item.field as any, e.target.value)}
+                                onChange={(e) => {
+                                  updateField(item.field as any, e.target.value);
+                                  // If league changes, reset current_club
+                                  if (item.field === 'league') {
+                                    updateField('current_club', '');
+                                  }
+                                }}
                                 className="w-full bg-slate-50 border-none rounded-lg p-2 text-[12px] font-bold text-slate-900 focus:ring-1 focus:ring-[#b50a0a]"
                               >
+                                {item.field === 'current_club' && <option value="">Select Club</option>}
                                 {(item.options || []).map((opt: string) => (
                                   <option key={opt} value={opt}>{opt}</option>
                                 ))}
@@ -1028,7 +1610,7 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
 
                     <div className="flex items-center gap-6 p-6 bg-slate-50 rounded-2xl border border-slate-100">
                        <div className="w-16 h-16 bg-white rounded-xl shadow-sm flex items-center justify-center text-xl font-black text-slate-300">
-                          {agents.find(a => a.id === player.agent_id)?.first_name?.[0] || '?'}
+                          {agents.find(a => a.user_id === player.agent_id)?.first_name?.[0] || '?'}
                        </div>
                        <div className="flex-1">
                           {editingSection === 'agent' ? (
@@ -1039,13 +1621,13 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
                             >
                                <option value="">Independent</option>
                                {agents.map(a => (
-                                  <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>
+                                  <option key={a.id} value={a.user_id}>{a.first_name} {a.last_name}</option>
                                ))}
                             </select>
                           ) : (
                             <>
                               <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">
-                                {agents.find(a => a.id === player.agent_id)?.first_name ? `${agents.find(a => a.id === player.agent_id)?.first_name} ${agents.find(a => a.id === player.agent_id)?.last_name}` : 'Independent'}
+                                {agents.find(a => a.user_id === player.agent_id)?.first_name ? `${agents.find(a => a.user_id === player.agent_id)?.first_name} ${agents.find(a => a.user_id === player.agent_id)?.last_name}` : 'Independent'}
                               </h4>
                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Status: {player.agent_status || 'N/A'}</p>
                             </>
@@ -1183,7 +1765,7 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
                                     />
                                   )}
                                   <span 
-                                    title={stat.league_name}
+                                    title={stat.league_name || undefined}
                                     className="px-2 py-0.5 bg-slate-100 rounded-full text-[9px] font-bold uppercase tracking-tight text-slate-500 cursor-help"
                                   >
                                     {shortenLeagueName(stat.league_name)}
@@ -1265,7 +1847,7 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
                             <tr key={transfer.id} className="hover:bg-white/5 transition-colors group/row border-b border-white/5 last:border-0 font-medium">
                               <td className="px-4 py-5 align-middle">
                                 <div className="text-white font-bold italic tracking-tighter text-[11px]">{transfer.season}</div>
-                                <div className="text-[8px] text-slate-500 font-bold mt-0.5">{transfer.transfer_date ? new Date(transfer.transfer_date).toLocaleDateString() : 'N/A'}</div>
+                                <div className="text-[8px] text-slate-500 font-bold mt-0.5">{transfer.transfer_date ? <DateDisplay date={transfer.transfer_date} /> : 'N/A'}</div>
                               </td>
                               <td className="px-4 py-5 align-middle text-slate-400 font-bold tracking-tight text-[10px]">{toTitleCase(transfer.from_club_name)}</td>
                               <td className="px-4 py-5 align-middle">
@@ -1284,7 +1866,7 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
                                     />
                                   )}
                                   <span 
-                                    title={transfer.league_name}
+                                    title={transfer.league_name || undefined}
                                     className="px-2 py-0.5 bg-white/10 rounded-full text-[9px] font-bold uppercase text-slate-300 cursor-help"
                                   >
                                     {shortenLeagueName(transfer.league_name)}
@@ -1334,137 +1916,446 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
 
           {/* Tab 3: Bio & Honours */}
           {activeTab === 'bio' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div className="lg:col-span-8 bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-sm">
-                  <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                        <FileText className="w-6 h-6" />
-                      </div>
-                      <h3 className="text-base font-black text-slate-900 uppercase tracking-tight">Biography</h3>
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8 max-w-5xl mx-auto">
+              {/* Biography Section - Full Width */}
+              <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-bl-full -mr-12 -mt-12 transition-all group-hover:bg-indigo-50/50"></div>
+                
+                <div className="flex items-center justify-between mb-6 relative">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100/50">
+                      <FileText className="w-6 h-6" />
                     </div>
-                    <button 
-                      onClick={() => setEditingSection(editingSection === 'bio' ? null : 'bio')}
-                      className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all"
-                    >
-                      <Edit className="w-5 h-5" />
-                    </button>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Athlete Biography</h3>
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Professional Background & Story</p>
+                    </div>
                   </div>
-                  
-                  {editingSection === 'bio' ? (
-                    <textarea 
-                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-6 text-sm font-bold text-slate-600 leading-relaxed shadow-inner h-[300px] focus:ring-1 focus:ring-[#b50a0a] outline-none"
-                      value={displayValue('bio', player.bio || '')}
-                      onChange={(e) => updateField('bio', e.target.value)}
-                      placeholder="Professional biography..."
-                    />
-                  ) : (
-                    <div className="p-8 bg-slate-50/50 rounded-2xl border border-slate-100 italic">
-                      <p className="text-sm font-bold text-slate-500 leading-relaxed">
-                        {player.bio || "No professional biography has been provided for this athlete yet."}
-                      </p>
-                    </div>
-                  )}
-                  <PendingEditBadge field="bio" />
-                  
-                  {editingSection === 'bio' && (
-                    <div className="mt-8 flex gap-3">
-                      <button onClick={handleSaveChanges} className="px-8 py-2.5 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-[#b50a0a] transition-all">Save Biography</button>
-                      <button onClick={() => { setEditingSection(null); setEditedFields({}); }} className="px-8 py-2.5 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Cancel</button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="lg:col-span-4 bg-white rounded-[2rem] p-10 border border-slate-100 shadow-sm flex flex-col">
-                  <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight mb-8">Career Honours</h3>
-                  <div className="flex-1 space-y-4">
-                    {player.achievements && Array.isArray(player.achievements) && player.achievements.length > 0 ? (
-                      player.achievements.map((h, i) => (
-                        <div key={i} className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100 group transition-all hover:bg-slate-900 hover:text-white">
-                           <div className="w-10 h-10 bg-white group-hover:bg-[#b50a0a] rounded-lg flex items-center justify-center transition-colors shadow-sm">
-                              <Trophy className="w-5 h-5 text-[#b50a0a] group-hover:text-white" />
-                           </div>
-                           <span className="text-[11px] font-black uppercase tracking-widest">{h.title || h}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="h-full flex flex-col items-center justify-center p-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 opacity-60">
-                         <Trophy className="w-10 h-10 text-slate-200 mb-3" />
-                         <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No active awards</p>
-                      </div>
-                    )}
-                  </div>
-                  <button className="w-full mt-8 bg-slate-50 border border-slate-100 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
-                     <Plus className="w-3.5 h-3.5" /> Add Achievement
+                  <button 
+                    onClick={() => setEditingSection(editingSection === 'bio' ? null : 'bio')}
+                    className="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all border border-transparent hover:border-slate-100"
+                  >
+                    <Edit className="w-4 h-4" />
                   </button>
                 </div>
+                
+                {editingSection === 'bio' ? (
+                  <div className="space-y-6 relative">
+                    <textarea 
+                      rows={2}
+                      onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = 'auto';
+                        target.style.height = `${target.scrollHeight}px`;
+                      }}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-8 text-[13px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-all resize-none overflow-hidden"
+                      value={displayValue('bio', player.bio || '')}
+                      onChange={(e) => updateField('bio', e.target.value)}
+                      placeholder="Share the professional journey, key milestones, and personal story of this athlete..."
+                    />
+                    <div className="flex gap-4">
+                      <button onClick={handleSaveChanges} className="px-10 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200">Save Biography</button>
+                      <button onClick={() => { setEditingSection(null); setEditedFields({}); }} className="px-10 py-4 bg-white text-slate-400 border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <div className="p-8 bg-slate-50/50 rounded-[1.5rem] border border-slate-100 relative group/bio shadow-inner">
+                      <div className="text-[13px] font-medium text-slate-600 leading-[1.8] whitespace-pre-wrap">
+                        {player.bio || "No professional biography has been provided for this athlete yet. Use the edit button to share their professional journey and achievements."}
+                      </div>
+                      <div className="absolute -left-2 top-10 w-1 h-32 bg-indigo-500/20 rounded-full opacity-0 group-hover/bio:opacity-100 transition-opacity"></div>
+                    </div>
+                  </div>
+                )}
+                <PendingEditBadge field="bio" />
               </div>
+
+              {/* Honours & Awards - Full Width */}
+              <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
+                <div className="absolute bottom-0 right-0 w-32 h-32 bg-slate-50 rounded-tl-full -mr-16 -mb-16 transition-all group-hover:bg-yellow-50/30"></div>
+                
+                <div className="flex items-center justify-between mb-6 relative">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-yellow-50 flex items-center justify-center text-yellow-600 shadow-sm border border-yellow-100/50">
+                      <Trophy className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Career Honours</h3>
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Medals, Trophies & Individual Awards</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => { setEditingAchievement(null); setShowAchievementModal(true); }}
+                    className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-yellow-600 transition-all shadow-md shadow-slate-200"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex flex-col md:flex-row gap-4 mb-6 relative">
+                   <div className="flex-1 relative group">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-yellow-600 transition-colors" />
+                      <input 
+                         type="text"
+                         placeholder="Search trophies, years, organizations..."
+                         value={achievementSearch}
+                         onChange={(e) => { setAchievementSearch(e.target.value); setAchievementPage(1); }}
+                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-3.5 text-xs font-bold text-slate-600 focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500/50 outline-none transition-all shadow-inner"
+                      />
+                   </div>
+                   <div className="w-full md:w-44 relative">
+                      <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                      <select 
+                         value={achievementCategoryFilter}
+                         onChange={(e) => { setAchievementCategoryFilter(e.target.value); setAchievementPage(1); }}
+                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-3.5 text-xs font-bold text-slate-600 focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500/50 outline-none transition-all appearance-none cursor-pointer"
+                      >
+                         <option value="All">All Categories</option>
+                         <option value="Club">Club Honours</option>
+                         <option value="Individual">Individual Awards</option>
+                         <option value="International">International</option>
+                         <option value="Other">Other</option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                         <ChevronDown className="w-3.5 h-3.5" />
+                      </div>
+                   </div>
+                </div>
+
+                <div className="relative">
+                  {isLoadingAchievements ? (
+                    <div className="py-20 flex flex-col items-center justify-center space-y-4">
+                      <div className="w-10 h-10 border-4 border-slate-100 border-t-yellow-500 rounded-full animate-spin"></div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Loading Honours...</p>
+                    </div>
+                  ) : filteredAchievements.length > 0 ? (
+                    <>
+                      <div className="space-y-4">
+                        {paginatedAchievements.map((h) => (
+                          <div key={h.id} className="flex items-center gap-6 p-6 rounded-3xl bg-slate-50 border border-slate-100 group/item transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-100 hover:border-white relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-1 h-full bg-yellow-500 transform translate-x-full group-hover/item:translate-x-0 transition-transform duration-300"></div>
+                            
+                            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center transition-all shadow-sm group-hover/item:scale-110 group-hover/item:bg-yellow-50 border border-slate-100 group-hover/item:border-yellow-100">
+                               <Trophy className="w-7 h-7 text-yellow-600" />
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                               <div className="flex items-center gap-3 mb-1.5">
+                                  <span className="px-2 py-0.5 bg-white border border-slate-100 rounded-md text-[7px] font-black text-slate-400 uppercase tracking-widest shadow-sm">{h.category}</span>
+                                  {h.year && (
+                                     <div className="flex items-center gap-1.5 px-2 py-0.5 bg-yellow-50 text-yellow-700 rounded-md text-[8px] font-black uppercase tracking-widest border border-yellow-100/50">
+                                        <Calendar className="w-2.5 h-2.5" />
+                                        {h.year}
+                                     </div>
+                                  )}
+                               </div>
+                               <h4 className="text-[13px] font-bold text-slate-900 uppercase tracking-tight mb-0.5">{h.title}</h4>
+                               {h.organization && (
+                                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                                     <Building2 className="w-3 h-3" />
+                                     {h.organization}
+                                  </div>
+                               )}
+                            </div>
+
+                            <div className="flex items-center gap-2 ml-4">
+                              <button 
+                                onClick={() => { setEditingAchievement(h); setShowAchievementModal(true); }}
+                                className="p-2.5 bg-white text-slate-400 hover:text-indigo-600 rounded-xl shadow-sm border border-slate-100 transition-all hover:scale-105 active:scale-95"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteAchievement(h.id)}
+                                className="p-2.5 bg-white text-slate-400 hover:text-red-600 rounded-xl shadow-sm border border-slate-100 transition-all hover:scale-105 active:scale-95"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Achievement Pagination */}
+                      {totalAchievementPages > 1 && (
+                        <div className="flex items-center justify-between mt-10 pt-10 border-t border-slate-100">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            Showing {Math.min(filteredAchievements.length, achievementsPerPage)} of {filteredAchievements.length} Results
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => setAchievementPage(p => Math.max(1, p - 1))}
+                              disabled={achievementPage === 1}
+                              className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-30 transition-all"
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <div className="flex items-center gap-1.5 px-4 h-10 rounded-xl border border-slate-200 bg-slate-50">
+                              <span className="text-[10px] font-bold text-slate-900">{achievementPage}</span>
+                              <span className="text-[10px] font-bold text-slate-300">/</span>
+                              <span className="text-[10px] font-bold text-slate-400">{totalAchievementPages}</span>
+                            </div>
+                            <button 
+                              onClick={() => setAchievementPage(p => Math.min(totalAchievementPages, p + 1))}
+                              disabled={achievementPage === totalAchievementPages}
+                              className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-30 transition-all"
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="min-h-[300px] flex flex-col items-center justify-center p-12 bg-slate-50/50 rounded-[2.5rem] border border-dashed border-slate-200">
+                      <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-sm border border-slate-100">
+                        <Trophy className="w-10 h-10 text-slate-100" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest">No achievements yet</h4>
+                      <p className="text-[10px] text-slate-400 mt-2 max-w-[240px] text-center">Start adding official trophies, medals, and awards to showcase this player's success.</p>
+                      <button 
+                        onClick={() => { setEditingAchievement(null); setShowAchievementModal(true); }}
+                        className="mt-8 px-8 py-3 bg-white text-slate-900 border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
+                      >
+                        + Add First Achievement
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Modal Rendering */}
+              <AchievementFormModal 
+                isOpen={showAchievementModal}
+                onClose={() => { setShowAchievementModal(false); setEditingAchievement(null); }}
+                onSave={handleSaveAchievement}
+                initialData={editingAchievement}
+              />
             </div>
           )}
 
           {/* Tab 4: Gallery */}
           {activeTab === 'gallery' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-900">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-10">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-900 shadow-sm border border-slate-100">
                     <ImageIcon className="w-6 h-6" />
                   </div>
-                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Media Gallery</h3>
-                </div>
-                <button className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#b50a0a] transition-all flex items-center gap-2 shadow-lg shadow-slate-900/10">
-                  <Plus className="w-3.5 h-3.5" /> Upload Media
-                </button>
-              </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                  "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=800",
-                  "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=800",
-                  "https://images.unsplash.com/photo-1522778119026-d647f0596c20?q=80&w=800",
-                  "https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=800",
-                ].map((img, i) => (
-                  <div key={i} className="group relative aspect-square rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer">
-                    <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Eye className="w-8 h-8 text-white" />
-                    </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">Athlete Media</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Video Highlights & Action Shots</p>
                   </div>
-                ))}
+                </div>
+                
+                {player.media_gallery?.external_gallery_url && (
+                  <a 
+                    href={player.media_gallery.external_gallery_url.startsWith('http') ? player.media_gallery.external_gallery_url : `https://${player.media_gallery.external_gallery_url}`} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-8 py-4 bg-slate-50 text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-3 border border-slate-200"
+                  >
+                    Visit Global Portfolio <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
               </div>
+
+              {/* Video Highlight - Primary focus */}
+              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm overflow-hidden group">
+                 <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600">
+                       <Activity className="w-4 h-4" />
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Featured Highlight Vid</h4>
+                 </div>
+                 
+                 <div className="aspect-video rounded-[2rem] overflow-hidden bg-slate-900 border border-slate-100 shadow-2xl relative group/video">
+                    {player.media_gallery?.highlight_video_url ? (
+                       <iframe 
+                          src={getEmbedUrl(player.media_gallery.highlight_video_url)}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                          allowFullScreen
+                       ></iframe>
+                    ) : (
+                       <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 space-y-4">
+                          <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center">
+                             <Activity className="w-10 h-10" />
+                          </div>
+                          <p className="text-xs font-bold uppercase tracking-widest">No highlight video added</p>
+                       </div>
+                    )}
+                 </div>
+              </div>
+
+              {/* Action Grid & External Link */}
+              {/* Action Grid */}
+              <div className="space-y-6">
+                 <div className="flex items-center justify-between px-2">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Latest Action Images</h4>
+                    <span className="text-[10px] font-bold text-slate-400">Total: {player.media_gallery?.action_images?.filter(img => img && img.trim() !== '').length || 0}</span>
+                 </div>
+                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {(player.media_gallery?.action_images && player.media_gallery.action_images.filter(img => img && img.trim() !== '').length > 0) ? (
+                       player.media_gallery.action_images.filter(img => img && img.trim() !== '').map((img, i) => (
+                          <div key={i} className="group relative aspect-square rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer">
+                             <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                             <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Eye className="w-6 h-6 text-white" />
+                             </div>
+                          </div>
+                       ))
+                    ) : (
+                       [1,2,3,4,5].map((idx) => (
+                          <div key={idx} className="aspect-square rounded-3xl bg-slate-50 border border-dashed border-slate-200 flex items-center justify-center">
+                             <ImageIcon className="w-6 h-6 text-slate-200" />
+                          </div>
+                       ))
+                    )}
+                 </div>
+
+                 {/* Manage Gallery Button at the bottom */}
+                 <div className="flex justify-center pt-10 pb-4">
+                    <button 
+                       onClick={() => setShowMediaModal(true)}
+                       className="px-12 py-5 bg-slate-900 text-white rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all flex items-center gap-3 shadow-xl hover:shadow-indigo-500/20 active:scale-95"
+                    >
+                       <Edit className="w-4 h-4" /> Manage Media Gallery
+                    </button>
+                 </div>
+              </div>
+
+              <MediaGalleryModal 
+                 isOpen={showMediaModal}
+                 onClose={() => setShowMediaModal(false)}
+                 onSave={(media) => handlePlayerUpdate({ media_gallery: media })}
+                 initialData={player.media_gallery || DEFAULT_MEDIA}
+              />
             </div>
           )}
 
           {/* Tab 5: News */}
           {activeTab === 'news' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-900">
-                  <Newspaper className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Press & Updates</h3>
-              </div>
-              <div className="grid grid-cols-1 gap-6">
-                {[
-                  { title: `${player.first_name}'s clinical finish secures victory`, date: "2 days ago", category: "Match Report", img: "https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=800" },
-                  { title: "Transfer rumors: European giants watching", date: "1 week ago", category: "Transfer News", img: "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?q=80&w=800" },
-                ].map((news, i) => (
-                  <div key={i} className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm flex flex-col md:flex-row h-48 hover:border-[#b50a0a]/30 transition-all group">
-                    <div className="md:w-64 relative overflow-hidden">
-                      <img src={news.img} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" />
+              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm mb-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-900">
+                      <Newspaper className="w-6 h-6" />
                     </div>
-                    <div className="flex-1 p-8 flex flex-col justify-between">
-                      <div>
-                        <span className="text-[9px] font-black uppercase text-[#b50a0a] tracking-widest mb-2 block">{news.category}</span>
-                        <h4 className="text-lg font-black uppercase leading-tight text-slate-900">{news.title}</h4>
-                      </div>
-                      <div className="flex items-center justify-between mt-4">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">{news.date}</span>
-                        <button className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400 hover:text-[#b50a0a] transition-all">Moderate Story <ExternalLink className="w-3 h-3" /></button>
-                      </div>
+                    <div>
+                      <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Press Tags</h3>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Manage tags to connect news stories</p>
                     </div>
                   </div>
-                ))}
+                </div>
+
+                <div className="space-y-6">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input 
+                        type="text"
+                        placeholder="Add new tag (e.g. Victor Osimhen)"
+                        value={newTagInput}
+                        onChange={(e) => setNewTagInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && newTagInput.trim()) {
+                            if (!profileTags.includes(newTagInput.trim())) {
+                              handleUpdateTags([...profileTags, newTagInput.trim()]);
+                            }
+                            setNewTagInput('');
+                          }
+                        }}
+                        className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a]/20 transition-all shadow-inner"
+                      />
+                    </div>
+                    <button 
+                      onClick={() => {
+                        if (newTagInput.trim()) {
+                          if (!profileTags.includes(newTagInput.trim())) {
+                            handleUpdateTags([...profileTags, newTagInput.trim()]);
+                          }
+                          setNewTagInput('');
+                        }
+                      }}
+                      disabled={isUpdatingTags || !newTagInput.trim()}
+                      className="bg-[#b50a0a] hover:bg-black text-white px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                    >
+                      {isUpdatingTags ? 'Syncing...' : 'Add Tag'}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {profileTags.length > 0 ? (
+                      profileTags.map((tag, idx) => (
+                        <div key={idx} className="flex items-center gap-2 bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-xl group hover:border-[#b50a0a]/30 transition-all">
+                          <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">{tag}</span>
+                          <button 
+                            onClick={() => handleUpdateTags(profileTags.filter(t => t !== tag))}
+                            className="text-slate-300 hover:text-[#b50a0a] transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-[9px] font-bold text-slate-300 uppercase italic tracking-widest py-2">No tags assigned yet</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 mb-6">
+                <hr className="flex-1 border-slate-100" />
+                <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">Latest Feed</span>
+                <hr className="flex-1 border-slate-100" />
+              </div>
+              <div className="grid grid-cols-1 gap-6">
+                {isLoadingNews ? (
+                  <div className="py-20 text-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
+                    <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Searching tagged stories...</p>
+                  </div>
+                ) : playerNews.length > 0 ? (
+                  playerNews.map((news) => (
+                    <div key={news.id} className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm flex flex-col md:flex-row h-48 hover:border-[#b50a0a]/30 transition-all group">
+                      <div className="md:w-64 relative overflow-hidden bg-slate-100">
+                        <img 
+                          src={news.cover_image_url || 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=800'} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" 
+                        />
+                      </div>
+                      <div className="flex-1 p-8 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[9px] font-black uppercase text-[#b50a0a] tracking-widest">{news.category?.name || 'Story'}</span>
+                            {news.is_pinned && <Star className="w-3 h-3 text-orange-400 fill-orange-400" />}
+                          </div>
+                          <h4 className="text-sm font-black uppercase leading-tight text-slate-900 line-clamp-2">{news.title}</h4>
+                        </div>
+                        <div className="flex items-center justify-between mt-4">
+                          <div className="flex items-center gap-2">
+                             <Calendar className="w-3 h-3 text-slate-300" />
+                             <DateDisplay date={news.published_at} className="text-[9px] font-bold text-slate-400 uppercase" />
+                          </div>
+                          <Link 
+                            href={`/news/${news.slug}`}
+                            target="_blank"
+                            className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400 hover:text-[#b50a0a] transition-all"
+                          >
+                            View Post <ExternalLink className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-20 text-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
+                    <MessageSquare className="w-10 h-10 text-slate-200 mx-auto mb-4" />
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No stories tagged for this athlete yet.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1472,65 +2363,147 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
           {/* Tab: Billing */}
           {activeTab === 'billing' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-slate-900 rounded-[2rem] p-10 text-white shadow-xl relative overflow-hidden group">
+              <div className="space-y-8">
+                {/* Subscription Card - Full Width */}
+                <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-xl relative overflow-hidden group">
                   <div className="absolute -top-20 -right-20 w-80 h-80 bg-[#b50a0a]/10 rounded-full blur-[100px] group-hover:bg-[#b50a0a]/20 transition-all duration-1000"></div>
-                  <div className="relative z-10 flex items-center justify-between mb-10">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Subscription Status</h3>
-                    <span className={`${player.is_subscribed ? 'bg-emerald-500' : 'bg-blue-600'} px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg`}>
-                      {player.is_subscribed ? 'Active Pro' : 'Free Prospect'}
+                  <div className="relative z-10 flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                        <Shield className="w-5 h-5 text-[#b50a0a]" />
+                      </div>
+                      <div>
+                        <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">Subscription Status</h3>
+                        <p className="text-sm font-black uppercase text-white mt-0.5 tracking-tight">{player.is_subscribed ? 'Active Pro Member' : 'Free Prospect Plan'}</p>
+                      </div>
+                    </div>
+                    <span className={`${player.is_subscribed ? 'bg-emerald-500 text-white' : 'bg-blue-600 text-white'} px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-black/20`}>
+                      {player.is_subscribed ? 'PRO' : 'FREE'}
                     </span>
                   </div>
-                  <div className="relative z-10 space-y-10">
-                    <div>
-                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2">Cycle End Date</p>
-                      <p className="text-4xl font-black italic tracking-tighter">
-                        {player.users?.subscriptions?.[0]?.current_period_end ? (
-                          <DateDisplay date={player.users.subscriptions[0].current_period_end} />
-                        ) : 'NOT CONFIGURED'}
-                      </p>
-                    </div>
-                    <div className="flex gap-4">
-                      <button className="flex-1 bg-white/5 border border-white/10 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">Invoices</button>
-                      <button className="flex-1 bg-[#b50a0a] py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#b50a0a]/80 transition-all shadow-lg shadow-red-900/20">Upgrade Plan</button>
-                    </div>
+                  <div className="relative z-10">
+                    <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 px-1">Cycle End Date</p>
+                    <p className="text-3xl font-black italic tracking-tighter">
+                      {player.users?.subscriptions?.[0]?.current_period_end ? (
+                        <DateDisplay date={player.users.subscriptions[0].current_period_end} />
+                      ) : 'NOT CONFIGURED'}
+                    </p>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-[2rem] p-10 border border-slate-100 shadow-sm">
-                  <div className="flex items-center justify-between mb-8">
-                    <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
-                      <CreditCard className="w-5 h-5 text-[#b50a0a]" /> Ledger
+                {/* Ledger Card - Full Width */}
+                <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 pb-10 border-b border-slate-50">
+                    <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                        <CreditCard className="w-5 h-5 text-[#b50a0a]" />
+                      </div>
+                      Ledger
                     </h3>
+                    
+                    <div className="flex items-center gap-2">
+                      <div className="relative group/search">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-hover/search:text-[#b50a0a] transition-colors" />
+                        <input 
+                          type="text"
+                          placeholder="Search reference..."
+                          value={txSearch}
+                          onChange={(e) => setTxSearch(e.target.value)}
+                          className="bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl pl-11 pr-5 py-3 text-[10px] font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a]/10 w-48 transition-all"
+                        />
+                      </div>
+                      <div className="relative">
+                        <select 
+                          value={txStatusFilter}
+                          onChange={(e) => setTxStatusFilter(e.target.value)}
+                          className="bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl pl-5 pr-10 py-3 text-[10px] font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a]/10 transition-all appearance-none cursor-pointer"
+                        >
+                          <option value="all">All Status</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="success">Success</option>
+                          <option value="pending">Pending</option>
+                          <option value="failed">Failed</option>
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                    {playerTransactions.length > 0 ? (
-                      playerTransactions.map((tx, i) => (
-                        <div key={i} className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-[#b50a0a]/10 transition-all group">
-                          <div className="flex items-center gap-5">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-black ${
-                              tx.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
-                            }`}>
-                              {tx.currency === 'USD' ? '$' : tx.currency}
+                  <div className="space-y-4">
+                    {isLoadingTransactions ? (
+                      <div className="py-20 text-center">
+                        <div className="w-10 h-10 border-4 border-slate-100 border-t-[#b50a0a] rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Accessing records...</p>
+                      </div>
+                    ) : filteredTransactions.length > 0 ? (
+                      <>
+                        <div className="grid grid-cols-1 gap-3">
+                          {paginatedTransactions.map((tx, i) => (
+                            <div key={i} className="flex items-center justify-between p-6 bg-slate-50/50 rounded-3xl border border-slate-50 hover:border-[#b50a0a]/10 hover:bg-white transition-all group">
+                              <div className="flex items-center gap-6">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black shadow-sm ${
+                                  tx.status === 'confirmed' || tx.status === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                                }`}>
+                                  {tx.currency === 'USD' ? '$' : tx.currency === 'NGN' ? '₦' : tx.currency}
+                                </div>
+                                <div>
+                                  <p className="text-[11px] font-black text-slate-900 uppercase leading-none mb-1.5 tracking-tight">
+                                    {tx.reference?.split('_')[0] || 'Member Base Payment'}
+                                    <span className="ml-2 text-[8px] font-bold text-slate-300 normal-case tracking-normal">ref: {tx.reference}</span>
+                                  </p>
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-1.5">
+                                      <Calendar className="w-3 h-3 text-slate-300" />
+                                      <DateDisplay date={tx.created_at} className="text-[9px] font-bold text-slate-400 uppercase tracking-wider" />
+                                    </div>
+                                    <div className="w-1 h-1 rounded-full bg-slate-200"></div>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{tx.currency} GATEWAY</p>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-lg font-black text-slate-900 italic tracking-tighter">
+                                  {tx.currency === 'USD' ? '$' : tx.currency === 'NGN' ? '₦' : ''}{(tx.amount / 100).toLocaleString()}
+                                </p>
+                                <span className={`text-[8px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-lg ${
+                                  tx.status === 'confirmed' || tx.status === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'
+                                }`}>{tx.status}</span>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-[11px] font-black text-slate-900 uppercase leading-none mb-1">{tx.reference.split('_')[0]}</p>
-                              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest"><DateDisplay date={tx.created_at} /></p>
+                          ))}
+                        </div>
+
+                        {/* Pagination Footer */}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-8 pt-8 border-t border-slate-50">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                            Showing <span className="text-slate-900">{Math.min(filteredTransactions.length, (txPage - 1) * txPerPage + 1)}</span> to <span className="text-slate-900">{Math.min(filteredTransactions.length, txPage * txPerPage)}</span> of <span className="text-slate-900">{filteredTransactions.length}</span> transactions
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => setTxPage(p => Math.max(1, p - 1))}
+                              disabled={txPage === 1}
+                              className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-900 transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <div className="bg-slate-50 px-4 py-2.5 rounded-xl">
+                              <span className="text-[10px] font-black text-slate-900">{txPage}</span>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-black text-slate-900">{(tx.amount / 100).toFixed(2)}</p>
-                            <p className={`text-[8px] font-black uppercase tracking-[0.2em] ${
-                              tx.status === 'confirmed' ? 'text-emerald-500' : 'text-red-500'
-                            }`}>{tx.status}</p>
+                            <button 
+                              onClick={() => setTxPage(p => p + 1)}
+                              disabled={txPage * txPerPage >= filteredTransactions.length}
+                              className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-900 transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
-                      ))
+                      </>
                     ) : (
-                      <div className="py-20 text-center text-slate-300">
-                        <Clock className="w-10 h-10 mx-auto mb-4 opacity-20" />
-                        <p className="text-[9px] font-black uppercase tracking-widest">No activity found</p>
+                      <div className="py-24 text-center bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
+                        <CreditCard className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No activity matches your filters</p>
+                        <button onClick={() => { setTxSearch(''); setTxStatusFilter('all'); }} className="mt-4 text-[9px] font-black text-[#b50a0a] uppercase tracking-widest hover:underline">Clear all filters</button>
                       </div>
                     )}
                   </div>

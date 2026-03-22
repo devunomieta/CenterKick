@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { DateDisplay } from '@/components/common/DateDisplay';
+import { useRouter } from 'next/navigation';
 import { 
   Globe, Mail, Shield, Layers, RefreshCw, 
   Save, Trash2, CheckCircle2, AlertCircle,
@@ -520,7 +522,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: any }) {
               </button>
                <div className="text-right">
                  <p className="text-[8px] font-black text-gray-900 uppercase tracking-widest italic opacity-50">
-                   Last deploy: {new Date().toLocaleDateString()}
+                   Last deploy: <DateDisplay date={new Date()} />
                  </p>
                </div>
             </div>

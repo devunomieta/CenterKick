@@ -59,7 +59,7 @@ export async function addCoach(formData: FormData) {
       age,
       gender,
       league,
-      agent_id: agentId,
+      agent_id: agentId === '' ? null : agentId,
       status: 'active'
     }]);
 
@@ -79,19 +79,25 @@ export async function addCoach(formData: FormData) {
 export async function updateCoach(id: string, data: any) {
   const supabase = await createClient();
   
+  // If first_name or last_name is updated, recalculate slug if it's missing or if names changed
   if (data.first_name || data.last_name) {
-    let fname = data.first_name;
-    let lname = data.last_name;
-    
-    if (!fname || !lname) {
-      const { data: current } = await supabase.from('profiles').select('first_name, last_name, role').eq('id', id).single();
-      fname = fname || current?.first_name;
-      lname = lname || current?.last_name;
-      data.slug = await getUniqueSlug(supabase, current?.role || 'coach', fname, lname);
-    } else {
-       const { data: current } = await supabase.from('profiles').select('role').eq('id', id).single();
-       data.slug = await getUniqueSlug(supabase, current?.role || 'coach', fname, lname);
+    const { data: current } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, role, slug')
+      .eq('id', id)
+      .single();
+
+    if (current && (data.first_name !== current.first_name || data.last_name !== current.last_name)) {
+      const newBase = generateBaseSlug(current.role || 'coach', data.first_name || current.first_name, data.last_name || current.last_name);
+      // Only update if it doesn't already start with the new base
+      if (!current.slug || !current.slug.startsWith(newBase)) {
+         data.slug = await getUniqueSlug(supabase, current.role || 'coach', data.first_name || current.first_name, data.last_name || current.last_name);
+      }
     }
+  }
+
+  if (data.agent_id === '') {
+    data.agent_id = null;
   }
 
   const { error } = await supabase

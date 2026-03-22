@@ -41,36 +41,47 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   return (
     <ToastContext.Provider value={{ showToast, hideToast }}>
       {children}
-      <div className="fixed bottom-8 right-8 z-[1000] flex flex-col gap-3 pointer-events-none">
-        <AnimatePresence>
+      <div className="fixed bottom-8 right-8 z-[9999] flex flex-col gap-3 pointer-events-none">
+        <AnimatePresence mode="popLayout">
           {toasts.map((toast) => (
             <motion.div
               key={toast.id}
-              initial={{ opacity: 0, y: 30, scale: 0.9, filter: 'blur(10px)' }}
+              layout
+              initial={{ opacity: 0, y: 50, scale: 0.8, filter: 'blur(10px)' }}
               animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, scale: 0.9, filter: 'blur(10px)', transition: { duration: 0.2 } }}
+              exit={{ opacity: 0, scale: 0.8, filter: 'blur(10px)', transition: { duration: 0.3 } }}
               className="pointer-events-auto"
             >
               <div className={`
-                flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border
-                ${toast.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-600' : ''}
-                ${toast.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-[#b50a0a]' : ''}
-                ${toast.type === 'info' ? 'bg-blue-500/10 border-blue-500/20 text-blue-600' : ''}
-                ${toast.type === 'loading' ? 'bg-black/80 border-white/10 text-white' : ''}
-                ${toast.type !== 'loading' && toast.type !== 'success' && toast.type !== 'error' && toast.type !== 'info' ? 'bg-white border-gray-100 text-gray-900' : ''}
+                flex items-center gap-4 px-6 py-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border backdrop-blur-3xl
+                ${toast.type === 'success' ? 'bg-white/95 border-emerald-50 text-emerald-600' : ''}
+                ${toast.type === 'error' ? 'bg-white/95 border-red-50 text-[#b50a0a]' : ''}
+                ${toast.type === 'info' ? 'bg-white/95 border-blue-50 text-blue-600' : ''}
+                ${toast.type === 'loading' ? 'bg-black/90 border-white/10 text-white' : ''}
               `}>
-                <div className="shrink-0">
+                <div className={`
+                  w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-lg
+                  ${toast.type === 'success' ? 'bg-emerald-500 text-white shadow-emerald-200' : ''}
+                  ${toast.type === 'error' ? 'bg-[#b50a0a] text-white shadow-red-200' : ''}
+                  ${toast.type === 'info' ? 'bg-blue-500 text-white shadow-blue-200' : ''}
+                  ${toast.type === 'loading' ? 'bg-white/10 text-white' : ''}
+                `}>
                   {toast.type === 'success' && <CheckCircle className="w-5 h-5" />}
                   {toast.type === 'error' && <AlertCircle className="w-5 h-5" />}
                   {toast.type === 'info' && <Info className="w-5 h-5" />}
                   {toast.type === 'loading' && <Loader2 className="w-5 h-5 animate-spin" />}
                 </div>
-                <p className="text-[11px] font-black uppercase tracking-widest">{toast.message}</p>
+                <div className="min-w-0 pr-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest leading-tight">
+                    {toast.type === 'success' ? 'Success' : toast.type === 'error' ? 'Attention Required' : toast.type === 'loading' ? 'Processing' : 'Information'}
+                  </p>
+                  <p className="text-[11px] font-bold text-gray-500 mt-1 line-clamp-2">{toast.message}</p>
+                </div>
                 <button 
                   onClick={() => hideToast(toast.id)}
-                  className="ml-4 p-1 hover:bg-black/5 rounded-full transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-2xl transition-all"
                 >
-                  <X className="w-3.5 h-3.5 opacity-40 hover:opacity-100" />
+                  <X className="w-4 h-4 text-gray-400" />
                 </button>
               </div>
             </motion.div>

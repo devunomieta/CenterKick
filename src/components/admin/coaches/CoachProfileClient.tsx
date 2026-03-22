@@ -14,6 +14,7 @@ import { getPendingEdits, processProfileEdit, getPlayerTransactions } from '@/ap
 import { updateCoach } from '@/app/admin/coaches/actions';
 import Link from 'next/link';
 import { COUNTRIES } from '@/lib/constants/countries';
+import { FOOTBALL_DATA } from '@/lib/constants/football_data';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
 import { FlagIcon } from '@/components/common/FlagIcon';
@@ -35,6 +36,7 @@ interface Coach {
   avatar_url?: string;
   agent_id?: string;
   bio?: string;
+  current_club?: string;
   league?: string;
   achievements?: any[];
   users: {
@@ -222,6 +224,10 @@ export default function CoachProfileClient({ coach, agents }: CoachProfileClient
               src={coach.avatar_url || "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=600&auto=format&fit=crop"}
               alt={coach.first_name}
               className="h-[105%] w-auto object-cover object-top drop-shadow-[0_20px_60px_rgba(37,99,235,0.4)] relative z-10 transition-transform duration-700 hover:scale-105"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=600&auto=format&fit=crop";
+              }}
             />
           </div>
 
@@ -294,39 +300,54 @@ export default function CoachProfileClient({ coach, agents }: CoachProfileClient
                      <div>
                         <h3 className="text-4xl font-black text-gray-900 uppercase tracking-tighter italic underline underline-offset-8 decoration-[#b50a0a]/30 mb-12">General Hub</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-10">
-                           {[
-                              { label: 'First Name', value: coach.first_name, field: 'first_name', type: 'text' },
-                              { label: 'Last Name', value: coach.last_name, field: 'last_name', type: 'text' },
-                              { label: 'Role/Position', value: coach.position, field: 'position', type: 'text' },
-                              { label: 'Citizenship', value: coach.country, field: 'country', type: 'select', options: COUNTRIES },
-                              { label: 'Current League', value: coach.league || 'Free Agent', field: 'league', type: 'text' },
-                              { label: 'Age', value: coach.age || 'N/A', field: 'age', type: 'number' },
-                              { label: 'Gender', value: coach.gender, field: 'gender', type: 'select', options: ['Male', 'Female', 'Other'] },
-                              { label: 'Managing Agent', value: agents.find(a => a.id === coach.agent_id)?.first_name ? `${agents.find(a => a.id === coach.agent_id)?.first_name} ${agents.find(a => a.id === coach.agent_id)?.last_name}` : 'Independent', field: 'agent_id', type: 'select', options: agents.map(a => `${a.first_name} ${a.last_name}`) },
-                           ].map((item, i) => (
+                           {(() => {
+                               const currentLeague = displayValue('league' as any, coach.league);
+                               const availableClubs = FOOTBALL_DATA.leagues.find(l => l.name === currentLeague)?.clubs || [];
+                               
+                               return [
+                                 { label: 'First Name', value: coach.first_name, field: 'first_name', type: 'text' },
+                                 { label: 'Last Name', value: coach.last_name, field: 'last_name', type: 'text' },
+                                 { label: 'Email Address', value: coach.email || 'N/A', field: 'email', type: 'text' },
+                                 { label: 'Role/Position', value: coach.position, field: 'position', type: 'text' },
+                                 { label: 'Citizenship', value: coach.country, field: 'country', type: 'select', options: COUNTRIES },
+                                 { label: 'Current League', value: coach.league || 'None', field: 'league', type: 'select', options: ['None', ...FOOTBALL_DATA.leagues.map(l => l.name)] },
+                                 { label: 'Current Club', value: coach.current_club || 'Unattached', field: 'current_club', type: availableClubs.length > 0 ? 'select' : 'text', options: availableClubs },
+                                 { label: 'Age', value: coach.age || 'N/A', field: 'age', type: 'number' },
+                                 { label: 'Gender', value: coach.gender, field: 'gender', type: 'select', options: ['Male', 'Female', 'Other'] },
+                                 { label: 'Managing Agent', value: coach.agent_id, field: 'agent_id', type: 'select', agents: agents },
+                               ];
+                           })().map((item, i) => (
                               <div key={i} className="flex flex-col border-b border-gray-100 pb-4 group">
                                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">{item.label}</span>
                                  <div className="flex items-start justify-between">
                                     <div className="flex-1">
                                        {isEditMode ? (
                                           item.type === 'select' ? (
-                                             <select 
-                                               value={displayValue(item.field as any, item.value)}
-                                               onChange={(e) => {
-                                                  if (item.label === 'Managing Agent') {
-                                                     const agent = agents.find(a => `${a.first_name} ${a.last_name}` === e.target.value);
-                                                     updateField('agent_id', agent?.id || null);
+                                              <select 
+                                                value={displayValue(item.field as any, item.value || '')}
+                                                onChange={(e) => {
+                                                  if (item.field === 'agent_id') {
+                                                    updateField('agent_id', e.target.value === 'none' ? null : e.target.value);
                                                   } else {
-                                                     updateField(item.field as any, e.target.value);
+                                                    updateField(item.field as any, e.target.value);
+                                                    if (item.field === 'league') {
+                                                      updateField('current_club', '');
+                                                    }
                                                   }
-                                               }}
-                                               className="w-full bg-gray-50 border-none rounded-lg p-2 text-[13px] font-black uppercase text-gray-900 focus:ring-1 focus:ring-[#b50a0a]"
-                                             >
-                                                {(item.options || []).map((opt: string) => (
-                                                   <option key={opt} value={opt}>{opt}</option>
-                                                ))}
-                                                {item.label === 'Managing Agent' && <option value="Independent">Independent</option>}
-                                             </select>
+                                                }}
+                                                className="w-full bg-gray-50 border-none rounded-lg p-2 text-[13px] font-black uppercase text-gray-900 focus:ring-1 focus:ring-[#b50a0a]"
+                                              >
+                                                 {item.field === 'agent_id' && <option value="none">Independent</option>}
+                                                 {item.field === 'current_club' && <option value="">Select Club</option>}
+                                                 {(item.field === 'agent_id' ? (item.agents || []) : (item.options || [])).map((opt: any) => (
+                                                    <option 
+                                                      key={item.field === 'agent_id' ? opt.user_id : opt} 
+                                                      value={item.field === 'agent_id' ? opt.user_id : opt}
+                                                    >
+                                                      {item.field === 'agent_id' ? `${opt.first_name} ${opt.last_name}` : opt}
+                                                    </option>
+                                                 ))}
+                                              </select>
                                           ) : (
                                              <input 
                                                type={item.type}
@@ -336,9 +357,13 @@ export default function CoachProfileClient({ coach, agents }: CoachProfileClient
                                              />
                                           )
                                        ) : (
-                                          <div className="text-[14px] font-black text-gray-900 uppercase">
-                                             {item.value || 'N/A'}
-                                          </div>
+                                           <div className="text-[14px] font-black text-gray-900 uppercase">
+                                              {item.label === 'Managing Agent' 
+                                                ? (agents.find(a => a.user_id === item.value)?.first_name 
+                                                   ? `${agents.find(a => a.user_id === item.value)?.first_name} ${agents.find(a => a.user_id === item.value)?.last_name}` 
+                                                   : 'Independent')
+                                                : (item.value || 'N/A')}
+                                           </div>
                                        )}
                                        <PendingEditBadge field={item.field} />
                                     </div>

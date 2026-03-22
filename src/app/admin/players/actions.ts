@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { sendEmailNotification } from '../notifications/actions';
 import { generateBaseSlug, generateRandomSuffix } from '@/lib/utils/slug';
+import sharp from 'sharp';
 
 async function getUniqueSlug(supabase: any, role: string, firstName: string, lastName: string) {
   const baseSlug = generateBaseSlug(role, firstName, lastName);
@@ -58,6 +59,8 @@ export async function addPlayer(formData: FormData) {
 
   // Generate unique slug
   const slug = await getUniqueSlug(supabase, 'player', firstName, lastName);
+  
+  const finalAgentId = agentId === '' ? null : agentId;
 
   // 3. Profile Creation (Unlinked enrollment)
   const { error: profileError } = await supabase
@@ -74,8 +77,8 @@ export async function addPlayer(formData: FormData) {
       date_of_birth: dob,
       gender,
       foot,
-      agent_id: agentId,
-      agent_status: agentId ? 'pending' : 'accepted',
+      agent_id: finalAgentId,
+      agent_status: finalAgentId ? 'pending' : 'accepted',
       status: 'active'
     }]);
 
@@ -95,23 +98,27 @@ export async function addPlayer(formData: FormData) {
 export async function updatePlayer(id: string, data: any) {
   const supabase = await createClient();
   
-  // If first_name or last_name is updated, recalculate slug if it's missing or if we want to enforce new format
+  // If first_name or last_name is updated, recalculate slug if it's missing or if names changed
   if (data.first_name || data.last_name) {
-    // Get current names if only one is provided
-    let fname = data.first_name;
-    let lname = data.last_name;
-    
-    if (!fname || !lname) {
-      const { data: current } = await supabase.from('profiles').select('first_name, last_name, role').eq('id', id).single();
-      fname = fname || current?.first_name;
-      lname = lname || current?.last_name;
-      data.slug = await getUniqueSlug(supabase, current?.role || 'player', fname, lname);
-    } else {
-       const { data: current } = await supabase.from('profiles').select('role').eq('id', id).single();
-       data.slug = await getUniqueSlug(supabase, current?.role || 'player', fname, lname);
+    const { data: current } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, role, slug')
+      .eq('id', id)
+      .single();
+
+    if (current && (data.first_name !== current.first_name || data.last_name !== current.last_name)) {
+      const newBase = generateBaseSlug(current.role || 'player', data.first_name || current.first_name, data.last_name || current.last_name);
+      // Only update if it doesn't already start with the new base
+      if (!current.slug || !current.slug.startsWith(newBase)) {
+         data.slug = await getUniqueSlug(supabase, current.role || 'player', data.first_name || current.first_name, data.last_name || current.last_name);
+      }
     }
   }
-  
+
+  if (data.agent_id === '') {
+    data.agent_id = null;
+  }
+
   const { error } = await supabase
     .from('profiles')
     .update(data)
@@ -126,40 +133,41 @@ export async function updatePlayer(id: string, data: any) {
 export async function deletePlayer(id: string) {
   const supabase = await createClient();
   
-  // Note: Deleting from 'users' will cascade if foreign keys are set correctly
-  const { error } = await supabase
-    .from('users')
-    .delete()
-    .eq('id', id);
+  // Get profile to check for linked user
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('user_id')
+    .eq('id', id)
+    .single();
 
-  if (error) return { success: false, error: error.message };
+  if (profile?.user_id) {
+    // Deleting from 'users' cascades to 'profiles'
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', profile.user_id);
+    if (error) return { success: false, error: error.message };
+  } else {
+    // Just delete the unlinked profile
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', id);
+    if (error) return { success: false, error: error.message };
+  }
 
   revalidatePath('/admin/players');
   return { success: true };
 }
 
-export async function getPlayerTransactions(profileId: string) {
-  const supabase = await createClient();
-  
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('user_id', profileId)
-    .order('created_at', { ascending: false })
-    .limit(10);
-
-  if (error) return { success: false, error: error.message };
-  return { success: true, data };
-}
-
 export async function getPendingEdits(profileId: string) {
   const supabase = await createClient();
-  
   const { data, error } = await supabase
     .from('profile_edits')
     .select('*')
     .eq('profile_id', profileId)
-    .eq('status', 'pending');
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
 
   if (error) return { success: false, error: error.message };
   return { success: true, data };
@@ -173,44 +181,65 @@ export async function processProfileEdit(editId: string, action: 'approve' | 're
       .from('profile_edits')
       .update({ status: 'rejected' })
       .eq('id', editId);
-    
     if (error) return { success: false, error: error.message };
     return { success: true };
   }
 
-  // Approve: 1. Get the edit details
-  const { data: edit, error: fetchError } = await supabase
+  // Approve: Get edit details and apply to profile
+  const { data: edit } = await supabase
     .from('profile_edits')
     .select('*')
     .eq('id', editId)
     .single();
-  
-  if (fetchError || !edit) return { success: false, error: fetchError?.message || 'Edit not found' };
 
-  // 2. Update the profile
-  const { error: updateError } = await supabase
+  if (!edit) return { success: false, error: "Edit not found" };
+
+  // Update profile
+  const { error: profileError } = await supabase
     .from('profiles')
     .update({ [edit.field_name]: edit.new_value })
     .eq('id', edit.profile_id);
-  
-  if (updateError) return { success: false, error: updateError.message };
 
-  // 3. Mark edit as approved
-  const { error: statusError } = await supabase
+  if (profileError) return { success: false, error: profileError.message };
+
+  // Mark edit as approved
+  const { error: editError } = await supabase
     .from('profile_edits')
     .update({ status: 'approved' })
     .eq('id', editId);
-  
-  if (statusError) return { success: false, error: statusError.message };
+
+  if (editError) return { success: false, error: editError.message };
 
   revalidatePath('/admin/players');
   return { success: true };
 }
 
+export async function getPlayerTransactions(profileId: string) {
+  const supabase = await createClient();
+  
+  // First get user_id from profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('user_id')
+    .eq('id', profileId)
+    .single();
+
+  if (!profile?.user_id) return { success: true, data: [] };
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', profile.user_id)
+    .order('created_at', { ascending: false });
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
 export async function getPlayerStats(playerId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from('player_career_stats')
+    .from('career_stats')
     .select('*')
     .eq('player_id', playerId)
     .order('season', { ascending: false });
@@ -219,45 +248,89 @@ export async function getPlayerStats(playerId: string) {
   return { success: true, data };
 }
 
-export async function addPlayerStat(data: any) {
+export async function addPlayerStat(playerId: string, data: any) {
   const supabase = await createClient();
   const { error } = await supabase
-    .from('player_career_stats')
-    .insert([data]);
+    .from('career_stats')
+    .insert([{ ...data, player_id: playerId }]);
 
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/players');
+  revalidatePath('/admin/players/[id]', 'page');
   return { success: true };
 }
 
-export async function updatePlayerStat(id: string, data: any) {
+export async function updatePlayerStat(statId: string, data: any) {
   const supabase = await createClient();
   const { error } = await supabase
-    .from('player_career_stats')
+    .from('career_stats')
     .update(data)
-    .eq('id', id);
+    .eq('id', statId);
 
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/players');
   return { success: true };
 }
 
-export async function deletePlayerStat(id: string) {
+export async function deletePlayerStat(statId: string) {
   const supabase = await createClient();
   const { error } = await supabase
-    .from('player_career_stats')
+    .from('career_stats')
     .delete()
-    .eq('id', id);
+    .eq('id', statId);
 
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/players');
   return { success: true };
 }
 
+// Achievements
+export async function getPlayerAchievements(playerId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('achievements')
+    .select('*')
+    .eq('player_id', playerId)
+    .order('year', { ascending: false });
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
+export async function addPlayerAchievement(playerId: string, data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('achievements')
+    .insert([{ ...data, player_id: playerId }]);
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
+export async function updatePlayerAchievement(achievementId: string, data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('achievements')
+    .update(data)
+    .eq('id', achievementId);
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
+export async function deletePlayerAchievement(achievementId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('achievements')
+    .delete()
+    .eq('id', achievementId);
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
+// Transfers
 export async function getPlayerTransfers(playerId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from('player_transfer_history')
+    .from('player_transfers')
     .select('*')
     .eq('player_id', playerId)
     .order('transfer_date', { ascending: false });
@@ -266,37 +339,140 @@ export async function getPlayerTransfers(playerId: string) {
   return { success: true, data };
 }
 
-export async function addPlayerTransfer(data: any) {
+export async function addPlayerTransfer(playerId: string, data: any) {
   const supabase = await createClient();
   const { error } = await supabase
-    .from('player_transfer_history')
-    .insert([data]);
+    .from('player_transfers')
+    .insert([{ ...data, player_id: playerId }]);
 
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/players');
   return { success: true };
 }
 
-export async function updatePlayerTransfer(id: string, data: any) {
+export async function updatePlayerTransfer(transferId: string, data: any) {
   const supabase = await createClient();
   const { error } = await supabase
-    .from('player_transfer_history')
+    .from('player_transfers')
     .update(data)
-    .eq('id', id);
+    .eq('id', transferId);
 
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/players');
   return { success: true };
 }
 
-export async function deletePlayerTransfer(id: string) {
+export async function deletePlayerTransfer(transferId: string) {
   const supabase = await createClient();
   const { error } = await supabase
-    .from('player_transfer_history')
+    .from('player_transfers')
     .delete()
-    .eq('id', id);
+    .eq('id', transferId);
 
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/players');
   return { success: true };
+}
+
+export async function updateProfileAvatar(profileId: string, avatarUrl: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('profiles')
+    .update({ avatar_url: avatarUrl })
+    .eq('id', profileId);
+
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/players/[id]', 'page');
+  return { success: true };
+}
+
+export async function updateProfileTags(profileId: string, tags: string[]) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('profiles')
+    .update({ tags })
+    .eq('id', profileId);
+
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/players/[id]', 'page');
+  return { success: true };
+}
+
+export async function getPlayerNews(profileId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('id, title, excerpt, cover_image, slug, created_at')
+    .eq('status', 'published')
+    .contains('tags', ['Player Mention'])
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
+export async function uploadPlayerImage(formData: FormData) {
+  try {
+    const supabase = await createClient();
+    const file = formData.get('file') as File;
+    if (!file) return { error: 'No file provided' };
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const optimizedBuffer = await sharp(buffer)
+      .resize(800, 800, { fit: 'cover' })
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.webp`;
+    const path = `avatars/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('site-assets')
+      .upload(path, optimizedBuffer, {
+        contentType: 'image/webp',
+        upsert: true
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('site-assets')
+      .getPublicUrl(path);
+
+    return { url: publicUrl };
+  } catch (error: any) {
+    console.error('Image upload error:', error);
+    return { error: 'Failed to process image' };
+  }
+}
+
+export async function migrateAllProfileSlugs() {
+  const supabase = await createClient();
+  
+  // Fetch all profiles
+  const { data: profiles, error: fetchError } = await supabase
+    .from('profiles')
+    .select('id, first_name, last_name, role, slug');
+
+  if (fetchError) return { success: false, error: fetchError.message };
+  if (!profiles) return { success: true, count: 0 };
+
+  let updatedCount = 0;
+  for (const profile of profiles) {
+    const targetBase = generateBaseSlug(profile.role || 'player', profile.first_name || '', profile.last_name || '');
+    
+    // Check if current slug starts with targetBase (and follows it with possibly a random suffix)
+    if (!profile.slug || !profile.slug.startsWith(targetBase)) {
+      const newSlug = await getUniqueSlug(supabase, profile.role || 'player', profile.first_name || '', profile.last_name || '');
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ slug: newSlug })
+        .eq('id', profile.id);
+      
+      if (!updateError) updatedCount++;
+    }
+  }
+
+  revalidatePath('/admin/players');
+  revalidatePath('/admin/coaches');
+  return { success: true, count: updatedCount };
 }

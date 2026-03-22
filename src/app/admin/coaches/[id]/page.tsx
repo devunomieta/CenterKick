@@ -6,9 +6,11 @@ export default async function CoachProfilePage({ params }: { params: { id: strin
   const { id } = params;
   const supabase = await createClient();
 
-  // Fetch Coach Data
-  const { data: coach, error } = await supabase
-    .from('coaches')
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+  // Fetch Coach Data from profiles
+  let coachQuery = supabase
+    .from('profiles')
     .select(`
       *,
       users:user_id (
@@ -19,18 +21,25 @@ export default async function CoachProfilePage({ params }: { params: { id: strin
           status
         )
       )
-    `)
-    .eq('id', id)
-    .single();
+    `);
 
-  if (error || !coach) {
-    notFound();
+  if (isUUID) {
+    coachQuery = coachQuery.or(`id.eq.${id},slug.eq.${id}`);
+  } else {
+    coachQuery = coachQuery.eq('slug', id);
   }
 
-  // Fetch Agents for the dropdown
+  const { data: coach, error } = await coachQuery.single();
+
+  if (error || !coach) {
+    return notFound();
+  }
+
+  // Fetch Agents for the dropdown (from profiles table)
   const { data: agents } = await supabase
-    .from('agents')
-    .select('id, first_name, last_name');
+    .from('profiles')
+    .select('id, user_id, first_name, last_name, agency_name')
+    .ilike('role', 'agent');
 
   return (
     <div className="min-h-screen bg-[#fcfcfc]">
