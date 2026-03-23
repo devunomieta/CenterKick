@@ -29,8 +29,6 @@ import {
   uploadPlayerImage
 } from '@/app/admin/players/actions';
 import Link from 'next/link';
-import { COUNTRIES } from '@/lib/constants/countries';
-import { FOOTBALL_DATA } from '@/lib/constants/football_data';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
 import { FlagIcon } from '@/components/common/FlagIcon';
@@ -154,32 +152,30 @@ interface ProfileEdit {
 interface PlayerProfileClientProps {
   player: Player;
   agents: any[];
+  leagues: any[];
+  clubs: any[];
+  seasons: any[];
+  countries: any[];
 }
 
-const SEASONS = (() => {
-  const years = [];
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  // Football season usually starts in July. If before July, previous year is the start.
-  const endYear = now.getMonth() < 6 ? currentYear : currentYear + 1;
-  
-  for (let year = endYear - 1; year >= 2000; year--) {
-    years.push(`${year}/${(year + 1).toString().slice(-2)}`);
-  }
-  return years;
-})();
+// SEASONS constant removed. Seasons are now provided via props.
 
 function StatFormModal({ 
   isOpen, 
   onClose, 
   onSave, 
   initialData, 
-  defaultSeason 
+  defaultSeason,
+  leagues,
+  clubs: allClubs,
+  seasons: allSeasons
 }: { 
-  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; initialData?: CareerStat | null; defaultSeason?: string | null 
+  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; initialData?: CareerStat | null; defaultSeason?: string | null;
+  leagues: any[]; clubs: any[]; seasons: any[];
 }) {
+  const seasonsList = allSeasons.map(s => s.name);
   const [formData, setFormData] = useState<Partial<CareerStat>>(initialData || {
-    season: defaultSeason || SEASONS[0],
+    season: defaultSeason || seasonsList[0] || '2023/24',
     appearances: 0,
     goals: 0,
     assists: 0,
@@ -193,7 +189,7 @@ function StatFormModal({
   useEffect(() => {
     if (initialData) setFormData(initialData);
     else if (defaultSeason) setFormData(prev => ({ ...prev, season: defaultSeason }));
-    else setFormData(prev => ({ ...prev, season: SEASONS[0] }));
+    else setFormData(prev => ({ ...prev, season: seasonsList[0] || '2023/24' }));
   }, [initialData, defaultSeason, isOpen]);
 
   if (!isOpen) return null;
@@ -223,7 +219,7 @@ function StatFormModal({
                 onChange={(e) => setFormData({ ...formData, season: e.target.value })}
                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
               >
-                {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
+                {seasonsList.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div className="space-y-2">
@@ -234,18 +230,11 @@ function StatFormModal({
                   list="league-list"
                   placeholder="e.g. Premier League"
                   value={formData.league_name || ''}
-                  onChange={(e) => {
-                    const league = FOOTBALL_DATA.leagues.find(l => l.name === e.target.value);
-                    setFormData({ 
-                      ...formData, 
-                      league_name: e.target.value,
-                      league_flag: league ? league.flag : formData.league_flag
-                    });
-                  }}
+                  onChange={(e) => setFormData({ ...formData, league_name: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
                 />
                 <datalist id="league-list">
-                  {FOOTBALL_DATA.leagues.map(l => <option key={l.name} value={l.name} />)}
+                  {leagues.map((l: any) => <option key={l.id} value={l.name} />)}
                 </datalist>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
                   {formData.league_flag && (
@@ -272,11 +261,11 @@ function StatFormModal({
                 onChange={(e) => setFormData({ ...formData, club_name: e.target.value })}
                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
               />
-              <datalist id="club-list">
-                {FOOTBALL_DATA.leagues
-                  .find(l => l.name === formData.league_name)
-                  ?.clubs.map(c => <option key={c} value={c} />)}
-                {!formData.league_name && FOOTBALL_DATA.leagues.flatMap(l => l.clubs).map(c => <option key={c} value={c} />)}
+               <datalist id="club-list">
+                {allClubs
+                  .filter((c: any) => c.leagues?.name === formData.league_name)
+                  .map((c: any) => <option key={c.id} value={c.name} />)}
+                {!formData.league_name && allClubs.map((c: any) => <option key={c.id} value={c.name} />)}
               </datalist>
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
                 <Search className="w-4 h-4 text-slate-300" />
@@ -383,10 +372,15 @@ function TransferFormModal({
   isOpen, 
   onClose, 
   onSave, 
-  initialData 
+  initialData,
+  leagues,
+  clubs: allClubs,
+  seasons: allSeasons
 }: { 
-  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; initialData?: PlayerTransfer | null 
+  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; initialData?: PlayerTransfer | null;
+  leagues: any[]; clubs: any[]; seasons: any[];
 }) {
+  const seasonsList = allSeasons.map(s => s.name);
   const [formData, setFormData] = useState<Partial<PlayerTransfer>>(initialData || {
     season: SEASONS[0],
     transfer_date: new Date().toISOString().split('T')[0],
@@ -399,7 +393,7 @@ function TransferFormModal({
   useEffect(() => {
     if (initialData) setFormData(initialData);
     else setFormData({
-        season: SEASONS[0],
+        season: seasonsList[0] || '2023/24',
         transfer_date: new Date().toISOString().split('T')[0],
         from_club_name: '',
         to_club_name: '',
@@ -451,24 +445,24 @@ function TransferFormModal({
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">League</label>
             <div className="relative group/select">
-              <input 
-                type="text"
-                list="transfer-league-list"
-                placeholder="Select League"
-                value={formData.league_name || ''}
-                onChange={(e) => {
-                    const league = FOOTBALL_DATA.leagues.find(l => l.name === e.target.value);
-                    setFormData({ 
-                      ...formData, 
-                      league_name: e.target.value,
-                      league_flag: league ? league.flag : formData.league_flag
-                    });
-                }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
-              />
-              <datalist id="transfer-league-list">
-                {FOOTBALL_DATA.leagues.map(l => <option key={l.name} value={l.name} />)}
-              </datalist>
+                <input 
+                  type="text"
+                  list="transfer-league-list"
+                  placeholder="Select League"
+                  value={formData.league_name || ''}
+                  onChange={(e) => {
+                      const league = leagues.find((l: any) => l.name === e.target.value);
+                      setFormData({ 
+                        ...formData, 
+                        league_name: e.target.value,
+                        league_flag: league ? league.countries?.code : formData.league_flag
+                      });
+                  }}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
+                />
+                <datalist id="transfer-league-list">
+                  {leagues.map((l: any) => <option key={l.id} value={l.name} />)}
+                </datalist>
               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
                 {formData.league_flag && (
                   <img 
@@ -495,10 +489,10 @@ function TransferFormModal({
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
                   />
                   <datalist id="to-club-list">
-                    {FOOTBALL_DATA.leagues
-                      .find(l => l.name === formData.league_name)
-                      ?.clubs.map(c => <option key={c} value={c} />)}
-                    {!formData.league_name && FOOTBALL_DATA.leagues.flatMap(l => l.clubs).map(c => <option key={c} value={c} />)}
+                    {allClubs
+                      .filter((c: any) => c.leagues?.name === formData.league_name)
+                      .map((c: any) => <option key={c.id} value={c.name} />)}
+                    {!formData.league_name && allClubs.map((c: any) => <option key={c.id} value={c.name} />)}
                   </datalist>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2">
                     <Search className="w-4 h-4 text-slate-300" />
@@ -517,9 +511,8 @@ function TransferFormModal({
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
                   />
                   <datalist id="from-club-list">
-                    {FOOTBALL_DATA.leagues
-                      .flatMap(l => l.clubs)
-                      .map(c => <option key={c} value={c} />)}
+                    {allClubs
+                      .map((c: any) => <option key={c.id} value={c.name} />)}
                   </datalist>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2">
                     <Search className="w-4 h-4 text-slate-300" />
@@ -595,13 +588,16 @@ function AchievementFormModal({
   isOpen, 
   onClose, 
   onSave, 
-  initialData 
+  initialData,
+  seasons: allSeasons
 }: { 
-  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; initialData?: Achievement | null 
+  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; initialData?: Achievement | null;
+  seasons: any[];
 }) {
+  const seasonsList = allSeasons.map(s => s.name);
   const [formData, setFormData] = useState<Partial<Achievement>>(initialData || {
     title: '',
-    year: SEASONS[0],
+    year: seasonsList[0] || '2023/24',
     organization: '',
     category: 'Club',
     description: ''
@@ -611,7 +607,7 @@ function AchievementFormModal({
     if (initialData) setFormData(initialData);
     else setFormData({
         title: '',
-        year: SEASONS[0],
+        year: seasonsList[0] || '2023/24',
         organization: '',
         category: 'Club',
         description: ''
@@ -1468,7 +1464,7 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
                         { label: 'Date Of Birth', value: player.date_of_birth, field: 'date_of_birth', type: 'date' },
                         { label: 'Place Of Birth', value: player.place_of_birth || 'N/A', field: 'place_of_birth', type: 'text' },
                         { label: 'Preferred Foot', value: player.foot || 'Right', field: 'foot', type: 'select', options: ['Right', 'Left', 'Both'] },
-                        { label: 'Citizenship', value: player.country, field: 'country', type: 'select', options: COUNTRIES },
+                        { label: 'Citizenship', value: player.country, field: 'country', type: 'select', options: countries.map(c => c.name) },
                         { label: 'Gender', value: player.gender, field: 'gender', type: 'select', options: ['Male', 'Female', 'Other'] },
                       ].map((item, i) => (
                         <div key={i} className="flex flex-col gap-1">
@@ -1533,10 +1529,10 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
                     <div className="grid grid-cols-2 gap-x-8 gap-y-6">
                       {(() => {
                         const currentLeague = displayValue('league' as any, player.league);
-                        const availableClubs = FOOTBALL_DATA.leagues.find(l => l.name === currentLeague)?.clubs || [];
+                        const availableClubs = clubs.filter((c: any) => c.leagues?.name === currentLeague).map((c: any) => c.name);
                         
                         return [
-                          { label: 'League', value: player.league || 'Not Set', field: 'league', type: 'select', options: ['None', ...FOOTBALL_DATA.leagues.map(l => l.name)] },
+                          { label: 'League', value: player.league || 'Not Set', field: 'league', type: 'select', options: ['None', ...leagues.map(l => l.name)] },
                           { label: 'Current Club', value: player.current_club || 'Unattached', field: 'current_club', type: availableClubs.length > 0 ? 'select' : 'text', options: availableClubs },
                           { label: 'Primary Role', value: player.position, field: 'position', type: 'select', options: ['Forward', 'Midfielder', 'Defender', 'Goalkeeper'] },
                           { label: 'Market Value', value: player.market_value || 'N/A', field: 'market_value', type: 'text' },
@@ -1902,6 +1898,9 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
                 onSave={handleSaveStat}
                 initialData={editingStat}
                 defaultSeason={selectedSeasonForAdd}
+                leagues={leagues}
+                clubs={clubs}
+                seasons={seasons}
               />
 
               {/* Transfer Form Modal Rendering */}
@@ -1910,6 +1909,9 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
                 onClose={() => { setShowTransferModal(false); setEditingTransfer(null); }}
                 onSave={handleSaveTransfer}
                 initialData={editingTransfer}
+                leagues={leagues}
+                clubs={clubs}
+                seasons={seasons}
               />
             </div>
           )}
@@ -2131,6 +2133,7 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
                 onClose={() => { setShowAchievementModal(false); setEditingAchievement(null); }}
                 onSave={handleSaveAchievement}
                 initialData={editingAchievement}
+                seasons={seasons}
               />
             </div>
           )}

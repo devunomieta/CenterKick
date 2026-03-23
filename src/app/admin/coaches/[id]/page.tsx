@@ -41,9 +41,22 @@ export default async function CoachProfilePage({ params }: { params: Promise<{ i
     .select('id, user_id, first_name, last_name, agency_name')
     .ilike('role', 'agent');
 
+  // Fetch All Football Constants
+  const { data: leagues } = await supabase.from('leagues').select('*, countries(name, code, flag_url)').order('name');
+  const { data: clubs } = await supabase.from('clubs').select('*, leagues(name)').order('name');
+  const { data: seasons } = await supabase.from('seasons').select('*').order('sort_order', { ascending: false });
+  const { data: countries } = await supabase.from('countries').select('*').order('name');
+  
   return (
     <div className="min-h-screen bg-[#fcfcfc]">
-      <CoachProfileClient coach={coach} agents={agents || []} />
+      <CoachProfileClient 
+        coach={coach} 
+        agents={agents || []} 
+        leagues={leagues || []}
+        clubs={clubs || []}
+        seasons={seasons || []}
+        countries={countries || []}
+      />
     </div>
   );
 }

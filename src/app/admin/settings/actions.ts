@@ -144,3 +144,255 @@ export async function clearSystemCache() {
   
   return { success: true };
 }
+
+import { COUNTRIES } from '@/lib/constants/countries';
+import { getFlagCode } from '@/lib/utils/flags';
+
+// Football Constants Management
+export async function getCountries() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('countries')
+    .select('*')
+    .order('name');
+  
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
+export async function addCountry(data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('countries')
+    .insert([data]);
+  
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}
+
+export async function updateCountry(id: string, data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('countries')
+    .update(data)
+    .eq('id', id);
+  
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}
+
+export async function deleteCountry(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('countries')
+    .delete()
+    .eq('id', id);
+  
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}
+
+export async function getLeagues() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('leagues')
+    .select('*, countries(name, code, flag_url)')
+    .order('name');
+  
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
+export async function addLeague(data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('leagues')
+    .insert([data]);
+  
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}
+
+export async function updateLeague(id: string, data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('leagues')
+    .update(data)
+    .eq('id', id);
+  
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}
+
+export async function deleteLeague(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('leagues')
+    .delete()
+    .eq('id', id);
+  
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}
+
+export async function getClubs(leagueId?: string) {
+  const supabase = await createClient();
+  let query = supabase.from('clubs').select('*, leagues(name)');
+  
+  if (leagueId) {
+    query = query.eq('league_id', leagueId);
+  }
+  
+  const { data, error } = await query.order('name');
+  
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
+export async function addClub(data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('clubs')
+    .insert([data]);
+  
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}
+
+export async function updateClub(id: string, data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('clubs')
+    .update(data)
+    .eq('id', id);
+  
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}
+
+export async function deleteClub(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('clubs')
+    .delete()
+    .eq('id', id);
+  
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}
+
+export async function getSeasons() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('seasons')
+    .select('*')
+    .order('sort_order', { ascending: false });
+  
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
+export async function addSeason(data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('seasons')
+    .insert([data]);
+  
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}
+
+export async function updateSeason(id: string, data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('seasons')
+    .update(data)
+    .eq('id', id);
+  
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}
+
+export async function deleteSeason(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('seasons')
+    .delete()
+    .eq('id', id);
+  
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}
+
+import { FOOTBALL_DATA } from '@/lib/constants/football_data';
+
+export async function seedFootballData() {
+  const supabase = await createClient();
+  
+  // 1. Seed Countries
+  for (const countryName of COUNTRIES) {
+    const code = getFlagCode(countryName);
+    await supabase
+      .from('countries')
+      .upsert({ 
+        name: countryName, 
+        code: code || countryName.slice(0, 2).toUpperCase(),
+        flag_url: code ? `https://flagcdn.com/w40/${code.toLowerCase()}.png` : null
+      }, { onConflict: 'name' });
+  }
+
+  // 2. Seed Leagues and Clubs
+  for (const leagueData of FOOTBALL_DATA.leagues) {
+    // Get country ID
+    const { data: country } = await supabase
+      .from('countries')
+      .select('id')
+      .eq('name', leagueData.country)
+      .single();
+
+    const { data: league, error: lError } = await supabase
+      .from('leagues')
+      .upsert({ 
+        name: leagueData.name, 
+        country_id: country?.id || null 
+      }, { onConflict: 'name' })
+      .select()
+      .single();
+    
+    if (lError) continue;
+
+    for (const clubName of leagueData.clubs) {
+      await supabase
+        .from('clubs')
+        .upsert({ name: clubName, league_id: league.id }, { onConflict: 'name,league_id' });
+    }
+  }
+
+  // 3. Seed Seasons
+  const currentYear = new Date().getFullYear();
+  for (let year = 2000; year <= currentYear; year++) {
+    const seasonName = `${year}/${(year + 1).toString().slice(-2)}`;
+    await supabase
+      .from('seasons')
+      .upsert({ 
+        name: seasonName, 
+        sort_order: year,
+        is_current: year === currentYear
+      }, { onConflict: 'name' });
+  }
+
+  revalidatePath('/admin/settings/football-data');
+  return { success: true };
+}

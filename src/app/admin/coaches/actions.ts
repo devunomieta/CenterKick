@@ -187,3 +187,99 @@ export async function migrateAllCoachSlugs() {
   revalidatePath('/admin/coaches');
   return { success: true, count: updatedCount };
 }
+
+// Coaching Statistics Actions
+export async function getCoachStats(coachId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('coach_career_stats')
+    .select('*')
+    .eq('coach_id', coachId)
+    .order('season', { ascending: false });
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
+export async function addCoachStat(data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('coach_career_stats')
+    .insert([data]);
+
+  if (error) return { success: false, error: error.message };
+  revalidatePath(`/admin/coaches/${data.coach_id}`);
+  return { success: true };
+}
+
+export async function updateCoachStat(id: string, coachId: string, data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('coach_career_stats')
+    .update(data)
+    .eq('id', id);
+
+  if (error) return { success: false, error: error.message };
+  revalidatePath(`/admin/coaches/${coachId}`);
+  return { success: true };
+}
+
+export async function deleteCoachStat(id: string, coachId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('coach_career_stats')
+    .delete()
+    .eq('id', id);
+
+  if (error) return { success: false, error: error.message };
+  revalidatePath(`/admin/coaches/${coachId}`);
+  return { success: true };
+}
+
+// Coaching Achievement Actions
+export async function getCoachAchievements(coachId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('coach_achievements')
+    .select('*')
+    .eq('coach_id', coachId)
+    .order('year', { ascending: false });
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
+export async function addCoachAchievement(data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('coach_achievements')
+    .insert([data]);
+
+  if (error) return { success: false, error: error.message };
+  revalidatePath(`/admin/coaches/${data.coach_id}`);
+  return { success: true };
+}
+
+export async function updateCoachAchievement(id: string, coachId: string, data: any) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('coach_achievements')
+    .update(data)
+    .eq('id', id);
+
+  if (error) return { success: false, error: error.message };
+  revalidatePath(`/admin/coaches/${coachId}`);
+  return { success: true };
+}
+
+export async function deleteCoachAchievement(id: string, coachId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('coach_achievements')
+    .delete()
+    .eq('id', id);
+
+  if (error) return { success: false, error: error.message };
+  revalidatePath(`/admin/coaches/${coachId}`);
+  return { success: true };
+}

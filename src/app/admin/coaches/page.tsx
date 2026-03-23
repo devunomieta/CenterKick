@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Users, Shield, UserPlus, Filter, Search, CreditCard, Clock, CheckCircle, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { CoachesClient } from '@/components/admin/coaches/CoachesClient';
+import { getLeagues, getClubs, getCountries } from '@/app/admin/settings/actions';
 
 export default async function AdminCoachesPage({
   searchParams
@@ -132,6 +133,13 @@ export default async function AdminCoachesPage({
     .eq('id', session?.user.id)
     .single();
 
+  // 5. Fetch Football Data for enrollment
+  const [leaguesRes, clubsRes, countriesRes] = await Promise.all([
+    getLeagues(),
+    getClubs(),
+    getCountries()
+  ]);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -145,6 +153,7 @@ export default async function AdminCoachesPage({
           </Link>
         </div>
       </div>
+
 
       {/* Linked Filter Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -176,6 +185,9 @@ export default async function AdminCoachesPage({
         currentPage={page}
         pageSize={pageSize}
         role={userRecord?.role || 'player'}
+        leagues={leaguesRes.success ? leaguesRes.data : []}
+        clubs={clubsRes.success ? clubsRes.data : []}
+        countries={countriesRes.success ? countriesRes.data : []}
       />
     </div>
   );

@@ -13,9 +13,7 @@ import { DateDisplay } from '@/components/common/DateDisplay';
 import { deletePlayer, updatePlayer, addPlayer, getPlayerTransactions, getPendingEdits, processProfileEdit, updateProfileAvatar, uploadPlayerImage, migrateAllProfileSlugs } from '@/app/admin/players/actions';
 import { checkAccountStatus, resendInvitation, type AccountStatus } from '@/app/actions/auth';
 import Link from 'next/link';
-import { COUNTRIES } from '@/lib/constants/countries';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FOOTBALL_DATA } from '@/lib/constants/football_data';
 import { useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { Info, AlertCircle } from 'lucide-react';
@@ -123,14 +121,20 @@ export function PlayersClient({
   totalCount,
   currentPage,
   pageSize,
-  role
+  role,
+  leagues,
+  clubs,
+  countries
 }: { 
   initialPlayers: Player[],
   agents: any[],
   totalCount: number,
   currentPage: number,
   pageSize: number,
-  role: string
+  role: string,
+  leagues: any[],
+  clubs: any[],
+  countries: any[]
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -351,8 +355,8 @@ export function PlayersClient({
                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#b50a0a]" />
               </div>
               <datalist id="countries-players">
-                 {COUNTRIES.map(country => (
-                    <option key={country} value={country} />
+                 {countries.map((c: any) => (
+                    <option key={c.id} value={c.name} />
                  ))}
               </datalist>
               <button type="submit" className="bg-black text-white px-4 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest hover:bg-[#b50a0a] transition-all">
@@ -652,8 +656,8 @@ export function PlayersClient({
                              value={selectedLeague}
                            >
                               <option value="">No League</option>
-                              {FOOTBALL_DATA.leagues.map(l => (
-                                <option key={l.name} value={l.name}>{l.name}</option>
+                              {leagues.map((l: any) => (
+                                <option key={l.id} value={l.name}>{l.name}</option>
                               ))}
                            </select>
                         </div>
@@ -661,8 +665,8 @@ export function PlayersClient({
                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Current Club</label>
                            <select name="current_club" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black">
                               <option value="">Unattached</option>
-                              {(FOOTBALL_DATA.leagues.find(l => l.name === selectedLeague)?.clubs || []).map(club => (
-                                <option key={club} value={club}>{club}</option>
+                              {clubs.filter((c: any) => c.leagues?.name === selectedLeague).map((club: any) => (
+                                <option key={club.id} value={club.name}>{club.name}</option>
                               ))}
                            </select>
                         </div>
@@ -690,8 +694,8 @@ export function PlayersClient({
                               />
                            </div>
                            <datalist id="countries-modal-players">
-                              {COUNTRIES.map(country => (
-                                 <option key={country} value={country} className="text-black" />
+                              {countries.map((c: any) => (
+                                 <option key={c.id} value={c.name} className="text-black" />
                               ))}
                            </datalist>
                         </div>

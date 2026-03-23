@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { 
   Globe, Mail, Shield, Layers, RefreshCw, 
   Save, Trash2, CheckCircle2, AlertCircle,
-  Eye, EyeOff, Zap, Upload, Loader2
+  Eye, EyeOff, Zap, Upload, Loader2, Database, ChevronRight, Activity, Trophy
 } from 'lucide-react';
 import { updateSystemSettings, clearSystemCache, uploadSiteAsset, sendTestEmail } from '@/app/admin/settings/actions';
 import { useToast } from '@/context/ToastContext';
@@ -91,12 +91,14 @@ export function SettingsClient({ initialSettings }: { initialSettings: any }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const { showToast, hideToast } = useToast();
+  const router = useRouter();
 
   const sections = [
     { title: 'Global Configuration', label: 'Core', icon: Globe },
     { title: 'Mail & SMTP Settings', label: 'Infrastructure', icon: Mail },
     { title: 'Security & Access', label: 'System', icon: Shield },
     { title: 'Banners & Assets', label: 'Branding', icon: Layers },
+    { title: 'Football Data Registry', label: 'Ecosystem', icon: Database },
   ];
 
   const handleSave = async () => {
@@ -509,6 +511,40 @@ export function SettingsClient({ initialSettings }: { initialSettings: any }) {
                       {isSaving ? 'Saving...' : 'Save Asset Settings'}
                     </button>
                  </div>
+              </div>
+            )}
+
+            {activeSection === 'Football Data Registry' && (
+              <div className="space-y-10 animate-in slide-in-from-bottom-2 duration-300 h-full flex flex-col justify-center items-center text-center py-20">
+                <div className="w-24 h-24 rounded-[2rem] bg-slate-50 flex items-center justify-center text-[#b50a0a] mb-8 shadow-inner border border-slate-100">
+                  <Database className="w-10 h-10" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Football Ecosystem Registry</h3>
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-2 max-w-[400px] mx-auto leading-relaxed">
+                    Manage the global list of leagues, clubs, and seasons used across all player and coach profiles.
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-2xl mt-8">
+                  {[
+                    { label: 'Leagues', icon: Trophy, count: 'Global' },
+                    { label: 'Clubs', icon: Activity, count: 'Registry' },
+                    { label: 'Seasons', icon: Globe, count: 'Historical' },
+                  ].map((item) => (
+                    <div key={item.label} className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex flex-col items-center gap-2">
+                      <item.icon className="w-5 h-5 text-slate-400" />
+                      <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button 
+                  onClick={() => router.push('/admin/settings/football-data')}
+                  className="mt-12 bg-slate-900 text-white px-10 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:bg-[#b50a0a] flex items-center gap-4 shadow-2xl shadow-slate-200 group"
+                >
+                  Configure Registry <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
               </div>
             )}
 

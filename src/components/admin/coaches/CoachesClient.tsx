@@ -12,8 +12,6 @@ import { DateDisplay } from '@/components/common/DateDisplay';
 import { deleteCoach, updateCoach, addCoach, migrateAllCoachSlugs } from '@/app/admin/coaches/actions';
 import { checkAccountStatus, resendInvitation, AccountStatus } from '@/app/actions/auth';
 import Link from 'next/link';
-import { FOOTBALL_DATA } from '@/lib/constants/football_data';
-import { COUNTRIES } from '@/lib/constants/countries';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
 import { Info, AlertCircle, ImageIcon, Eye, Activity, RefreshCcw } from 'lucide-react';
@@ -42,14 +40,20 @@ export function CoachesClient({
   totalCount,
   currentPage,
   pageSize,
-  role
+  role,
+  leagues,
+  clubs,
+  countries
 }: { 
   initialCoaches: Coach[],
   agents: any[],
   totalCount: number,
   currentPage: number,
   pageSize: number,
-  role: string
+  role: string,
+  leagues: any[],
+  clubs: any[],
+  countries: any[]
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -210,8 +214,8 @@ export function CoachesClient({
                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#b50a0a]" />
               </div>
               <datalist id="countries-coaches">
-                 {COUNTRIES.map(country => (
-                    <option key={country} value={country} />
+                 {countries.map((c: any) => (
+                    <option key={c.id} value={c.name} />
                  ))}
               </datalist>
               <button type="submit" className="bg-black text-white px-4 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest hover:bg-[#b50a0a] transition-all">
@@ -428,6 +432,8 @@ export function CoachesClient({
                               <option value="Assistant Coach">Assistant Coach</option>
                               <option value="Goalkeeping Coach">Goalkeeping Coach</option>
                               <option value="Fitness Coach">Fitness Coach</option>
+                              <option value="Set Piece Coach">Set Piece Coach</option>
+                              <option value="Medical Coach">Medical Coach</option>
                            </select>
                         </div>
                         <div className="space-y-1">
@@ -439,8 +445,8 @@ export function CoachesClient({
                              value={selectedLeague}
                            >
                               <option value="">No League</option>
-                              {FOOTBALL_DATA.leagues.map(l => (
-                                <option key={l.name} value={l.name}>{l.name}</option>
+                              {leagues.map((l: any) => (
+                                <option key={l.id} value={l.name}>{l.name}</option>
                               ))}
                            </select>
                         </div>
@@ -448,8 +454,8 @@ export function CoachesClient({
                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Current Club</label>
                            <select name="current_club" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">
                               <option value="">Unattached</option>
-                              {(FOOTBALL_DATA.leagues.find(l => l.name === selectedLeague)?.clubs || []).map(club => (
-                                <option key={club} value={club}>{club}</option>
+                              {clubs.filter((c: any) => c.leagues?.name === selectedLeague).map((club: any) => (
+                                <option key={club.id} value={club.name}>{club.name}</option>
                               ))}
                            </select>
                         </div>
@@ -474,8 +480,8 @@ export function CoachesClient({
                               />
                            </div>
                            <datalist id="countries-coach-modal">
-                              {COUNTRIES.map(country => (
-                                 <option key={country} value={country} />
+                              {countries.map((c: any) => (
+                                 <option key={c.id} value={c.name} />
                               ))}
                            </datalist>
                         </div>

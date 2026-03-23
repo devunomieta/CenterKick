@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Users, Shield, UserPlus, Filter, Search, CreditCard, Clock, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { PlayersClient } from '@/components/admin/players/PlayersClient';
+import { getLeagues, getClubs, getCountries } from '@/app/admin/settings/actions';
 
 export default async function AdminPlayersPage({
   searchParams
@@ -111,6 +112,13 @@ export default async function AdminPlayersPage({
     .eq('id', session?.user.id)
     .single();
 
+  // 5. Fetch Football Data for enrollment
+  const [leaguesRes, clubsRes, countriesRes] = await Promise.all([
+    getLeagues(),
+    getClubs(),
+    getCountries()
+  ]);
+
   const stats = [
     { label: 'All Players', value: allPlayersCount || 0, tab: 'all', color: 'text-gray-900', bg: 'bg-gray-100', icon: Users },
     { label: 'Subscribed', value: subscribedCount || 0, tab: 'subscribed', color: 'text-green-600', bg: 'bg-green-50', icon: CreditCard },
@@ -163,6 +171,9 @@ export default async function AdminPlayersPage({
         currentPage={page}
         pageSize={pageSize}
         role={userRecord?.role || 'player'}
+        leagues={leaguesRes.success ? leaguesRes.data : []}
+        clubs={clubsRes.success ? clubsRes.data : []}
+        countries={countriesRes.success ? countriesRes.data : []}
       />
     </div>
   );
