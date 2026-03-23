@@ -283,3 +283,34 @@ export async function deleteCoachAchievement(id: string, coachId: string) {
   revalidatePath(`/admin/coaches/${coachId}`);
   return { success: true };
 }
+export async function updateProfileTags(profileId: string, tags: string[]) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('profiles')
+    .update({ tags })
+    .eq('id', profileId);
+
+  if (error) return { success: false, error: error.message };
+  revalidatePath(`/admin/coaches/${profileId}`);
+  return { success: true };
+}
+
+export async function getCoachNews(tags: string[]) {
+  const supabase = await createClient();
+  
+  // Logic: Search for posts either tagged with "Coach Mention" 
+  // OR containing one of the coach's specific profile tags
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('*, category:blog_categories(name)')
+    .eq('status', 'published')
+    .or(`tags.cs.{"Coach Mention"},tags.cs.{${tags.map(t => `"${t}"`).join(',')}}`)
+    .order('published_at', { ascending: false })
+    .limit(5);
+
+  if (error) {
+    console.error('Coach news fetch error:', error);
+    return { success: false, error: error.message };
+  }
+  return { success: true, data };
+}

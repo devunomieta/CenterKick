@@ -395,13 +395,13 @@ export async function updateProfileTags(profileId: string, tags: string[]) {
   return { success: true };
 }
 
-export async function getPlayerNews(profileId: string) {
+export async function getPlayerNews(tags: string[]) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('blog_posts')
     .select('id, title, excerpt, cover_image, slug, created_at')
     .eq('status', 'published')
-    .contains('tags', ['Player Mention'])
+    .overlaps('tags', tags)
     .order('created_at', { ascending: false })
     .limit(3);
 

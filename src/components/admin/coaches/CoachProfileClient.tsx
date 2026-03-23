@@ -8,12 +8,12 @@ import {
   Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard, Lock, Eye, Mail, Trophy, Activity, MessageSquare,
   Facebook, Instagram, Twitter, AlertCircle, Save, Undo, Plus, Briefcase,
   LayoutDashboard, UserCircle, FileText, Image as ImageIcon, Newspaper, ShoppingBag, DollarSign, Settings,
-  Star, Award, Building2, CheckCircle2
+  Star, Award, Building2, CheckCircle2, Quote
 } from 'lucide-react';
 import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/RestrictedAccess';
 import { DateDisplay } from '@/components/common/DateDisplay';
 import { getPendingEdits, processProfileEdit, getPlayerTransactions } from '@/app/admin/players/actions';
-import { updateCoach, getCoachStats, addCoachStat, updateCoachStat, deleteCoachStat, getCoachAchievements, addCoachAchievement, updateCoachAchievement, deleteCoachAchievement } from '@/app/admin/coaches/actions';
+import { updateCoach, getCoachStats, addCoachStat, updateCoachStat, deleteCoachStat, getCoachAchievements, addCoachAchievement, updateCoachAchievement, deleteCoachAchievement, updateProfileTags, getCoachNews } from '@/app/admin/coaches/actions';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
@@ -32,13 +32,24 @@ interface Coach {
   age?: number;
   gender: string;
   position: string;
-  is_subscribed: boolean;
-  avatar_url?: string;
-  agent_id?: string;
-  bio?: string;
-  current_club?: string;
-  league?: string;
-  achievements?: any[];
+  avatar_url?: string | null;
+  is_subscribed?: boolean;
+  agent_id?: string | null;
+  league?: string | null;
+  current_club?: string | null;
+  bio?: string | null;
+  media_gallery?: {
+    highlight_video_url: string;
+    action_images: string[];
+    external_gallery_url: string;
+  };
+  tactics?: {
+    attacking_approach: string;
+    defense_style: string;
+    preferred_formation: string;
+    tactical_philosophy: string;
+  };
+  tags?: string[];
   users: {
     email: string;
     role: string;
@@ -88,6 +99,10 @@ interface CoachStat {
   average_recovery_days: number;
   player_fitness_pct: number;
   injury_count: number;
+  achievements?: Array<{
+    type: 'league' | 'cup';
+    name: string;
+  }>;
   created_at?: string;
 }
 
@@ -135,7 +150,15 @@ export default function CoachProfileClient({
   const [editedFields, setEditedFields] = useState<Partial<Coach>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [isTacticsMediaModalOpen, setIsTacticsMediaModalOpen] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // News & Tagging State
+  const [profileTags, setProfileTags] = useState<string[]>(coach.tags || []);
+  const [newTagInput, setNewTagInput] = useState('');
+  const [isUpdatingTags, setIsUpdatingTags] = useState(false);
+  const [coachNews, setCoachNews] = useState<any[]>([]);
+  const [isLoadingNews, setIsLoadingNews] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'billing') {
@@ -178,6 +201,18 @@ export default function CoachProfileClient({
     fetchAchievements();
   }, [coach.id]);
 
+  useEffect(() => {
+    if (activeTab === 'news') {
+      const fetchNews = async () => {
+        setIsLoadingNews(true);
+        const res = await getCoachNews(profileTags.length > 0 ? profileTags : [`${coach.first_name} ${coach.last_name}`]);
+        if (res.success) setCoachNews(res.data || []);
+        setIsLoadingNews(false);
+      };
+      fetchNews();
+    }
+  }, [coach.id, activeTab, coach.first_name, coach.last_name, profileTags]);
+
   const handleEditAction = async (editId: string, action: 'approve' | 'reject') => {
     const res = await processProfileEdit(editId, action);
     if (res.success) {
@@ -202,6 +237,21 @@ export default function CoachProfileClient({
       toast.showToast(res.error || 'Failed to update coach profile', 'error');
     }
     setIsSaving(false);
+  };
+
+  const handleUpdateTags = async (newTags: string[]) => {
+    setIsUpdatingTags(true);
+    try {
+      const res = await updateProfileTags(coach.id, newTags);
+      if (res.success) {
+        setProfileTags(newTags);
+        toast.showToast('Profile tags updated and synced', 'success');
+      } else {
+        toast.showToast(res.error || 'Failed to update tags', 'error');
+      }
+    } finally {
+      setIsUpdatingTags(false);
+    }
   };
 
   const updateField = (field: keyof Coach, value: any) => {
@@ -765,11 +815,40 @@ export default function CoachProfileClient({
                                 </div>
                               </td>
                               <td className="px-6 py-5 text-center">
-                                <div className="flex items-center justify-center gap-1.5">
-                                  {[...Array(stat.leagues_won + stat.cups_won)].map((_, i) => (
-                                    <Trophy key={i} className="w-3.5 h-3.5 text-amber-400 fill-current" />
-                                  ))}
-                                  {stat.leagues_won + stat.cups_won === 0 && <span className="text-slate-300 text-[11px]">—</span>}
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    {(stat.achievements || []).length > 0 ? (
+                                      (stat.achievements || []).map((achievement, i) => (
+                                        <div key={i} className="group/trophy relative">
+                                          <Trophy className={`w-3.5 h-3.5 ${achievement.type === 'league' ? 'text-amber-500' : 'text-amber-400'} fill-current`} />
+                                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-slate-900 text-white text-[8px] rounded-lg opacity-0 group-hover/trophy:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none shadow-xl border border-white/10">
+                                            <p className="font-black uppercase tracking-widest leading-none">{achievement.name}</p>
+                                          </div>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <>
+                                        {[...Array(stat.leagues_won + stat.cups_won)].map((_, i) => (
+                                          <Trophy key={i} className={`w-3.5 h-3.5 ${i < stat.leagues_won ? 'text-amber-500' : 'text-amber-400'} fill-current`} />
+                                        ))}
+                                        {stat.leagues_won + stat.cups_won === 0 && <span className="text-slate-300 text-[11px]">—</span>}
+                                      </>
+                                    )}
+                                  </div>
+                                  {(stat.achievements || []).length > 0 && (
+                                    <div className="flex flex-col gap-0.5">
+                                      {(stat.achievements || []).slice(0, 2).map((a, i) => (
+                                        <span key={i} className={`text-[8px] font-black uppercase tracking-tight leading-tight ${a.type === 'league' ? 'text-amber-600' : 'text-slate-400'}`}>
+                                          {a.name}
+                                        </span>
+                                      ))}
+                                      {(stat.achievements || []).length > 2 && (
+                                        <span className="text-[7px] font-bold text-slate-300 uppercase tracking-widest">
+                                          +{(stat.achievements || []).length - 2} More
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </td>
                               <td className="px-8 py-5 text-right">
@@ -884,57 +963,248 @@ export default function CoachProfileClient({
           )}
 
           {activeTab === 'gallery' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-               <div className="flex items-center justify-between mb-12">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
+               <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Tactics & Media</h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Review coaching assets and tactical boards</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Review coaching assets and tactical systems</p>
                   </div>
-                  <button className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#b50a0a] transition-all flex items-center gap-2 shadow-lg shadow-slate-200">
-                     <Plus className="w-4 h-4" /> Add Asset
+                  <button 
+                    onClick={() => setIsTacticsMediaModalOpen(true)}
+                    className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#b50a0a] transition-all flex items-center gap-2 shadow-lg shadow-slate-200"
+                  >
+                     <ImageIcon className="w-4 h-4" /> Manage Tactics & Media
                   </button>
                </div>
-               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  {[
-                     'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=800&auto=format&fit=crop',
-                     'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=80&w=800&auto=format&fit=crop',
-                     'https://images.unsplash.com/photo-1543351611-58f69d7c1781?q=80&w=800&auto=format&fit=crop',
-                     'https://images.unsplash.com/photo-1511886929837-354d827aae26?q=80&w=800&auto=format&fit=crop'
-                  ].map((url, i) => (
-                     <div key={i} className="aspect-square bg-white rounded-[2.5rem] overflow-hidden border border-slate-100 shadow-sm group cursor-pointer hover:border-[#b50a0a] transition-all relative">
-                        <img src={url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                           <Eye className="w-6 h-6 text-white" />
+
+               {/* Tactical Profile Card */}
+               <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-slate-50 rounded-bl-[6rem] -z-0 transition-all group-hover:bg-slate-100/80"></div>
+                  <div className="p-10 relative z-10">
+                    <div className="flex items-center gap-4 mb-10">
+                       <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100">
+                          <Target className="w-7 h-7" />
+                       </div>
+                       <div>
+                          <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Tactical System</h3>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-0.5">Core Methodology & Logic</p>
+                       </div>
+                    </div>
+
+                    <div className="space-y-4 mb-10">
+                       {[
+                          { label: 'Attacking Approach', value: coach.tactics?.attacking_approach, icon: Target, color: 'text-orange-600' },
+                          { label: 'Defensive Style', value: coach.tactics?.defense_style, icon: Shield, color: 'text-blue-600' },
+                          { label: 'Primary Formation', value: coach.tactics?.preferred_formation, icon: LayoutDashboard, color: 'text-emerald-600' },
+                       ].map((item, i) => (
+                          <div key={i} className="flex items-center justify-between p-6 bg-slate-50/50 rounded-2xl border border-slate-100/50 hover:bg-white hover:shadow-md transition-all group/item">
+                             <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400 group-hover/item:text-slate-900 transition-colors">
+                                   <item.icon className={`w-5 h-5 ${item.color}`} />
+                                </div>
+                                <div>
+                                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.label}</p>
+                                   <p className="text-[13px] font-black text-slate-900 uppercase tracking-tight mt-0.5">{item.value || 'Not Defined'}</p>
+                                </div>
+                             </div>
+                             <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity border border-slate-100 shadow-sm">
+                                <ChevronRight className="w-4 h-4 text-slate-300" />
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+
+                    <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm relative overflow-hidden group/philosophy hover:shadow-xl hover:translate-y-[-2px] transition-all">
+                       <div className="absolute top-0 left-0 w-2 h-full bg-[#b50a0a]/10 group-hover/philosophy:bg-[#b50a0a] transition-all"></div>
+                       <div className="relative z-10 pl-4">
+                          <div className="flex items-center gap-3 mb-6">
+                             <Quote className="w-10 h-10 text-[#b50a0a] opacity-20 group-hover/philosophy:opacity-40 transition-opacity" />
+                             <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Tactical Philosophy</h4>
+                          </div>
+                          <div className="min-h-[80px] flex items-center">
+                             <p className="text-xl md:text-2xl font-black text-slate-900 leading-tight italic tracking-tighter">
+                                {coach.tactics?.tactical_philosophy ? (
+                                   `"${coach.tactics.tactical_philosophy}"`
+                                ) : "Fundamental vision has not been defined for this professional profile."}
+                             </p>
+                          </div>
+                          <div className="mt-8 pt-8 border-t border-slate-50 flex items-center justify-between">
+                             <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500 border border-white">
+                                   {coach.first_name[0]}{coach.last_name[0]}
+                                </div>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{coach.first_name} {coach.last_name}</span>
+                             </div>
+                             <Target className="w-5 h-5 text-slate-100" />
+                          </div>
+                       </div>
+                    </div>
+                  </div>
+               </div>
+
+               {/* Media Library Section */}
+               <div className="space-y-6">
+                  <div className="flex items-center gap-2 px-2">
+                    <ImageIcon className="w-4 h-4 text-slate-400" />
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Multimedia Gallery</h4>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                    {/* Highlight Video (First Slot if exists) */}
+                    {coach.media_gallery?.highlight_video_url && (
+                      <div className="aspect-square bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-sm group cursor-pointer relative border border-slate-800">
+                        <div className="absolute inset-0 bg-[#b50a0a]/20 group-hover:bg-[#b50a0a]/40 transition-all flex items-center justify-center">
+                          <ExternalLink className="w-8 h-8 text-white animate-pulse" />
                         </div>
-                     </div>
-                  ))}
+                        <div className="absolute bottom-4 left-4 right-4 bg-white/10 backdrop-blur-md rounded-xl p-2 text-center text-[8px] font-black text-white uppercase tracking-widest border border-white/10">
+                          Highlight Reel
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Action Images */}
+                    {(coach.media_gallery?.action_images || []).filter(url => url).map((url, i) => (
+                      <div key={i} className="aspect-square bg-white rounded-[2.5rem] overflow-hidden border border-slate-100 shadow-sm group cursor-pointer hover:border-[#b50a0a] transition-all relative">
+                          <img src={url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Eye className="w-6 h-6 text-white" />
+                          </div>
+                      </div>
+                    ))}
+
+                    {/* Placeholder if empty */}
+                    {(!(coach.media_gallery?.action_images || []).some(url => url) && !coach.media_gallery?.highlight_video_url) && (
+                      <div className="col-span-full aspect-[4/1] bg-white border border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center justify-center">
+                        <ImageIcon className="w-8 h-8 text-slate-200 mb-2" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No Media Uploaded</p>
+                      </div>
+                    )}
+                  </div>
                </div>
             </div>
           )}
 
-          {activeTab === 'news' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-               <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-12">Latest Mentions</h3>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {[
-                     { title: `Tactical Masterclass: How ${coach.last_name} Secured the Win`, date: "2 Days Ago", source: "SoccerDaily" },
-                     { title: "Exclusive Interview: Building a Legacy at the Top Level", date: "1 Week Ago", source: "ProCoach Mag" }
-                  ].map((news, i) => (
-                     <div key={i} className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all group">
-                        <div className="flex items-center gap-3 mb-4">
-                           <div className="w-2 h-2 rounded-full bg-[#b50a0a]"></div>
-                           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{news.source}</span>
+           {activeTab === 'news' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
+              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm mb-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-900">
+                      <Newspaper className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Press Tags</h3>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Manage tags to connect news stories</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input 
+                        type="text"
+                        placeholder="Add new tag (e.g. Manchester United)"
+                        value={newTagInput}
+                        onChange={(e) => setNewTagInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && newTagInput.trim()) {
+                            if (!profileTags.includes(newTagInput.trim())) {
+                              handleUpdateTags([...profileTags, newTagInput.trim()]);
+                            }
+                            setNewTagInput('');
+                          }
+                        }}
+                        className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a]/20 transition-all shadow-inner"
+                      />
+                    </div>
+                    <button 
+                      onClick={() => {
+                        if (newTagInput.trim()) {
+                          if (!profileTags.includes(newTagInput.trim())) {
+                            handleUpdateTags([...profileTags, newTagInput.trim()]);
+                          }
+                          setNewTagInput('');
+                        }
+                      }}
+                      disabled={isUpdatingTags || !newTagInput.trim()}
+                      className="bg-[#b50a0a] hover:bg-black text-white px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                    >
+                      {isUpdatingTags ? 'Syncing...' : 'Add Tag'}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {profileTags.length > 0 ? (
+                      profileTags.map((tag, idx) => (
+                        <div key={idx} className="flex items-center gap-2 bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-xl group hover:border-[#b50a0a]/30 transition-all">
+                          <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">{tag}</span>
+                          <button 
+                            onClick={() => handleUpdateTags(profileTags.filter(t => t !== tag))}
+                            className="text-slate-300 hover:text-[#b50a0a] transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
                         </div>
-                        <h4 className="text-lg font-black uppercase tracking-tight group-hover:text-[#b50a0a] transition-colors mb-6 leading-tight">{news.title}</h4>
-                        <div className="flex items-center justify-between">
-                           <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{news.date}</span>
-                           <button className="text-[10px] font-black uppercase tracking-widest text-[#b50a0a] flex items-center gap-2 group/btn">
-                                Read Article <ChevronRight className="w-3 h-3 transition-transform group-hover/btn:translate-x-1" />
-                           </button>
+                      ))
+                    ) : (
+                      <div className="text-[9px] font-bold text-slate-300 uppercase italic tracking-widest py-2">No tags assigned yet</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 mb-6">
+                <hr className="flex-1 border-slate-100" />
+                <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">Latest Feed</span>
+                <hr className="flex-1 border-slate-100" />
+              </div>
+
+              <div className="grid grid-cols-1 gap-6">
+                {isLoadingNews ? (
+                  <div className="py-20 text-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
+                    <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Searching tagged stories...</p>
+                  </div>
+                ) : coachNews.length > 0 ? (
+                  coachNews.map((news) => (
+                    <div key={news.id} className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm flex flex-col md:flex-row h-48 hover:border-[#b50a0a]/30 transition-all group">
+                      <div className="md:w-64 relative overflow-hidden bg-slate-100">
+                        <img 
+                          src={news.cover_image_url || 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=800'} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" 
+                        />
+                      </div>
+                      <div className="flex-1 p-8 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[9px] font-black uppercase text-[#b50a0a] tracking-widest">{news.category?.name || 'Story'}</span>
+                            {news.is_pinned && <Star className="w-3 h-3 text-orange-400 fill-orange-400" />}
+                          </div>
+                          <h4 className="text-sm font-black uppercase leading-tight text-slate-900 line-clamp-2">{news.title}</h4>
                         </div>
-                     </div>
-                  ))}
-               </div>
+                        <div className="flex items-center justify-between mt-4">
+                          <div className="flex items-center gap-2">
+                             <Calendar className="w-3 h-3 text-slate-300" />
+                             <DateDisplay date={news.published_at} className="text-[9px] font-bold text-slate-400 uppercase" />
+                          </div>
+                          <Link 
+                            href={`/news/${news.slug}`}
+                            target="_blank"
+                            className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400 hover:text-[#b50a0a] transition-all"
+                          >
+                            View Post <ExternalLink className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-20 text-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
+                    <MessageSquare className="w-10 h-10 text-slate-200 mx-auto mb-4" />
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No stories tagged for this coach yet.</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -985,6 +1255,30 @@ export default function CoachProfileClient({
         editingAchievement={editingAchievement}
         isSaving={isSaving}
       />
+
+      <TacticsMediaModal 
+        isOpen={isTacticsMediaModalOpen}
+        onClose={() => setIsTacticsMediaModalOpen(false)}
+        onSave={async (data) => {
+          setIsSaving(true);
+          const res = await updateCoach(coach.id, {
+            media_gallery: data.media_gallery,
+            tactics: data.tactics
+          });
+          if (res.success) {
+            toast.showToast('Tactics & Media updated successfully', 'success');
+            setIsTacticsMediaModalOpen(false);
+            router.refresh();
+          } else {
+            toast.showToast(res.error || 'Update failed', 'error');
+          }
+          setIsSaving(false);
+        }}
+        initialData={{
+          media_gallery: coach.media_gallery || { highlight_video_url: '', action_images: ['', '', '', '', ''], external_gallery_url: '' },
+          tactics: coach.tactics || { attacking_approach: '', defense_style: '', preferred_formation: '', tactical_philosophy: '' }
+        }}
+      />
     </div>
   );
 }
@@ -1033,7 +1327,8 @@ function StatModal({
     player_availability_pct: 0,
     average_recovery_days: 0,
     player_fitness_pct: 0,
-    injury_count: 0
+    injury_count: 0,
+    achievements: []
   });
 
   // Seasons from props
@@ -1063,7 +1358,8 @@ function StatModal({
       player_availability_pct: 0,
       average_recovery_days: 0,
       player_fitness_pct: 0,
-      injury_count: 0
+      injury_count: 0,
+      achievements: []
     });
   }, [editingStat, isOpen]);
 
@@ -1204,6 +1500,54 @@ function StatModal({
               <input type="number" className="w-full bg-slate-50 border-none rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all" value={formData.red_cards || 0} onChange={(e) => setFormData({ ...formData, red_cards: parseInt(e.target.value) || 0 })} />
             </div>
           </div>
+
+          {(formData.leagues_won || 0) + (formData.cups_won || 0) > 0 && (
+            <div className="pt-8 border-t border-slate-100 space-y-6 animate-in slide-in-from-top-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 flex items-center gap-2">
+                  <Trophy className="w-3 h-3" /> Trophy Details Breakdown
+                </h4>
+                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic">Link trophies to specific registry nodes</p>
+              </div>
+
+              <div className="space-y-4">
+                {[...Array((formData.leagues_won || 0) + (formData.cups_won || 0))].map((_, i) => {
+                  const isLeague = i < (formData.leagues_won || 0);
+                  const achievement = (formData.achievements || [])[i] || { 
+                    type: isLeague ? 'league' : 'cup', 
+                    name: ''
+                  };
+
+                  const updateAchievement = (updates: any) => {
+                    const newAchievements = [...(formData.achievements || [])];
+                    newAchievements[i] = { ...achievement, ...updates };
+                    setFormData({ ...formData, achievements: newAchievements });
+                  };
+
+                  return (
+                    <div key={i} className="bg-slate-50/50 rounded-3xl p-6 border border-slate-100 space-y-4 group/item hover:border-amber-200 transition-all">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[9px] font-black uppercase tracking-widest ${isLeague ? 'text-amber-600' : 'text-slate-400'}`}>
+                          # {i + 1} • {isLeague ? 'League Title' : 'Cup Title'}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Achievement Name</label>
+                        <input 
+                          type="text"
+                          placeholder={isLeague ? "e.g. Premier League" : "e.g. FA Cup"}
+                          className="w-full bg-white border-none rounded-2xl px-6 py-4 text-sm font-bold text-slate-900 focus:ring-1 focus:ring-amber-500 transition-all shadow-sm"
+                          value={achievement.name}
+                          onChange={(e) => updateAchievement({ name: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Role-Specific Metrics */}
           <div className="pt-8 border-t border-slate-100">
@@ -1410,6 +1754,247 @@ function AchievementModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function TacticsMediaModal({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  initialData 
+}: { 
+  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; 
+  initialData: { 
+    media_gallery: { highlight_video_url: string; action_images: string[]; external_gallery_url: string };
+    tactics: { attacking_approach: string; defense_style: string; preferred_formation: string; tactical_philosophy: string };
+  }
+}) {
+  const [formData, setFormData] = useState(initialData);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const isInitialized = useRef(false);
+  const toast = useToast();
+
+  useEffect(() => {
+    if (isOpen && !isInitialized.current && initialData) {
+      const baseImages = initialData.media_gallery?.action_images || [];
+      const paddedImages = [0, 1, 2, 3, 4].map(i => baseImages[i] || '');
+      setFormData({
+        ...initialData,
+        media_gallery: {
+          ...initialData.media_gallery,
+          action_images: paddedImages
+        }
+      });
+      isInitialized.current = true;
+    }
+    
+    if (!isOpen) {
+      isInitialized.current = false;
+    }
+  }, [isOpen, initialData]);
+
+  if (!isOpen) return null;
+
+  const handleFileChange = async (index: number, file: File | undefined) => {
+    if (!file) return;
+    
+    setUploadingIndex(index);
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+    
+    const res = await uploadPlayerImage(uploadData);
+    if (res.url) {
+      const newImages = [...formData.media_gallery.action_images];
+      newImages[index] = res.url;
+      setFormData({ 
+        ...formData, 
+        media_gallery: { ...formData.media_gallery, action_images: newImages } 
+      });
+      toast.showToast(`Image ${index + 1} uploaded`, 'success');
+    } else {
+      toast.showToast(res.error || 'Upload failed', 'error');
+    }
+    setUploadingIndex(null);
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = [...formData.media_gallery.action_images];
+    newImages[index] = '';
+    setFormData({ 
+      ...formData, 
+      media_gallery: { ...formData.media_gallery, action_images: newImages } 
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto">
+      <div className="bg-white rounded-[3rem] w-full max-w-3xl my-8 overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+          <div>
+            <h3 className="text-xl font-black uppercase tracking-tight">Tactics & Media Manager</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Videos, Photos & Technical Systems</p>
+          </div>
+          <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-2xl transition-all">
+            <X className="w-5 h-5 text-white" />
+          </button>
+        </div>
+        
+        <div className="p-10 space-y-12 overflow-y-auto flex-1 custom-scrollbar">
+          {/* Section 1: Tactical Systems */}
+          <div className="space-y-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <Target className="w-6 h-6" />
+              </div>
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Functional Tactical Controls</h4>
+            </div>
+
+            <div className="grid grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Attacking Approach</label>
+                <select 
+                  value={formData.tactics.attacking_approach}
+                  onChange={(e) => setFormData({ ...formData, tactics: { ...formData.tactics, attacking_approach: e.target.value } })}
+                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-[12px] font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+                >
+                  <option value="">Select Approach</option>
+                  <option value="Possession-based">Possession-based</option>
+                  <option value="Counter-attack">Counter-attack</option>
+                  <option value="High-press">High-press</option>
+                  <option value="Direct Football">Direct Football</option>
+                  <option value="Gegenpressing">Gegenpressing</option>
+                  <option value="Tiki-Taka">Tiki-Taka</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Defensive Style</label>
+                <select 
+                  value={formData.tactics.defense_style}
+                  onChange={(e) => setFormData({ ...formData, tactics: { ...formData.tactics, defense_style: e.target.value } })}
+                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-[12px] font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+                >
+                  <option value="">Select Style</option>
+                  <option value="Zonal Marking">Zonal Marking</option>
+                  <option value="Man-to-Man">Man-to-Man</option>
+                  <option value="Low Block">Low Block</option>
+                  <option value="High Line">High Line</option>
+                  <option value="Buscaglia Block">Buscaglia Block</option>
+                  <option value="Parking the Bus">Parking the Bus</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Preferred Formation</label>
+                <select 
+                  value={formData.tactics.preferred_formation}
+                  onChange={(e) => setFormData({ ...formData, tactics: { ...formData.tactics, preferred_formation: e.target.value } })}
+                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-[12px] font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+                >
+                  <option value="">Select Formation</option>
+                  <option value="4-3-3">4-3-3</option>
+                  <option value="4-4-2">4-4-2</option>
+                  <option value="4-2-3-1">4-2-3-1</option>
+                  <option value="3-5-2">3-5-2</option>
+                  <option value="3-4-3">3-4-3</option>
+                  <option value="5-3-2">5-3-2</option>
+                  <option value="4-1-4-1">4-1-4-1</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tactical Philosophy / Vision</label>
+              <textarea 
+                rows={6}
+                value={formData.tactics.tactical_philosophy}
+                onChange={(e) => setFormData({ ...formData, tactics: { ...formData.tactics, tactical_philosophy: e.target.value } })}
+                placeholder="Describe your fundamental beliefs about how football should be played at the highest level..."
+                className="w-full bg-slate-50 border-none rounded-[2.5rem] px-10 py-8 text-[14px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
+              />
+            </div>
+          </div>
+
+          <div className="h-[1px] bg-slate-100"></div>
+
+          {/* Section 2: Multimedia Gallery */}
+          <div className="space-y-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+                <ImageIcon className="w-6 h-6" />
+              </div>
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Multimedia Library</h4>
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Featured Highlight Video (YouTube/Vimeo)</label>
+              <input 
+                type="text"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={formData.media_gallery.highlight_video_url}
+                onChange={(e) => setFormData({ ...formData, media_gallery: { ...formData.media_gallery, highlight_video_url: e.target.value } })}
+                className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-[12px] font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Action & Tactical Images (Max 5)</label>
+              <div className="grid grid-cols-5 gap-4">
+                {formData.media_gallery.action_images.map((url, i) => (
+                  <div key={i} className="relative aspect-square">
+                    <div className="w-full h-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl overflow-hidden group hover:border-indigo-400 transition-all">
+                      {url ? (
+                        <>
+                          <img src={url} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button 
+                              onClick={() => removeImage(i)}
+                              className="p-2 bg-white/20 backdrop-blur-md rounded-xl text-white hover:bg-[#b50a0a] transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer">
+                          {uploadingIndex === i ? (
+                            <Clock className="w-6 h-6 text-indigo-400 animate-spin" />
+                          ) : (
+                            <>
+                              <Plus className="w-6 h-6 text-slate-300 group-hover:text-indigo-400 transition-colors" />
+                              <span className="text-[7px] font-black text-slate-300 mt-2 uppercase">Slot {i + 1}</span>
+                            </>
+                          )}
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={(e) => handleFileChange(i, e.target.files?.[0])}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+          <button 
+            onClick={() => onSave(formData)}
+            className="flex-1 bg-slate-900 text-white rounded-[2rem] py-5 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-[#b50a0a] transition-all shadow-xl shadow-slate-200"
+          >
+            Save All Changes
+          </button>
+          <button 
+            onClick={onClose}
+            className="px-12 bg-white text-slate-400 border border-slate-200 rounded-[2rem] py-5 text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   );

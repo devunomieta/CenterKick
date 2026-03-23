@@ -382,7 +382,7 @@ function TransferFormModal({
 }) {
   const seasonsList = allSeasons.map(s => s.name);
   const [formData, setFormData] = useState<Partial<PlayerTransfer>>(initialData || {
-    season: SEASONS[0],
+    season: seasonsList[0] || '2023/24',
     transfer_date: new Date().toISOString().split('T')[0],
     from_club_name: '',
     to_club_name: '',
@@ -428,7 +428,7 @@ function TransferFormModal({
                 onChange={(e) => setFormData({ ...formData, season: e.target.value })}
                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
               >
-                {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
+                {seasonsList.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div className="space-y-2">
@@ -651,7 +651,7 @@ function AchievementFormModal({
                 onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
               >
-                {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
+                {seasonsList.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div className="space-y-2">
@@ -917,7 +917,7 @@ function MediaGalleryModal({
   );
 }
 
-export default function PlayerProfileClient({ player, agents }: PlayerProfileClientProps) {
+export default function PlayerProfileClient({ player, agents, leagues, clubs, seasons, countries }: PlayerProfileClientProps) {
   const router = useRouter();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'profile' | 'stats' | 'bio' | 'gallery' | 'news' | 'shop' | 'billing'>('profile');
@@ -1023,7 +1023,8 @@ export default function PlayerProfileClient({ player, agents }: PlayerProfileCli
       const fetchNews = async () => {
         setIsLoadingNews(true);
         // Fetch news based on all profile tags
-        const res = await getPlayerNews(profileTags.length > 0 ? profileTags : [`${player.first_name} ${player.last_name}`]);
+        const newsTags = profileTags.length > 0 ? profileTags : [`${player.first_name} ${player.last_name}`];
+        const res = await getPlayerNews(newsTags);
         if (res.success) setPlayerNews(res.data || []);
         setIsLoadingNews(false);
       };

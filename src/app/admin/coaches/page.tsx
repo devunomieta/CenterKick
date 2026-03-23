@@ -185,9 +185,9 @@ export default async function AdminCoachesPage({
         currentPage={page}
         pageSize={pageSize}
         role={userRecord?.role || 'player'}
-        leagues={leaguesRes.success ? leaguesRes.data : []}
-        clubs={clubsRes.success ? clubsRes.data : []}
-        countries={countriesRes.success ? countriesRes.data : []}
+        leagues={leaguesRes.data || []}
+        clubs={clubsRes.data || []}
+        countries={countriesRes.data || []}
       />
     </div>
   );

@@ -21,6 +21,7 @@ import { FlagIcon } from '@/components/common/FlagIcon';
 
 interface Player {
   id: string;
+  slug?: string | null;
   user_id: string | null;
   email: string | null;
   first_name: string;
