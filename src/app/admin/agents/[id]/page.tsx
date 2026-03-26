@@ -37,9 +37,19 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
     notFound();
   }
 
+  // Fetch Linked Talent (Players and Coaches)
+  const { data: clients } = await supabase
+    .from('profiles')
+    .select('id, slug, first_name, last_name, role, avatar_url, country, status, agent_id, agent_status')
+    .eq('agent_id', agent.user_id)
+    .order('last_name', { ascending: true });
+
   return (
     <div className="min-h-screen bg-[#fcfcfc]">
-      <AgentProfileClient agent={agent} />
+      <AgentProfileClient 
+        agent={agent} 
+        initialClients={clients || []}
+      />
     </div>
   );
 }

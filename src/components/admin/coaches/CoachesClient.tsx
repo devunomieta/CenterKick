@@ -222,7 +222,7 @@ export function CoachesClient({
                 Search
               </button>
            </div>
-        </form>
+                       </form>
 
         {/* Coaches Table */}
         <div className="overflow-x-auto -mx-6">
@@ -380,111 +380,123 @@ export function CoachesClient({
                      showToast(errorMsg, "error");
                   }
                }} className="p-6 space-y-4 overflow-y-auto">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                    <div className="space-y-1">
-                       <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">First Name</label>
-                       <input name="first_name" required type="text" className="w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="Ex: John" />
-                    </div>
-                    <div className="space-y-1">
-                       <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Last Name</label>
-                       <input name="last_name" required type="text" className="w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="Ex: Doe" />
-                    </div>
-                     <div className="md:col-span-2 space-y-1">
-                        <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1 flex justify-between">
-                           <span>Email Address</span>
-                           {isCheckingEmail && <span className="text-[7px] text-[#b50a0a] animate-pulse">Checking status...</span>}
-                        </label>
-                        <input 
-                          name="email" 
-                          required 
-                          type="email" 
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className={`w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900 placeholder:text-gray-900 ${emailStatus === 'REGISTERED' ? 'ring-1 ring-red-500 bg-red-50/10' : ''}`} 
-                          placeholder="coach@centerkick.com" 
-                        />
-                        {emailStatus === 'REGISTERED' && (
-                          <div className="flex items-center gap-2 mt-1 px-2 py-1 bg-red-50 rounded-lg border border-red-100">
-                             <AlertCircle className="w-3 h-3 text-red-500" />
-                             <p className="text-[8px] font-black text-red-600 uppercase tracking-widest">Email already registered as a member.</p>
-                          </div>
-                        )}
-                        {emailStatus === 'PROSPECT' && (
-                          <div className="flex items-center justify-between mt-1 px-2 py-1 bg-blue-50 rounded-lg border border-blue-100">
-                             <div className="flex items-center gap-2">
-                                <Info className="w-3 h-3 text-blue-500" />
-                                <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">Enrolled as prospect (Not yet joined).</p>
-                             </div>
-                             <button 
-                                onClick={handleResendInv}
-                                className="text-[8px] font-black underline text-[#b50a0a] hover:text-black uppercase tracking-widest"
-                             >
-                                Resend Invitation?
-                             </button>
-                          </div>
-                        )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                     <div className="space-y-1">
+                        <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">First Name</label>
+                        <input name="first_name" required type="text" className="w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="Ex: John" />
                      </div>
-                    <div className="p-4 bg-gray-50/50 rounded-2xl md:col-span-2 grid grid-cols-2 gap-4 border border-gray-100">
-                        <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Coaching Role</label>
-                           <select name="position" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">
-                              <option value="Head Coach">Head Coach</option>
-                              <option value="Assistant Coach">Assistant Coach</option>
-                              <option value="Goalkeeping Coach">Goalkeeping Coach</option>
-                              <option value="Fitness Coach">Fitness Coach</option>
-                              <option value="Set Piece Coach">Set Piece Coach</option>
-                              <option value="Medical Coach">Medical Coach</option>
-                           </select>
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">League</label>
-                           <select 
-                             name="league" 
-                             className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900"
-                             onChange={(e) => setSelectedLeague(e.target.value)}
-                             value={selectedLeague}
-                           >
-                              <option value="">No League</option>
-                              {leagues.map((l: any) => (
-                                <option key={l.id} value={l.name}>{l.name}</option>
-                              ))}
-                           </select>
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Current Club</label>
-                           <select name="current_club" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">
-                              <option value="">Unattached</option>
-                              {clubs.filter((c: any) => c.leagues?.name === selectedLeague).map((club: any) => (
-                                <option key={club.id} value={club.name}>{club.name}</option>
-                              ))}
-                           </select>
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Country</label>
-                           <div className="relative group">
-                              <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                                <FlagIcon 
-                                  country={selectedCountry} 
-                                  className="w-4 h-2.5" 
-                                />
-                              </div>
-                              <input 
-                                name="country" 
-                                list="countries-coach-modal" 
-                                required 
-                                type="text" 
-                                value={selectedCountry}
-                                onChange={(e) => setSelectedCountry(e.target.value)}
-                                className="w-full bg-white border border-gray-100 rounded-lg pl-9 pr-3 py-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900 placeholder:text-gray-900" 
-                                placeholder="Ex: Nigeria" 
-                              />
+                     <div className="space-y-1">
+                        <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Last Name</label>
+                        <input name="last_name" required type="text" className="w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900" placeholder="Ex: Doe" />
+                     </div>
+                      <div className="md:col-span-2 space-y-1">
+                         <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1 flex justify-between">
+                            <span>Email Address</span>
+                            {isCheckingEmail && <span className="text-[7px] text-[#b50a0a] animate-pulse">Checking status...</span>}
+                         </label>
+                         <input 
+                           name="email" 
+                           required 
+                           type="email" 
+                           value={email}
+                           onChange={(e) => setEmail(e.target.value)}
+                           className={`w-full bg-gray-50 border-none rounded-xl p-3 text-[11px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900 placeholder:text-gray-900 ${emailStatus === 'REGISTERED' ? 'ring-1 ring-red-500 bg-red-50/10' : ''}`} 
+                           placeholder="coach@centerkick.com" 
+                         />
+                         {emailStatus === 'REGISTERED' && (
+                           <div className="flex items-center gap-2 mt-1 px-2 py-1 bg-red-50 rounded-lg border border-red-100">
+                              <AlertCircle className="w-3 h-3 text-red-500" />
+                              <p className="text-[8px] font-black text-red-600 uppercase tracking-widest">Email already registered as a member.</p>
                            </div>
-                           <datalist id="countries-coach-modal">
-                              {countries.map((c: any) => (
-                                 <option key={c.id} value={c.name} />
-                              ))}
-                           </datalist>
-                        </div>
+                         )}
+                         {emailStatus === 'PROSPECT' && (
+                           <div className="flex items-center justify-between mt-1 px-2 py-1 bg-blue-50 rounded-lg border border-blue-100">
+                              <div className="flex items-center gap-2">
+                                 <Info className="w-3 h-3 text-blue-500" />
+                                 <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">Enrolled as prospect (Not yet joined).</p>
+                              </div>
+                              <button 
+                                 onClick={handleResendInv}
+                                 className="text-[8px] font-black underline text-[#b50a0a] hover:text-black uppercase tracking-widest"
+                              >
+                                 Resend Invitation?
+                              </button>
+                           </div>
+                         )}
+                      </div>
+                     <div className="p-4 bg-gray-50/50 rounded-2xl md:col-span-2 grid grid-cols-2 gap-4 border border-gray-100">
+                         <div className="space-y-1">
+                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Coaching Role</label>
+                            <select name="position" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">
+                               <option value="Head Coach">Head Coach</option>
+                               <option value="Assistant Coach">Assistant Coach</option>
+                               <option value="Goalkeeping Coach">Goalkeeping Coach</option>
+                               <option value="Fitness Coach">Fitness Coach</option>
+                               <option value="Set Piece Coach">Set Piece Coach</option>
+                               <option value="Medical Coach">Medical Coach</option>
+                            </select>
+                         </div>
+                         <div className="space-y-1">
+                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">League</label>
+                            <select 
+                              name="league" 
+                              className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900"
+                              onChange={(e) => setSelectedLeague(e.target.value)}
+                              value={selectedLeague}
+                            >
+                               <option value="">No League</option>
+                               {leagues.map((l: any) => (
+                                 <option key={l.id} value={l.name}>{l.name}</option>
+                               ))}
+                            </select>
+                         </div>
+                         <div className="space-y-1">
+                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Current Club</label>
+                            <select name="current_club" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">
+                               <option value="">Unattached</option>
+                               {clubs.filter((c: any) => c.leagues?.name === selectedLeague).map((club: any) => (
+                                 <option key={club.id} value={club.name}>{club.name}</option>
+                               ))}
+                            </select>
+                         </div>
+                         <div className="space-y-1">
+                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Country</label>
+                            <div className="relative group">
+                               <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                                 <FlagIcon 
+                                   country={selectedCountry} 
+                                   className="w-4 h-2.5" 
+                                 />
+                               </div>
+                               <input 
+                                 name="country" 
+                                 list="countries-coach-modal" 
+                                 required 
+                                 type="text" 
+                                 value={selectedCountry}
+                                 onChange={(e) => setSelectedCountry(e.target.value)}
+                                 className="w-full bg-white border border-gray-100 rounded-lg pl-9 pr-3 py-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900 placeholder:text-gray-900" 
+                                 placeholder="Ex: Nigeria" 
+                               />
+                            </div>
+                            <datalist id="countries-coach-modal">
+                               {countries.map((c: any) => (
+                                  <option key={c.id} value={c.name} />
+                               ))}
+                            </datalist>
+                         </div>
+
+                         {/* Agent Selection */}
+                         <div className="space-y-1">
+                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Assigned Agent</label>
+                            <select name="agent_id" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">
+                               <option value="">Independent (No Agent)</option>
+                               {agents.map((a: any) => (
+                                 <option key={a.id} value={a.user_id}>{a.first_name} {a.last_name} {a.agency_name ? `(${a.agency_name})` : ''}</option>
+                               ))}
+                            </select>
+                         </div>
+
                          <div className="space-y-1">
                             <div className="flex items-center justify-between ml-1">
                                <label className="text-[8px] font-black text-red-500 uppercase tracking-widest">Birthdate</label>
@@ -500,9 +512,9 @@ export function CoachesClient({
                                  onChange={(e) => setDob(prev => ({ ...prev, day: e.target.value }))}
                                  required
                                >
-                                  <option value="" className="text-gray-900">DD</option>
+                                  <option value="">DD</option>
                                   {Array.from({ length: 31 }, (_, i) => (
-                                     <option key={i+1} value={String(i+1).padStart(2, '0')} className="text-gray-900">{i+1}</option>
+                                     <option key={i+1} value={String(i+1).padStart(2, '0')}>{i+1}</option>
                                   ))}
                                </select>
                                <select 
@@ -510,9 +522,9 @@ export function CoachesClient({
                                  onChange={(e) => setDob(prev => ({ ...prev, month: e.target.value }))}
                                  required
                                >
-                                  <option value="" className="text-gray-900">MM</option>
+                                  <option value="">MM</option>
                                   {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, i) => (
-                                     <option key={m} value={String(i+1).padStart(2, '0')} className="text-gray-900">{m}</option>
+                                     <option key={m} value={String(i+1).padStart(2, '0')}>{m}</option>
                                   ))}
                                </select>
                                <select 
@@ -520,9 +532,9 @@ export function CoachesClient({
                                  onChange={(e) => setDob(prev => ({ ...prev, year: e.target.value }))}
                                  required
                                >
-                                  <option value="" className="text-gray-900">YYYY</option>
+                                  <option value="">YYYY</option>
                                   {Array.from({ length: 70 }, (_, i) => (
-                                     <option key={i} value={String(new Date().getFullYear() - 15 - i)} className="text-gray-900">{new Date().getFullYear() - 15 - i}</option>
+                                     <option key={i} value={String(new Date().getFullYear() - 15 - i)}>{new Date().getFullYear() - 15 - i}</option>
                                   ))}
                                </select>
                             </div>
@@ -547,7 +559,7 @@ export function CoachesClient({
                     </button>
                     <p className="text-[7px] text-gray-900 text-center uppercase font-bold tracking-widest mt-2 italic opacity-60">An automated enrollment email will be sent immediately.</p>
                  </div>
-               </form>
+</form>
            </div>
         </div>
       )}

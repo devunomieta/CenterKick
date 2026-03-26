@@ -434,7 +434,7 @@ export default function CoachProfileClient({
                 </h1>
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
                   <FlagIcon country={coach.country || ''} className="w-3.5 h-2.5" />
-                  ID: {coach.email || 'NO EMAIL'} • {coach.position}
+                  {coach.email || 'NO EMAIL'} • {coach.position}
                 </p>
               </div>
             </div>
@@ -647,8 +647,8 @@ export default function CoachProfileClient({
                           ) : (
                             <div className="text-[13px] font-bold text-slate-800">
                               {item.field === 'agent_id' 
-                                ? (agents.find(a => a.user_id === item.value)?.first_name 
-                                   ? `${agents.find(a => a.user_id === item.value)?.first_name} ${agents.find(a => a.user_id === item.value)?.last_name}` 
+                                ? (agents.find(a => a.id === item.value)?.first_name 
+                                   ? `${agents.find(a => a.id === item.value)?.first_name} ${agents.find(a => a.id === item.value)?.last_name}` 
                                    : 'Independent')
                                 : item.value}
                             </div>
@@ -1210,12 +1210,13 @@ export default function CoachProfileClient({
 
           {activeTab === 'billing' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-12">
+               {/* Subscription Hero */}
                <div className="bg-slate-900 rounded-[3rem] p-16 text-white shadow-2xl relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-[#b50a0a]/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-12">
                        <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-500">Subscription Hub</h3>
-                       <span className={`${coach.is_subscribed ? 'bg-emerald-500' : 'bg-slate-700'} px-8 py-2.5 rounded-full text-[12px] font-black uppercase tracking-widest`}>
+                       <span className={`${coach.is_subscribed ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-slate-700'} px-8 py-2.5 rounded-full text-[12px] font-black uppercase tracking-widest transition-all`}>
                           {coach.is_subscribed ? 'Coach Premium' : 'Standard Access'}
                        </span>
                     </div>
@@ -1228,7 +1229,78 @@ export default function CoachProfileClient({
                              ) : 'UNSET'}
                           </p>
                        </div>
+                       <div className="flex flex-col justify-end items-end">
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Service Level</p>
+                          <p className="text-xl font-black uppercase tracking-tighter text-right">
+                             {coach.is_subscribed ? 'Active Professional' : 'Restricted Access'}
+                          </p>
+                       </div>
                     </div>
+                  </div>
+               </div>
+
+               {/* Transaction Ledger */}
+               <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-xl shadow-slate-200">
+                        <CreditCard className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Financial Ledger</h3>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Direct payment records and history</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {isLoadingTransactions ? (
+                      <div className="py-20 text-center">
+                        <div className="w-10 h-10 border-4 border-slate-100 border-t-[#b50a0a] rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Accessing records...</p>
+                      </div>
+                    ) : playerTransactions.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3">
+                        {playerTransactions.map((tx, i) => (
+                          <div key={i} className="flex items-center justify-between p-6 bg-slate-50/50 rounded-3xl border border-slate-50 hover:border-[#b50a0a]/10 hover:bg-white transition-all group">
+                            <div className="flex items-center gap-6">
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black shadow-sm ${
+                                tx.status === 'confirmed' || tx.status === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                              }`}>
+                                {tx.currency === 'USD' ? '$' : tx.currency === 'NGN' ? '₦' : tx.currency}
+                              </div>
+                              <div>
+                                <p className="text-[11px] font-black text-slate-900 uppercase leading-none mb-1.5 tracking-tight">
+                                  {tx.reference?.split('_')[0] || 'Member Base Payment'}
+                                  <span className="ml-2 text-[8px] font-bold text-slate-300 transform uppercase tracking-widest opacity-50">REF: {tx.reference}</span>
+                                </p>
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-1.5">
+                                    <Calendar className="w-3 h-3 text-slate-300" />
+                                    <DateDisplay date={tx.created_at} className="text-[9px] font-bold text-slate-400 uppercase tracking-wider" />
+                                  </div>
+                                  <div className="w-1 h-1 rounded-full bg-slate-200"></div>
+                                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{tx.currency} GATEWAY</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-black text-slate-900 italic tracking-tighter">
+                                {tx.currency === 'USD' ? '$' : tx.currency === 'NGN' ? '₦' : ''}{(tx.amount / 100).toLocaleString()}
+                              </p>
+                              <span className={`text-[8px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-lg ${
+                                tx.status === 'confirmed' || tx.status === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'
+                              }`}>{tx.status}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-20 text-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
+                        <CreditCard className="w-10 h-10 text-slate-200 mx-auto mb-4" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No transactions recorded yet</p>
+                      </div>
+                    )}
                   </div>
                </div>
             </div>

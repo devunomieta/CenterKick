@@ -29,11 +29,15 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
     return notFound();
   }
 
-  // Fetch all agents
-  const { data: agents } = await supabase
+  // Fetch Agents for linking - Simple and reliable query
+  const { data: agents, error: agentsError } = await supabase
     .from('profiles')
     .select('id, user_id, first_name, last_name, agency_name, email')
     .eq('role', 'agent');
+
+  if (agentsError) {
+    console.error('Error fetching agents:', agentsError);
+  }
 
   // Fetch All Football Constants
   const { data: leagues } = await supabase.from('leagues').select('*, countries(name, code, flag_url)').order('name');

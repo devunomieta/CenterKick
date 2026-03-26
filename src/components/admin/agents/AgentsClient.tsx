@@ -26,7 +26,8 @@ interface Agent {
   status: string;
   agency_name: string;
   country: string;
-  age: number;
+  age?: number;
+  date_of_birth?: string;
   gender: string;
   is_subscribed: boolean;
   license_code?: string;
@@ -411,8 +412,8 @@ export function AgentsClient({
                            </datalist>
                         </div>
                         <div className="space-y-1">
-                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Age</label>
-                           <input name="age" required type="number" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black" placeholder="40" />
+                           <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Date of Birth</label>
+                           <input name="date_of_birth" required type="date" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black" />
                         </div>
                         <div className="space-y-1">
                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Gender</label>

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 
-export default function AdminPaymentsPage() {
+export default async function AdminPaymentsPage() {
   redirect('/admin/payments/transactions');
 }
+

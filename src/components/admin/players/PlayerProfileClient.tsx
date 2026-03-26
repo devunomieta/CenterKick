@@ -1357,7 +1357,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                 </h1>
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
                   <FlagIcon country={player.country || ''} className="w-3.5 h-2.5" />
-                  ID: {player.email || 'NO EMAIL'} • {player.position}
+                  {player.email || 'NO EMAIL'} • {player.position}
                 </p>
               </div>
             </div>

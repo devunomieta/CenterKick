@@ -6,12 +6,12 @@ import {
   MoreHorizontal, Edit, Trash2, ExternalLink, 
   ChevronLeft, ChevronRight, X, User, ChevronDown,
   Globe, Calendar, MapPin, Target, CheckCircle, Clock, CreditCard, Lock, Eye, Mail, Trophy, Activity, MessageSquare,
-  Facebook, Instagram, Twitter, AlertCircle, Save, Undo, Plus, Briefcase, Link2, LayoutDashboard, UserCircle, FileText, Image as ImageIcon, Newspaper, DollarSign, Settings
+  Facebook, Instagram, Twitter, AlertCircle, Save, Undo, Plus, Briefcase, Link2, LayoutDashboard, UserCircle, FileText, Image as ImageIcon, Newspaper, DollarSign, Settings, RefreshCcw
 } from 'lucide-react';
 import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/RestrictedAccess';
 import { DateDisplay } from '@/components/common/DateDisplay';
 import { getPendingEdits, processProfileEdit, getPlayerTransactions, uploadPlayerImage } from '@/app/admin/players/actions';
-import { updateAgent } from '@/app/admin/agents/actions';
+import { updateAgent, getAvailableTalent, linkTalentToAgent, unlinkTalentFromAgent } from '@/app/admin/agents/actions';
 import Link from 'next/link';
 import { COUNTRIES } from '@/lib/constants/countries';
 import { useRouter } from 'next/navigation';
@@ -29,6 +29,7 @@ interface Agent {
   status: string;
   country: string | null;
   age?: number;
+  date_of_birth?: string | null;
   gender: string;
   agency_name: string;
   license_code?: string;
@@ -55,11 +56,25 @@ interface ProfileEdit {
   created_at: string;
 }
 
-interface AgentProfileClientProps {
-  agent: Agent;
+interface ClientProfile {
+  id: string;
+  slug?: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  avatar_url?: string;
+  country?: string;
+  status: string;
+  agent_id?: string;
+  agent_status?: string;
 }
 
-export default function AgentProfileClient({ agent }: AgentProfileClientProps) {
+interface AgentProfileClientProps {
+  agent: Agent;
+  initialClients: ClientProfile[];
+}
+
+export default function AgentProfileClient({ agent, initialClients }: AgentProfileClientProps) {
   const router = useRouter();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'profile' | 'bio' | 'clients' | 'billing'>('profile');
@@ -71,6 +86,11 @@ export default function AgentProfileClient({ agent }: AgentProfileClientProps) {
   const [editedFields, setEditedFields] = useState<Partial<Agent>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [clients, setClients] = useState<ClientProfile[]>(initialClients);
+  const [isAddTalentModalOpen, setIsAddTalentModalOpen] = useState(false);
+  const [availableTalent, setAvailableTalent] = useState<ClientProfile[]>([]);
+  const [isSearchingTalent, setIsSearchingTalent] = useState(false);
+  const [talentSearchQuery, setTalentSearchQuery] = useState('');
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -122,7 +142,7 @@ export default function AgentProfileClient({ agent }: AgentProfileClientProps) {
   };
 
   const updateField = (field: keyof Agent, value: any) => {
-    setEditedFields(prev => ({ ...prev, [field]: value }));
+    setEditedFields((prev: any) => ({ ...prev, [field]: value }));
   };
 
   const displayValue = (field: keyof Agent, defaultValue: any) => {
@@ -154,6 +174,44 @@ export default function AgentProfileClient({ agent }: AgentProfileClientProps) {
     }
   };
 
+  const handleTalentSearch = async (q: string) => {
+    setTalentSearchQuery(q);
+    if (!q || q.length < 2) {
+      setAvailableTalent([]);
+      return;
+    }
+    setIsSearchingTalent(true);
+    const res = await getAvailableTalent(q);
+    if (res.success) setAvailableTalent(res.data || []);
+    setIsSearchingTalent(false);
+  };
+
+  const handleLinkTalent = async (profileId: string) => {
+    const res = await linkTalentToAgent(agent.user_id!, profileId);
+    if (res.success) {
+      toast.showToast('Talent linked successfully', 'success');
+      // Refresh clients list
+      router.refresh();
+      setIsAddTalentModalOpen(false);
+      setTalentSearchQuery('');
+      setAvailableTalent([]);
+    } else {
+      toast.showToast(res.error || 'Failed to link talent', 'error');
+    }
+  };
+
+  const handleUnlinkTalent = async (profileId: string) => {
+    if (!confirm('Are you sure you want to remove this athlete from your roster?')) return;
+    const res = await unlinkTalentFromAgent(profileId);
+    if (res.success) {
+      toast.showToast('Talent unlinked successfully', 'success');
+      router.refresh();
+    } else {
+      toast.showToast(res.error || 'Failed to unlink talent', 'error');
+    }
+  };
+
+
   const PendingEditBadge = ({ field }: { field: string }) => {
     const edit = pendingEdits.find(e => e.field_name === field);
     if (!edit) return null;
@@ -182,7 +240,8 @@ export default function AgentProfileClient({ agent }: AgentProfileClientProps) {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#f8fafc] animate-in fade-in duration-500">
+    <>
+      <div className="flex flex-col min-h-screen bg-[#f8fafc] animate-in fade-in duration-500">
       <input 
         type="file" 
         ref={avatarInputRef}
@@ -228,7 +287,7 @@ export default function AgentProfileClient({ agent }: AgentProfileClientProps) {
                 </h1>
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
                   <FlagIcon country={agent.country || ''} className="w-3.5 h-2.5" />
-                  ID: {agent.email || 'NO EMAIL'} • {agent.agency_name}
+                  {agent.email || 'NO EMAIL'} • {agent.agency_name}
                 </p>
               </div>
             </div>
@@ -291,10 +350,10 @@ export default function AgentProfileClient({ agent }: AgentProfileClientProps) {
 
           <div className="mt-auto pt-6 border-t border-slate-50">
             <div className="bg-slate-50 rounded-2xl p-4">
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Network</p>
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Managed Profiles</p>
               <div className="flex items-center gap-2">
                  <Users className="w-4 h-4 text-slate-900" />
-                 <p className="text-xl font-black italic tracking-tighter text-slate-900">0 Clients</p>
+                 <p className="text-xl font-black italic tracking-tighter text-slate-900">{clients.length} Profile{clients.length !== 1 ? 's' : ''}</p>
               </div>
             </div>
           </div>
@@ -330,9 +389,8 @@ export default function AgentProfileClient({ agent }: AgentProfileClientProps) {
                         { label: 'Last Name', value: agent.last_name, field: 'last_name', type: 'text' },
                         { label: 'Email Address', value: agent.email || 'N/A', field: 'email', type: 'text' },
                         { label: 'Citizenship', value: agent.country, field: 'country', type: 'select', options: COUNTRIES },
-                        { label: 'Age', value: agent.age || 'N/A', field: 'age', type: 'number' },
+                        { label: 'Birthdate', value: agent.date_of_birth || 'N/A', field: 'date_of_birth', type: 'date' },
                         { label: 'Gender', value: agent.gender, field: 'gender', type: 'select', options: ['Male', 'Female', 'Other'] },
-                        { label: 'Slug', value: agent.slug || 'N/A', field: 'slug', type: 'text' },
                       ].map((item, i) => (
                         <div key={i} className="flex flex-col gap-1">
                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
@@ -357,7 +415,7 @@ export default function AgentProfileClient({ agent }: AgentProfileClientProps) {
                             )
                           ) : (
                             <div className="text-[13px] font-bold text-slate-800">
-                              {item.value || 'N/A'}
+                              {item.field === 'date_of_birth' ? (item.value ? <DateDisplay date={item.value as string} /> : 'N/A') : item.value || 'N/A'}
                             </div>
                           )}
                           <PendingEditBadge field={item.field} />
@@ -494,40 +552,126 @@ export default function AgentProfileClient({ agent }: AgentProfileClientProps) {
 
           {activeTab === 'clients' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-               <div className="flex items-center justify-between mb-12">
+               <div className="flex items-center justify-between mb-8">
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Talent Roster</h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Manage athletes linked to your agency</p>
+                    <h3 className="text-xl font-black italic uppercase tracking-tighter text-slate-900">Talent <span className="text-[#b50a0a]">Roster</span></h3>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Manage linked athletes and representation status</p>
                   </div>
-                  <button className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#b50a0a] transition-all flex items-center gap-2 shadow-lg shadow-slate-200">
-                     <Plus className="w-4 h-4" /> Add Talent
+                  <button 
+                    onClick={() => setIsAddTalentModalOpen(true)}
+                    className="bg-black hover:bg-[#b50a0a] text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-xl shadow-black/10"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" /> Add Talent
                   </button>
                </div>
-               
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[].map((client: any, i) => (
-                     <div key={i} className="bg-white border border-slate-100 p-6 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all group">
-                        {/* Client details here if we had them */}
+
+               {clients.length > 0 ? (
+                  <div className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50/50 border-b border-slate-100">
+                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Athlete</th>
+                          <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Role</th>
+                          <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Country</th>
+                          <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
+                          <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Contract</th>
+                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {clients.map((client) => (
+                          <tr key={client.id} className="border-b border-slate-50 last:border-none hover:bg-slate-50/50 transition-colors group">
+                            <td className="px-8 py-4">
+                              <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-[10px] overflow-hidden shrink-0 shadow-sm">
+                                  {client.avatar_url ? (
+                                    <img src={client.avatar_url} alt="" className="w-full h-full object-cover" />
+                                  ) : (
+                                    client.first_name[0]
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <Link 
+                                    href={`/admin/${client.role === 'coach' ? 'coaches' : 'players'}/${client.slug || client.id}`}
+                                    className="font-black text-slate-900 text-xs leading-none mb-1 truncate block hover:text-[#b50a0a] transition-colors"
+                                  >
+                                    {client.first_name} {client.last_name}
+                                  </Link>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest bg-slate-100 px-2 py-1 rounded-md">
+                                {client.role}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <FlagIcon country={client.country || ''} className="w-4 h-3 shadow-sm" />
+                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{client.country || 'N/A'}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                               <div className="flex flex-col">
+                                  <span className="text-[10px] font-black text-slate-900 uppercase">Professional</span>
+                                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Active Agent</span>
+                               </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${client.agent_status === 'accepted' ? 'bg-green-100 text-green-600 shadow-sm shadow-green-100/50' : 'bg-amber-100 text-amber-600 shadow-sm shadow-amber-100/50'}`}>
+                                {client.agent_status || 'Pending'}
+                              </span>
+                            </td>
+                            <td className="px-8 py-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Link 
+                                  href={`/admin/${client.role === 'coach' ? 'coaches' : 'players'}/${client.slug || client.id}`}
+                                  className="p-2.5 bg-slate-900 text-white rounded-xl hover:bg-[#b50a0a] transition-all shadow-lg shadow-black/5"
+                                  title="View Full Profile"
+                                >
+                                  <ChevronRight className="w-4 h-4" />
+                                </Link>
+                                <button 
+                                  onClick={() => handleUnlinkTalent(client.id)}
+                                  className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                                  title="Remove from Roster"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+               ) : (
+                  <div className="bg-slate-50 rounded-[2.5rem] p-12 text-center border-2 border-dashed border-slate-200">
+                     <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                        <Users className="w-8 h-8 text-slate-200" />
                      </div>
-                  ))}
-               </div>
-               
-               <div className="bg-slate-50 rounded-[2.5rem] p-12 text-center border-2 border-dashed border-slate-200">
-                  <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                  <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">No athletes linked</h4>
-                  <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mt-1">Add athletes to provide agency oversight</p>
-               </div>
+                     <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">No athletes linked</h4>
+                     <p className="text-[10px] text-slate-400 mt-2 max-w-xs mx-auto font-medium">Link players and coaches to manage their representation from this dashboard.</p>
+                     <button 
+                        onClick={() => setIsAddTalentModalOpen(true)}
+                        className="mt-8 bg-black text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#b50a0a] transition-all"
+                     >
+                        Link First Athlete
+                     </button>
+                  </div>
+               )}
             </div>
           )}
 
           {activeTab === 'billing' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-12">
+               {/* Subscription Hero */}
                <div className="bg-slate-900 rounded-[3rem] p-16 text-white shadow-2xl relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-[#b50a0a]/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-12">
                        <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-500">Subscription Hub</h3>
-                       <span className={`${agent.is_subscribed ? 'bg-emerald-500' : 'bg-slate-700'} px-8 py-2.5 rounded-full text-[12px] font-black uppercase tracking-widest`}>
+                       <span className={`${agent.is_subscribed ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-slate-700'} px-8 py-2.5 rounded-full text-[12px] font-black uppercase tracking-widest transition-all`}>
                           {agent.is_subscribed ? 'Agency Premium' : 'Network Access'}
                        </span>
                     </div>
@@ -540,13 +684,167 @@ export default function AgentProfileClient({ agent }: AgentProfileClientProps) {
                              ) : 'UNSET'}
                           </p>
                        </div>
+                       <div className="flex flex-col justify-end items-end">
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Service Level</p>
+                          <p className="text-xl font-black uppercase tracking-tighter text-right">
+                             {agent.is_subscribed ? 'Active Management' : 'Restricted Access'}
+                          </p>
+                       </div>
                     </div>
+                  </div>
+               </div>
+
+               {/* Transaction Ledger */}
+               <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-xl shadow-slate-200">
+                        <CreditCard className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Financial Ledger</h3>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Direct payment records and history</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {isLoadingTransactions ? (
+                      <div className="py-20 text-center">
+                        <div className="w-10 h-10 border-4 border-slate-100 border-t-[#b50a0a] rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Accessing records...</p>
+                      </div>
+                    ) : playerTransactions.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3">
+                        {playerTransactions.map((tx, i) => (
+                          <div key={i} className="flex items-center justify-between p-6 bg-slate-50/50 rounded-3xl border border-slate-50 hover:border-[#b50a0a]/10 hover:bg-white transition-all group">
+                            <div className="flex items-center gap-6">
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black shadow-sm ${
+                                tx.status === 'confirmed' || tx.status === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                              }`}>
+                                {tx.currency === 'USD' ? '$' : tx.currency === 'NGN' ? '₦' : tx.currency}
+                              </div>
+                              <div>
+                                <p className="text-[11px] font-black text-slate-900 uppercase leading-none mb-1.5 tracking-tight">
+                                  {tx.reference?.split('_')[0] || 'Member Base Payment'}
+                                  <span className="ml-2 text-[8px] font-bold text-slate-300 transform uppercase tracking-widest opacity-50">REF: {tx.reference}</span>
+                                </p>
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-1.5">
+                                    <Calendar className="w-3 h-3 text-slate-300" />
+                                    <DateDisplay date={tx.created_at} className="text-[9px] font-bold text-slate-400 uppercase tracking-wider" />
+                                  </div>
+                                  <div className="w-1 h-1 rounded-full bg-slate-200"></div>
+                                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{tx.currency} GATEWAY</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-black text-slate-900 italic tracking-tighter">
+                                {tx.currency === 'USD' ? '$' : tx.currency === 'NGN' ? '₦' : ''}{(tx.amount / 100).toLocaleString()}
+                              </p>
+                              <span className={`text-[8px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-lg ${
+                                tx.status === 'confirmed' || tx.status === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'
+                              }`}>{tx.status}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-20 text-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
+                        <CreditCard className="w-10 h-10 text-slate-200 mx-auto mb-4" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No transactions recorded yet</p>
+                      </div>
+                    )}
                   </div>
                </div>
             </div>
           )}
         </div>
+        </div>
       </div>
-    </div>
+
+      {/* Add Talent Modal */}
+      {isAddTalentModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
+           <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="p-8 border-b border-slate-100 flex items-center justify-between shrink-0">
+                 <div>
+                    <h3 className="text-base md:text-xl font-black italic uppercase tracking-tighter text-slate-900">Link New <span className="text-[#b50a0a]">Talent</span></h3>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Search and represent athletes within your agency</p>
+                 </div>
+                 <button onClick={() => setIsAddTalentModalOpen(false)} className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center hover:bg-slate-100 transition-all border border-slate-100">
+                    <X className="w-4 h-4 text-slate-400" />
+                 </button>
+              </div>
+
+              <div className="p-8 space-y-6 overflow-y-auto">
+                 <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b50a0a]" />
+                    <input 
+                       type="text"
+                       placeholder="Search athlete by name..."
+                       value={talentSearchQuery}
+                       onChange={(e) => handleTalentSearch(e.target.value)}
+                       className="w-full bg-slate-50 border-none rounded-2xl pl-12 pr-4 py-4 text-[11px] font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all text-slate-900 placeholder:text-slate-400"
+                    />
+                    {isSearchingTalent && (
+                       <RefreshCcw className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b50a0a] animate-spin" />
+                    )}
+                 </div>
+
+                 <div className="space-y-3">
+                    {availableTalent.length > 0 ? (
+                       availableTalent.map((talent) => (
+                          <div 
+                             key={talent.id} 
+                             className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-[1.5rem] hover:bg-white hover:border-[#b50a0a]/20 transition-all group"
+                          >
+                             <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-[10px] overflow-hidden shrink-0">
+                                   {talent.avatar_url ? (
+                                      <img src={talent.avatar_url} alt="" className="w-full h-full object-cover" />
+                                   ) : (
+                                      talent.first_name[0]
+                                   )}
+                                </div>
+                                <div className="min-w-0">
+                                   <p className="text-[11px] font-black text-slate-900 leading-none mb-1 truncate">{talent.first_name} {talent.last_name}</p>
+                                   <div className="flex items-center gap-2">
+                                      <span className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em]">{talent.role}</span>
+                                      <span className="text-[7px] font-black text-slate-200 tracking-widest">•</span>
+                                      <span className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-1">
+                                         <FlagIcon country={talent.country || ''} className="w-2 h-1.5" /> {talent.country || 'N/A'}
+                                      </span>
+                                   </div>
+                                </div>
+                             </div>
+                             <button 
+                                onClick={() => handleLinkTalent(talent.id)}
+                                className="px-4 py-2 bg-black text-white rounded-xl font-black text-[8px] uppercase tracking-widest hover:bg-[#b50a0a] transition-all shadow-lg shadow-black/5 shrink-0"
+                             >
+                                Link Profile
+                             </button>
+                          </div>
+                       ))
+                    ) : talentSearchQuery.length >= 2 ? (
+                       <div className="text-center py-8">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No available talent found for "{talentSearchQuery}"</p>
+                       </div>
+                    ) : (
+                       <div className="text-center py-8">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Start typing to search available athletes</p>
+                       </div>
+                    )}
+                 </div>
+              </div>
+
+              <div className="p-8 pt-0 mt-auto shrink-0">
+                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center italic">Athletes already linked to an agent will not appear in search.</p>
+              </div>
+           </div>
+        </div>
+      )}
+    </>
   );
 }

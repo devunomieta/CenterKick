@@ -31,7 +31,7 @@ export async function addAgent(formData: FormData) {
   const country = formData.get('country') as string;
   const licenseCode = formData.get('license_code') as string;
   const gender = formData.get('gender') as string;
-  const age = parseInt(formData.get('age') as string);
+  const date_of_birth = formData.get('date_of_birth') as string;
 
   // 1. Check if user already exists
   const { data: existingUser } = await supabase
@@ -57,7 +57,7 @@ export async function addAgent(formData: FormData) {
       country,
       license_code: licenseCode,
       gender,
-      age,
+      date_of_birth,
       status: 'active'
     }]);
 
@@ -160,3 +160,59 @@ export async function migrateAllAgentSlugs() {
   revalidatePath('/admin/agents');
   return { success: true, count };
 }
+
+export async function getAvailableTalent(query: string = '') {
+  const supabase = await createClient();
+  
+  let fetchQuery = supabase
+    .from('profiles')
+    .select('id, slug, first_name, last_name, role, avatar_url, country, status, agent_id')
+    .in('role', ['player', 'coach'])
+    .is('agent_id', null);
+
+  if (query) {
+    fetchQuery = fetchQuery.or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`);
+  }
+
+  const { data, error } = await fetchQuery
+    .order('last_name', { ascending: true })
+    .limit(20);
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
+export async function linkTalentToAgent(agentUserId: string, profileId: string) {
+  const supabase = await createClient();
+  
+  const { error } = await supabase
+    .from('profiles')
+    .update({ 
+      agent_id: agentUserId,
+      agent_status: 'accepted'
+    })
+    .eq('id', profileId);
+
+  if (error) return { success: false, error: error.message };
+  
+  revalidatePath(`/admin/agents`);
+  return { success: true };
+}
+
+export async function unlinkTalentFromAgent(profileId: string) {
+  const supabase = await createClient();
+  
+  const { error } = await supabase
+    .from('profiles')
+    .update({ 
+      agent_id: null,
+      agent_status: 'rejected' // Or just null? Schema says pending/accepted/rejected
+    })
+    .eq('id', profileId);
+
+  if (error) return { success: false, error: error.message };
+  
+  revalidatePath(`/admin/agents`);
+  return { success: true };
+}
+

@@ -35,11 +35,15 @@ export default async function CoachProfilePage({ params }: { params: Promise<{ i
     return notFound();
   }
 
-  // Fetch Agents for the dropdown (from profiles table)
-  const { data: agents } = await supabase
+  // Fetch Agents for linking - Simple and reliable query
+  const { data: agents, error: agentsError } = await supabase
     .from('profiles')
-    .select('id, user_id, first_name, last_name, agency_name')
-    .ilike('role', 'agent');
+    .select('id, user_id, first_name, last_name, agency_name, email')
+    .eq('role', 'agent');
+
+  if (agentsError) {
+    console.error('Error fetching agents:', agentsError);
+  }
 
   // Fetch All Football Constants
   const { data: leagues } = await supabase.from('leagues').select('*, countries(name, code, flag_url)').order('name');

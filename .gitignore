@@ -76,3 +76,17 @@ credentials.txt
 .env.development.local
 .env.test.local
 .env.production.local
+audit_report.txt
+
+# diagnostic logs and scripts
+tsc_output.txt
+tsc_errors.txt
+tsc_output.mjs
+check_role.ts
+fix_superadmin.sql
+build_log.txt
+build_output.log
+build_attempt.log
+build_error.log
+build_error_*.log
+/tmp/

@@ -57,7 +57,7 @@ export default async function AdminAgentsPage({
     .range(offset, offset + pageSize - 1);
 
   // 3. Fetch Client Counts for each agent
-  const agentIds = agents?.map(a => a.id) || [];
+  const agentIds = agents?.map(a => a.user_id) || [];
   const { data: clientCounts } = await supabase
     .from('profiles')
     .select('agent_id')
@@ -67,7 +67,7 @@ export default async function AdminAgentsPage({
     ...agent,
     email: agent.users?.email || 'N/A',
     profiles: { ...agent }, // Compatibility wrapper
-    clientCount: clientCounts?.filter(c => c.agent_id === agent.id).length || 0
+    clientCount: clientCounts?.filter(c => c.agent_id === agent.user_id).length || 0
   })) || [];
 
   const stats = [
