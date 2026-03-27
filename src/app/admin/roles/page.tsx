@@ -4,18 +4,26 @@ import { redirect } from 'next/navigation';
 
 export default async function AdminRolesPage() {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session) {
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (authError || !user) {
     redirect('/login');
   }
 
-  // Fetch all administrative users
+  // Fetch all administrative users (excluding unassigned for the main list)
   const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
   const { data: adminUsers } = await supabase
     .from('users')
     .select('*, profiles(*)')
     .in('role', adminRoles)
+    .order('created_at', { ascending: false });
+
+  // Fetch users in verification queue (unassigned role)
+  const { data: verificationQueue } = await supabase
+    .from('users')
+    .select('*, profiles(*)')
+    .eq('role', 'unassigned')
+    .order('is_verification_requested', { ascending: false })
     .order('created_at', { ascending: false });
 
   // Fetch pending invitations
@@ -30,15 +38,16 @@ export default async function AdminRolesPage() {
   const { data: currentUser } = await supabase
     .from('users')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single();
 
   return (
     <div className="animate-in fade-in duration-500">
       <RolesClient 
         adminUsers={adminUsers || []} 
+        verificationQueue={verificationQueue || []}
         invitations={invitations || []}
-        currentUserId={session.user.id}
+        currentUserId={user.id}
         currentUserRole={currentUser?.role || 'admin'}
       />
     </div>

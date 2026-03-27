@@ -6,9 +6,9 @@ import crypto from 'crypto';
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const { data: userRecord } = await supabase
       .from('users')
       .select('role')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single();
 
     if (!userRecord || !['superadmin', 'admin'].includes(userRecord.role)) {
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
         email,
         role,
         token,
-        invited_by: session.user.id,
+        invited_by: user.id,
         expires_at: expiresAt.toISOString(),
       });
 
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: inviteError.message }, { status: 500 });
     }
 
-    const invitationLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/complete-signup?token=${token}`;
+    const invitationLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin/signup?token=${token}`;
 
     await sendAdminInvitationEmail(email, role, invitationLink);
 

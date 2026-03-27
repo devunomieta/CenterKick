@@ -105,11 +105,11 @@ export default async function AdminPlayersPage({
     .or('role.ilike.agent,users.role.ilike.agent');
 
   // 4. Fetch current admin role for RBAC
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
   const { data: userRecord } = await supabase
     .from('users')
     .select('role')
-    .eq('id', session?.user.id)
+    .eq('id', user?.id)
     .single();
 
   // 5. Fetch Football Data for enrollment

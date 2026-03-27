@@ -32,19 +32,19 @@ export default function ProfileEditor() {
   useEffect(() => {
     async function loadData() {
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (session) {
+      if (user) {
         const { data: userRecord } = await supabase
           .from('users')
           .select('role')
-          .eq('id', session.user.id)
+          .eq('id', user.id)
           .single();
         
         const { data: profileRecord } = await supabase
           .from('profiles')
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
           .single();
         
         setRole(userRecord?.role || 'player');
@@ -62,9 +62,8 @@ export default function ProfileEditor() {
     setStatus(null);
     
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       setStatus({ type: 'error', msg: 'You must be logged in to save changes' });
       setIsSaving(false);
       return;
@@ -74,7 +73,7 @@ export default function ProfileEditor() {
     const formData = new FormData(form);
     
     const profileData: any = {
-      user_id: session.user.id,
+      user_id: user.id,
       first_name: formData.get('first_name'),
       last_name: formData.get('last_name'),
       date_of_birth: formData.get('date_of_birth') || null,

@@ -27,21 +27,21 @@ export default function SubscriptionPage() {
   useEffect(() => {
     async function loadData() {
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (session) {
+      if (user) {
         // Fetch subscription
         const { data: subData } = await supabase
           .from('subscriptions')
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
           .single();
         
         // Fetch profile for verification status
         const { data: profData } = await supabase
           .from('profiles')
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
           .single();
 
         // Fetch payment settings from CMS

@@ -6,15 +6,24 @@ import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import BubbleMenuExtension from '@tiptap/extension-bubble-menu';
+import { Link as TiptapLink } from '@tiptap/extension-link';
+import { Underline as TiptapUnderline } from '@tiptap/extension-underline';
+import { TextAlign as TiptapTextAlign } from '@tiptap/extension-text-align';
+import { TextStyle as TiptapTextStyle } from '@tiptap/extension-text-style';
+import { Color as TiptapColor } from '@tiptap/extension-color';
 import { 
   Save, Globe, Eye, Settings, Image as ImageIcon, 
   ChevronLeft, X, Check, Loader2, Link as LinkIcon,
-  Bold, Italic, List, Heading1, Heading2, Quote, Undo, Redo, Plus, Trash2
+  Bold, Italic, List, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Quote, Undo, Redo, Plus, Trash2,
+  Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, Type,
+  ChevronDown, FileText, Send, Trash, History
 } from 'lucide-react';
 import Link from 'next/link';
-import { createPost, updatePost, uploadBlogImage } from '@/app/admin/blog/actions';
+import { createPost, updatePost, uploadBlogImage, quickCreateTag, isSlugUnique, deletePost } from '@/app/admin/blog/actions';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
+import MediaGallery from './MediaGallery';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface NewPostClientProps {
   categories: any[];
@@ -43,376 +52,741 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
   const [selectedTags, setSelectedTags] = useState<string[]>(
     post?.post_tags?.map((pt: any) => pt.tag_id) || []
   );
+  const [availableTags, setAvailableTags] = useState(tags);
+  const [tagSearch, setTagSearch] = useState('');
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [isCreatingTag, setIsCreatingTag] = useState(false);
+  const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'unique' | 'duplicate'>('idle');
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryUsage, setGalleryUsage] = useState<'editor' | 'cover'>('editor');
+  const [showSaveOptions, setShowSaveOptions] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(post?.updated_at ? new Date(post.updated_at) : null);
+  const saveOptionsRef = useRef<HTMLDivElement>(null);
+  const [currentPostId, setCurrentPostId] = useState<string | null>(post?.id || null);
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: false,
+        underline: false,
+      }),
       Image.configure({
         allowBase64: true,
         HTMLAttributes: {
-          class: 'rounded-3xl shadow-lg border border-gray-100 my-8',
+          class: 'rounded-[2.5rem] shadow-2xl border border-gray-100 my-12 max-h-[800px] mx-auto transition-all hover:scale-[1.01]',
         },
       }),
+      TiptapLink.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-[#b50a0a] underline font-bold transition-all hover:text-black decoration-2 underline-offset-4',
+        },
+      }),
+      TiptapUnderline,
+      TiptapTextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      TiptapTextStyle,
+      TiptapColor,
       BubbleMenuExtension,
     ],
     content: post?.content || '',
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none min-h-[500px] max-w-none px-8 py-12 bg-white rounded-3xl border border-gray-100 shadow-sm',
+        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none min-h-[600px] max-w-none px-4 sm:px-0 selection:bg-[#b50a0a]/10 text-black prose-headings:text-black prose-p:text-black prose-strong:text-black prose-blockquote:text-black prose-li:text-black',
       },
     },
   });
 
-  // Auto-generate slug if not manually edited
+  // Enforce slug logic with uniqueness check
   useEffect(() => {
-    if (!post && formData.title && !formData.slug) {
-      setFormData(prev => ({ 
-        ...prev, 
-        slug: formData.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') 
-      }));
+    const timer = setTimeout(async () => {
+      if (formData.title) {
+        let baseSlug = formData.title
+          .toLowerCase()
+          .replace(/ /g, '-')
+          .replace(/[^\w-]+/g, '')
+          .replace(/--+/g, '-')
+          .replace(/^-+/, '')
+          .replace(/-+$/, '');
+
+        if (baseSlug === formData.slug && slugStatus !== 'idle') return;
+
+        setSlugStatus('checking');
+        
+        let finalSlug = baseSlug;
+        let suffix = 1;
+        
+        while (true) {
+          const isUnique = await isSlugUnique(finalSlug, post?.id);
+          if (isUnique) break;
+          finalSlug = `${baseSlug}-${suffix}`;
+          suffix++;
+        }
+
+        setFormData(prev => ({ ...prev, slug: finalSlug }));
+        setSlugStatus('unique');
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.title, post?.id]);
+
+  // Auto-save logic (5 minutes)
+  useEffect(() => {
+    if (!currentPostId || formData.is_draft === false) return; // Only auto-save drafts
+
+    const timer = setInterval(async () => {
+      if (!formData.title || !editor) return;
+      
+      const submissionData = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key !== 'is_draft') submissionData.append(key, String(value));
+      });
+      submissionData.set('content', editor.getHTML());
+      submissionData.set('published', 'false');
+      submissionData.set('tags', JSON.stringify(selectedTags));
+
+      const res = await updatePost(currentPostId, submissionData);
+      if (!res.error) {
+        setLastSaved(new Date());
+        showToast('Draft auto-saved', 'success');
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(timer);
+  }, [currentPostId, formData, editor, selectedTags]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (saveOptionsRef.current && !saveOptionsRef.current.contains(event.target as Node)) {
+        setShowSaveOptions(false);
+      }
     }
-  }, [formData.title, post]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const handleSave = async (publish: boolean) => {
-    if (!editor) return;
+  const handleSaveAction = async (action: 'draft' | 'publish' | 'delete') => {
+    if (!formData.title) {
+      showToast('A title is required to save.', 'error');
+      return;
+    }
+
+    if (action === 'delete') {
+      if (!currentPostId) {
+        setFormData({
+          title: '', slug: '', excerpt: '', category_id: '',
+          cover_image_url: '', is_draft: true, meta_title: '',
+          meta_description: '', og_image_url: '',
+        });
+        editor?.commands.setContent('');
+        setSelectedTags([]);
+        showToast('Post cleared', 'success');
+        return;
+      }
+      if (!confirm('Are you sure you want to delete this post?')) return;
+      setIsLoading(true);
+      const res = await deletePost(currentPostId);
+      if (res.success) {
+        showToast('Post deleted', 'success');
+        router.push('/admin/blog');
+      } else {
+        showToast(res.error || 'Delete failed', 'error');
+      }
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
-
+    const publish = action === 'publish';
+    
     const submissionData = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
-      submissionData.append(key, String(value));
+      if (key !== 'is_draft') submissionData.append(key, String(value));
     });
-    submissionData.set('content', editor.getHTML());
+    
+    submissionData.set('content', editor?.getHTML() || '');
     submissionData.set('published', publish ? 'true' : 'false');
     submissionData.set('tags', JSON.stringify(selectedTags));
 
-    const res = post 
-      ? await updatePost(post.id, submissionData) 
+    const res = currentPostId 
+      ? await updatePost(currentPostId, submissionData) 
       : await createPost(submissionData);
 
     if (res?.error) {
       showToast(res.error, 'error');
     } else {
-      showToast(post ? 'Post updated successfully' : 'Post published successfully', 'success');
-      router.push('/admin/blog');
+      showToast(publish ? 'Post Published' : 'Draft Saved', 'success');
+      setLastSaved(new Date());
+      if ('id' in res && res.id && !currentPostId) {
+        setCurrentPostId(res.id);
+        window.history.replaceState(null, '', `/admin/blog/edit/${res.id}`);
+      }
+      setFormData(prev => ({ ...prev, is_draft: !publish }));
     }
     setIsLoading(false);
+    setShowSaveOptions(false);
   };
+
+  const handleSlugChange = (val: string) => {
+    let sanitized = val.toLowerCase().replace(/\s+/g, '-').slice(0, 60);
+    setFormData(prev => ({ ...prev, slug: sanitized }));
+  };
+
+  const handleCreateTag = async (name: string) => {
+    if (!name.trim()) return;
+    setIsCreatingTag(true);
+    const res = await quickCreateTag(name.trim());
+    if (res.tag) {
+      setAvailableTags([...availableTags, res.tag]);
+      setSelectedTags([...selectedTags, res.tag.id]);
+      setTagSearch('');
+      setShowTagDropdown(false);
+      showToast('Tag created', 'success');
+    } else {
+      showToast(res.error || 'Failed to create tag', 'error');
+    }
+    setIsCreatingTag(false);
+  };
+
+  const filteredTags = availableTags.filter(tag => 
+    tag.name.toLowerCase().includes(tagSearch.toLowerCase()) && 
+    !selectedTags.includes(tag.id)
+  );
 
   const MenuBar = () => {
     if (!editor) return null;
 
     return (
-      <div className="flex flex-wrap items-center gap-1 p-2 mb-4 bg-gray-50 rounded-2xl border border-gray-100">
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          className="hidden" 
-          accept="image/*"
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (!file || !editor) return;
-            
-            const toastId = showToast('Uploading image...', 'loading');
-            const uploadData = new FormData();
-            uploadData.append('file', file);
-            
-            const res = await uploadBlogImage(uploadData);
-            hideToast(toastId);
+      <div className="flex flex-wrap items-center gap-1 p-2 mb-8 bg-white/80 backdrop-blur-xl sticky top-4 z-40 border-b border-gray-100/50">
+        <div className="flex items-center gap-0.5 bg-gray-50/50 p-1 rounded-xl border border-gray-100/50">
+          <button
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive('bold') ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <Bold className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive('italic') ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <Italic className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive('underline') ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <UnderlineIcon className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        
+        <div className="w-px h-4 bg-gray-200 mx-2"></div>
+        
+        <div className="flex items-center gap-0.5 bg-gray-50/50 p-1 rounded-xl border border-gray-100/50">
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive('heading', { level: 1 }) ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <Heading1 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive('heading', { level: 2 }) ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <Heading2 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive('heading', { level: 3 }) ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <Heading3 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive('heading', { level: 4 }) ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <Heading4 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 5 }).run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive('heading', { level: 5 }) ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <Heading5 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 6 }).run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive('heading', { level: 6 }) ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <Heading6 className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
-            if (res.url) {
-              editor.chain().focus().setImage({ src: res.url }).run();
-              showToast('Image uploaded successfully', 'success');
-            } else {
-              showToast(res.error || 'Upload failed', 'error');
-            }
-          }}
-        />
-        <button
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-2 rounded-lg transition-all ${editor.isActive('bold') ? 'bg-black text-white' : 'hover:bg-white text-gray-400'}`}
-        >
-          <Bold className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-2 rounded-lg transition-all ${editor.isActive('italic') ? 'bg-black text-white' : 'hover:bg-white text-gray-400'}`}
-        >
-          <Italic className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`p-2 rounded-lg transition-all ${editor.isActive('heading', { level: 1 }) ? 'bg-black text-white' : 'hover:bg-white text-gray-400'}`}
-        >
-          <Heading1 className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`p-2 rounded-lg transition-all ${editor.isActive('heading', { level: 2 }) ? 'bg-black text-white' : 'hover:bg-white text-gray-400'}`}
-        >
-          <Heading2 className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`p-2 rounded-lg transition-all ${editor.isActive('bulletList') ? 'bg-black text-white' : 'hover:bg-white text-gray-400'}`}
-        >
-          <List className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`p-2 rounded-lg transition-all ${editor.isActive('blockquote') ? 'bg-black text-white' : 'hover:bg-white text-gray-400'}`}
-        >
-          <Quote className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="p-2 rounded-lg hover:bg-white text-gray-400 transition-all"
-        >
-          <ImageIcon className="w-4 h-4" />
-        </button>
-        <div className="w-px h-6 bg-gray-200 mx-1"></div>
-        <button
-          onClick={() => editor.chain().focus().undo().run()}
-          className="p-2 rounded-lg hover:bg-white text-gray-400 transition-all"
-        >
-          <Undo className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().redo().run()}
-          className="p-2 rounded-lg hover:bg-white text-gray-400 transition-all"
-        >
-          <Redo className="w-4 h-4" />
-        </button>
+        <div className="w-px h-4 bg-gray-200 mx-2"></div>
+
+        <div className="flex items-center gap-0.5 bg-gray-50/50 p-1 rounded-xl border border-gray-100/50">
+          <button
+            onClick={() => editor.chain().focus().setTextAlign('left').run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive({ textAlign: 'left' }) ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <AlignLeft className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().setTextAlign('center').run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive({ textAlign: 'center' }) ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <AlignCenter className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().setTextAlign('right').run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive({ textAlign: 'right' }) ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <AlignRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="w-px h-4 bg-gray-200 mx-2"></div>
+
+        <div className="flex items-center gap-0.5 bg-gray-50/50 p-1 rounded-xl border border-gray-100/50">
+          <button
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive('bulletList') ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <List className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            className={`p-2 rounded-lg transition-all ${editor.isActive('blockquote') ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <Quote className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="w-px h-4 bg-gray-200 mx-2"></div>
+
+        <div className="flex items-center gap-0.5 bg-gray-50/50 p-1 rounded-xl border border-gray-100/50">
+          <button
+            onClick={() => {
+              const url = window.prompt('URL');
+              if (url) editor.chain().focus().setLink({ href: url }).run();
+            }}
+            className={`p-2 rounded-lg transition-all ${editor.isActive('link') ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+          >
+            <LinkIcon className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => {
+              setGalleryUsage('editor');
+              setIsGalleryOpen(true);
+            }}
+            className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-black transition-all"
+          >
+            <ImageIcon className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            onClick={() => editor.chain().focus().undo().run()}
+            className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 transition-all"
+          >
+            <Undo className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().redo().run()}
+            className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 transition-all"
+          >
+            <Redo className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="max-w-7xl mx-auto pb-32 animate-in fade-in duration-500">
-      {/* Top Navigation */}
-      <div className="flex items-center justify-between mb-12">
-        <Link 
-          href="/admin/blog" 
-          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#b50a0a] hover:text-black transition-all group"
-        >
-          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Back to Dashboard
-        </Link>
-        <div className="flex items-center gap-3">
-           <button 
-             onClick={() => handleSave(false)}
-             disabled={isLoading}
-             className="px-6 py-3 bg-white border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-gray-50 flex items-center gap-2"
-           >
-              {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              Save Draft
-           </button>
-           <button 
-             onClick={() => handleSave(true)}
-             disabled={isLoading}
-             className="px-8 py-3 bg-[#b50a0a] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 shadow-xl shadow-red-900/10"
-           >
-              {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Globe className="w-3.5 h-3.5" />}
-              Publish Post
-           </button>
+    <div className="min-h-screen bg-gray-50/30 pb-48 animate-in fade-in duration-1000">
+      {/* 1. Full Width Sticky ActionBar - Fixed to stick truly flush to the top bar */}
+      <div 
+        className="sticky z-[100] w-[calc(100%+4rem)] -mx-8 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm"
+        style={{ top: '-32px' }}
+      >
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link 
+            href="/admin/blog" 
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-black hover:text-[#b50a0a] transition-all group shrink-0"
+          >
+            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Post Dashboard
+          </Link>
+          
+          <div className="flex items-center gap-4">
+            {lastSaved && (
+              <div className="hidden sm:flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-gray-400">
+                <History className="w-3 h-3" />
+                Last Saved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            )}
+
+            <div className="relative" ref={saveOptionsRef}>
+              <button 
+                onClick={() => setShowSaveOptions(!showSaveOptions)}
+                disabled={isLoading}
+                className="flex items-center gap-3 px-6 py-2.5 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#b50a0a] transition-all shadow-lg active:scale-95 group"
+              >
+                {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                Save Post
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showSaveOptions ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {showSaveOptions && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 5, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 top-full w-56 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden z-[60]"
+                  >
+                    <div className="p-2 space-y-1">
+                      <button 
+                        onClick={() => handleSaveAction('draft')}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-gray-50 hover:text-black rounded-lg transition-all"
+                      >
+                        <FileText className="w-4 h-4 text-gray-400" />
+                        Save to Draft
+                      </button>
+                      <button 
+                        onClick={() => handleSaveAction('publish')}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-[#b50a0a]/5 hover:text-[#b50a0a] rounded-lg transition-all"
+                      >
+                        <Send className="w-4 h-4 text-[#b50a0a]/60" />
+                        Publish Now
+                      </button>
+                      <div className="h-px bg-gray-50 my-1"></div>
+                      <button 
+                        onClick={() => handleSaveAction('delete')}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <Trash className="w-4 h-4 text-red-500/60" />
+                        Delete Post
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        {/* Main Editor Section */}
-        <div className="lg:col-span-8 space-y-8">
-           <div className="space-y-4">
-              <input 
-                 type="text" 
-                 placeholder="Enter Post Title..." 
-                 className="w-full bg-transparent border-none p-0 text-5xl font-black italic uppercase tracking-tighter text-black placeholder:text-gray-200 focus:ring-0 leading-tight"
-                 value={formData.title}
-                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              />
-              <div className="flex items-center gap-2 text-[10px] font-bold text-gray-900 uppercase tracking-widest">
-                 <LinkIcon className="w-3 h-3" />
-                 https://centerkick.com/news/
-                 <input 
-                    type="text" 
-                    className="bg-gray-50 border-none rounded px-2 py-0.5 text-black focus:ring-1 focus:ring-[#b50a0a] w-auto"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                 />
-              </div>
-           </div>
+      <div className="max-w-4xl mx-auto px-6 pt-12">
 
-           <div className="space-y-2">
-              <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest ml-1">Excerpt / Summary</p>
-              <textarea 
-                 rows={3} 
-                 placeholder="Brief summary for listing pages..."
-                 className="w-full bg-white border border-gray-100 rounded-[2rem] p-6 text-[11px] font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all text-black placeholder:text-gray-300 resize-none shadow-sm"
-                 value={formData.excerpt}
-                 onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-              />
-           </div>
+          {/* The Unified Canvas */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden flex flex-col transition-all">
+          {/* Content Segment */}
+          <div className="p-8 sm:p-12 space-y-12">
+             <div className="space-y-8">
+                <div className="space-y-2 group">
+                   <label className="text-[10px] font-black text-black uppercase tracking-widest ml-1 opacity-100">Title</label>
+                   <textarea 
+                      rows={1}
+                      placeholder="The Title of Your Story..." 
+                      className="w-full bg-transparent border-none p-0 text-xl sm:text-3xl font-black text-black placeholder:text-gray-200 focus:ring-0 leading-tight transition-all resize-none min-h-[1em] overflow-hidden"
+                      value={formData.title}
+                      onChange={(e) => {
+                        setFormData({ ...formData, title: e.target.value });
+                        e.target.style.height = 'auto';
+                        e.target.style.height = e.target.scrollHeight + 'px';
+                      }}
+                   />
+                </div>
+ 
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black text-black uppercase tracking-widest ml-1">Slug</label>
+                   <div className="flex items-center gap-2 text-[10px] font-bold text-gray-900 bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100 w-full max-w-2xl group focus-within:border-black/10 transition-all">
+                      <LinkIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                      <span className="opacity-40 shrink-0">centerkick.com/news/</span>
+                      <input 
+                         type="text" 
+                         maxLength={60}
+                         placeholder="post-url-identifier"
+                         className={`bg-transparent border-none p-0 text-[10px] focus:ring-0 flex-1 font-black transition-colors ${
+                            slugStatus === 'unique' ? 'text-green-600' : 'text-black'
+                         }`}
+                         value={formData.slug}
+                         onChange={(e) => handleSlugChange(e.target.value)}
+                      />
+                      <div className="flex items-center gap-2 shrink-0 border-l border-gray-200 pl-3 ml-1">
+                        <span className="text-[8px] text-gray-400 font-black tracking-tighter">{formData.slug.length}/60</span>
+                        {slugStatus === 'checking' && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
+                        {slugStatus === 'unique' && <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />}
+                      </div>
+                   </div>
+                </div>
+             </div>
 
-           <div className="space-y-4">
-              <MenuBar />
-              {editor && (
-                <BubbleMenu editor={editor} shouldShow={({ editor: e }: any) => e.isActive('image')}>
-                  <div className="flex bg-black text-white rounded-xl shadow-2xl p-1 overflow-hidden border border-white/10 backdrop-blur-md">
-                    <button 
-                      onClick={() => editor.chain().focus().deleteSelection().run()}
-                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-red-600 rounded-lg transition-all text-[9px] font-black uppercase tracking-widest"
+             <div className="space-y-2">
+                <label className="text-[10px] font-black text-black uppercase tracking-widest ml-1">Excerpt</label>
+                <textarea 
+                   rows={3} 
+                   placeholder="Short summary for the index page..."
+                   className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 text-[11px] font-bold focus:ring-4 focus:ring-black/5 transition-all text-black placeholder:text-gray-300 resize-none shadow-sm"
+                   value={formData.excerpt}
+                   onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                />
+             </div>
+
+             <div className="w-full h-px bg-gray-100/50"></div>
+
+             <div className="space-y-8">
+                <div className="flex items-center justify-between ml-1 leading-none">
+                   <label className="text-[10px] font-black text-black uppercase tracking-widest">Body Content</label>
+                </div>
+                <MenuBar />
+                <div className="relative editor-content-area">
+                  {editor && (
+                    <BubbleMenu 
+                      editor={editor} 
+                      shouldShow={({ editor }) => editor.isActive('image')}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Remove Image
-                    </button>
-                  </div>
-                </BubbleMenu>
-              )}
-              <EditorContent editor={editor} />
-           </div>
-        </div>
+                      <div className="flex bg-white shadow-2xl border border-gray-100 rounded-2xl p-1.5 gap-1 animate-in zoom-in-95 duration-200">
+                        <button 
+                          onClick={() => {
+                            setGalleryUsage('editor');
+                            setIsGalleryOpen(true);
+                          }}
+                          className="px-3 py-2 hover:bg-gray-50 rounded-xl text-black flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all"
+                        >
+                          <ImageIcon className="w-3.5 h-3.5 text-[#b50a0a]" />
+                          Replace
+                        </button>
+                        <div className="w-px h-4 bg-gray-100 self-center mx-1"></div>
+                        <button 
+                          onClick={() => editor?.chain().focus().deleteSelection().run()}
+                          className="px-3 py-2 hover:bg-red-50 rounded-xl text-red-600 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete
+                        </button>
+                      </div>
+                    </BubbleMenu>
+                  )}
+                  <EditorContent editor={editor} />
+                </div>
+             </div>
+          </div>
 
-        {/* Sidebar Configuration */}
-        <div className="lg:col-span-4 space-y-8">
-           <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
-              <div className="space-y-4">
-                 <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                    <Settings className="w-4 h-4 text-[#b50a0a]" /> Post Settings
-                 </h4>
-                 
+          {/* Footer Segment: Settings Dashboard */}
+          <div className="bg-gray-50/30 border-t border-gray-100 p-8 sm:p-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+              <div className="space-y-10">
                  <div className="space-y-2">
-                    <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest">Primary Category</label>
-                    <select 
-                      className="w-full bg-gray-50 border-none rounded-xl p-3 text-[10px] font-black uppercase tracking-widest text-black"
-                      value={formData.category_id}
-                      onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                    >
-                       <option value="">Uncategorized</option>
-                       {categories.map(cat => (
-                          <option key={cat.id} value={cat.id}>{cat.name}</option>
-                       ))}
-                    </select>
+                    <h4 className="text-[11px] font-black text-black uppercase tracking-[0.2em] flex items-center gap-2">
+                       <Settings className="w-4 h-4 text-[#b50a0a]" />
+                       Post Settings
+                    </h4>
+                    <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Metadata & Discovery</p>
+                 </div>
+                 
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black text-black uppercase tracking-widest ml-1">Category</label>
+                    <div className="relative group">
+                      <select 
+                        className="w-full bg-white border border-gray-100 rounded-2xl p-4 text-[10px] font-black uppercase tracking-widest text-black focus:ring-4 focus:ring-black/5 transition-all appearance-none cursor-pointer pr-12 shadow-sm"
+                        value={formData.category_id}
+                        onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                      >
+                         <option value="">Uncategorized</option>
+                         {categories.map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                         ))}
+                      </select>
+                      <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-black transition-colors">
+                        <ChevronDown className="w-4 h-4" />
+                      </div>
+                    </div>
                  </div>
 
-                 <div className="space-y-3">
-                    <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest">Tags</label>
-                    <div className="flex flex-wrap gap-2">
-                       {tags.map(tag => (
-                          <button 
-                            key={tag.id}
-                            onClick={() => {
-                               if (selectedTags.includes(tag.id)) {
-                                  setSelectedTags(selectedTags.filter(id => id !== tag.id));
-                               } else {
-                                  setSelectedTags([...selectedTags, tag.id]);
-                               }
-                            }}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                               selectedTags.includes(tag.id) 
-                               ? 'bg-black text-white' 
-                               : 'bg-gray-50 text-gray-900 hover:bg-gray-100'
-                            }`}
-                          >
+                 <div className="space-y-6">
+                    <div className="flex items-center justify-between ml-1">
+                       <label className="text-[10px] font-black text-black uppercase tracking-widest">Tags</label>
+                       <span className="text-[9px] font-black text-gray-900 uppercase tracking-widest opacity-40">{selectedTags.length} SELECTED</span>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2.5 min-h-[60px] p-5 bg-white rounded-2xl border border-gray-100 shadow-sm relative group focus-within:border-[#b50a0a]/20 transition-all">
+                       {selectedTags.map(tagId => {
+                         const tag = availableTags.find(t => t.id === tagId || t.name === tagId);
+                         if (!tag) return null;
+                         return (
+                           <button 
+                             key={tag.id || tag.name}
+                             onClick={() => setSelectedTags(selectedTags.filter(id => id !== (tag.id || tag.name)))}
+                             className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 text-[10px] font-black text-black hover:bg-black hover:text-white transition-all flex items-center gap-2 group/tag shadow-sm uppercase tracking-tighter"
+                           >
                              {tag.name}
-                          </button>
-                       ))}
+                             <X className="w-3 h-3 text-gray-300 group-hover/tag:text-white transition-colors" />
+                           </button>
+                         );
+                       })}
+                       {selectedTags.length === 0 && (
+                         <span className="text-[10px] font-black text-gray-200 uppercase tracking-widest w-full text-center py-2 italic font-serif">Connect keywords...</span>
+                       )}
+                    </div>
+                    
+                    <div className="relative">
+                       <div className="flex items-center gap-3 bg-white rounded-2xl p-2 border border-gray-100 focus-within:ring-4 focus-within:ring-black/5 transition-all shadow-sm">
+                          <Plus className="w-5 h-5 ml-2 text-gray-300" />
+                          <input 
+                             type="text" 
+                             placeholder="Search tags..."
+                             className="flex-1 bg-transparent border-none text-[11px] font-bold text-black placeholder:text-gray-300 focus:ring-0 py-2.5"
+                             value={tagSearch}
+                             onChange={(e) => {
+                               setTagSearch(e.target.value);
+                               setShowTagDropdown(e.target.value.length >= 3);
+                             }}
+                             onFocus={() => tagSearch.length >= 3 && setShowTagDropdown(true)}
+                          />
+                       </div>
+
+                       {showTagDropdown && (
+                         <div className="absolute bottom-full left-0 right-0 mb-4 bg-white rounded-2xl border border-gray-100 shadow-2xl z-50 overflow-hidden animate-in slide-in-from-bottom-2 fade-in duration-300">
+                           <div className="p-4 border-b border-gray-50 bg-gray-50/50 flex items-center justify-end">
+                             <Check className="w-3 h-3 text-gray-300" />
+                           </div>
+                           <div className="max-h-[220px] overflow-y-auto p-2 space-y-1">
+                             {filteredTags.map(tag => (
+                               <button
+                                 key={tag.id || tag.name}
+                                 onClick={() => {
+                                   setSelectedTags([...selectedTags, tag.id || tag.name]);
+                                   setTagSearch('');
+                                   setShowTagDropdown(false);
+                                 }}
+                                 className="w-full text-left px-4 py-3 hover:bg-[#b50a0a] rounded-xl flex items-center justify-between group transition-all"
+                               >
+                                 <span className="text-[10px] font-black uppercase text-black group-hover:text-white tracking-widest">{tag.name}</span>
+                                 <Plus className="w-4 h-4 text-gray-100 opacity-0 group-hover:opacity-100 transition-opacity" />
+                               </button>
+                             ))}
+                             
+                             {tagSearch.trim() && !availableTags.find(t => t.name.toLowerCase() === tagSearch.toLowerCase()) && (
+                               <button
+                                 onClick={() => handleCreateTag(tagSearch)}
+                                 disabled={isCreatingTag}
+                                 className="w-full text-left px-4 py-4 bg-[#b50a0a]/5 hover:bg-[#b50a0a] rounded-xl flex items-center justify-between group border border-dashed border-[#b50a0a]/20 transition-all mt-4"
+                               >
+                                 <span className="text-[10px] font-black uppercase text-[#b50a0a] group-hover:text-white">Add Tag: "{tagSearch}"</span>
+                                 {isCreatingTag ? <Loader2 className="w-4 h-4 animate-spin text-[#b50a0a]" /> : <Plus className="w-4 h-4 text-[#b50a0a] group-hover:text-white" />}
+                               </button>
+                             )}
+                           </div>
+                         </div>
+                       )}
                     </div>
                  </div>
               </div>
 
-              <div className="space-y-4 pt-8 border-t border-gray-50">
-                 <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4 text-[#b50a0a]" /> Media Assets
-                 </h4>
-                  <div 
-                    onClick={() => coverInputRef.current?.click()}
-                    className="aspect-video bg-gray-50 rounded-2xl border border-dashed border-gray-200 flex flex-col items-center justify-center p-6 text-center group cursor-pointer hover:border-[#b50a0a]/30 transition-all overflow-hidden relative"
-                  >
+              <div className="space-y-10">
+                 <div className="space-y-2">
+                    <h4 className="text-[11px] font-black text-black uppercase tracking-[0.2em] flex items-center gap-2">
+                       <ImageIcon className="w-4 h-4 text-[#b50a0a]" />
+                       Featured Image
+                    </h4>
+                    <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Article Cover View</p>
+                 </div>
+
+                 <div 
+                   onClick={() => {
+                     setGalleryUsage('cover');
+                     setIsGalleryOpen(true);
+                   }}
+                   className="aspect-[16/9] bg-white rounded-3xl border border-gray-100 flex flex-col items-center justify-center p-8 text-center group cursor-pointer hover:border-black/20 hover:shadow-lg transition-all overflow-hidden relative shadow-sm ring-4 ring-black/0 focus-within:ring-black/5"
+                 >
+                    {formData.cover_image_url ? (
+                       <>
+                          <img src={formData.cover_image_url} className="w-full h-full object-cover" alt="Cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                             <p className="text-[10px] font-black text-white uppercase tracking-widest">Change Visual</p>
+                          </div>
+                          <button onClick={(e) => { e.stopPropagation(); setFormData({ ...formData, cover_image_url: '' }); }}
+                            className="absolute top-4 right-4 w-9 h-9 bg-white/90 backdrop-blur-md rounded-2xl flex items-center justify-center text-black hover:bg-black hover:text-white transition-all shadow-xl"
+                          >
+                             <Trash2 className="w-4 h-4" />
+                          </button>
+                       </>
+                    ) : (
+                       <div className="flex flex-col items-center gap-4">
+                          <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 group-hover:bg-black group-hover:text-white transition-all shadow-inner group-hover:scale-110">
+                             <Plus className="w-6 h-6" />
+                          </div>
+                          <div className="space-y-1">
+                             <p className="text-[10px] font-black text-black uppercase tracking-widest group-hover:text-[#b50a0a] transition-colors">Select from Gallery</p>
+                             <p className="text-[8px] font-bold text-gray-400">Dimensions: 1920x1080 recommended</p>
+                          </div>
+                       </div>
+                    )}
+                 </div>
+              </div>
+            </div>
+
+            {/* SEO Section: Full Width */}
+            <div className="p-8 sm:p-12 space-y-12 border-t border-gray-100 bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.02)] mt-24">
+               <div className="space-y-2">
+                  <h4 className="text-[11px] font-black text-black uppercase tracking-[0.2em] flex items-center gap-2">
+                     <Globe className="w-4 h-4 text-[#b50a0a]" />
+                     SEO Meta Settings
+                  </h4>
+                  <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">The algorithm's perspective</p>
+               </div>
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-4">
+                     <label className="text-[10px] font-black text-black uppercase tracking-widest ml-1">Meta Title</label>
                      <input 
-                        type="file" 
-                        ref={coverInputRef}
-                        className="hidden" 
-                        accept="image/*"
-                        onChange={async (e) => {
-                           const file = e.target.files?.[0];
-                           if (!file) return;
-                           
-                           const toastId = showToast('Uploading cover image...', 'loading');
-                           const uploadData = new FormData();
-                           uploadData.append('file', file);
-                           
-                           const res = await uploadBlogImage(uploadData);
-                           hideToast(toastId);
-
-                           if (res.url) {
-                              setFormData({ ...formData, cover_image_url: res.url });
-                              showToast('Cover image uploaded', 'success');
-                           } else {
-                              showToast(res.error || 'Upload failed', 'error');
-                           }
-                        }}
+                        type="text" 
+                        placeholder="SEO hook title..."
+                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-[10px] font-bold text-black focus:ring-4 focus:ring-black/5 shadow-inner transition-all"
+                        value={formData.meta_title}
+                        onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
                      />
-                     {formData.cover_image_url ? (
-                        <>
-                           <img src={formData.cover_image_url} className="w-full h-full object-cover" alt="Cover" />
-                           <button 
-                             onClick={(e) => {
-                                e.stopPropagation();
-                                setFormData({ ...formData, cover_image_url: '' });
-                             }}
-                             className="absolute top-4 right-4 w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-xl"
-                           >
-                              <X className="w-5 h-5" />
-                           </button>
-                        </>
-                     ) : (
-                        <>
-                           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform">
-                              <Plus className="w-6 h-6 text-gray-900" />
-                           </div>
-                           <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Set Cover Image</p>
-                           <p className="text-[8px] font-bold text-gray-900 uppercase tracking-[0.2em] mt-1 italic">Click to upload premium visual</p>
-                        </>
-                     )}
                   </div>
-                  <input 
-                     type="text" 
-                     placeholder="Or paste direct image URL..." 
-                     className="w-full bg-gray-50 border-none rounded-xl p-3 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-900"
-                     value={formData.cover_image_url}
-                     onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
-                  />
-              </div>
-           </div>
-
-           <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
-              <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                 <Globe className="w-4 h-4 text-[#b50a0a]" /> SEO Optimization
-              </h4>
-              <div className="space-y-4">
-                 <div className="space-y-1">
-                    <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Meta Title</label>
-                    <input 
-                      type="text" 
-                      className="w-full bg-gray-50 border-none rounded-xl p-3 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-300" 
-                      placeholder="SEO Title..." 
-                      value={formData.meta_title}
-                      onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
-                    />
-                 </div>
-                 <div className="space-y-1">
-                    <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Meta Description</label>
-                    <textarea 
-                      rows={4} 
-                      className="w-full bg-gray-50 border-none rounded-xl p-3 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black placeholder:text-gray-300 resize-none" 
-                      placeholder="SEO Description..." 
-                      value={formData.meta_description}
-                      onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
-                    />
-                 </div>
-              </div>
-           </div>
+                   <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                         <label className="text-[10px] font-black text-black uppercase tracking-widest ml-1">Meta Description</label>
+                         <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{formData.meta_description.length}/140</span>
+                      </div>
+                      <textarea 
+                         rows={1}
+                         maxLength={140}
+                         placeholder="Index page snippet..."
+                         className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-[10px] font-bold text-black focus:ring-4 focus:ring-black/5 shadow-inner transition-all resize-none overflow-hidden"
+                         value={formData.meta_description}
+                         onChange={(e) => {
+                           setFormData({ ...formData, meta_description: e.target.value });
+                           e.target.style.height = "auto";
+                           e.target.style.height = e.target.scrollHeight + "px";
+                         }}
+                      />
+                   </div>
+               </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      <MediaGallery 
+        isOpen={isGalleryOpen} 
+        onClose={() => setIsGalleryOpen(false)} 
+        onSelect={(url) => {
+          if (galleryUsage === 'editor' && editor) {
+            editor.chain().focus().setImage({ src: url }).run();
+          } else {
+            setFormData({ ...formData, cover_image_url: url });
+          }
+        }}
+      />
     </div>
   );
 }

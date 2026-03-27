@@ -7,18 +7,19 @@ import { notFound } from 'next/navigation';
 import { Metadata, ResolvingMetadata } from 'next';
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
+  const { slug } = await params;
   const supabase = await createClient();
   const { data: post } = await supabase
     .from('cms_posts')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single();
 
   if (!post) return { title: 'Post Not Found' };
@@ -43,12 +44,13 @@ export async function generateMetadata(
 }
 
 export default async function PostPage({ params }: Props) {
+  const { slug } = await params;
   const supabase = await createClient();
 
   const { data: post } = await supabase
     .from('cms_posts')
     .select('*, author:users(email), category:blog_categories(name), post_tags(tag:blog_tags(name))')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single();
 
   if (!post) notFound();

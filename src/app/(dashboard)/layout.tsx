@@ -13,29 +13,30 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     redirect('/login');
   }
 
   const { data: userRecord } = await supabase
     .from('users')
     .select('*')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single();
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .single();
 
   const role = userRecord?.role || 'player';
   const status = profile?.status || 'pending';
 
-  // Forced Redirect for Superadmins to the unified Admin Portal
-  if (role === 'superadmin') {
+  // Forced Redirect for Administrative roles to the unified Admin Portal
+  const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
+  if (adminRoles.includes(role)) {
     redirect('/admin');
   }
 
@@ -142,11 +143,11 @@ export default async function DashboardLayout({
               </button>
               <div className="flex items-center gap-3 pl-6 border-l border-gray-100">
                 <div className="text-right hidden sm:block">
-                  <p className="text-xs font-black uppercase text-gray-900">{session.user.email?.split('@')[0]}</p>
+                  <span className="text-gray-900 font-bold text-xs truncate max-w-[150px]">{user?.email}</span>
                   <p className="text-[10px] font-bold text-[#b50a0a] uppercase tracking-widest">{role}</p>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center font-black shadow-lg">
-                  {session.user.email?.[0].toUpperCase()}
+                <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center font-bold text-white shadow-lg text-xs">
+                  {user?.email?.[0].toUpperCase()}
                 </div>
               </div>
             </div>

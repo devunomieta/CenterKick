@@ -5,9 +5,9 @@ import { revalidatePath } from 'next/cache';
 
 export async function requestVerification(formData: FormData) {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session) {
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (authError || !user) {
     return { error: 'Unauthorized' };
   }
 
@@ -24,7 +24,7 @@ export async function requestVerification(formData: FormData) {
       payment_reference: paymentReference,
       updated_at: new Date().toISOString()
     })
-    .eq('user_id', session.user.id);
+    .eq('user_id', user.id);
 
   if (error) {
     console.error('Error requesting verification:', error);

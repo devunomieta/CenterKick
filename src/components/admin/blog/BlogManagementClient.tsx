@@ -46,28 +46,45 @@ export default function BlogManagementClient({
 
   return (
     <>
-      <div className="flex gap-3">
-        <button 
-          onClick={() => handleOpenPanel('categories')}
-          className="bg-white border border-gray-100 text-gray-900 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-gray-50 flex items-center gap-2"
-        >
-          <Folder className="w-3.5 h-3.5" />
-          Categories
-        </button>
-        <button 
-          onClick={() => handleOpenPanel('tags')}
-          className="bg-white border border-gray-100 text-gray-900 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-gray-50 flex items-center gap-2"
-        >
-          <Tag className="w-3.5 h-3.5" />
-          Tags
-        </button>
-        <Link 
-          href="/admin/blog/media"
-          className="bg-white border border-gray-100 text-gray-900 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-gray-50 flex items-center gap-2 shadow-sm"
-        >
-          <ImageIcon className="w-3.5 h-3.5 text-[#b50a0a]" />
-          Media Library
-        </Link>
+      <div className="flex flex-wrap gap-2.5">
+        {[
+          { icon: Folder, label: 'Categories', tab: 'categories' as const },
+          { icon: Tag, label: 'Tags', tab: 'tags' as const },
+          { icon: ImageIcon, label: 'Media Assets', tab: 'assets' as const, href: '/admin/blog/media' },
+        ].map((item, i) => {
+          const content = (
+            <div className="flex items-center gap-2.5">
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                i === 2 ? 'bg-[#b50a0a]/5 text-[#b50a0a]' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-900 group-hover:text-white'
+              }`}>
+                <item.icon className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-600 group-hover:text-slate-900 transition-colors">{item.label}</span>
+            </div>
+          );
+
+          if (item.href) {
+            return (
+              <Link 
+                key={i}
+                href={item.href}
+                className="group relative bg-white border border-slate-100 px-5 py-2.5 rounded-xl transition-all duration-300 hover:border-slate-300 hover:shadow-sm"
+              >
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <button 
+              key={i}
+              onClick={() => handleOpenPanel(item.tab)}
+              className="group relative bg-white border border-slate-100 px-5 py-2.5 rounded-xl transition-all duration-300 hover:border-slate-300 hover:shadow-sm"
+            >
+              {content}
+            </button>
+          );
+        })}
       </div>
 
       {isPanelOpen && (
@@ -302,7 +319,7 @@ export default function BlogManagementClient({
                                  <button 
                                     onClick={async () => {
                                        if (confirm('Delete asset?')) {
-                                          await deleteAsset(asset.id);
+                                          await deleteAsset(asset.id, asset.filename);
                                        }
                                     }}
                                     className="w-full py-2 bg-red-600/20 backdrop-blur-md border border-red-500/30 text-red-500 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"

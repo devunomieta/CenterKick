@@ -108,3 +108,35 @@ The CenterKick Team`;
   const res = await sendEmailNotification(email, subject, message);
   return res;
 }
+
+/**
+ * Allows a user with 'unassigned' role to request account verification
+ */
+export async function requestVerification() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { data: userRecord } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (userRecord?.role !== 'unassigned') {
+    return { success: false, error: "Verification can only be requested by unassigned accounts." };
+  }
+
+  const { error } = await supabase
+    .from('users')
+    .update({ is_verification_requested: true })
+    .eq('id', user.id);
+
+  if (error) {
+    console.error('Error requesting verification:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}

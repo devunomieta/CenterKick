@@ -1,33 +1,37 @@
 import { createClient } from '@/lib/supabase/server';
 import NewPostClient from '@/components/admin/blog/NewPostClient';
 import { notFound } from 'next/navigation';
+import { getGlobalTags } from '@/app/admin/blog/actions';
 
-export default async function EditPostPage({ params }: { params: { id: string } }) {
+export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
 
-  const { data: post } = await supabase
-    .from('cms_posts')
-    .select('*, post_tags(*)')
-    .eq('id', params.id)
-    .single();
+  const [
+    { data: post },
+    { data: categories },
+    { data: blogTags },
+    { tags: globalTags }
+  ] = await Promise.all([
+    supabase.from('cms_posts').select('*, post_tags(*)').eq('id', id).single(),
+    supabase.from('blog_categories').select('*').order('name'),
+    supabase.from('blog_tags').select('*').order('name'),
+    getGlobalTags()
+  ]);
 
   if (!post) notFound();
 
-  const { data: categories } = await supabase
-    .from('blog_categories')
-    .select('*')
-    .order('name');
-
-  const { data: tags } = await supabase
-    .from('blog_tags')
-    .select('*')
-    .order('name');
+  // Combine tags (ensuring name/slug structure)
+  const allTags = [
+    ...(blogTags || []),
+    ...(globalTags || []).map(t => ({ name: t, slug: t.toLowerCase().replace(/ /g, '-') }))
+  ];
 
   return (
     <div className="p-8">
       <NewPostClient 
         categories={categories || []} 
-        tags={tags || []} 
+        tags={allTags} 
         post={post}
       />
     </div>

@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+import { VerificationBanner } from '@/components/dashboard/VerificationBanner';
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -37,6 +39,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
+      {/* Unassigned Verification Banner */}
+      {role === 'unassigned' && (
+        <VerificationBanner 
+          isRequested={userRecord?.is_verification_requested || false} 
+          roleName="Unassigned Administrator"
+        />
+      )}
+
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>

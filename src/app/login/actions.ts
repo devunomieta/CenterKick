@@ -19,14 +19,28 @@ export async function login(formData: FormData) {
     return { error: error.message };
   }
 
-  // Fetch user role to determine redirect
+  // Fetch user role and status to determine redirect and access
   const { data: userRecord } = await supabase
     .from('users')
-    .select('role')
+    .select('role, is_active')
     .eq('id', data.user.id)
     .single();
 
-  const redirectPath = userRecord?.role === 'superadmin' ? '/admin' : '/dashboard';
+  if (userRecord && !userRecord.is_active) {
+    await supabase.auth.signOut();
+    return { error: 'Your account is currently inactive. Please contact an administrator.' };
+  }
+
+  const role = userRecord?.role || 'player';
+  
+  // Custom redirects based on role
+  let redirectPath = '/dashboard';
+  if (role === 'superadmin' || role === 'admin') {
+    redirectPath = '/admin';
+  } else if (['blogger', 'operations', 'finance'].includes(role)) {
+    redirectPath = '/admin'; // Staff roles also go to admin overview
+  }
+
   revalidatePath('/', 'layout');
   redirect(redirectPath);
 }

@@ -125,7 +125,7 @@ export default function MediaAssetsClient({ assets: initialAssets }: MediaPagePr
                 <button 
                   onClick={async () => {
                     if (confirm('Delete asset permanently?')) {
-                      await deleteAsset(asset.id);
+                      await deleteAsset(asset.id, asset.filename);
                       showToast('Asset removed', 'success');
                     }
                   }}

@@ -8,35 +8,48 @@ import { redirect } from 'next/navigation';
 import { SignOutButton } from '@/components/dashboard/SignOutButton';
 import { NotificationBell } from '@/components/admin/NotificationBell';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { headers } from 'next/headers';
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const headerList = await headers();
+  const pathname = headerList.get('x-pathname');
+  const isPublicPath = pathname === '/admin/signup';
 
-  if (!session) {
+  if (isPublicPath) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center">
+        {children}
+      </div>
+    );
+  }
+
+  const supabase = await createClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !user) {
     redirect('/login');
   }
 
-  const { data: userRecord } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', session.user.id)
-    .single();
+    const { data: userRecord } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
 
-  const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
-  if (!userRecord || !adminRoles.includes(userRecord.role)) {
-    redirect('/dashboard');
-  }
+    const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
+    if (!userRecord || !adminRoles.includes(userRecord.role)) {
+      redirect('/dashboard');
+    }
 
   // Fetch Notifications
   const { data: notifications } = await supabase
     .from('notifications')
     .select('*')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(10);
 
@@ -47,8 +60,9 @@ export default async function AdminLayout({
     .eq('page', 'settings')
     .eq('section', 'system')
     .single();
-  
+
   const siteSettings = siteSettingsData?.content || {};
+
   const resolveUrl = (url: string) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
@@ -105,11 +119,11 @@ export default async function AdminLayout({
             <NotificationBell initialNotifications={notifications || []} />
             <div className="flex items-center gap-3 pl-6 border-l border-gray-100">
                <div className="text-right">
-                  <p className="text-[10px] font-black uppercase text-gray-900">{session?.user?.email}</p>
+                  <p className="text-[10px] font-black uppercase text-gray-900">{user?.email}</p>
                   <p className="text-[8px] font-bold text-[#b50a0a] uppercase tracking-[0.2em]">Super Administrator</p>
                </div>
                <div className="w-10 h-10 rounded-xl bg-gray-900 border-2 border-gray-800 flex items-center justify-center font-black text-white shadow-lg">
-                  {session?.user?.email?.[0].toUpperCase()}
+                  {user?.email?.[0].toUpperCase()}
                </div>
             </div>
           </div>
