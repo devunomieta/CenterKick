@@ -2,6 +2,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Search, ChevronDown, ArrowRight, ChevronLeft, ChevronRight, Briefcase, Globe, Users } from "lucide-react";
 import Link from 'next/link';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function AgentsPage() {
@@ -34,7 +35,7 @@ export default async function AgentsPage() {
                         <span className="text-[#a20000]">AGENTS</span>
                      </h1>
                      <p className="text-gray-400 text-xl font-medium leading-relaxed mb-12">
-                        Connect with the world's most influential football agents and agencies. Professional representation for players and coaches seeking global opportunities.
+                        Connect with the world&apos;s most influential football agents and agencies. Professional representation for players and coaches seeking global opportunities.
                      </p>
                      <div className="flex flex-wrap gap-6">
                         <button className="bg-[#a20000] text-white px-10 py-5 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-[#8a0000] transition-all shadow-[0_20px_40px_rgba(162,0,0,0.3)]">
@@ -71,10 +72,11 @@ export default async function AgentsPage() {
                         >
                            <div className="p-6 pb-0 overflow-hidden">
                               <div className="relative aspect-square rounded-[24px] overflow-hidden">
-                                 <img 
+                                 <Image 
                                     src={agent.avatar_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=800&auto=format&fit=crop"} 
-                                    alt={agent.full_name} 
+                                    alt={agent.full_name || 'Agent Avatar'} 
                                     className="w-full h-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-110" 
+                                    fill
                                  />
                               </div>
                            </div>

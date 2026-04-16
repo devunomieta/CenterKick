@@ -15,6 +15,7 @@ import { DateDisplay } from '@/components/common/DateDisplay';
 import { getPendingEdits, processProfileEdit, getPlayerTransactions } from '@/app/admin/players/actions';
 import { updateCoach, getCoachStats, addCoachStat, updateCoachStat, deleteCoachStat, getCoachAchievements, addCoachAchievement, updateCoachAchievement, deleteCoachAchievement, updateProfileTags, getCoachNews } from '@/app/admin/coaches/actions';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
 import { FlagIcon } from '@/components/common/FlagIcon';
@@ -121,11 +122,11 @@ import { uploadPlayerImage } from '@/app/admin/players/actions';
 
 interface CoachProfileClientProps {
   coach: Coach;
-  agents: any[];
-  leagues: any[];
-  clubs: any[];
-  seasons: any[];
-  countries: any[];
+  agents: Record<string, any>[];
+  leagues: Record<string, any>[];
+  clubs: Record<string, any>[];
+  seasons: Record<string, any>[];
+  countries: Record<string, any>[];
 }
 
 export default function CoachProfileClient({ 
@@ -142,7 +143,7 @@ export default function CoachProfileClient({
   const [isAchievementModalOpen, setIsAchievementModalOpen] = useState(false);
   const [editingStat, setEditingStat] = useState<CoachStat | null>(null);
   const [editingAchievement, setEditingAchievement] = useState<CoachAchievement | null>(null);
-  const [playerTransactions, setPlayerTransactions] = useState<any[]>([]);
+  const [playerTransactions, setPlayerTransactions] = useState<Record<string, any>[]>([]);
   const [pendingEdits, setPendingEdits] = useState<ProfileEdit[]>([]);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [isLoadingEdits, setIsLoadingEdits] = useState(false);
@@ -157,7 +158,7 @@ export default function CoachProfileClient({
   const [profileTags, setProfileTags] = useState<string[]>(coach.tags || []);
   const [newTagInput, setNewTagInput] = useState('');
   const [isUpdatingTags, setIsUpdatingTags] = useState(false);
-  const [coachNews, setCoachNews] = useState<any[]>([]);
+  const [coachNews, setCoachNews] = useState<Record<string, any>[]>([]);
   const [isLoadingNews, setIsLoadingNews] = useState(false);
 
   useEffect(() => {
@@ -239,7 +240,7 @@ export default function CoachProfileClient({
     setIsSaving(false);
   };
 
-  const handleUpdateTags = async (newTags: string[]) => {
+   const handleUpdateTags = async (newTags: string[]) => {
     setIsUpdatingTags(true);
     try {
       const res = await updateProfileTags(coach.id, newTags);
@@ -254,11 +255,11 @@ export default function CoachProfileClient({
     }
   };
 
-  const updateField = (field: keyof Coach, value: any) => {
+   const updateField = (field: keyof Coach, value: unknown) => {
     setEditedFields(prev => ({ ...prev, [field]: value }));
   };
 
-  const displayValue = (field: keyof Coach, defaultValue: any) => {
+   const displayValue = (field: keyof Coach, defaultValue: unknown) => {
     return editedFields.hasOwnProperty(field) ? editedFields[field] : defaultValue;
   };
 
@@ -287,7 +288,7 @@ export default function CoachProfileClient({
     }
   };
 
-  const handleSaveStat = async (formData: any) => {
+   const handleSaveStat = async (formData: Partial<CoachStat>) => {
     setIsSaving(true);
     let res;
     if (editingStat) {
@@ -322,7 +323,7 @@ export default function CoachProfileClient({
     }
   };
 
-  const handleSaveAchievement = async (formData: any) => {
+   const handleSaveAchievement = async (formData: Partial<CoachAchievement>) => {
     setIsSaving(true);
     let res;
     if (editingAchievement) {
@@ -415,7 +416,12 @@ export default function CoachProfileClient({
                 onClick={() => !avatarUploading && avatarInputRef.current?.click()}
               >
                 {coach.avatar_url ? (
-                  <img src={coach.avatar_url} className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all" />
+                  <Image 
+                    src={coach.avatar_url} 
+                    className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all" 
+                    alt="Avatar"
+                    fill
+                  />
                 ) : (
                   <User className="w-5 h-5 group-hover/avatar:opacity-50 transition-all" />
                 )}
@@ -465,7 +471,12 @@ export default function CoachProfileClient({
               </div>
             </div>
             {coach.avatar_url ? (
-              <img src={coach.avatar_url} alt="" className="w-full aspect-square object-cover border-2 border-slate-50 shadow-inner transition-transform duration-700 group-hover:scale-110" />
+              <Image 
+                src={coach.avatar_url} 
+                alt="" 
+                className="w-full aspect-square object-cover border-2 border-slate-50 shadow-inner transition-transform duration-700 group-hover:scale-110" 
+                fill
+              />
             ) : (
               <div className="w-full aspect-square bg-slate-100 flex items-center justify-center text-slate-300 text-4xl font-black">
                 {coach.first_name[0]}{coach.last_name[0]}
@@ -485,7 +496,7 @@ export default function CoachProfileClient({
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => { setActiveTab(tab.id as any); setEditingSection(null); }}
+                onClick={() => { setActiveTab(tab.id as 'profile' | 'bio' | 'statistics' | 'awards' | 'gallery' | 'news' | 'billing'); setEditingSection(null); }}
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all group ${
                   activeTab === tab.id 
                   ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/20 translate-x-1' 
@@ -503,7 +514,7 @@ export default function CoachProfileClient({
               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Assigned Agent</p>
               {coach.agent_id ? (
                 <Link href={`/admin/agents/${coach.agent_id}`} className="text-[10px] font-black text-slate-900 uppercase hover:text-[#b50a0a] transition-colors">
-                  {agents.find(a => a.user_id === coach.agent_id)?.first_name ? `${agents.find(a => a.user_id === coach.agent_id)?.first_name} ${agents.find(a => a.user_id === coach.agent_id)?.last_name}` : 'Linked Agent'}
+                  {agents.find((a: Record<string, any>) => a.user_id === coach.agent_id)?.first_name ? `${agents.find((a: Record<string, any>) => a.user_id === coach.agent_id)?.first_name} ${agents.find((a: Record<string, any>) => a.user_id === coach.agent_id)?.last_name}` : 'Linked Agent'}
                 </Link>
               ) : (
                 <p className="text-[10px] font-bold text-slate-400 italic">Independent</p>
@@ -550,8 +561,8 @@ export default function CoachProfileClient({
                           {editingSection === 'identity' ? (
                             item.type === 'select' ? (
                               <select 
-                                value={displayValue(item.field as any, item.value || '')}
-                                onChange={(e) => updateField(item.field as any, e.target.value)}
+                                value={displayValue(item.field as keyof Coach, item.value || '') as string}
+                                onChange={(e) => updateField(item.field as keyof Coach, e.target.value)}
                                 className="w-full bg-slate-50 border-none rounded-lg p-2 text-[12px] font-bold text-slate-900 focus:ring-1 focus:ring-[#b50a0a]"
                               >
                                 {(item.options || []).map((opt: string) => (
@@ -561,8 +572,8 @@ export default function CoachProfileClient({
                             ) : (
                               <input 
                                 type={item.type}
-                                value={displayValue(item.field as any, item.value || '')}
-                                onChange={(e) => updateField(item.field as any, e.target.value)}
+                                value={displayValue(item.field as keyof Coach, item.value || '') as string}
+                                onChange={(e) => updateField(item.field as keyof Coach, e.target.value)}
                                 className="w-full bg-slate-50 border-none rounded-lg p-2 text-[12px] font-bold text-slate-900 focus:ring-1 focus:ring-[#b50a0a]"
                               />
                             )
@@ -606,8 +617,8 @@ export default function CoachProfileClient({
 
                     <div className="grid grid-cols-2 gap-x-8 gap-y-6">
                       {(() => {
-                        const currentLeague = displayValue('league' as any, coach.league);
-                        const availableClubs = clubs.filter((c: any) => c.leagues?.name === currentLeague).map((c: any) => c.name);
+                        const currentLeague = displayValue('league' as keyof Coach, coach.league);
+                        const availableClubs = clubs.filter((c: Record<string, any>) => c.leagues?.name === currentLeague).map((c: Record<string, any>) => c.name);
                         
                         return [
                           { label: 'Primary Role', value: coach.position, field: 'position', type: 'select', options: ['Head Coach', 'Assistant Coach', 'Goalkeeping Coach', 'Fitness Coach', 'Set Piece Coach', 'Medical Coach'] },
@@ -621,34 +632,34 @@ export default function CoachProfileClient({
                           {editingSection === 'pro' ? (
                             item.type === 'select' ? (
                               <select 
-                                value={displayValue(item.field as any, item.value || '')}
+                                value={displayValue(item.field as keyof Coach, item.value || '') as string}
                                 onChange={(e) => {
-                                  updateField(item.field as any, e.target.value);
-                                  if (item.field === 'league') updateField('current_club' as any, '');
+                                  updateField(item.field as keyof Coach, e.target.value);
+                                  if (item.field === 'league') updateField('current_club' as keyof Coach, '');
                                 }}
                                 className="w-full bg-slate-50 border-none rounded-lg p-2 text-[12px] font-bold text-slate-900 focus:ring-1 focus:ring-[#b50a0a]"
                               >
                                 {item.field === 'current_club' && <option value="">Select Club</option>}
                                 {item.field === 'agent_id' && <option value="">Independent</option>}
-                                {(item.options || []).map((opt: any) => (
-                                  <option key={typeof opt === 'string' ? opt : opt.id} value={typeof opt === 'string' ? opt : opt.id}>
-                                    {typeof opt === 'string' ? opt : opt.name}
+                                {(item.options || []).map((opt: unknown) => (
+                                  <option key={typeof opt === 'string' ? opt : (opt as Record<string, any>).id} value={typeof opt === 'string' ? opt : (opt as Record<string, any>).id}>
+                                    {typeof opt === 'string' ? opt : (opt as Record<string, any>).name}
                                   </option>
                                 ))}
                               </select>
                             ) : (
                               <input 
                                 type={item.type}
-                                value={displayValue(item.field as any, item.value || '')}
-                                onChange={(e) => updateField(item.field as any, e.target.value)}
+                                value={displayValue(item.field as keyof Coach, item.value || '') as string}
+                                onChange={(e) => updateField(item.field as keyof Coach, e.target.value)}
                                 className="w-full bg-slate-50 border-none rounded-lg p-2 text-[12px] font-bold text-slate-900 focus:ring-1 focus:ring-[#b50a0a]"
                               />
                             )
                           ) : (
                             <div className="text-[13px] font-bold text-slate-800">
                               {item.field === 'agent_id' 
-                                ? (agents.find(a => a.id === item.value)?.first_name 
-                                   ? `${agents.find(a => a.id === item.value)?.first_name} ${agents.find(a => a.id === item.value)?.last_name}` 
+                                ? (agents.find((a: Record<string, any>) => a.id === item.value)?.first_name 
+                                   ? `${agents.find((a: Record<string, any>) => a.id === item.value)?.first_name} ${agents.find((a: Record<string, any>) => a.id === item.value)?.last_name}` 
                                    : 'Independent')
                                 : item.value}
                             </div>
@@ -698,7 +709,7 @@ export default function CoachProfileClient({
                     <textarea 
                       rows={5}
                       className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-8 text-[13px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-[#b50a0a] focus:border-transparent outline-none transition-all resize-none"
-                      value={displayValue('bio', coach.bio || '')}
+                      value={displayValue('bio', coach.bio || '') as string}
                       onChange={(e) => updateField('bio', e.target.value)}
                       placeholder="Share your coaching philosophy, career highlights, and methodology..."
                     />
@@ -818,7 +829,7 @@ export default function CoachProfileClient({
                                 <div className="flex flex-col items-center gap-2">
                                   <div className="flex items-center justify-center gap-1.5">
                                     {(stat.achievements || []).length > 0 ? (
-                                      (stat.achievements || []).map((achievement, i) => (
+                                      (stat.achievements || []).map((achievement: Record<string, any>, i: number) => (
                                         <div key={i} className="group/trophy relative">
                                           <Trophy className={`w-3.5 h-3.5 ${achievement.type === 'league' ? 'text-amber-500' : 'text-amber-400'} fill-current`} />
                                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-slate-900 text-white text-[8px] rounded-lg opacity-0 group-hover/trophy:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none shadow-xl border border-white/10">
@@ -837,7 +848,7 @@ export default function CoachProfileClient({
                                   </div>
                                   {(stat.achievements || []).length > 0 && (
                                     <div className="flex flex-col gap-0.5">
-                                      {(stat.achievements || []).slice(0, 2).map((a, i) => (
+                                      {(stat.achievements || []).slice(0, 2).map((a: Record<string, any>, i: number) => (
                                         <span key={i} className={`text-[8px] font-black uppercase tracking-tight leading-tight ${a.type === 'league' ? 'text-amber-600' : 'text-slate-400'}`}>
                                           {a.name}
                                         </span>
@@ -1064,7 +1075,12 @@ export default function CoachProfileClient({
                     {/* Action Images */}
                     {(coach.media_gallery?.action_images || []).filter(url => url).map((url, i) => (
                       <div key={i} className="aspect-square bg-white rounded-[2.5rem] overflow-hidden border border-slate-100 shadow-sm group cursor-pointer hover:border-[#b50a0a] transition-all relative">
-                          <img src={url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                          <Image 
+                             src={url} 
+                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                             alt={`Gallery ${i + 1}`}
+                             fill
+                           />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <Eye className="w-6 h-6 text-white" />
                           </div>
@@ -1166,12 +1182,14 @@ export default function CoachProfileClient({
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Searching tagged stories...</p>
                   </div>
                 ) : coachNews.length > 0 ? (
-                  coachNews.map((news) => (
+                  coachNews.map((news: Record<string, any>) => (
                     <div key={news.id} className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm flex flex-col md:flex-row h-48 hover:border-[#b50a0a]/30 transition-all group">
                       <div className="md:w-64 relative overflow-hidden bg-slate-100">
-                        <img 
+                        <Image 
                           src={news.cover_image_url || 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=800'} 
                           className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" 
+                          alt={news.title}
+                          fill
                         />
                       </div>
                       <div className="flex-1 p-8 flex flex-col justify-between">
@@ -1261,7 +1279,7 @@ export default function CoachProfileClient({
                       </div>
                     ) : playerTransactions.length > 0 ? (
                       <div className="grid grid-cols-1 gap-3">
-                        {playerTransactions.map((tx, i) => (
+                        {playerTransactions.map((tx: Record<string, any>, i: number) => (
                           <div key={i} className="flex items-center justify-between p-6 bg-slate-50/50 rounded-3xl border border-slate-50 hover:border-[#b50a0a]/10 hover:bg-white transition-all group">
                             <div className="flex items-center gap-6">
                               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black shadow-sm ${
@@ -1331,7 +1349,7 @@ export default function CoachProfileClient({
       <TacticsMediaModal 
         isOpen={isTacticsMediaModalOpen}
         onClose={() => setIsTacticsMediaModalOpen(false)}
-        onSave={async (data) => {
+        onSave={async (data: Record<string, any>) => {
           setIsSaving(true);
           const res = await updateCoach(coach.id, {
             media_gallery: data.media_gallery,
@@ -1372,10 +1390,10 @@ function StatModal({
   onSave: (data: any) => void; 
   editingStat: CoachStat | null;
   isSaving: boolean;
-  leagues: any[];
-  clubs: any[];
-  seasons: any[];
-  countries: any[];
+  leagues: Record<string, any>[];
+  clubs: Record<string, any>[];
+  seasons: Record<string, any>[];
+  countries: Record<string, any>[];
 }) {
   const [formData, setFormData] = useState<Partial<CoachStat>>({
     type: 'club',
@@ -1437,7 +1455,7 @@ function StatModal({
 
   if (!isOpen) return null;
 
-  const clubs = allClubs.filter(c => c.leagues?.name === formData.league_name);
+  const clubs = allClubs.filter((c: Record<string, any>) => c.leagues?.name === formData.league_name);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
@@ -1501,7 +1519,7 @@ function StatModal({
                     onChange={(e) => setFormData({ ...formData, league_name: e.target.value, club_name: '' })}
                   >
                     <option value="">Select League</option>
-                    {leagues.map((l: any) => <option key={l.id} value={l.name}>{l.name}</option>)}
+                    {leagues.map((l: Record<string, any>) => <option key={l.id} value={l.name}>{l.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -1513,7 +1531,7 @@ function StatModal({
                     onChange={(e) => setFormData({ ...formData, club_name: e.target.value })}
                   >
                     <option value="">Select Club</option>
-                    {clubs.map((c: any) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                    {clubs.map((c: Record<string, any>) => <option key={c.id} value={c.name}>{c.name}</option>)}
                   </select>
                 </div>
               </>
@@ -1526,7 +1544,7 @@ function StatModal({
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                 >
                   <option value="">Select Nation</option>
-                  {countries.map((c: any) => (
+                  {countries.map((c: Record<string, any>) => (
                     <option key={c.id} value={c.name}>{c.name}</option>
                   ))}
                 </select>
@@ -1590,7 +1608,7 @@ function StatModal({
                     name: ''
                   };
 
-                  const updateAchievement = (updates: any) => {
+                  const updateAchievement = (updates: Partial<Record<string, any>>) => {
                     const newAchievements = [...(formData.achievements || [])];
                     newAchievements[i] = { ...achievement, ...updates };
                     setFormData({ ...formData, achievements: newAchievements });
@@ -1837,7 +1855,7 @@ function TacticsMediaModal({
   onSave, 
   initialData 
 }: { 
-  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; 
+  isOpen: boolean; onClose: () => void; onSave: (data: Record<string, any>) => void; 
   initialData: { 
     media_gallery: { highlight_video_url: string; action_images: string[]; external_gallery_url: string };
     tactics: { attacking_approach: string; defense_style: string; preferred_formation: string; tactical_philosophy: string };
@@ -2017,7 +2035,14 @@ function TacticsMediaModal({
                     <div className="w-full h-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl overflow-hidden group hover:border-indigo-400 transition-all">
                       {url ? (
                         <>
-                          <img src={url} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                          <div className="relative w-full h-full">
+                            <Image 
+                              src={url} 
+                              className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+                              alt={`Action ${i + 1}`}
+                              fill
+                            />
+                          </div>
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                             <button 
                               onClick={() => removeImage(i)}

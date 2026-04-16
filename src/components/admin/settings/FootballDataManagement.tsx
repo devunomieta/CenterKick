@@ -7,6 +7,7 @@ import {
   Database, RefreshCw, X, ChevronRight, Activity, MapPin,
   Filter, MoreHorizontal, ArrowUpDown, Image as ImageIcon
 } from 'lucide-react';
+import Image from 'next/image';
 import { 
   getLeagues, addLeague, updateLeague, deleteLeague,
   getClubs, addClub, updateClub, deleteClub,
@@ -32,11 +33,11 @@ const getSingularLabel = (tab: TabType) => {
 export default function FootballDataManagement() {
   const [activeTab, setActiveTab] = useState<TabType>('countries');
   const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState<any>({ countries: [], leagues: [], clubs: [], seasons: [] });
+  const [data, setData] = useState<Record<TabType, Record<string, any>[]>>({ countries: [], leagues: [], clubs: [], seasons: [] });
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState<any>({});
+  const [editingItem, setEditingItem] = useState<Record<string, any> | null>(null);
+  const [formData, setFormData] = useState<Record<string, any>>({});
   const [isActionLoading, setIsActionLoading] = useState(false);
   
   const toast = useToast();
@@ -56,10 +57,10 @@ export default function FootballDataManagement() {
       ]);
 
       setData({
-        countries: cRes.success ? cRes.data : [],
-        leagues: lRes.success ? lRes.data : [],
-        clubs: clRes.success ? clRes.data : [],
-        seasons: sRes.success ? sRes.data : []
+        countries: (cRes.success ? cRes.data ?? [] : []) as Record<string, any>[],
+        leagues: (lRes.success ? lRes.data ?? [] : []) as Record<string, any>[],
+        clubs: (clRes.success ? clRes.data ?? [] : []) as Record<string, any>[],
+        seasons: (sRes.success ? sRes.data ?? [] : []) as Record<string, any>[]
       });
     } catch (error) {
       toast.showToast('Failed to load registry data', 'error');
@@ -68,7 +69,7 @@ export default function FootballDataManagement() {
     }
   };
 
-  const handleOpenModal = (item: any = null) => {
+   const handleOpenModal = (item: Record<string, any> | null = null) => {
     setEditingItem(item);
     if (item) {
       setFormData(item);
@@ -146,7 +147,7 @@ export default function FootballDataManagement() {
     setIsLoading(false);
   };
 
-  const filteredData = (data[activeTab] || []).filter((item: any) => 
+   const filteredData = (data[activeTab] || []).filter((item: Record<string, any>) => 
     item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.countries?.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -266,7 +267,7 @@ export default function FootballDataManagement() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredData.map((item: any) => (
+                {filteredData.map((item: Record<string, any>) => (
                   <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
@@ -316,10 +317,12 @@ export default function FootballDataManagement() {
                         <td className="px-8 py-6">
                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{item.leagues?.name || 'Independent'}</span>
                         </td>
-                        <td className="px-8 py-6 text-center">
+                         <td className="px-8 py-6 text-center">
                           <div className="flex justify-center">
                             {item.logo_url ? (
-                               <img src={item.logo_url} alt={item.name} className="w-8 h-8 object-contain" />
+                               <div className="relative w-8 h-8">
+                                 <Image src={item.logo_url} alt={item.name} fill className="object-contain" />
+                               </div>
                             ) : (
                                <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-100 text-slate-300">
                                   <Building2 className="w-4 h-4" />
@@ -435,8 +438,8 @@ export default function FootballDataManagement() {
                       onChange={(e) => setFormData({ ...formData, country_id: e.target.value })}
                       className="w-full bg-slate-50 border-none rounded-2xl p-5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] outline-none transition-all shadow-inner"
                     >
-                      <option value="">Select Country</option>
-                      {data.countries.map((c: any) => (
+                       <option value="">Select Country</option>
+                      {data.countries.map((c: Record<string, any>) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
                     </select>
@@ -453,8 +456,8 @@ export default function FootballDataManagement() {
                         onChange={(e) => setFormData({ ...formData, league_id: e.target.value })}
                         className="w-full bg-slate-50 border-none rounded-2xl p-5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] outline-none transition-all shadow-inner"
                       >
-                        <option value="">Select League</option>
-                        {data.leagues.map((l: any) => (
+                         <option value="">Select League</option>
+                        {data.leagues.map((l: Record<string, any>) => (
                           <option key={l.id} value={l.id}>{l.name}</option>
                         ))}
                       </select>

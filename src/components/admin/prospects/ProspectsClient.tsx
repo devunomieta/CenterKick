@@ -4,7 +4,8 @@ import { useState } from 'react';
 import {
   Search, Mail, User, Globe, Calendar,
   MapPin, CheckCircle, Clock, AlertCircle,
-  RefreshCcw, ExternalLink, Eye, X, Filter, Target, Footprints, UserCheck
+  RefreshCcw, ExternalLink, Eye, X, Filter, Target, Footprints, UserCheck,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { resendInvitation } from '@/app/actions/auth';
 import { useToast } from '@/context/ToastContext';
@@ -75,8 +76,8 @@ export function ProspectsClient({
     handleFilterChange('q', searchQuery);
   };
 
-  const handleResendInv = async (email: string, lastName: string, role: string) => {
-    const res = await resendInvitation(email, role as any, lastName);
+   const handleResendInv = async (email: string, lastName: string, role: string) => {
+    const res = await resendInvitation(email, role as 'player' | 'coach' | 'agent' | 'blogger' | 'admin', lastName);
     if (res.success) {
       showToast("Invitation email resent successfully.", "success");
     } else {
@@ -331,7 +332,7 @@ export function ProspectsClient({
         <div className="w-10 h-10 rounded-xl bg-[#b50a0a] flex items-center justify-center shrink-0">
           <AlertCircle className="w-5 h-5 text-white" />
         </div>
-        <div>
+         <div>
           <h4 className="text-sm font-black text-gray-900 uppercase tracking-tight">Understanding Prospects</h4>
           <p className="text-xs text-gray-600 leading-relaxed mt-1">
             Prospects are professional profiles created by administrators.
@@ -343,5 +344,3 @@ export function ProspectsClient({
     </div>
   );
 }
-
-import { ChevronLeft, ChevronRight } from 'lucide-react';

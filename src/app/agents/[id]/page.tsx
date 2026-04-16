@@ -2,14 +2,15 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import AgentDetailsClient from './AgentDetailsClient';
 
-export default async function AgentPage({ params }: { params: { id: string } }) {
+export default async function AgentPage({ params }: { params: Promise<{ id: string }> }) {
+   const { id } = await params;
    const supabase = await createClient();
 
    // Fetch agent profile
    const { data: profile, error } = await supabase
       .from('profiles')
       .select('*, users!inner(role)')
-      .or(`id.eq.${params.id},slug.eq.${params.id}`)
+      .or(`id.eq.${id},slug.eq.${id}`)
       .single();
 
     // Fetch managed clients (Players & Coaches)

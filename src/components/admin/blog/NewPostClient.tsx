@@ -19,6 +19,7 @@ import {
   ChevronDown, FileText, Send, Trash, History
 } from 'lucide-react';
 import Link from 'next/link';
+import NextImage from 'next/image';
 import { createPost, updatePost, uploadBlogImage, quickCreateTag, isSlugUnique, deletePost } from '@/app/admin/blog/actions';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
@@ -26,9 +27,9 @@ import MediaGallery from './MediaGallery';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface NewPostClientProps {
-  categories: any[];
-  tags: any[];
-  post?: any; // For editing
+  categories: Record<string, any>[];
+  tags: Record<string, any>[];
+  post?: Record<string, any>; // For editing
 }
 
 export default function NewPostClient({ categories, tags, post }: NewPostClientProps) {
@@ -103,7 +104,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (formData.title) {
-        let baseSlug = formData.title
+        const baseSlug = formData.title
           .toLowerCase()
           .replace(/ /g, '-')
           .replace(/[^\w-]+/g, '')
@@ -232,7 +233,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
   };
 
   const handleSlugChange = (val: string) => {
-    let sanitized = val.toLowerCase().replace(/\s+/g, '-').slice(0, 60);
+    const sanitized = val.toLowerCase().replace(/\s+/g, '-').slice(0, 60);
     setFormData(prev => ({ ...prev, slug: sanitized }));
   };
 
@@ -492,7 +493,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                    <textarea 
                       rows={1}
                       placeholder="The Title of Your Story..." 
-                      className="w-full bg-transparent border-none p-0 text-xl sm:text-3xl font-black text-black placeholder:text-gray-200 focus:ring-0 leading-tight transition-all resize-none min-h-[1em] overflow-hidden"
+                      className="w-full bg-transparent border-none p-0 textxl sm:text-3xl font-black text-black placeholder:text-gray-200 focus:ring-0 leading-tight transition-all resize-none min-h-[1em] overflow-hidden"
                       value={formData.title}
                       onChange={(e) => {
                         setFormData({ ...formData, title: e.target.value });
@@ -677,7 +678,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                                  disabled={isCreatingTag}
                                  className="w-full text-left px-4 py-4 bg-[#b50a0a]/5 hover:bg-[#b50a0a] rounded-xl flex items-center justify-between group border border-dashed border-[#b50a0a]/20 transition-all mt-4"
                                >
-                                 <span className="text-[10px] font-black uppercase text-[#b50a0a] group-hover:text-white">Add Tag: "{tagSearch}"</span>
+                                 <span className="text-[10px] font-black uppercase text-[#b50a0a] group-hover:text-white">Add Tag: &quot;{tagSearch}&quot;</span>
                                  {isCreatingTag ? <Loader2 className="w-4 h-4 animate-spin text-[#b50a0a]" /> : <Plus className="w-4 h-4 text-[#b50a0a] group-hover:text-white" />}
                                </button>
                              )}
@@ -706,7 +707,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                  >
                     {formData.cover_image_url ? (
                        <>
-                          <img src={formData.cover_image_url} className="w-full h-full object-cover" alt="Cover" />
+                          <NextImage src={formData.cover_image_url} className="w-full h-full object-cover" alt="Cover" fill />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                              <p className="text-[10px] font-black text-white uppercase tracking-widest">Change Visual</p>
                           </div>
@@ -738,7 +739,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                      <Globe className="w-4 h-4 text-[#b50a0a]" />
                      SEO Meta Settings
                   </h4>
-                  <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">The algorithm's perspective</p>
+                  <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">The algorithm&apos;s perspective</p>
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">

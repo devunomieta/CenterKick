@@ -4,20 +4,17 @@ import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
 import { 
   ShieldCheck, 
-  CreditCard, 
   History, 
   Check, 
   ChevronRight, 
   Star,
   Zap,
-  Lock,
   Calendar,
   Globe
 } from 'lucide-react';
 
 export default function SubscriptionPage() {
   const [activeTab, setActiveTab] = useState('My Plan');
-  const [subscription, setSubscription] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [paymentSettings, setPaymentSettings] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +49,6 @@ export default function SubscriptionPage() {
           .eq('section', 'payment')
           .single();
         
-        setSubscription(subData);
         setProfile(profData);
         setPaymentSettings(settings?.content || { paymentLink: 'https://paystack.com/pay/centerkick-pro' });
       }
@@ -226,7 +222,7 @@ export default function SubscriptionPage() {
                   <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                      <div>
                         <h3 className="text-2xl font-black uppercase tracking-tighter leading-none mb-4">Maximum <br /><span className="text-[#b50a0a]">Market Visibility</span></h3>
-                        <p className="text-[11px] font-medium text-gray-400 leading-relaxed mb-8">Our proprietary algorithm prioritizes verified profiles in scout searches, ensuring you're seen by the decision-makers that matter most.</p>
+                        <p className="text-[11px] font-medium text-gray-400 leading-relaxed mb-8">Our proprietary algorithm prioritizes verified profiles in scout searches, ensuring you&apos;re seen by the decision-makers that matter most.</p>
                         <div className="flex items-center gap-4">
                            <div className="flex -space-x-3">
                               {[1, 2, 3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-[#0a0a0b] bg-gray-700"></div>)}

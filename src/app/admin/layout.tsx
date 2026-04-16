@@ -120,7 +120,7 @@ export default async function AdminLayout({
             <div className="flex items-center gap-3 pl-6 border-l border-gray-100">
                <div className="text-right">
                   <p className="text-[10px] font-black uppercase text-gray-900">{user?.email}</p>
-                  <p className="text-[8px] font-bold text-[#b50a0a] uppercase tracking-[0.2em]">Super Administrator</p>
+                  <p className="text-[8px] font-bold text-[#b50a0a] uppercase tracking-[0.2em]">{userRecord?.role || 'Admin'}</p>
                </div>
                <div className="w-10 h-10 rounded-xl bg-gray-900 border-2 border-gray-800 flex items-center justify-center font-black text-white shadow-lg">
                   {user?.email?.[0].toUpperCase()}

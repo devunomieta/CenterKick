@@ -28,7 +28,7 @@ export default async function AdminDashboard() {
 
   // Process sub counts
   const getSubCount = (role: string, status: string) => {
-    return (roleSubData as any)?.filter((p: any) => {
+    return (roleSubData as Record<string, any>[])?.filter((p: Record<string, any>) => {
       const userRole = Array.isArray(p.users) ? p.users[0]?.role : p.users?.role;
       return userRole === role && p.status === status;
     }).length || 0;

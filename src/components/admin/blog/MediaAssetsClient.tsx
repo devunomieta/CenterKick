@@ -11,9 +11,10 @@ import {
 import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface MediaPageProps {
-  assets: any[];
+  assets: Record<string, any>[];
 }
 
 export default function MediaAssetsClient({ assets: initialAssets }: MediaPageProps) {
@@ -103,10 +104,11 @@ export default function MediaAssetsClient({ assets: initialAssets }: MediaPagePr
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
         {filteredAssets.map(asset => (
           <div key={asset.id} className="group relative aspect-square bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition-all hover:-translate-y-1">
-              <img 
+              <Image 
                 src={asset.url} 
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                 alt={asset.filename} 
+                fill
               />
               
               <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-4 p-6 backdrop-blur-[2px]">

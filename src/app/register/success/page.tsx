@@ -65,13 +65,13 @@ export default function RegisterSuccessPage() {
                   <div className="bg-white border border-gray-100 p-10 rounded-[40px] shadow-sm flex flex-col items-start text-left group hover:border-[#a20000] transition-colors">
                      <Mail className="w-8 h-8 text-[#a20000] mb-6" />
                      <h4 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-2">Check Your Email</h4>
-                     <p className="text-sm font-medium text-gray-400 leading-relaxed mb-6">We've sent a detailed welcome packet to your inbox with your login credentials and temporary dashboard access.</p>
+                     <p className="text-sm font-medium text-gray-400 leading-relaxed mb-6">We&apos;ve sent a detailed welcome packet to your inbox with your login credentials and temporary dashboard access.</p>
                      <button className="text-[10px] font-black uppercase tracking-widest text-[#a20000] flex items-center gap-2 group-hover:gap-4 transition-all">Resend Email <ChevronRight className="w-4 h-4" /></button>
                   </div>
                   <div className="bg-white border border-gray-100 p-10 rounded-[40px] shadow-sm flex flex-col items-start text-left group hover:border-[#a20000] transition-colors">
                      <Share2 className="w-8 h-8 text-[#a20000] mb-6" />
                      <h4 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-2">Share the News</h4>
-                     <p className="text-sm font-medium text-gray-400 leading-relaxed mb-6">Let the world know you've joined CenterKick. Sharing your status helps build early momentum for your profile.</p>
+                     <p className="text-sm font-medium text-gray-400 leading-relaxed mb-6">Let the world know you&apos;ve joined CenterKick. Sharing your status helps build early momentum for your profile.</p>
                      <div className="flex gap-4">
                         <button className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-[#a20000] hover:bg-red-50 transition-colors border border-transparent hover:border-red-100"><Share2 className="w-4 h-4" /></button>
                      </div>

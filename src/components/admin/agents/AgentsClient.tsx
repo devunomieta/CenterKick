@@ -13,6 +13,7 @@ import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/Res
 import { deleteAgent, updateAgent, addAgent, migrateAllAgentSlugs } from '@/app/admin/agents/actions';
 import { checkAccountStatus, resendInvitation, AccountStatus } from '@/app/actions/auth';
 import Link from 'next/link';
+import Image from 'next/image';
 import { COUNTRIES } from '@/lib/constants/countries';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
@@ -118,7 +119,7 @@ export function AgentsClient({
     handleFilterChange('q', searchQuery);
   };
 
-  const handleOpenProfile = (agent: any) => {
+   const handleOpenProfile = (agent: Record<string, any>) => {
     router.push(`/admin/agents/${agent.slug || agent.id}`);
   };
 
@@ -328,7 +329,7 @@ export function AgentsClient({
                      showToast("The agent has been successfully enrolled.", "success");
                      closeAddModal();
                   } else {
-                     const errorMsg = (res as any).error || "Failed to enroll agent.";
+                     const errorMsg = (res as Record<string, any>).error || "Failed to enroll agent.";
                      showToast(errorMsg, "error");
                   }
                }} className="p-6 space-y-4 overflow-y-auto">

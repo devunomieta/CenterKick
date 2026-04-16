@@ -131,7 +131,7 @@ export default async function AdminPlayersPage({
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-gray-900 uppercase tracking-tighter leading-none">Player's <span className="text-[#b50a0a]">Profiles</span></h1>
+          <h1 className="text-2xl font-black text-gray-900 uppercase tracking-tighter leading-none">Player&apos;s <span className="text-[#b50a0a]">Profiles</span></h1>
           <p className="text-gray-400 text-[9px] font-black uppercase tracking-[0.2em] mt-2">Manage players profile and subscriptions.</p>
         </div>
         <div className="flex items-center gap-3">

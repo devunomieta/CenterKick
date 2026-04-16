@@ -13,6 +13,7 @@ import { DateDisplay } from '@/components/common/DateDisplay';
 import { deletePlayer, updatePlayer, addPlayer, getPlayerTransactions, getPendingEdits, processProfileEdit, updateProfileAvatar, uploadPlayerImage, migrateAllProfileSlugs } from '@/app/admin/players/actions';
 import { checkAccountStatus, resendInvitation, type AccountStatus } from '@/app/actions/auth';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
@@ -50,7 +51,7 @@ interface Player {
   market_value?: string;
   formation?: string;
   league?: string;
-  social_links?: any;
+  social_links?: Record<string, any>;
   achievements?: any[];
   avatar_url?: string;
   users: {
@@ -128,14 +129,14 @@ export function PlayersClient({
   countries
 }: { 
   initialPlayers: Player[],
-  agents: any[],
+  agents: Record<string, any>[],
   totalCount: number,
   currentPage: number,
   pageSize: number,
   role: string,
-  leagues: any[],
-  clubs: any[],
-  countries: any[]
+  leagues: Record<string, any>[],
+  clubs: Record<string, any>[],
+  countries: Record<string, any>[]
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -356,7 +357,7 @@ export function PlayersClient({
                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#b50a0a]" />
               </div>
               <datalist id="countries-players">
-                 {countries.map((c: any) => (
+                 {countries.map((c: Record<string, any>) => (
                     <option key={c.id} value={c.name} />
                  ))}
               </datalist>
@@ -399,17 +400,11 @@ export function PlayersClient({
                            <div className="relative group/avatar">
                              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-xs shrink-0 overflow-hidden shadow-sm relative">
                                {player.avatar_url ? (
-                                 <img 
+                                 <Image 
                                    src={player.avatar_url} 
                                    className="w-full h-full object-cover" 
-                                   onError={(e) => {
-                                     const target = e.target as HTMLImageElement;
-                                     target.style.display = 'none';
-                                     const parent = target.parentElement;
-                                     if (parent) {
-                                       parent.innerText = (player.users?.email || player.email || 'P')[0].toUpperCase();
-                                     }
-                                   }}
+                                   alt={`${player.first_name} ${player.last_name}`}
+                                   fill
                                  />
                                ) : (
                                  (player.users?.email || player.email || 'P')[0].toUpperCase()
@@ -428,7 +423,7 @@ export function PlayersClient({
                                  setTargetAvatarId(player.id);
                                  avatarInputRef.current?.click();
                                }}
-                               className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-lg shadow-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-[#b50a0a] transition-all opacity-0 group-hover/avatar:opacity-100 z-10"
+                               className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-xl shadow-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-[#b50a0a] transition-all opacity-0 group-hover/avatar:opacity-100 z-10"
                              >
                                <Edit className="w-3 h-3" />
                              </button>
@@ -657,7 +652,7 @@ export function PlayersClient({
                              value={selectedLeague}
                            >
                               <option value="">No League</option>
-                              {leagues.map((l: any) => (
+                              {leagues.map((l: Record<string, any>) => (
                                 <option key={l.id} value={l.name}>{l.name}</option>
                               ))}
                            </select>
@@ -666,7 +661,7 @@ export function PlayersClient({
                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Current Club</label>
                            <select name="current_club" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black">
                               <option value="">Unattached</option>
-                              {clubs.filter((c: any) => c.leagues?.name === selectedLeague).map((club: any) => (
+                              {clubs.filter((c: Record<string, any>) => c.leagues?.name === selectedLeague).map((club: Record<string, any>) => (
                                 <option key={club.id} value={club.name}>{club.name}</option>
                               ))}
                            </select>
@@ -695,7 +690,7 @@ export function PlayersClient({
                               />
                            </div>
                            <datalist id="countries-modal-players">
-                              {countries.map((c: any) => (
+                              {countries.map((c: Record<string, any>) => (
                                  <option key={c.id} value={c.name} className="text-black" />
                               ))}
                            </datalist>

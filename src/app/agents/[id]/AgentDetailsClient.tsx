@@ -14,10 +14,11 @@ import {
    Award
 } from "lucide-react";
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface AgentDetailsClientProps {
-  profile: any;
-  managedClients: any[];
+  profile: Record<string, any>;
+  managedClients: Record<string, any>[];
 }
 
 export default function AgentDetailsClient({ profile, managedClients }: AgentDetailsClientProps) {
@@ -45,10 +46,11 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
                <div className="max-w-[1200px] mx-auto px-4 lg:px-0 h-full flex items-center gap-12 relative z-10">
                   <div className="relative group shrink-0">
                      <div className="w-56 h-56 lg:w-72 lg:h-72 rounded-[48px] overflow-hidden border-4 border-white/5 shadow-2xl transition-all duration-700 group-hover:rounded-[24px]">
-                        <img 
+                        <Image 
                            src={profile.avatar_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=800&auto=format&fit=crop"} 
                            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" 
-                           alt={profile.full_name} 
+                           alt={profile.full_name || 'Agent Avatar'} 
+                           fill
                         />
                      </div>
                      <div className="absolute -bottom-4 -right-4 bg-[#a20000] p-4 rounded-2xl shadow-xl">
@@ -151,10 +153,11 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
                                     className="group bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-2xl transition-all hover:-translate-y-2"
                                  >
                                     <div className="aspect-[4/5] relative overflow-hidden bg-gray-100">
-                                       <img 
+                                       <Image 
                                           src={client.avatar_url || "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=600&auto=format&fit=crop"} 
                                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                          alt={client.full_name} 
+                                          alt={client.full_name || 'Client Avatar'} 
+                                          fill
                                        />
                                        <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-[8px] font-black text-white uppercase tracking-widest border border-white/20">
                                           {client.position || (isCoach ? 'Tactician' : 'Attack')}
@@ -195,7 +198,7 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
                      <div className="lg:col-span-2 space-y-12">
                         <div>
                            <h2 className="text-3xl font-black text-gray-700 uppercase tracking-tighter inline-block relative border-b-4 border-[#a20000] pb-2">
-                              Agent's Philosophy
+                              Agent&apos;s Philosophy
                            </h2>
                         </div>
                         <div className="prose prose-xl text-gray-500 font-medium leading-[1.8]">

@@ -8,15 +8,14 @@ import {
   Eye, 
   Calendar,
   ChevronRight,
-  Plus,
   Shield,
-  FileText,
   AlertTriangle,
   ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
-import { VerificationBanner } from '@/components/dashboard/VerificationBanner';
+
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -39,13 +38,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      {/* Unassigned Verification Banner */}
-      {role === 'unassigned' && (
-        <VerificationBanner 
-          isRequested={userRecord?.is_verification_requested || false} 
-          roleName="Unassigned Administrator"
-        />
-      )}
+
 
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -66,7 +59,7 @@ export default async function DashboardPage() {
             Welcome back, <span className="text-[#b50a0a]">{name}</span>
           </h1>
           <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">
-            "Here's what's happening with your profile today."
+            &quot;Here&apos;s what&apos;s happening with your profile today.&quot;
           </p>
         </div>
         <div className="flex gap-3">
@@ -171,10 +164,12 @@ export default async function DashboardPage() {
               </div>
               <div className="flex items-center gap-4 mb-6">
                  <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center overflow-hidden border border-gray-100">
-                    <img 
+                    <Image 
                        src={profile.agent.profiles.avatar_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=100&auto=format&fit=crop"} 
                        className="w-full h-full object-cover" 
-                       alt={profile.agent.profiles.first_name} 
+                       alt={profile.agent.profiles.first_name || 'Agent Avatar'} 
+                       width={48}
+                       height={48}
                     />
                  </div>
                  <div>

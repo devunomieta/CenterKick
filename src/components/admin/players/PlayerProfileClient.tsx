@@ -10,6 +10,7 @@ import {
   LayoutDashboard, UserCircle, Briefcase, FileText, Image as ImageIcon, Newspaper, ShoppingBag, DollarSign, Settings,
   Star, Award, Building2, CheckCircle2
 } from 'lucide-react';
+import Image from 'next/image';
 import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/RestrictedAccess';
 import { DateDisplay } from '@/components/common/DateDisplay';
 
@@ -63,7 +64,7 @@ interface Player {
   market_value?: string;
   formation?: string;
   league?: string;
-  social_links?: any;
+  social_links?: Record<string, any>;
   media_gallery?: {
     highlight_video_url: string;
     action_images: string[];
@@ -151,11 +152,11 @@ interface ProfileEdit {
 
 interface PlayerProfileClientProps {
   player: Player;
-  agents: any[];
-  leagues: any[];
-  clubs: any[];
-  seasons: any[];
-  countries: any[];
+  agents: Record<string, any>[];
+  leagues: Record<string, any>[];
+  clubs: Record<string, any>[];
+  seasons: Record<string, any>[];
+  countries: Record<string, any>[];
 }
 
 // SEASONS constant removed. Seasons are now provided via props.
@@ -170,8 +171,8 @@ function StatFormModal({
   clubs: allClubs,
   seasons: allSeasons
 }: { 
-  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; initialData?: CareerStat | null; defaultSeason?: string | null;
-  leagues: any[]; clubs: any[]; seasons: any[];
+  isOpen: boolean; onClose: () => void; onSave: (data: Partial<CareerStat>) => void; initialData?: CareerStat | null; defaultSeason?: string | null;
+  leagues: Record<string, any>[]; clubs: Record<string, any>[]; seasons: Record<string, any>[];
 }) {
   const seasonsList = allSeasons.map(s => s.name);
   const [formData, setFormData] = useState<Partial<CareerStat>>(initialData || {
@@ -238,10 +239,13 @@ function StatFormModal({
                 </datalist>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
                   {formData.league_flag && (
-                    <img 
+                    <Image 
                       src={`https://flagcdn.com/w20/${formData.league_flag.toLowerCase()}.png`} 
                       alt="" 
                       className="w-4 h-3 object-cover rounded-sm"
+                      width={20}
+                      height={15}
+                      unoptimized
                     />
                   )}
                   <Search className="w-4 h-4 text-slate-300" />
@@ -263,9 +267,9 @@ function StatFormModal({
               />
                <datalist id="club-list">
                 {allClubs
-                  .filter((c: any) => c.leagues?.name === formData.league_name)
-                  .map((c: any) => <option key={c.id} value={c.name} />)}
-                {!formData.league_name && allClubs.map((c: any) => <option key={c.id} value={c.name} />)}
+                  .filter((c: Record<string, any>) => c.leagues?.name === formData.league_name)
+                  .map((c: Record<string, any>) => <option key={c.id} value={c.name} />)}
+                {!formData.league_name && allClubs.map((c: Record<string, any>) => <option key={c.id} value={c.name} />)}
               </datalist>
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
                 <Search className="w-4 h-4 text-slate-300" />
@@ -377,8 +381,8 @@ function TransferFormModal({
   clubs: allClubs,
   seasons: allSeasons
 }: { 
-  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; initialData?: PlayerTransfer | null;
-  leagues: any[]; clubs: any[]; seasons: any[];
+  isOpen: boolean; onClose: () => void; onSave: (data: Partial<PlayerTransfer>) => void; initialData?: PlayerTransfer | null;
+  leagues: Record<string, any>[]; clubs: Record<string, any>[]; seasons: Record<string, any>[];
 }) {
   const seasonsList = allSeasons.map(s => s.name);
   const [formData, setFormData] = useState<Partial<PlayerTransfer>>(initialData || {
@@ -451,7 +455,7 @@ function TransferFormModal({
                   placeholder="Select League"
                   value={formData.league_name || ''}
                   onChange={(e) => {
-                      const league = leagues.find((l: any) => l.name === e.target.value);
+                      const league = leagues.find((l: Record<string, any>) => l.name === e.target.value);
                       setFormData({ 
                         ...formData, 
                         league_name: e.target.value,
@@ -461,14 +465,17 @@ function TransferFormModal({
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all"
                 />
                 <datalist id="transfer-league-list">
-                  {leagues.map((l: any) => <option key={l.id} value={l.name} />)}
+                  {leagues.map((l: Record<string, any>) => <option key={l.id} value={l.name} />)}
                 </datalist>
               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
                 {formData.league_flag && (
-                  <img 
+                  <Image 
                     src={`https://flagcdn.com/w20/${formData.league_flag.toLowerCase()}.png`} 
                     alt="" 
                     className="w-4 h-3 object-cover rounded-sm"
+                    width={20}
+                    height={15}
+                    unoptimized
                   />
                 )}
                 <Search className="w-4 h-4 text-slate-300" />
@@ -490,9 +497,9 @@ function TransferFormModal({
                   />
                   <datalist id="to-club-list">
                     {allClubs
-                      .filter((c: any) => c.leagues?.name === formData.league_name)
-                      .map((c: any) => <option key={c.id} value={c.name} />)}
-                    {!formData.league_name && allClubs.map((c: any) => <option key={c.id} value={c.name} />)}
+                      .filter((c: Record<string, any>) => c.leagues?.name === formData.league_name)
+                      .map((c: Record<string, any>) => <option key={c.id} value={c.name} />)}
+                    {!formData.league_name && allClubs.map((c: Record<string, any>) => <option key={c.id} value={c.name} />)}
                   </datalist>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2">
                     <Search className="w-4 h-4 text-slate-300" />
@@ -512,7 +519,7 @@ function TransferFormModal({
                   />
                   <datalist id="from-club-list">
                     {allClubs
-                      .map((c: any) => <option key={c.id} value={c.name} />)}
+                      .map((c: Record<string, any>) => <option key={c.id} value={c.name} />)}
                   </datalist>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2">
                     <Search className="w-4 h-4 text-slate-300" />
@@ -591,8 +598,8 @@ function AchievementFormModal({
   initialData,
   seasons: allSeasons
 }: { 
-  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; initialData?: Achievement | null;
-  seasons: any[];
+  isOpen: boolean; onClose: () => void; onSave: (data: Partial<Achievement>) => void; initialData?: Achievement | null;
+  seasons: Record<string, any>[];
 }) {
   const seasonsList = allSeasons.map(s => s.name);
   const [formData, setFormData] = useState<Partial<Achievement>>(initialData || {
@@ -716,7 +723,7 @@ function MediaGalleryModal({
   onSave, 
   initialData 
 }: { 
-  isOpen: boolean; onClose: () => void; onSave: (data: any) => void; initialData: { highlight_video_url: string; action_images: string[]; external_gallery_url: string }
+  isOpen: boolean; onClose: () => void; onSave: (data: Record<string, any>) => void; initialData: { highlight_video_url: string; action_images: string[]; external_gallery_url: string }
 }) {
   const [formData, setFormData] = useState(initialData);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
@@ -810,7 +817,14 @@ function MediaGalleryModal({
                       onClick={() => formData.action_images[idx] && setPreviewUrl(formData.action_images[idx])}
                    >
                       {formData.action_images[idx] ? (
-                         <img src={formData.action_images[idx]} className="w-full h-full object-cover" />
+                         <div className="relative w-full h-full">
+                            <Image 
+                               src={formData.action_images[idx]} 
+                               className="w-full h-full object-cover" 
+                               alt={`Action ${idx + 1}`}
+                               fill
+                            />
+                         </div>
                       ) : (
                          <span className="text-xs font-black text-slate-300">#{idx + 1}</span>
                       )}
@@ -908,8 +922,13 @@ function MediaGalleryModal({
           >
             <X className="w-6 h-6" />
           </button>
-          <div className="max-w-5xl max-h-full rounded-3xl overflow-hidden shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500">
-            <img src={previewUrl} className="max-w-full max-h-[85vh] object-contain" />
+          <div className="max-w-5xl max-h-full rounded-3xl overflow-hidden shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 relative aspect-video">
+            <Image 
+               src={previewUrl} 
+               className="object-contain" 
+               alt="Preview"
+               fill
+            />
           </div>
         </div>
       )}
@@ -921,7 +940,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
   const router = useRouter();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'profile' | 'stats' | 'bio' | 'gallery' | 'news' | 'shop' | 'billing'>('profile');
-  const [playerTransactions, setPlayerTransactions] = useState<any[]>([]);
+  const [playerTransactions, setPlayerTransactions] = useState<Record<string, any>[]>([]);
   const [pendingEdits, setPendingEdits] = useState<ProfileEdit[]>([]);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [isLoadingEdits, setIsLoadingEdits] = useState(false);
@@ -942,7 +961,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
   const [isLoadingAchievements, setIsLoadingAchievements] = useState(false);
   const [showAchievementModal, setShowAchievementModal] = useState(false);
   const [editingAchievement, setEditingAchievement] = useState<Achievement | null>(null);
-  const [playerNews, setPlayerNews] = useState<any[]>([]);
+  const [playerNews, setPlayerNews] = useState<Record<string, any>[]>([]);
   const [isLoadingNews, setIsLoadingNews] = useState(false);
   const [showMediaModal, setShowMediaModal] = useState(false);
 
@@ -1126,7 +1145,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
     setTxPage(1);
   }, [txSearch, txStatusFilter]);
 
-  const handleSaveStat = async (data: any) => {
+  const handleSaveStat = async (data: Partial<CareerStat>) => {
     setIsSaving(true);
     const res = editingStat 
       ? await updatePlayerStat(editingStat.id, data)
@@ -1157,7 +1176,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
     }
   };
 
-  const handleSaveTransfer = async (data: any) => {
+  const handleSaveTransfer = async (data: Partial<PlayerTransfer>) => {
     setIsSaving(true);
     const res = editingTransfer 
       ? await updatePlayerTransfer(editingTransfer.id, data)
@@ -1187,7 +1206,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
     }
   };
 
-  const handleSaveAchievement = async (data: any) => {
+  const handleSaveAchievement = async (data: Partial<Achievement>) => {
     setIsSaving(true);
     const res = editingAchievement 
       ? await updatePlayerAchievement(editingAchievement.id, data)
@@ -1274,12 +1293,13 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
     setIsSaving(false);
   };
 
-  const updateField = (field: keyof Player, value: any) => {
+  const updateField = (field: keyof Player, value: unknown) => {
     setEditedFields(prev => ({ ...prev, [field]: value }));
   };
 
-  const displayValue = (field: keyof Player, defaultValue: any) => {
-    return editedFields.hasOwnProperty(field) ? editedFields[field] : defaultValue;
+  const displayValue = (field: keyof Player, defaultValue: unknown): string | number | readonly string[] | undefined => {
+    const val = editedFields.hasOwnProperty(field) ? editedFields[field] : defaultValue;
+    return val as string | number | readonly string[] | undefined;
   };
 
   const PendingEditBadge = ({ field }: { field: string }) => {
@@ -1336,7 +1356,12 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                 onClick={() => !avatarUploading && avatarInputRef.current?.click()}
               >
                 {player.avatar_url ? (
-                  <img src={player.avatar_url} className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all" />
+                  <Image 
+                    src={player.avatar_url} 
+                    className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all" 
+                    alt="Avatar"
+                    fill
+                  />
                 ) : (
                   <User className="w-5 h-5 group-hover/avatar:opacity-50 transition-all" />
                 )}
@@ -1388,7 +1413,12 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
               </div>
             </div>
             {player.avatar_url ? (
-              <img src={player.avatar_url} alt="" className="w-full aspect-square object-cover border-2 border-slate-50 shadow-inner transition-transform duration-700 group-hover:scale-110" />
+              <Image 
+                src={player.avatar_url} 
+                alt="" 
+                className="w-full aspect-square object-cover border-2 border-slate-50 shadow-inner transition-transform duration-700 group-hover:scale-110" 
+                fill
+              />
             ) : (
               <div className="w-full aspect-square bg-slate-100 flex items-center justify-center text-slate-300 text-4xl font-black">
                 {player.first_name[0]}{player.last_name[0]}
@@ -1407,7 +1437,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => { setActiveTab(tab.id as any); setEditingSection(null); }}
+                onClick={() => { setActiveTab(tab.id as 'profile' | 'stats' | 'bio' | 'gallery' | 'news' | 'shop' | 'billing'); setEditingSection(null); }}
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all group ${
                   activeTab === tab.id 
                   ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/20 translate-x-1' 
@@ -1477,8 +1507,8 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                                 onChange={(e) => updateField(item.field as any, e.target.value)}
                                 className="w-full bg-slate-50 border-none rounded-lg p-2 text-[12px] font-bold text-slate-900 focus:ring-1 focus:ring-[#b50a0a]"
                               >
-                                {(item.options || []).map((opt: string) => (
-                                  <option key={opt} value={opt}>{opt}</option>
+                                {(item.options || []).map((opt: unknown) => (
+                                  <option key={opt as string} value={opt as string}>{opt as string}</option>
                                 ))}
                               </select>
                             ) : (
@@ -1529,8 +1559,8 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
 
                     <div className="grid grid-cols-2 gap-x-8 gap-y-6">
                       {(() => {
-                        const currentLeague = displayValue('league' as any, player.league);
-                        const availableClubs = clubs.filter((c: any) => c.leagues?.name === currentLeague).map((c: any) => c.name);
+                        const currentLeague = displayValue('league' as keyof Player, player.league);
+                        const availableClubs = clubs.filter((c: Record<string, any>) => c.leagues?.name === currentLeague).map((c: Record<string, any>) => c.name);
                         
                         return [
                           { label: 'League', value: player.league || 'Not Set', field: 'league', type: 'select', options: ['None', ...leagues.map(l => l.name)] },
@@ -1547,7 +1577,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                               <select 
                                 value={displayValue(item.field as any, item.value)}
                                 onChange={(e) => {
-                                  updateField(item.field as any, e.target.value);
+                                  updateField(item.field as keyof Player, e.target.value);
                                   // If league changes, reset current_club
                                   if (item.field === 'league') {
                                     updateField('current_club', '');
@@ -1556,8 +1586,8 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                                 className="w-full bg-slate-50 border-none rounded-lg p-2 text-[12px] font-bold text-slate-900 focus:ring-1 focus:ring-[#b50a0a]"
                               >
                                 {item.field === 'current_club' && <option value="">Select Club</option>}
-                                {(item.options || []).map((opt: string) => (
-                                  <option key={opt} value={opt}>{opt}</option>
+                                {(item.options || []).map((opt: unknown) => (
+                                  <option key={opt as string} value={opt as string}>{opt as string}</option>
                                 ))}
                               </select>
                             ) : (
@@ -1699,7 +1729,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                     <Activity className="w-10 h-10" />
                   </div>
                   <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">No Career Data Yet</h3>
-                  <p className="text-sm font-bold text-slate-400 mt-2 max-w-sm mx-auto">Start building this player's professional history by adding their first season data.</p>
+                  <p className="text-sm font-bold text-slate-400 mt-2 max-w-sm mx-auto">Start building this player&apos;s professional history by adding their first season data.</p>
                   <button 
                     onClick={() => { setEditingStat(null); setSelectedSeasonForAdd(null); setShowStatModal(true); }}
                     className="mt-8 px-8 py-4 bg-[#b50a0a] text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-900 transition-all shadow-xl shadow-red-900/20"
@@ -1745,7 +1775,15 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                               <td className="px-4 py-4 align-middle">
                                 <div className="flex items-center gap-2">
                                   {stat.club_flag ? (
-                                    <img src={stat.club_flag} alt="" className="w-6 h-6 rounded-md object-contain bg-white p-1 shadow-sm" />
+                                    <div className="relative w-6 h-6 rounded-md overflow-hidden bg-white p-1 shadow-sm">
+                                      <Image 
+                                        src={stat.club_flag} 
+                                        alt="" 
+                                        className="object-contain" 
+                                        fill
+                                        unoptimized
+                                      />
+                                    </div>
                                   ) : (
                                     <div className="w-6 h-6 bg-slate-100 rounded-md flex items-center justify-center text-[8px] text-slate-400 uppercase font-bold">{stat.club_name[0]}</div>
                                   )}
@@ -1755,10 +1793,13 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                               <td className="px-4 py-4 text-center align-middle">
                                 <div className="flex items-center justify-center gap-2">
                                   {stat.league_flag && (
-                                    <img 
+                                    <Image 
                                       src={`https://flagcdn.com/w20/${stat.league_flag.toLowerCase()}.png`} 
                                       alt="" 
                                       className="w-3.5 h-2.5 object-cover rounded-[1px] opacity-70"
+                                      width={14}
+                                      height={10}
+                                      unoptimized
                                     />
                                   )}
                                   <span 
@@ -1856,10 +1897,13 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                               <td className="px-4 py-5 align-middle">
                                 <div className="flex items-center gap-2">
                                   {transfer.league_flag && (
-                                    <img 
+                                    <Image 
                                       src={`https://flagcdn.com/w20/${transfer.league_flag.toLowerCase()}.png`} 
                                       alt="" 
                                       className="w-3.5 h-2.5 object-cover rounded-[1px] opacity-80"
+                                      width={14}
+                                      height={10}
+                                      unoptimized
                                     />
                                   )}
                                   <span 
@@ -1952,7 +1996,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                         target.style.height = `${target.scrollHeight}px`;
                       }}
                       className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-8 text-[13px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-all resize-none overflow-hidden"
-                      value={displayValue('bio', player.bio || '')}
+                      value={displayValue('bio', player.bio || '') as string}
                       onChange={(e) => updateField('bio', e.target.value)}
                       placeholder="Share the professional journey, key milestones, and personal story of this athlete..."
                     />
@@ -2116,7 +2160,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                         <Trophy className="w-10 h-10 text-slate-100" />
                       </div>
                       <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest">No achievements yet</h4>
-                      <p className="text-[10px] text-slate-400 mt-2 max-w-[240px] text-center">Start adding official trophies, medals, and awards to showcase this player's success.</p>
+                      <p className="text-[10px] text-slate-400 mt-2 max-w-[240px] text-center">Start adding official trophies, medals, and awards to showcase this player&apos;s success.</p>
                       <button 
                         onClick={() => { setEditingAchievement(null); setShowAchievementModal(true); }}
                         className="mt-8 px-8 py-3 bg-white text-slate-900 border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
@@ -2204,7 +2248,12 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                     {(player.media_gallery?.action_images && player.media_gallery.action_images.filter(img => img && img.trim() !== '').length > 0) ? (
                        player.media_gallery.action_images.filter(img => img && img.trim() !== '').map((img, i) => (
                           <div key={i} className="group relative aspect-square rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer">
-                             <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                             <Image 
+                               src={img} 
+                               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                               alt="Gallery image"
+                               fill
+                             />
                              <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <Eye className="w-6 h-6 text-white" />
                              </div>
@@ -2233,7 +2282,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
               <MediaGalleryModal 
                  isOpen={showMediaModal}
                  onClose={() => setShowMediaModal(false)}
-                 onSave={(media) => handlePlayerUpdate({ media_gallery: media })}
+                 onSave={(media) => handlePlayerUpdate({ media_gallery: media as { highlight_video_url: string; action_images: string[]; external_gallery_url: string } })}
                  initialData={player.media_gallery || DEFAULT_MEDIA}
               />
             </div>
@@ -2325,9 +2374,11 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                   playerNews.map((news) => (
                     <div key={news.id} className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm flex flex-col md:flex-row h-48 hover:border-[#b50a0a]/30 transition-all group">
                       <div className="md:w-64 relative overflow-hidden bg-slate-100">
-                        <img 
+                        <Image 
                           src={news.cover_image_url || 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=800'} 
                           className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" 
+                          alt={news.title}
+                          fill
                         />
                       </div>
                       <div className="flex-1 p-8 flex flex-col justify-between">

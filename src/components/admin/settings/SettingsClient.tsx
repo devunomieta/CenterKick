@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { updateSystemSettings, clearSystemCache, uploadSiteAsset, sendTestEmail } from '@/app/admin/settings/actions';
 import { useToast } from '@/context/ToastContext';
+import Image from 'next/image';
 
 function ImageUpload({ label, value, onUpload, path }: { label: string, value: string, onUpload: (url: string) => void, path: string }) {
   const [isUploading, setIsUploading] = useState(false);
@@ -54,7 +55,7 @@ function ImageUpload({ label, value, onUpload, path }: { label: string, value: s
         <div className={`w-full bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-6 transition-all flex flex-col items-center justify-center gap-3 ${isUploading ? 'opacity-50' : 'hover:border-gray-300 hover:bg-gray-100/50'}`}>
           {value ? (
             <div className="relative w-full aspect-video md:aspect-auto md:h-24 flex items-center justify-center bg-white rounded-xl overflow-hidden border border-gray-100">
-               <img src={currentUrl} alt={label} className="h-full object-contain p-2" />
+               <Image src={currentUrl} alt={label} fill className="h-full object-contain p-2" />
                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <Upload className="w-5 h-5 text-white" />
                </div>
@@ -81,9 +82,9 @@ function ImageUpload({ label, value, onUpload, path }: { label: string, value: s
   );
 }
 
-export function SettingsClient({ initialSettings }: { initialSettings: any }) {
+export function SettingsClient({ initialSettings }: { initialSettings: Record<string, any> }) {
   const [activeSection, setActiveSection] = useState('Global Configuration');
-  const [settings, setSettings] = useState(initialSettings || {});
+  const [settings, setSettings] = useState<Record<string, any>>(initialSettings || {});
   const [isSaving, setIsSaving] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [isTestingEmail, setIsTestingEmail] = useState(false);
@@ -129,8 +130,8 @@ export function SettingsClient({ initialSettings }: { initialSettings: any }) {
     }
   };
 
-  const updateSetting = (key: string, value: any) => {
-    setSettings((prev: any) => ({ ...prev, [key]: value }));
+   const updateSetting = (key: string, value: unknown) => {
+    setSettings((prev: Record<string, any>) => ({ ...prev, [key]: value }));
   };
 
   const handleResetSection = () => {

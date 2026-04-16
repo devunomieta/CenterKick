@@ -12,11 +12,12 @@ import {
 import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface BlogManagementClientProps {
-  categories: any[];
-  tags: any[];
-  assets: any[];
+  categories: Record<string, any>[];
+  tags: Record<string, any>[];
+  assets: Record<string, any>[];
 }
 
 export default function BlogManagementClient({ 
@@ -301,10 +302,11 @@ export default function BlogManagementClient({
                           .filter(a => a.filename?.toLowerCase().includes(searchQuery.toLowerCase()))
                           .map(asset => (
                            <div key={asset.id} className="group relative aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all">
-                              <img 
+                              <Image 
                                  src={asset.url} 
                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                                  alt={asset.filename} 
+                                 fill
                               />
                               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4">
                                  <button 

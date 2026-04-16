@@ -20,6 +20,12 @@ interface Post {
   published_at: string;
 }
 
+interface Testimonial {
+  name: string;
+  role: string;
+  text: string;
+}
+
 interface HomeClientProps {
   layout: string[];
   heroPosts: Post[];
@@ -299,10 +305,10 @@ export function HomeClient({ layout, heroPosts, storyPosts, dummyPlayers, highli
                      {(Array.isArray(siteContent.testimonials) ? siteContent.testimonials : [
                         { name: 'Samuel Ejoor', role: 'Elite Player', text: 'CenterKick has revolutionized how I manage my professional identity.' },
                         { name: 'Coach Adebayo', role: 'Head Coach', text: 'The tactical dashboard and recruitment tools are world-class.' }
-                     ]).map((rev: any, i: number) => (
+                     ]).map((rev: Testimonial, i: number) => (
                         <div key={i} className="bg-white rounded-[40px] p-10 border border-gray-100 shadow-sm relative hover:shadow-xl transition-all group">
                            <Star className="absolute top-10 right-10 w-6 h-6 text-[#b50a0a]/10 group-hover:text-[#b50a0a]/40" />
-                           <p className="text-gray-600 font-bold italic leading-relaxed mb-8">"{rev.text}"</p>
+                           <p className="text-gray-600 font-bold italic leading-relaxed mb-8">&quot;{rev.text}&quot;</p>
                            <div className="flex items-center gap-4 pt-6 border-t border-gray-50">
                               <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-[#b50a0a] font-black">{rev.name?.[0]}</div>
                               <div>

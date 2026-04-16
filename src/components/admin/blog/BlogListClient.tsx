@@ -8,7 +8,7 @@ import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
 
 interface BlogListClientProps {
-  initialPosts: any[];
+  initialPosts: Record<string, any>[];
 }
 
 export default function BlogListClient({ initialPosts }: BlogListClientProps) {
@@ -30,7 +30,7 @@ export default function BlogListClient({ initialPosts }: BlogListClientProps) {
     setLoadingId(null);
   };
 
-  const handleToggleStatus = async (id: string, currentPublishedAt: any) => {
+  const handleToggleStatus = async (id: string, currentPublishedAt: string | Date | null) => {
     setLoadingId(id);
     const res = await togglePostStatus(id, !!currentPublishedAt);
     if (res?.error) {
@@ -56,7 +56,7 @@ export default function BlogListClient({ initialPosts }: BlogListClientProps) {
       <table className="w-full text-left text-sm text-gray-600">
         <thead className="bg-[#f8f9fa] border-b border-gray-100">
           <tr>
-            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Title & Excerpt</th>
+            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Title &amp; Excerpt</th>
             <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Category</th>
             <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
             <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Created</th>

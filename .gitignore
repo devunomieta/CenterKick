@@ -32,9 +32,15 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-build_log.txt
+build_log*.txt
 build_output.log
 Logs and Details.txt
+
+# lint reports
+lint_report*.txt
+lint_report*.json
+lint_full_report.txt
+unescaped_files.txt
 
 # database backups / sensitive dumps
 *.sql
@@ -84,9 +90,13 @@ tsc_errors.txt
 tsc_output.mjs
 check_role.ts
 fix_superadmin.sql
-build_log.txt
+build_log*.txt
 build_output.log
 build_attempt.log
 build_error.log
 build_error_*.log
 /tmp/
+
+# debug directories
+/src/app/test-agents/
+/src/app/debug-schema/

@@ -19,15 +19,15 @@ export function RolesClient({
   currentUserId,
   currentUserRole 
 }: { 
-  adminUsers: any[], 
-  verificationQueue: any[],
-  invitations: any[],
+  adminUsers: Record<string, any>[], 
+  verificationQueue: Record<string, any>[],
+  invitations: Record<string, any>[],
   currentUserId: string,
   currentUserRole: string
 }) {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<Record<string, any> | null>(null);
   
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('blogger');
@@ -60,7 +60,7 @@ export function RolesClient({
       setRole('blogger');
       showToast('Invitation sent successfully', 'success');
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Error already shown by showToast
     } finally {
       setLoading(false);
@@ -133,7 +133,7 @@ export function RolesClient({
     }
   };
 
-  const filteredAdmins = adminUsers.filter(admin => 
+  const filteredAdmins = adminUsers.filter((admin: Record<string, any>) => 
     admin.email?.toLowerCase().includes(search.toLowerCase()) ||
     `${admin.profiles?.first_name} ${admin.profiles?.last_name}`.toLowerCase().includes(search.toLowerCase())
   );
@@ -181,7 +181,7 @@ export function RolesClient({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   {verificationQueue.map((user) => (
+                   {verificationQueue.map((user: Record<string, any>) => (
                       <div key={user.id} className="bg-white p-6 rounded-3xl shadow-sm border border-red-100/50 flex items-center justify-between group hover:shadow-md transition-all">
                          <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center font-black text-gray-400 text-sm border border-gray-100 italic">
@@ -233,7 +233,7 @@ export function RolesClient({
              <div className="overflow-x-auto">
                <table className="w-full text-left text-sm">
                  <tbody className="divide-y divide-gray-50">
-                   {filteredAdmins.map((admin) => (
+                   {filteredAdmins.map((admin: Record<string, any>) => (
                      <tr key={admin.id} className="hover:bg-gray-50/50 transition-colors border-b border-gray-100 last:border-0">
                        <td className="px-4 py-4">
                           <div className="flex items-center gap-4">
@@ -315,7 +315,7 @@ export function RolesClient({
                <div className="overflow-x-auto">
                  <table className="w-full text-left text-sm text-gray-600">
                    <tbody className="divide-y divide-gray-50">
-                     {invitations.map((invite) => (
+                     {invitations.map((invite: Record<string, any>) => (
                        <tr key={invite.id} className="hover:bg-gray-50/50 transition-colors">
                          <td className="px-4 py-4">
                             <div className="flex items-center gap-4">

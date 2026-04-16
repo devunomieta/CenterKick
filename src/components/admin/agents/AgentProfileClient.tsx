@@ -13,6 +13,7 @@ import { DateDisplay } from '@/components/common/DateDisplay';
 import { getPendingEdits, processProfileEdit, getPlayerTransactions, uploadPlayerImage } from '@/app/admin/players/actions';
 import { updateAgent, getAvailableTalent, linkTalentToAgent, unlinkTalentFromAgent } from '@/app/admin/agents/actions';
 import Link from 'next/link';
+import Image from 'next/image';
 import { COUNTRIES } from '@/lib/constants/countries';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
@@ -78,7 +79,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
   const router = useRouter();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'profile' | 'bio' | 'clients' | 'billing'>('profile');
-  const [playerTransactions, setPlayerTransactions] = useState<any[]>([]);
+  const [playerTransactions, setPlayerTransactions] = useState<Record<string, any>[]>([]);
   const [pendingEdits, setPendingEdits] = useState<ProfileEdit[]>([]);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [isLoadingEdits, setIsLoadingEdits] = useState(false);
@@ -141,12 +142,12 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
     setIsSaving(false);
   };
 
-  const updateField = (field: keyof Agent, value: any) => {
-    setEditedFields((prev: any) => ({ ...prev, [field]: value }));
+   const updateField = (field: keyof Agent, value: unknown) => {
+    setEditedFields((prev: Partial<Agent>) => ({ ...prev, [field]: value }));
   };
 
-  const displayValue = (field: keyof Agent, defaultValue: any) => {
-    return editedFields.hasOwnProperty(field) ? editedFields[field] : defaultValue;
+   const displayValue = (field: keyof Agent, defaultValue: unknown) => {
+    return editedFields.hasOwnProperty(field) ? (editedFields as Record<string, any>)[field] : defaultValue;
   };
 
   const handleAvatarUpload = async (file: File) => {
@@ -268,7 +269,12 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                 onClick={() => !avatarUploading && avatarInputRef.current?.click()}
               >
                 {agent.avatar_url ? (
-                  <img src={agent.avatar_url} className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all" />
+                  <Image 
+                    src={agent.avatar_url} 
+                    alt={`${agent.first_name} ${agent.last_name}`} 
+                    fill 
+                    className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all" 
+                  />
                 ) : (
                   <User className="w-5 h-5 group-hover/avatar:opacity-50 transition-all" />
                 )}
@@ -318,7 +324,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
               </div>
             </div>
             {agent.avatar_url ? (
-              <img src={agent.avatar_url} alt="" className="w-full aspect-square object-cover border-2 border-slate-50 shadow-inner transition-transform duration-700 group-hover:scale-110" />
+              <Image src={agent.avatar_url} alt={`${agent.first_name} ${agent.last_name}`} fill className="w-full aspect-square object-cover border-2 border-slate-50 shadow-inner transition-transform duration-700 group-hover:scale-110" />
             ) : (
               <div className="w-full aspect-square bg-slate-100 flex items-center justify-center text-slate-300 text-4xl font-black">
                 {agent.first_name[0]}{agent.last_name[0]}
@@ -397,7 +403,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                           {editingSection === 'identity' ? (
                             item.type === 'select' ? (
                               <select 
-                                value={displayValue(item.field as any, item.value || '')}
+                                value={displayValue(item.field as any, item.value || '') as string}
                                 onChange={(e) => updateField(item.field as any, e.target.value)}
                                 className="w-full bg-slate-50 border-none rounded-lg p-2 text-[12px] font-bold text-slate-900 focus:ring-1 focus:ring-[#b50a0a]"
                               >
@@ -408,7 +414,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                             ) : (
                               <input 
                                 type={item.type}
-                                value={displayValue(item.field as any, item.value || '')}
+                                value={displayValue(item.field as any, item.value || '') as string}
                                 onChange={(e) => updateField(item.field as any, e.target.value)}
                                 className="w-full bg-slate-50 border-none rounded-lg p-2 text-[12px] font-bold text-slate-900 focus:ring-1 focus:ring-[#b50a0a]"
                               />
@@ -462,7 +468,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                           {editingSection === 'agency' ? (
                             item.type === 'select' ? (
                               <select 
-                                value={displayValue(item.field as any, item.value || '')}
+                                value={displayValue(item.field as any, item.value || '') as string}
                                 onChange={(e) => updateField(item.field as any, e.target.value)}
                                 className="w-full bg-slate-50 border-none rounded-lg p-2 text-[12px] font-bold text-slate-900 focus:ring-1 focus:ring-[#b50a0a]"
                               >
@@ -473,7 +479,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                             ) : (
                               <input 
                                 type={item.type}
-                                value={displayValue(item.field as any, item.value || '')}
+                                value={displayValue(item.field as any, item.value || '') as string}
                                 onChange={(e) => updateField(item.field as any, e.target.value)}
                                 className="w-full bg-slate-50 border-none rounded-lg p-2 text-[12px] font-bold text-slate-900 focus:ring-1 focus:ring-[#b50a0a]"
                               />
@@ -528,9 +534,9 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                     <textarea 
                       rows={8}
                       className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-8 text-[13px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-[#b50a0a] focus:border-transparent outline-none transition-all resize-none"
-                      value={displayValue('bio', agent.bio || '')}
+                      value={displayValue('bio', agent.bio || '') as string}
                       onChange={(e) => updateField('bio', e.target.value)}
-                      placeholder="Describe your agency's mission, key achievements, and roster focus..."
+                      placeholder="Describe your agency&apos;s mission, key achievements, and roster focus..."
                     />
                     <div className="flex gap-4">
                       <button onClick={handleSaveChanges} className="px-10 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#b50a0a] transition-all shadow-lg shadow-slate-200">Save Biography</button>
@@ -583,9 +589,9 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                           <tr key={client.id} className="border-b border-slate-50 last:border-none hover:bg-slate-50/50 transition-colors group">
                             <td className="px-8 py-4">
                               <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-[10px] overflow-hidden shrink-0 shadow-sm">
+                                <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-[10px] overflow-hidden shrink-0 shadow-sm relative">
                                   {client.avatar_url ? (
-                                    <img src={client.avatar_url} alt="" className="w-full h-full object-cover" />
+                                    <Image src={client.avatar_url} alt={`${client.first_name} ${client.last_name}`} fill className="w-full h-full object-cover" />
                                   ) : (
                                     client.first_name[0]
                                   )}
