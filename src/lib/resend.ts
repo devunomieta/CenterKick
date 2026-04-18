@@ -81,3 +81,56 @@ export async function sendAdminInvitationEmail(email: string, role: string, invi
     throw error;
   }
 }
+export async function sendPasswordResetEmail(email: string, resetLink: string) {
+  try {
+    const data = await resend.emails.send({
+      from: 'CenterKick Security <security@centerkick.com>',
+      to: [email],
+      subject: 'Reset Your CenterKick Password',
+      html: `
+        <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; color: #1f2937; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px;">
+            <div style="text-align: center; margin-bottom: 32px;">
+                <div style="display: inline-block; padding: 12px; border-radius: 12px; background-color: #a20000; margin-bottom: 16px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h1 style="font-size: 24px; font-weight: 800; color: #111827; margin: 0; text-transform: uppercase; letter-spacing: -0.025em;">CenterKick</h1>
+                <p style="font-size: 14px; font-weight: 600; color: #a20000; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em;">Security Center</p>
+            </div>
+            
+            <div style="margin-bottom: 32px;">
+                <p style="font-size: 16px; line-height: 24px; color: #4b5563; margin-bottom: 24px;">
+                    Hello, <br/><br/>
+                    We received a request to reset the password for your CenterKick account. If you didn't make this request, you can safely ignore this email.
+                </p>
+                
+                <div style="text-align: center; margin-bottom: 32px;">
+                    <a href="${resetLink}" style="display: inline-block; padding: 18px 36px; background-color: #a20000; color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s ease; box-shadow: 0 10px 15px -3px rgba(162, 0, 0, 0.3);">
+                        Reset My Password
+                    </a>
+                </div>
+
+                <p style="font-size: 14px; line-height: 20px; color: #6b7280; text-align: center;">
+                    This link will expire in 60 minutes and can only be used once.
+                </p>
+            </div>
+            
+            <div style="border-top: 1px solid #f3f4f6; padding-top: 24px; text-align: center;">
+                <p style="font-size: 12px; color: #9ca3af; margin-bottom: 8px;">
+                    If the button above doesn't work, copy and paste this link into your browser:
+                </p>
+                <p style="font-size: 12px; color: #6b7280; word-break: break-all; margin-bottom: 24px;">
+                    ${resetLink}
+                </p>
+                <p style="font-size: 11px; color: #9ca3af; text-transform: uppercase; font-weight: 700;">
+                    &copy; 2026 CenterKick. All rights reserved.
+                </p>
+            </div>
+        </div>
+      `,
+    });
+    return data;
+  } catch (error) {
+    console.error('Failed to send password reset email:', error);
+    throw error;
+  }
+}

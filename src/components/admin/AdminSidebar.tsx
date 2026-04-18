@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Users, UserCheck, Briefcase, FileText, PenTool,
-  ShieldCheck, CreditCard, Settings, LayoutDashboard, Clock
+  ShieldCheck, CreditCard, Settings, LayoutDashboard, Clock, Trophy
 } from 'lucide-react';
 
 export function AdminSidebar({ role }: { role: string }) {
@@ -29,6 +29,12 @@ export function AdminSidebar({ role }: { role: string }) {
         { label: 'Coaches', href: '/admin/coaches', icon: UserCheck },
         { label: 'Agents', href: '/admin/agents', icon: Briefcase },
         { label: 'Prospects', href: '/admin/prospects', icon: Clock }
+      ]
+    }] : []),
+    ...(isOperations || isSuperOrAdmin ? [{
+      group: 'Tournament',
+      items: [
+        { label: 'Manage Tournament', href: '/admin/tournaments', icon: Trophy }
       ]
     }] : []),
     ...(isBlogger || isSuperOrAdmin ? [{

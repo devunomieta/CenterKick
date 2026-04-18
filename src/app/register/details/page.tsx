@@ -11,6 +11,7 @@ import { getRegistrationData, saveRegistrationData } from '@/lib/registrationSto
 import { completeRegistration } from '../actions';
 import { checkAccountStatus, AccountStatus } from '@/app/actions/auth';
 import { Info, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { PasswordField } from '@/components/common/PasswordField';
 
 function RegisterDetailsContent() {
    const searchParams = useSearchParams();
@@ -188,16 +189,10 @@ function RegisterDetailsContent() {
                            </div>
                          )}
                       </div>
-                     <div className="space-y-4">
-                        <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Account Password</label>
-                        <input 
-                           name="password"
-                           required
-                           type="password" 
-                           placeholder="••••••••" 
-                           className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
-                        />
-                     </div>
+                      <PasswordField 
+                        name="password"
+                        label="Account Password"
+                      />
                   </div>
 
                   <div className="space-y-4">
