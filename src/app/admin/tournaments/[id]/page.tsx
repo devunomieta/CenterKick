@@ -43,6 +43,12 @@ export default async function TournamentManagementPage({ params }: { params: { i
     new Date(a.match_date).getTime() - new Date(b.match_date).getTime()
   ) || [];
 
+  const fixtureIds = sortedFixtures.map((f: any) => f.id);
+  const { data: matchEvents } = await supabase
+    .from('match_events')
+    .select('*')
+    .in('fixture_id', fixtureIds);
+
   return (
     <div className="max-w-7xl mx-auto space-y-10 pb-20">
       {/* Breadcrumbs & Header */}
@@ -82,6 +88,7 @@ export default async function TournamentManagementPage({ params }: { params: { i
         tournament={tournament} 
         fixtures={sortedFixtures} 
         teams={tournament.teams || []} 
+        matchEvents={matchEvents || []}
       />
     </div>
   );

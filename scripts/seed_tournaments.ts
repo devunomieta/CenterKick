@@ -155,19 +155,131 @@ async function seed() {
 
   if (fixturesErr) throw fixturesErr;
 
-  // 6. Stats (Match Events) for the first fixture
-  console.log('📊 Seeding Match Events...');
-  const firstFixture = insertedFixtures[0].id;
-  const events = [
-    { fixture_id: firstFixture, team_id: team1, player_name: 'John Doe', event_type: 'goal', minute: 23 },
-    { fixture_id: firstFixture, team_id: team1, player_name: 'John Doe', event_type: 'goal', minute: 45 },
-    { fixture_id: firstFixture, team_id: team2, player_name: 'Jane Smith', event_type: 'goal', minute: 78 },
-    { fixture_id: firstFixture, team_id: team1, player_name: 'Mike Ross', event_type: 'yellow_card', minute: 12 }
+  // 6. Detailed Stats (Match Events) for all finished fixtures
+  console.log('📊 Seeding Comprehensive Match Events...');
+  
+  const allFixtures = [
+    ...insertedFixtures,
+    // Add more fixtures for other tournaments if they exist
   ];
+
+  const players = [
+    'Ahmed Musa', 'Victor Osimhen', 'Alex Iwobi', 'Wilfred Ndidi', 'Samuel Chukwueze',
+    'Kelechi Iheanacho', 'Moses Simon', 'Ola Aina', 'William Troost-Ekong', 'Kenneth Omeruo',
+    'Francis Uzoho', 'Maduka Okoye', 'Joe Aribo', 'Frank Onyeka', 'Calvin Bassey',
+    'Zaidu Sanusi', 'Semi Ajayi', 'Chidozie Awaziem', 'Taiwo Awoniyi', 'Terem Moffi'
+  ];
+
+  const eventTypes = [
+    'goal', 'assist', 'yellow_card', 'red_card', 'penalty', 'free_kick', 
+    'shot', 'chance_created', 'chance_missed', 'key_pass', 'save', 'clean_sheet'
+  ];
+
+  const allEvents = [];
+
+  for (const fixture of insertedFixtures) {
+    if (fixture.status !== 'finished') continue;
+
+    const teams = [fixture.home_team_id, fixture.away_team_id];
+    
+    // Assign a GK for each team for clean sheets/saves
+    const homeGK = players[Math.floor(Math.random() * players.length)];
+    const awayGK = players[Math.floor(Math.random() * players.length)];
+
+    // Add some goals
+    for (let i = 0; i < fixture.home_score; i++) {
+      const scorer = players[Math.floor(Math.random() * players.length)];
+      allEvents.push({ 
+        fixture_id: fixture.id, 
+        team_id: fixture.home_team_id, 
+        player_name: scorer, 
+        event_type: 'goal', 
+        minute: Math.floor(Math.random() * 90) + 1 
+      });
+      // 70% chance of an assist
+      if (Math.random() > 0.3) {
+        let assister = players[Math.floor(Math.random() * players.length)];
+        while (assister === scorer) assister = players[Math.floor(Math.random() * players.length)];
+        allEvents.push({ 
+          fixture_id: fixture.id, 
+          team_id: fixture.home_team_id, 
+          player_name: assister, 
+          event_type: 'assist', 
+          minute: allEvents[allEvents.length - 1].minute 
+        });
+      }
+    }
+
+    for (let i = 0; i < fixture.away_score; i++) {
+      const scorer = players[Math.floor(Math.random() * players.length)];
+      allEvents.push({ 
+        fixture_id: fixture.id, 
+        team_id: fixture.away_team_id, 
+        player_name: scorer, 
+        event_type: 'goal', 
+        minute: Math.floor(Math.random() * 90) + 1 
+      });
+      if (Math.random() > 0.3) {
+        let assister = players[Math.floor(Math.random() * players.length)];
+        while (assister === scorer) assister = players[Math.floor(Math.random() * players.length)];
+        allEvents.push({ 
+          fixture_id: fixture.id, 
+          team_id: fixture.away_team_id, 
+          player_name: assister, 
+          event_type: 'assist', 
+          minute: allEvents[allEvents.length - 1].minute 
+        });
+      }
+    }
+
+    // Add random stats for players
+    for (const teamId of teams) {
+      const teamPlayers = players.sort(() => 0.5 - Math.random()).slice(0, 11);
+      const isGK = (p: string) => (teamId === fixture.home_team_id ? p === homeGK : p === awayGK);
+
+      for (const player of teamPlayers) {
+        // Shots
+        const shots = Math.floor(Math.random() * 5);
+        for (let s = 0; s < shots; s++) {
+          allEvents.push({ fixture_id: fixture.id, team_id: teamId, player_name: player, event_type: 'shot', minute: Math.floor(Math.random() * 90) + 1 });
+        }
+
+        // Key Passes
+        const keyPasses = Math.floor(Math.random() * 4);
+        for (let k = 0; k < keyPasses; k++) {
+          allEvents.push({ fixture_id: fixture.id, team_id: teamId, player_name: player, event_type: 'key_pass', minute: Math.floor(Math.random() * 90) + 1 });
+        }
+
+        // Chances Created
+        const chances = Math.floor(Math.random() * 3);
+        for (let c = 0; c < chances; c++) {
+          allEvents.push({ fixture_id: fixture.id, team_id: teamId, player_name: player, event_type: 'chance_created', minute: Math.floor(Math.random() * 90) + 1 });
+        }
+
+        // Discipline
+        if (Math.random() > 0.8) {
+          allEvents.push({ fixture_id: fixture.id, team_id: teamId, player_name: player, event_type: 'yellow_card', minute: Math.floor(Math.random() * 90) + 1 });
+        }
+
+        // GK Specific
+        if (isGK(player)) {
+          const saves = Math.floor(Math.random() * 6) + 1;
+          for (let sv = 0; sv < saves; sv++) {
+            allEvents.push({ fixture_id: fixture.id, team_id: teamId, player_name: player, event_type: 'save', minute: Math.floor(Math.random() * 90) + 1 });
+          }
+          
+          const opponentScore = teamId === fixture.home_team_id ? fixture.away_score : fixture.home_score;
+          if (opponentScore === 0) {
+            allEvents.push({ fixture_id: fixture.id, team_id: teamId, player_name: player, event_type: 'clean_sheet', minute: 90 });
+          }
+        }
+      }
+    }
+  }
 
   const { error: eventsErr } = await supabase
     .from('match_events')
-    .insert(events);
+    .insert(allEvents);
 
   if (eventsErr) throw eventsErr;
 

@@ -26,9 +26,10 @@ interface TournamentTabsProps {
   tournament: any;
   teams: any[];
   fixtures: any[];
+  matchEvents: any[];
 }
 
-export function TournamentTabs({ tournament, teams, fixtures }: TournamentTabsProps) {
+export function TournamentTabs({ tournament, teams, fixtures, matchEvents }: TournamentTabsProps) {
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingTeam, setIsAddingTeam] = useState(false);
@@ -39,6 +40,7 @@ export function TournamentTabs({ tournament, teams, fixtures }: TournamentTabsPr
     { id: 'teams', label: 'Teams', icon: Users },
     { id: 'fixtures', label: 'Fixtures & Results', icon: Calendar },
     { id: 'standings', label: 'Standings', icon: BarChart3 },
+    { id: 'stats', label: 'Statistics', icon: BarChart3 },
   ];
 
   return (
@@ -87,8 +89,148 @@ export function TournamentTabs({ tournament, teams, fixtures }: TournamentTabsPr
           {activeTab === 'standings' && (
             <StandingsTab teams={teams} type={tournament.type} />
           )}
+          {activeTab === 'stats' && (
+            <StatisticsTab matchEvents={matchEvents} fixtures={fixtures} />
+          )}
         </motion.div>
       </AnimatePresence>
+    </div>
+  );
+}
+
+function StatisticsTab({ matchEvents, fixtures }: { matchEvents: any[], fixtures: any[] }) {
+  const finishedFixturesCount = fixtures.filter(f => f.status === 'finished').length;
+
+  const aggregateStats = (type: string) => {
+    const stats = matchEvents.filter(e => e.event_type === type).reduce((acc: any, e) => {
+      acc[e.player_name] = (acc[e.player_name] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(stats)
+      .map(([name, count]) => ({ name, count: count as number }))
+      .sort((a, b) => b.count - a.count);
+  };
+
+  const goals = aggregateStats('goal');
+  const assists = aggregateStats('assist');
+  const yellowCards = aggregateStats('yellow_card');
+  const redCards = aggregateStats('red_card');
+  const saves = aggregateStats('save');
+  const cleanSheets = aggregateStats('clean_sheet');
+  const shots = aggregateStats('shot');
+  const keyPasses = aggregateStats('key_pass');
+  const chancesCreated = aggregateStats('chance_created');
+  const chancesMissed = aggregateStats('chance_missed');
+  const penalties = aggregateStats('penalty');
+  const freeKicks = aggregateStats('free_kick');
+
+  // Calculate Goals + Assists
+  const combinedStats = [...new Set([...goals.map(g => g.name), ...assists.map(a => a.name)])].map(name => {
+    const gCount = goals.find(g => g.name === name)?.count || 0;
+    const aCount = assists.find(a => a.name === name)?.count || 0;
+    return { name, count: gCount + aCount, goals: gCount, assists: aCount };
+  }).sort((a, b) => b.count - a.count);
+
+  const StatCard = ({ title, data, unit = '', color = 'text-gray-900' }: { title: string, data: any[], unit?: string, color?: string }) => (
+    <div className="bg-white border border-gray-100 rounded-[32px] p-8 shadow-sm space-y-6">
+      <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</h4>
+      <div className="space-y-4">
+        {data.slice(0, 3).map((item, i) => (
+          <div key={item.name} className="flex items-center justify-between group">
+            <div className="flex items-center gap-3">
+              <span className={`text-[10px] font-black ${i === 0 ? 'text-[#b50a0a]' : 'text-gray-300'}`}>0{i + 1}</span>
+              <span className="text-[11px] font-black text-gray-900 uppercase tracking-tight group-hover:text-[#b50a0a] transition-colors">{item.name}</span>
+            </div>
+            <span className={`text-sm font-black ${color}`}>{item.count}{unit}</span>
+          </div>
+        ))}
+        {data.length === 0 && <p className="text-[10px] font-bold text-gray-300 uppercase italic">No data yet</p>}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-10">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Tournament Statistics</h3>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">In-depth performance analysis of the tournament</p>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Games Analyzed</p>
+            <p className="text-xl font-black text-gray-900">{finishedFixturesCount}</p>
+          </div>
+          <div className="w-px h-10 bg-gray-100"></div>
+          <div className="text-right">
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Events</p>
+            <p className="text-xl font-black text-[#b50a0a]">{matchEvents.length}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title="Top Goal Scorers" data={goals} />
+        <StatCard title="Assist Kings" data={assists} />
+        <StatCard title="Goals + Assists" data={combinedStats} />
+        <StatCard title="Clean Sheets" data={cleanSheets} color="text-green-600" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
+        <div className="lg:col-span-2 bg-gray-900 rounded-[40px] p-10 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#b50a0a] blur-[150px] opacity-10 -translate-y-1/2 translate-x-1/2"></div>
+          <div className="relative z-10 space-y-8">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gameplay Efficiency</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
+              <div className="space-y-2">
+                <p className="text-[9px] font-black text-gray-500 uppercase">Shots PG</p>
+                <p className="text-3xl font-black">{(shots.reduce((a, b) => a + b.count, 0) / (finishedFixturesCount || 1)).toFixed(1)}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[9px] font-black text-gray-500 uppercase">Key Passes PG</p>
+                <p className="text-3xl font-black">{(keyPasses.reduce((a, b) => a + b.count, 0) / (finishedFixturesCount || 1)).toFixed(1)}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[9px] font-black text-gray-500 uppercase">Saves PG</p>
+                <p className="text-3xl font-black text-green-500">{(saves.reduce((a, b) => a + b.count, 0) / (finishedFixturesCount || 1)).toFixed(1)}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[9px] font-black text-gray-500 uppercase">Conversion Rate</p>
+                <p className="text-3xl font-black text-[#b50a0a]">
+                  {Math.round((goals.reduce((a, b) => a + b.count, 0) / (shots.reduce((a, b) => a + b.count, 0) || 1)) * 100)}%
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-gray-100 rounded-[40px] p-10 shadow-sm space-y-8">
+          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Discipline Record</h4>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between p-6 bg-yellow-50 rounded-3xl border border-yellow-100">
+              <div className="space-y-1">
+                <p className="text-[9px] font-black text-yellow-800 uppercase">Total Yellow Cards</p>
+                <p className="text-2xl font-black text-yellow-900">{yellowCards.reduce((a, b) => a + b.count, 0)}</p>
+              </div>
+              <div className="w-8 h-12 bg-yellow-400 rounded-lg shadow-sm"></div>
+            </div>
+            <div className="flex items-center justify-between p-6 bg-red-50 rounded-3xl border border-red-100">
+              <div className="space-y-1">
+                <p className="text-[9px] font-black text-red-800 uppercase">Total Red Cards</p>
+                <p className="text-2xl font-black text-red-900">{redCards.reduce((a, b) => a + b.count, 0)}</p>
+              </div>
+              <div className="w-8 h-12 bg-red-600 rounded-lg shadow-sm"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title="Chances Created" data={chancesCreated} />
+        <StatCard title="Chances Missed" data={chancesMissed} color="text-red-500" />
+        <StatCard title="Penalty Goals" data={penalties} />
+        <StatCard title="Free Kick Goals" data={freeKicks} />
+      </div>
     </div>
   );
 }
