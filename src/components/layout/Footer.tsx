@@ -34,18 +34,17 @@ export function Footer({ content }: { content?: any }) {
         {
            title: "Pages",
            links: [
-              { label: "FAQ", href: "/" },
-              { label: "Agency", href: "/news" },
-              { label: "Legal", href: "/matches" },
-              { label: "Matches", href: "/players" }
+              { label: "Home", href: "/" },
+              { label: "About", href: "/about" },
+              { label: "Coaches", href: "/coaches" },
+              { label: "Athletes", href: "/athletes" }
            ]
         },
         {
-           title: "Service",
+           title: "Legal",
            links: [
-              { label: "Coaching", href: "/" },
-              { label: "Find a Football Academy", href: "/news" },
-              { label: "Agency", href: "/matches" }
+              { label: "Privacy Policy", href: "/privacy" },
+              { label: "Terms of Service", href: "/terms" }
            ]
         },
         {
