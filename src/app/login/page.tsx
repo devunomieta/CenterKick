@@ -156,8 +156,26 @@ function LoginContent() {
                      </div>
 
                      <div className="grid grid-cols-1 gap-4">
-                        <button type="button" className="w-full flex items-center justify-center gap-4 py-5 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-all text-xs font-black uppercase tracking-widest">
-                           <Chrome className="w-4 h-4" /> Continue with Google
+                        <button 
+                           type="button" 
+                           onClick={async () => {
+                              setIsLoading(true);
+                              const { createClient } = await import('@/lib/supabase/client');
+                              const supabase = createClient();
+                              const { error } = await supabase.auth.signInWithOAuth({
+                                 provider: 'google',
+                                 options: {
+                                    redirectTo: `${window.location.origin}/auth/callback?next=/register/google-onboarding`
+                                 }
+                              });
+                              if (error) {
+                                 setStatus({ type: 'error', message: error.message });
+                                 setIsLoading(false);
+                              }
+                           }}
+                           className="w-full flex items-center justify-center gap-4 py-5 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-all text-xs font-black uppercase tracking-widest text-gray-700"
+                        >
+                           <Chrome className="w-4 h-4 text-red-600" /> Continue with Google
                         </button>
                      </div>
                   </form>
