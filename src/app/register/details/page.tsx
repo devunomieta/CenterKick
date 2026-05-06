@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { getRegistrationData, saveRegistrationData } from '@/lib/registrationStore';
 
-import { completeRegistration } from '../actions';
+import { completeRegistration, getTournaments, getTournamentTeams } from '../actions';
 import { checkAccountStatus, AccountStatus } from '@/app/actions/auth';
 import { Info, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { PasswordField } from '@/components/common/PasswordField';
@@ -23,6 +23,11 @@ function RegisterDetailsContent() {
    const [emailStatus, setEmailStatus] = useState<AccountStatus>('NONE');
    const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
+   const [tournaments, setTournaments] = useState<any[]>([]);
+   const [teams, setTeams] = useState<any[]>([]);
+   const [selectedTournament, setSelectedTournament] = useState('');
+   const [selectedTeam, setSelectedTeam] = useState('');
+
    useEffect(() => {
       const data = getRegistrationData();
       if (data.role && !roleFromUrl) {
@@ -32,6 +37,27 @@ function RegisterDetailsContent() {
          setFormData(data.details);
       }
    }, [roleFromUrl]);
+
+   useEffect(() => {
+      async function loadTournaments() {
+         const data = await getTournaments();
+         setTournaments(data);
+      }
+      loadTournaments();
+   }, []);
+
+   useEffect(() => {
+      async function loadTeams() {
+         if (selectedTournament) {
+            const data = await getTournamentTeams(selectedTournament);
+            setTeams(data);
+         } else {
+            setTeams([]);
+         }
+         setSelectedTeam('');
+      }
+      loadTeams();
+   }, [selectedTournament]);
 
    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       const { name, value } = e.target;
@@ -207,6 +233,46 @@ function RegisterDetailsContent() {
                         className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
                      />
                   </div>
+
+                  {(role === 'athlete' || role === 'coach') && (
+                     <div className="pt-12 border-t border-gray-100 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="flex items-center gap-4 mb-2">
+                           <div className="h-0.5 w-8 bg-[#a20000]"></div>
+                           <h3 className="text-xs font-black uppercase tracking-widest text-gray-900">League & Team Selection</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                           <div className="space-y-4">
+                              <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Tournament League</label>
+                              <select 
+                                 name="tournament_id"
+                                 value={selectedTournament}
+                                 onChange={(e) => setSelectedTournament(e.target.value)}
+                                 className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none appearance-none text-black"
+                              >
+                                 <option value="">Select Tournament League</option>
+                                 {tournaments.map((t: any) => (
+                                    <option key={t.id} value={t.id} className="text-black">{t.name}</option>
+                                 ))}
+                              </select>
+                           </div>
+                           <div className="space-y-4">
+                              <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Team</label>
+                              <select 
+                                 name="tournament_team_id"
+                                 value={selectedTeam}
+                                 onChange={(e) => setSelectedTeam(e.target.value)}
+                                 disabled={!selectedTournament}
+                                 className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none appearance-none text-black disabled:opacity-50"
+                              >
+                                 <option value="">Select Team</option>
+                                 {teams.map((t: any) => (
+                                    <option key={t.id} value={t.id} className="text-black">{t.team_name}</option>
+                                 ))}
+                              </select>
+                           </div>
+                        </div>
+                     </div>
+                  )}
 
                   {/* Role Specific Fields (Minimizing for Basic Step) */}
                   {role === 'athlete' && (

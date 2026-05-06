@@ -40,13 +40,21 @@ export function RolesClient({
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Secure Email Regex Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email.trim())) {
+      showToast('Please enter a valid, properly formatted email address', 'error');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch('/api/admin/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, role }),
+        body: JSON.stringify({ email: email.trim(), role }),
       });
 
       const data = await res.json();
@@ -61,7 +69,7 @@ export function RolesClient({
       showToast('Invitation sent successfully', 'success');
       router.refresh();
     } catch (err: unknown) {
-      // Error already shown by showToast
+      // Error already handled
     } finally {
       setLoading(false);
     }

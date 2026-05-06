@@ -3,13 +3,24 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createTournament } from '../actions';
-import { Trophy, ArrowLeft, Loader2, Save, Calendar, Info, Layout } from 'lucide-react';
+import { Trophy, ArrowLeft, Loader2, Save, Calendar, Info, Layout, Upload, Image as ImageIcon } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function NewTournamentPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const router = useRouter();
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setLogoPreview(url);
+    }
+  };
+
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -71,6 +82,30 @@ export default function NewTournamentPage() {
                 placeholder="e.g. Lagos Elite League 2026" 
                 className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-300" 
               />
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tournament Logo (Optional)</label>
+              <div className="flex items-center gap-6">
+                <div className="w-24 h-24 rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden shrink-0 relative group cursor-pointer hover:border-[#b50a0a] transition-colors">
+                  {logoPreview ? (
+                    <Image src={logoPreview} alt="Logo Preview" fill className="object-contain p-2" />
+                  ) : (
+                    <ImageIcon className="w-8 h-8 text-gray-300 group-hover:text-[#b50a0a] transition-colors" />
+                  )}
+                  <input 
+                    type="file" 
+                    name="logo" 
+                    accept="image/png, image/jpeg, image/webp"
+                    onChange={handleLogoChange}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[11px] font-black text-gray-900 uppercase">Upload Identity</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recommended: 400x400px. Max 4MB.</p>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-4">

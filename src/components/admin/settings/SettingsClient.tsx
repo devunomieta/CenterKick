@@ -103,6 +103,25 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
   ];
 
   const handleSave = async () => {
+    // 1. Enforce Platform Name
+    if (!settings.siteTitle || settings.siteTitle.trim() === '') {
+      showToast('Platform Name is required', 'error');
+      return;
+    }
+
+    // 2. Enforce SMTP From Email (if present)
+    if (settings.fromEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // Extract email from Resend format e.g. "Name <email@domain.com>"
+      const emailMatch = settings.fromEmail.match(/<(.+)>/);
+      const extractedEmail = emailMatch ? emailMatch[1]?.trim() : settings.fromEmail.trim();
+      
+      if (!emailRegex.test(extractedEmail)) {
+        showToast('Please enter a valid Sender Email address (e.g. info@domain.com)', 'error');
+        return;
+      }
+    }
+
     setIsSaving(true);
     const toastId = showToast('Saving configuration...', 'loading');
     try {

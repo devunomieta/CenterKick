@@ -3,6 +3,35 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
+export async function getTournaments() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('tournaments')
+    .select('id, name')
+    .eq('is_active', true);
+  
+  if (error) {
+    console.error('Error fetching tournaments:', error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function getTournamentTeams(tournamentId: string) {
+  if (!tournamentId) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('tournament_teams')
+    .select('id, team_name, team_logo_url')
+    .eq('tournament_id', tournamentId);
+  
+  if (error) {
+    console.error('Error fetching tournament teams:', error);
+    return [];
+  }
+  return data || [];
+}
+
 export async function completeRegistration(formData: FormData) {
   const supabase = await createClient();
 
@@ -10,9 +39,10 @@ export async function completeRegistration(formData: FormData) {
   const password = formData.get('password') as string;
   const fullName = formData.get('fullName') as string;
   const role = formData.get('role') as string;
-  const location = formData.get('location') as string;
   const phone = formData.get('phone') as string;
   const dob = formData.get('dob') as string;
+  const tournamentId = formData.get('tournament_id') as string;
+  const tournamentTeamId = formData.get('tournament_team_id') as string;
 
   const names = fullName.split(' ');
   const firstName = names[0] || '';
@@ -29,7 +59,9 @@ export async function completeRegistration(formData: FormData) {
         last_name: lastName,
         role: role,
         country: role === 'athlete' ? formData.get('country') || '' : '',
-        dob: dob
+        dob: dob,
+        tournament_id: tournamentId || '',
+        tournament_team_id: tournamentTeamId || ''
       }
     },
   });

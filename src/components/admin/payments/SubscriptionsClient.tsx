@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import {
    CreditCard, ExternalLink, Shield, Save,
-   HelpCircle, Zap, Settings, DollarSign,
-   UserCheck
+   Zap, DollarSign, UserCheck
 } from 'lucide-react';
 import { updatePaymentSettings } from '@/app/admin/payments/subscriptions/actions';
 
@@ -15,8 +14,84 @@ export function SubscriptionsClient({
 }) {
    const [settings, setSettings] = useState(initialSettings);
    const [isSaving, setIsSaving] = useState(false);
+   const [errors, setErrors] = useState<{[key: string]: string}>({});
+
+   const validate = () => {
+      const errs: {[key: string]: string} = {};
+
+      // 1. External Payment URL Validation
+      if (settings.paymentLink) {
+         try {
+            new URL(settings.paymentLink);
+         } catch (_) {
+            errs.paymentLink = 'Please enter a valid URL starting with http:// or https://';
+         }
+      }
+
+      // 2. Bank Settlement Validation
+      if (settings.accountNumber && !/^\d+$/.test(settings.accountNumber)) {
+         errs.accountNumber = 'Account number must contain digits only';
+      }
+      if (settings.accountNumber && (settings.accountNumber.length < 10 || settings.accountNumber.length > 12)) {
+         errs.accountNumber = 'Local bank account numbers must be between 10 to 12 digits';
+      }
+      if ((settings.accountNumber || settings.accountName) && !settings.bankName) {
+         errs.bankName = 'Institution / Bank name is required if bank details are provided';
+      }
+
+      // 3. Paystack Validation
+      if (settings.paystackActive) {
+         if (!settings.paystackSecret) {
+            errs.paystackSecret = 'Secret key is required when Paystack is active';
+         } else if (!settings.paystackSecret.startsWith('sk_')) {
+            errs.paystackSecret = 'Secret key must be a valid Paystack key starting with sk_';
+         }
+      }
+
+      // 4. Stripe Validation
+      if (settings.stripeActive) {
+         if (!settings.stripeKey) {
+            errs.stripeKey = 'Publishable key is required when Stripe is active';
+         } else if (!settings.stripeKey.startsWith('pk_')) {
+            errs.stripeKey = 'Publishable key must be a valid Stripe key starting with pk_';
+         }
+         if (!settings.stripeSecret) {
+            errs.stripeSecret = 'Secret key is required when Stripe is active';
+         } else if (!settings.stripeSecret.startsWith('sk_')) {
+            errs.stripeSecret = 'Secret key must be a valid Stripe key starting with sk_';
+         }
+      }
+
+      // 5. PayPal Validation
+      if (settings.paypalActive && !settings.paypalId) {
+         errs.paypalId = 'Client ID is required when PayPal is active';
+      }
+
+      // 6. Role-Based Plans Validation
+      const rolesToValidate = ['player', 'coach', 'agent'];
+      rolesToValidate.forEach(roleId => {
+         const plan = settings.plans?.[roleId] || {};
+         const amountStr = String(plan.amount || '');
+         if (!amountStr) {
+            errs[`plan_amount_${roleId}`] = 'Plan charge amount is required';
+         } else {
+            const num = Number(amountStr);
+            if (isNaN(num) || num < 0) {
+               errs[`plan_amount_${roleId}`] = 'Amount must be a positive numeric value';
+            }
+         }
+      });
+
+      setErrors(errs);
+      return Object.keys(errs).length === 0;
+   };
 
    const handleSave = async () => {
+      if (!validate()) {
+         alert('Please correct the validation errors in the registry form before saving.');
+         return;
+      }
+
       setIsSaving(true);
       try {
          await updatePaymentSettings(settings);
@@ -67,6 +142,14 @@ export function SubscriptionsClient({
             </button>
          </div>
 
+         {/* Validation Banner Summary */}
+         {Object.keys(errors).length > 0 && (
+            <div className="bg-red-50 border-2 border-red-200 p-6 rounded-[2rem] text-red-700 space-y-2 animate-in slide-in-from-top-4 duration-300">
+               <h4 className="text-xs font-black uppercase tracking-wider">Validation Errors Found ({Object.keys(errors).length})</h4>
+               <p className="text-xs font-medium">Please review and fix the highlighted fields below before submitting.</p>
+            </div>
+         )}
+
          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Universal Payment Link */}
             <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
@@ -89,12 +172,15 @@ export function SubscriptionsClient({
                            value={settings.paymentLink || ''}
                            onChange={(e) => setSettings({ ...settings, paymentLink: e.target.value })}
                            placeholder="https://..."
-                           className="w-full bg-gray-50 border-none rounded-xl p-4 text-[10px] font-bold focus:ring-2 focus:ring-gray-200 transition-all text-gray-900"
+                           className={`w-full bg-gray-50 border rounded-xl p-4 text-[10px] font-bold focus:ring-2 focus:ring-gray-200 transition-all text-gray-900 ${errors.paymentLink ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
                         />
-                        <a href={settings.paymentLink} target="_blank" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors">
-                           <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
+                        {settings.paymentLink && !errors.paymentLink && (
+                           <a href={settings.paymentLink} target="_blank" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                           </a>
+                        )}
                      </div>
+                     {errors.paymentLink && <p className="text-[9px] font-bold text-red-500 ml-1 mt-1">{errors.paymentLink}</p>}
                   </div>
                   <div className="space-y-1.5">
                      <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Checkout Instructions</label>
@@ -129,8 +215,9 @@ export function SubscriptionsClient({
                         value={settings.bankName || ''}
                         onChange={(e) => setSettings({ ...settings, bankName: e.target.value })}
                         placeholder="Bank name"
-                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900 focus:ring-2 focus:ring-amber-200 transition-all"
+                        className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900 focus:ring-2 focus:ring-amber-200 transition-all ${errors.bankName ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
                      />
+                     {errors.bankName && <p className="text-[9px] font-bold text-red-500 ml-1 mt-1">{errors.bankName}</p>}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                      <div className="space-y-1.5">
@@ -148,10 +235,11 @@ export function SubscriptionsClient({
                            type="text"
                            value={settings.accountNumber || ''}
                            onChange={(e) => setSettings({ ...settings, accountNumber: e.target.value })}
-                           className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900"
+                           className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900 focus:ring-2 focus:ring-amber-200 transition-all ${errors.accountNumber ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
                         />
                      </div>
                   </div>
+                  {errors.accountNumber && <p className="text-[9px] font-bold text-red-500 ml-1">{errors.accountNumber}</p>}
                </div>
             </div>
          </div>
@@ -187,8 +275,9 @@ export function SubscriptionsClient({
                         value={settings.paystackSecret || ''}
                         onChange={(e) => setSettings({ ...settings, paystackSecret: e.target.value })}
                         placeholder="sk_live_..."
-                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900 focus:ring-2 focus:ring-teal-100 transition-all"
+                        className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900 focus:ring-2 focus:ring-teal-100 transition-all ${errors.paystackSecret ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
                      />
+                     {errors.paystackSecret && <p className="text-[9px] font-bold text-red-500 ml-1 mt-1">{errors.paystackSecret}</p>}
                   </div>
                   <div className="space-y-1.5">
                      <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Webhook URL</label>
@@ -228,8 +317,9 @@ export function SubscriptionsClient({
                         value={settings.stripeKey || ''}
                         onChange={(e) => setSettings({ ...settings, stripeKey: e.target.value })}
                         placeholder="pk_live_..."
-                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900 focus:ring-2 focus:ring-indigo-100 transition-all"
+                        className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900 focus:ring-2 focus:ring-indigo-100 transition-all ${errors.stripeKey ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
                      />
+                     {errors.stripeKey && <p className="text-[9px] font-bold text-red-500 ml-1 mt-1">{errors.stripeKey}</p>}
                   </div>
                   <div className="space-y-1.5">
                      <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Secret Key</label>
@@ -238,8 +328,9 @@ export function SubscriptionsClient({
                         value={settings.stripeSecret || ''}
                         onChange={(e) => setSettings({ ...settings, stripeSecret: e.target.value })}
                         placeholder="sk_live_..."
-                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900 focus:ring-2 focus:ring-indigo-100 transition-all"
+                        className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900 focus:ring-2 focus:ring-indigo-100 transition-all ${errors.stripeSecret ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
                      />
+                     {errors.stripeSecret && <p className="text-[9px] font-bold text-red-500 ml-1 mt-1">{errors.stripeSecret}</p>}
                   </div>
                </div>
             </div>
@@ -273,8 +364,9 @@ export function SubscriptionsClient({
                         value={settings.paypalId || ''}
                         onChange={(e) => setSettings({ ...settings, paypalId: e.target.value })}
                         placeholder="AZ_..."
-                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900 focus:ring-2 focus:ring-blue-100 transition-all"
+                        className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900 focus:ring-2 focus:ring-blue-100 transition-all ${errors.paypalId ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
                      />
+                     {errors.paypalId && <p className="text-[9px] font-bold text-red-500 ml-1 mt-1">{errors.paypalId}</p>}
                   </div>
                   <div className="space-y-1.5">
                      <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Environment</label>
@@ -283,8 +375,8 @@ export function SubscriptionsClient({
                         onChange={(e) => setSettings({ ...settings, paypalEnv: e.target.value })}
                         className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-[10px] font-bold text-gray-900 focus:ring-2 focus:ring-blue-100 transition-all uppercase"
                      >
-                        <option value="sandbox">Sandbox (Testing)</option>
-                        <option value="live">Live (Production)</option>
+                        <option value="sandbox" className="text-gray-900 bg-white">Sandbox (Testing)</option>
+                        <option value="live" className="text-gray-900 bg-white">Live (Production)</option>
                      </select>
                   </div>
                </div>
@@ -330,7 +422,7 @@ export function SubscriptionsClient({
                            <div className="space-y-4">
                               <div className="space-y-2">
                                  <label className="text-[8px] font-black text-gray-200 uppercase tracking-widest ml-1">Amount / Charge Rate</label>
-                                 <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-4 focus-within:ring-2 focus-within:ring-[#b50a0a] transition-all">
+                                 <div className={`flex items-center gap-3 bg-white/5 border rounded-2xl p-4 focus-within:ring-2 focus-within:ring-[#b50a0a] transition-all ${errors[`plan_amount_${role.id}`] ? 'border-red-500' : 'border-white/10'}`}>
                                     <span className="text-2xl font-black italic tracking-tighter text-white/40 select-none">$</span>
                                     <input
                                        type="text"
@@ -340,6 +432,7 @@ export function SubscriptionsClient({
                                        placeholder="0.00"
                                     />
                                  </div>
+                                 {errors[`plan_amount_${role.id}`] && <p className="text-[9px] font-bold text-red-500 ml-1 mt-1">{errors[`plan_amount_${role.id}`]}</p>}
                               </div>
 
                               <div className="space-y-2">
@@ -349,10 +442,10 @@ export function SubscriptionsClient({
                                     onChange={(e) => updatePlan(role.id, 'frequency', e.target.value)}
                                     className="w-full bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold text-gray-300 uppercase tracking-widest px-4 py-3 focus:ring-1 focus:ring-[#b50a0a]"
                                  >
-                                    <option value="Lifetime Access">Lifetime Access</option>
-                                    <option value="Monthly">Monthly Billing</option>
-                                    <option value="Quarterly">Quarterly Billing</option>
-                                    <option value="Yearly">Yearly Billing</option>
+                                    <option value="Lifetime Access" className="text-gray-900 bg-white">Lifetime Access</option>
+                                    <option value="Monthly" className="text-gray-900 bg-white">Monthly Billing</option>
+                                    <option value="Quarterly" className="text-gray-900 bg-white">Quarterly Billing</option>
+                                    <option value="Yearly" className="text-gray-900 bg-white">Yearly Billing</option>
                                  </select>
                               </div>
 

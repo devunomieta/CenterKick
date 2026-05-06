@@ -206,7 +206,7 @@ export default function FootballDataManagement() {
       {/* List Content Area */}
       <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
         {/* Sub-header with Search */}
-        <div className="px-8 py-6 bg-slate-50/50 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative w-full md:w-96 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-[#b50a0a] transition-colors" />
             <input 
@@ -238,38 +238,38 @@ export default function FootballDataManagement() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/30 border-b border-slate-100">
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Identifier</th>
+                  <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Identifier</th>
                   {activeTab === 'countries' && (
                     <>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">ISO Code</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Flag</th>
+                      <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">ISO Code</th>
+                      <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Flag</th>
                     </>
                   )}
                   {activeTab === 'leagues' && (
                     <>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Country</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                      <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Country</th>
+                      <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
                     </>
                   )}
                   {activeTab === 'clubs' && (
                     <>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">League</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Logo</th>
+                      <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">League</th>
+                      <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Logo</th>
                     </>
                   )}
                   {activeTab === 'seasons' && (
                     <>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort order</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Current</th>
+                      <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort order</th>
+                      <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Current</th>
                     </>
                   )}
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                  <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filteredData.map((item: Record<string, any>) => (
                   <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
-                    <td className="px-8 py-6">
+                    <td className="px-6 py-3.5">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100 text-slate-400 group-hover:text-[#b50a0a] group-hover:bg-white transition-all">
                           {activeTab === 'countries' ? <Globe className="w-4 h-4" /> : 
@@ -283,12 +283,12 @@ export default function FootballDataManagement() {
 
                     {activeTab === 'countries' && (
                       <>
-                        <td className="px-8 py-6">
+                        <td className="px-6 py-3.5">
                           <code className="px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-black text-slate-600 uppercase tracking-widest">
                             {item.code || 'NA'}
                           </code>
                         </td>
-                        <td className="px-8 py-6 text-center">
+                        <td className="px-6 py-3.5 text-center">
                           <div className="flex justify-center">
                             <FlagIcon country={item.name} className="w-8 h-6 rounded shadow-sm border border-slate-100" />
                           </div>
@@ -298,13 +298,13 @@ export default function FootballDataManagement() {
 
                     {activeTab === 'leagues' && (
                       <>
-                        <td className="px-8 py-6">
+                        <td className="px-6 py-3.5">
                           <div className="flex items-center gap-2">
                              <FlagIcon country={item.countries?.name} className="w-5 h-4 rounded-sm" />
                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{item.countries?.name || 'International'}</span>
                           </div>
                         </td>
-                        <td className="px-8 py-6 text-center">
+                        <td className="px-6 py-3.5 text-center">
                            <span className={`inline-flex px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${item.is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400'}`}>
                              {item.is_active ? 'Active' : 'Archived'}
                            </span>
@@ -314,10 +314,10 @@ export default function FootballDataManagement() {
 
                     {activeTab === 'clubs' && (
                       <>
-                        <td className="px-8 py-6">
+                        <td className="px-6 py-3.5">
                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{item.leagues?.name || 'Independent'}</span>
                         </td>
-                         <td className="px-8 py-6 text-center">
+                         <td className="px-6 py-3.5 text-center">
                           <div className="flex justify-center">
                             {item.logo_url ? (
                                <div className="relative w-8 h-8">
@@ -335,10 +335,10 @@ export default function FootballDataManagement() {
 
                     {activeTab === 'seasons' && (
                       <>
-                        <td className="px-8 py-6 text-center">
+                        <td className="px-6 py-3.5 text-center">
                            <span className="text-xs font-bold text-slate-400">{item.sort_order}</span>
                         </td>
-                        <td className="px-8 py-6 text-center">
+                        <td className="px-6 py-3.5 text-center">
                           <div className="flex justify-center">
                              {item.is_current ? (
                                <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-100">
@@ -354,7 +354,7 @@ export default function FootballDataManagement() {
                       </>
                     )}
 
-                    <td className="px-8 py-6 text-right">
+                    <td className="px-6 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                          <button onClick={() => handleOpenModal(item)} className="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all">
                             <Edit className="w-4 h-4" />
