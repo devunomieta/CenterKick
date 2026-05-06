@@ -31,8 +31,20 @@ export default async function DashboardLayout({
     .eq('user_id', user.id)
     .single();
 
+  // 1. Enforce Profile Onboarding (for Google Auth signups)
+  if (!userRecord || !profile) {
+    redirect('/register/google-onboarding');
+  }
+
   const role = userRecord?.role || 'player';
   const status = profile?.status || 'pending';
+
+  // 2. Enforce Subscription Payment
+  const { headers: nextHeaders } = await import('next/headers');
+  const pathname = (await nextHeaders()).get('x-pathname') || '';
+  if (status !== 'active' && pathname !== '/dashboard/subscription') {
+    redirect('/dashboard/subscription');
+  }
 
   // Forced Redirect for Administrative roles to the unified Admin Portal
   const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
