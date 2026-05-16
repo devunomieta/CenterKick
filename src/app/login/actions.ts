@@ -66,6 +66,24 @@ export async function signup(formData: FormData) {
   return { success: true, message: 'Check your email for the confirmation link.' };
 }
 
+export async function verifyOtp(email: string, token: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'signup',
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  // After verification, ensure the user is logged in and redirect to onboarding
+  revalidatePath('/', 'layout');
+  return { success: true };
+}
+
 export async function signout() {
   const supabase = await createClient();
   await supabase.auth.signOut();

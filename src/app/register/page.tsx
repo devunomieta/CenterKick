@@ -3,12 +3,17 @@
 import { useState } from 'react';
 import { Mail, AlertCircle, CheckCircle2, ArrowRight, Chrome, ArrowLeft } from "lucide-react";
 import Link from 'next/link';
-import { signup } from '@/app/login/actions';
+import { signup, verifyOtp } from '@/app/login/actions';
 import { PasswordField } from '@/components/common/PasswordField';
+import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
+   const router = useRouter();
    const [isLoading, setIsLoading] = useState(false);
    const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+   const [showOtp, setShowOtp] = useState(false);
+   const [email, setEmail] = useState('');
+   const [otp, setOtp] = useState('');
 
    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -16,6 +21,7 @@ export default function RegisterPage() {
       setStatus(null);
 
       const formData = new FormData(e.currentTarget);
+      const emailInput = formData.get('email') as string;
       const password = formData.get('password') as string;
       const confirmPassword = formData.get('confirmPassword') as string;
 
@@ -26,15 +32,36 @@ export default function RegisterPage() {
       }
       
       try {
+         setEmail(emailInput);
          const result = await signup(formData);
 
          if (result.error) {
             setStatus({ type: 'error', message: result.error });
          } else if (result.success) {
-            setStatus({ type: 'success', message: result.message || 'Check your email for the confirmation link.' });
+            setShowOtp(true);
+            setStatus({ type: 'success', message: 'Enter the 6-digit code sent to your email.' });
          }
       } catch (err: any) {
          setStatus({ type: 'error', message: 'An unexpected error occurred.' });
+      } finally {
+         setIsLoading(false);
+      }
+   };
+
+   const handleVerifyOtp = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsLoading(true);
+      setStatus(null);
+
+      try {
+         const result = await verifyOtp(email, otp);
+         if (result.error) {
+            setStatus({ type: 'error', message: result.error });
+         } else if (result.success) {
+            router.push('/onboarding');
+         }
+      } catch (err) {
+         setStatus({ type: 'error', message: 'Failed to verify code.' });
       } finally {
          setIsLoading(false);
       }
@@ -74,61 +101,103 @@ export default function RegisterPage() {
             )}
 
             <div className="space-y-6">
-               <button
-                  type="button"
-                  onClick={async () => {
-                     setIsLoading(true);
-                     const { createClient } = await import('@/lib/supabase/client');
-                     const supabase = createClient();
-                     await supabase.auth.signInWithOAuth({
-                        provider: 'google',
-                        options: {
-                           redirectTo: `${window.location.origin}/auth/callback?next=/onboarding`
-                        }
-                     });
-                  }}
-                  className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-all text-[10px] font-black uppercase tracking-widest text-gray-600 shadow-sm"
-               >
-                  <Chrome className="w-4 h-4 text-red-600" /> Continue with Google
-               </button>
+               {!showOtp ? (
+                  <>
+                     <button
+                        type="button"
+                        onClick={async () => {
+                           setIsLoading(true);
+                           const { createClient } = await import('@/lib/supabase/client');
+                           const supabase = createClient();
+                           await supabase.auth.signInWithOAuth({
+                              provider: 'google',
+                              options: {
+                                 redirectTo: `${window.location.origin}/auth/callback?next=/onboarding`
+                              }
+                           });
+                        }}
+                        className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-all text-[10px] font-black uppercase tracking-widest text-gray-600 shadow-sm"
+                     >
+                        <Chrome className="w-4 h-4 text-red-600" /> Continue with Google
+                     </button>
 
-               <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Professional Email</label>
-                     <div className="relative">
-                        <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                           name="email"
-                           type="email"
-                           required
-                           placeholder="name@agency.com"
-                           className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 placeholder:text-gray-300"
+                     <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Professional Email</label>
+                           <div className="relative">
+                              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                              <input
+                                 name="email"
+                                 type="email"
+                                 required
+                                 placeholder="name@agency.com"
+                                 className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 placeholder:text-gray-300"
+                              />
+                           </div>
+                        </div>
+
+                        <PasswordField
+                           name="password"
+                           label="Create Password"
                         />
+
+                        <PasswordField
+                           name="confirmPassword"
+                           label="Confirm Password"
+                        />
+
+                        <button
+                           type="submit"
+                           disabled={isLoading}
+                           className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#a20000] transition-all flex items-center justify-center gap-3 shadow-xl transform active:scale-95 disabled:opacity-50"
+                        >
+                           {isLoading ? (
+                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                           ) : (
+                              <>Create Account <ArrowRight className="w-4 h-4" /></>
+                           )}
+                        </button>
+                     </form>
+                  </>
+               ) : (
+                  <form onSubmit={handleVerifyOtp} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Verification Code</label>
+                        <input
+                           type="text"
+                           required
+                           value={otp}
+                           onChange={(e) => setOtp(e.target.value)}
+                           placeholder="000000"
+                           className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-6 py-5 text-2xl font-black tracking-[0.5em] text-center focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 placeholder:text-gray-200"
+                           maxLength={6}
+                        />
+                        <p className="text-[9px] text-center text-gray-400 font-bold uppercase tracking-widest mt-4">
+                           Enter the 6-digit code sent to <span className="text-gray-900">{email}</span>
+                        </p>
                      </div>
-                  </div>
 
-                  <PasswordField
-                     name="password"
-                     label="Create Password"
-                  />
+                     <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#a20000] transition-all flex items-center justify-center gap-3 shadow-xl transform active:scale-95 disabled:opacity-50"
+                     >
+                        {isLoading ? (
+                           <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                           <>Verify & Continue <ArrowRight className="w-4 h-4" /></>
+                        )}
+                     </button>
 
-                  <PasswordField
-                     name="confirmPassword"
-                     label="Confirm Password"
-                  />
-
-                  <button
-                     type="submit"
-                     disabled={isLoading}
-                     className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#a20000] transition-all flex items-center justify-center gap-3 shadow-xl transform active:scale-95 disabled:opacity-50"
-                  >
-                     {isLoading ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                     ) : (
-                        <>Continue <ArrowRight className="w-4 h-4" /></>
-                     )}
-                  </button>
-               </form>
+                     <button 
+                        type="button"
+                        onClick={() => setShowOtp(false)}
+                        className="w-full text-center text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors"
+                     >
+                        Change Email Address
+                     </button>
+                  </form>
+               )}
             </div>
 
             <div className="mt-12 text-center">

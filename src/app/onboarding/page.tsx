@@ -116,6 +116,15 @@ export default function OnboardingPage() {
   }, [router]);
 
   const handleNextStep = async (nextStep: 1 | 2 | 3) => {
+    // Validate Step 1 before moving to payment
+    if (nextStep === 2) {
+      if (!fullName || !dob || !phone || !country) {
+        setError('All profile details are required before proceeding to payment.');
+        return;
+      }
+    }
+    
+    setIsLoading(true);
     // Save draft to DB so they can continue on another device
     await saveDraftOnboarding({
       role,
@@ -126,6 +135,7 @@ export default function OnboardingPage() {
       step: nextStep
     });
     setStep(nextStep);
+    setIsLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -237,141 +247,147 @@ export default function OnboardingPage() {
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#a20000] to-slate-900 opacity-20"></div>
 
           {step === 1 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {roles.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setRole(item.id)}
-                    className={`p-6 rounded-3xl border-2 text-left transition-all flex flex-col gap-3 ${
-                      role === item.id 
-                        ? 'border-[#a20000] bg-red-50/20 shadow-lg shadow-red-100/30' 
-                        : 'border-slate-50 hover:border-slate-200 bg-white'
-                    }`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${role === item.id ? 'bg-[#a20000] text-white' : 'bg-slate-50 text-slate-400'}`}>
-                      <item.icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-black text-[10px] uppercase tracking-tight text-slate-900">{item.label}</h4>
-                      <p className="text-[9px] text-slate-400 mt-1 font-bold leading-relaxed">{item.desc}</p>
-                    </div>
-                  </button>
-                ))}
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {/* Role Selection */}
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Account Identity</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {roles.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setRole(item.id)}
+                      className={`p-6 rounded-3xl border-2 text-left transition-all flex flex-col gap-3 ${
+                        role === item.id 
+                          ? 'border-[#a20000] bg-red-50/20 shadow-lg shadow-red-100/30' 
+                          : 'border-slate-50 hover:border-slate-200 bg-white'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${role === item.id ? 'bg-[#a20000] text-white' : 'bg-slate-50 text-slate-400'}`}>
+                        <item.icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-[10px] uppercase tracking-tight text-slate-900">{item.label}</h4>
+                        <p className="text-[9px] text-slate-400 mt-1 font-bold leading-relaxed">{item.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <button
-                onClick={() => handleNextStep(2)}
-                className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#a20000] transition-all flex items-center justify-center gap-3 shadow-xl"
-              >
-                Continue to Details <ChevronRight className="w-4 h-4" />
-              </button>
+              {/* Personal Details */}
+              <div className="space-y-6 pt-8 border-t border-slate-50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                    <div className="relative">
+                      <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        required
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="John Doe"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all placeholder:text-slate-300"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date of Birth</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="date"
+                        required
+                        value={dob}
+                        onChange={(e) => setDob(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
+                    <div className="relative">
+                      <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="tel"
+                        required
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="+234..."
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all placeholder:text-slate-300"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Country</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        required
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value)}
+                        placeholder="Nigeria"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all placeholder:text-slate-300"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => handleNextStep(2)}
+                  disabled={isLoading}
+                  className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#a20000] transition-all flex items-center justify-center gap-3 shadow-xl"
+                >
+                  {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <>Continue to Payment <ChevronRight className="w-4 h-4" /></>}
+                </button>
+              </div>
             </div>
           )}
 
           {step === 2 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                  <div className="relative">
-                    <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="text"
-                      required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="John Doe"
-                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all placeholder:text-slate-300"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date of Birth</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="date"
-                      required
-                      value={dob}
-                      onChange={(e) => setDob(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
-                  <div className="relative">
-                    <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="tel"
-                      required
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+234..."
-                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all placeholder:text-slate-300"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Country</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="text"
-                      required
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      placeholder="Nigeria"
-                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all placeholder:text-slate-300"
-                    />
-                  </div>
-                </div>
-              </div>
-
               {/* Mandatory Payment Section */}
-              <div className="pt-8 border-t border-slate-50">
-                <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden mb-8">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#a20000] blur-[80px] opacity-20"></div>
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-4">
-                      <CreditCard className="w-5 h-5 text-[#a20000]" />
-                      <h3 className="text-sm font-black uppercase tracking-widest">Mandatory Subscription</h3>
-                    </div>
-                    <p className="text-[11px] text-slate-400 font-medium mb-6">
-                      To activate your professional profile, a quarterly subscription fee of <span className="text-white font-bold">₦15,000</span> is required. 
-                      Please pay via Paystack and provide your reference below.
-                    </p>
-                    <a 
-                      href={paymentSettings.paymentLink} 
-                      target="_blank" 
-                      className="inline-flex items-center gap-2 bg-[#a20000] text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg"
-                    >
-                      Pay via Payment Gateway <ArrowRight className="w-4 h-4" />
-                    </a>
+              <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden mb-8">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#a20000] blur-[80px] opacity-20"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-4">
+                    <CreditCard className="w-5 h-5 text-[#a20000]" />
+                    <h3 className="text-sm font-black uppercase tracking-widest">Mandatory Subscription</h3>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Payment Reference / Transaction ID</label>
-                  <div className="relative">
-                    <ShieldCheck className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a20000]" />
-                    <input
-                      type="text"
-                      required
-                      value={paymentRef}
-                      onChange={(e) => setPaymentRef(e.target.value)}
-                      placeholder="e.g. T234567890"
-                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all placeholder:text-slate-300"
-                    />
-                  </div>
+                  <p className="text-[11px] text-slate-400 font-medium mb-6">
+                    To activate your professional profile, a quarterly subscription fee of <span className="text-white font-bold">₦15,000</span> is required. 
+                    Please pay via Paystack and provide your reference below.
+                  </p>
+                  <a 
+                    href={paymentSettings.paymentLink} 
+                    target="_blank" 
+                    className="inline-flex items-center gap-2 bg-[#a20000] text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg"
+                  >
+                    Pay via Payment Gateway <ArrowRight className="w-4 h-4" />
+                  </a>
                 </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Payment Reference / Transaction ID</label>
+                <div className="relative">
+                  <ShieldCheck className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a20000]" />
+                  <input
+                    type="text"
+                    required
+                    value={paymentRef}
+                    onChange={(e) => setPaymentRef(e.target.value)}
+                    placeholder="e.g. T234567890"
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all placeholder:text-slate-300"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-8">
                 <button
                   type="button"
                   onClick={() => setStep(1)}

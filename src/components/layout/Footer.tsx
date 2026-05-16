@@ -15,7 +15,7 @@ interface FooterContent {
   columns: FooterColumn[];
 }
 
-export function Footer({ content, settings }: { content?: FooterContent; settings?: { footerLogoUrl?: string; logoUrl?: string; siteTitle?: string } | null }) {
+export function Footer({ content, settings }: { content?: any; settings?: any }) {
   const [siteSettings, setSiteSettings] = useState<{ footerLogoUrl?: string; logoUrl?: string; siteTitle?: string } | null>(null);
   const supabase = createClient();
 

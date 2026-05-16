@@ -15,15 +15,87 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=${error_description || error_param}`)
   }
 
+  const supabase = await createClient()
+
   if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) {
       console.error('Auth callback error (code):', error)
       return NextResponse.redirect(`${origin}/login?error=Auth code exchange failed: ${error.message}`)
     }
-  } else if (token_hash && type) {
-    const supabase = await createClient()
+
+    // Ensure we have the user from the session
+    const user = session?.user
+    let finalNext = next
+
+    if (user) {
+      // Check for existing database records
+      let { data: userRecord } = await supabase
+        .from('users')
+        .select('role, is_active')
+        .eq('id', user.id)
+        .single()
+
+      // AUTO-CREATE OR SYNC USER RECORD
+      if (!userRecord) {
+        let assignedRole = 'player'
+        // Auto-promote specific developer/admin emails
+        const adminEmails = ['centerkickdev@gmail.com', 'admin@centerkick.com']
+        if (user.email && adminEmails.includes(user.email)) {
+          assignedRole = 'superadmin'
+        }
+
+        const { data: newUser, error: insertError } = await supabase
+          .from('users')
+          .insert([{ 
+            id: user.id, 
+            email: user.email, 
+            role: assignedRole,
+            is_active: true
+          }])
+          .select()
+          .single()
+
+        // Explicitly update auth metadata for immediate session availability
+        await supabase.auth.updateUser({
+          data: { role: assignedRole }
+        })
+        
+        if (!insertError) {
+          userRecord = newUser
+        }
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('user_id', user.id)
+        .single()
+
+      const role = userRecord?.role
+      const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance']
+
+      if (role && adminRoles.includes(role)) {
+        finalNext = '/admin'
+      } else if (userRecord && profile) {
+        if (profile.status === 'active') {
+          finalNext = '/dashboard'
+        } else {
+          finalNext = '/onboarding'
+        }
+      } else {
+        // NEW USER or INCOMPLETE PROFILE
+        finalNext = '/onboarding'
+      }
+    }
+
+    // Dynamic redirect based on where the request came from
+    // This solves the localhost vs production redirect issue
+    return NextResponse.redirect(`${origin}${finalNext}`)
+  }
+
+  // Handle OTP/Token-based login
+  if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({
       token_hash,
       type,
@@ -32,52 +104,8 @@ export async function GET(request: Request) {
       console.error('Auth callback error (otp):', error)
       return NextResponse.redirect(`${origin}/login?error=OTP verification failed: ${error.message}`)
     }
-  } else {
-    // Debug info: what params were actually present?
-    const params = Array.from(searchParams.keys()).join(', ')
-    return NextResponse.redirect(`${origin}/login?error=No authentication code or token found. Available params: ${params || 'none'}`)
+    return NextResponse.redirect(`${origin}${next}`)
   }
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  let finalNext = next
-  if (user) {
-    const { data: userRecord } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('status')
-      .eq('user_id', user.id)
-      .single()
-
-    const role = userRecord?.role || 'player'
-    const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance']
-
-    if (adminRoles.includes(role)) {
-      finalNext = '/admin'
-    } else if (userRecord && profile) {
-      if (profile.status === 'active') {
-        finalNext = '/dashboard'
-      } else {
-        finalNext = '/dashboard/subscription'
-      }
-    } else {
-      finalNext = '/onboarding'
-    }
-  }
-
-  const forwardedHost = request.headers.get('x-forwarded-host') // i.e. localhost:3000
-  const isLocalEnv = process.env.NODE_ENV === 'development'
-  if (isLocalEnv) {
-    return NextResponse.redirect(`${origin}${finalNext}`)
-  } else if (forwardedHost) {
-    return NextResponse.redirect(`https://${forwardedHost}${finalNext}`)
-  } else {
-    return NextResponse.redirect(`${origin}${finalNext}`)
-  }
+  return NextResponse.redirect(`${origin}/login?error=No authentication code found`)
 }

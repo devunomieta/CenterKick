@@ -136,6 +136,8 @@ export default async function AdminDashboard() {
                     { type: 'Players', subscribed: getSubCount('player', 'active'), unsubscribed: getSubCount('player', 'pending') },
                     { type: 'Coaches', subscribed: getSubCount('coach', 'active'), unsubscribed: getSubCount('coach', 'pending') },
                     { type: 'Agents', subscribed: getSubCount('agent', 'active'), unsubscribed: getSubCount('agent', 'pending') },
+                    { type: 'Scouts', subscribed: getSubCount('scout', 'active'), unsubscribed: getSubCount('scout', 'pending') },
+                    { type: 'Orgs', subscribed: getSubCount('organization', 'active'), unsubscribed: getSubCount('organization', 'pending') },
                   ].map((sub, i) => (
                     <div key={i} className="p-4 bg-gray-50 rounded-2xl space-y-3">
                        <div className="flex items-center justify-between">

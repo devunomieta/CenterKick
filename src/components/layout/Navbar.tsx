@@ -22,7 +22,7 @@ interface SiteSettings {
   logoUrl?: string;
 }
 
-export function Navbar({ content, settings }: { content?: NavbarContent; settings?: SiteSettings | null }) {
+export function Navbar({ content, settings }: { content?: any; settings?: any }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null); // Supabase User type is complex, keeping any for now but could use User from @supabase/supabase-js
@@ -132,7 +132,8 @@ export function Navbar({ content, settings }: { content?: NavbarContent; setting
   const logoUrl = resolveUrl(siteSettings?.logoUrl);
 
   const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
-  const dashboardHref = user ? (adminRoles.includes(userRole) ? "/admin" : "/dashboard") : "/login";
+  const userMetadataRole = user?.app_metadata?.role;
+  const dashboardHref = user ? (adminRoles.includes(userMetadataRole || userRole) ? "/admin" : "/dashboard") : "/login";
 
   return (
     <nav className="fixed w-full z-50 top-0 start-0 bg-white border-b border-gray-100 shadow-sm">
@@ -171,9 +172,9 @@ export function Navbar({ content, settings }: { content?: NavbarContent; setting
 
          {/* NAVIGATION LINKS */}
          <div className={`items-center justify-center w-full md:flex md:w-auto md:order-1 ${isOpen ? 'block' : 'hidden'} absolute md:relative top-20 md:top-0 left-0 bg-white md:bg-transparent shadow-lg md:shadow-none border-t md:border-0 border-gray-100 max-h-[calc(100vh-80px)] overflow-y-auto md:overflow-visible`}>
-            <ul className="flex flex-col p-6 md:p-0 mt-0 font-medium md:space-x-8 rtl:space-x-reverse md:flex-row text-sm uppercase tracking-widest text-[11px] font-black">
+            <ul className="flex flex-col p-6 md:p-0 mt-0 font-medium md:space-x-8 rtl:space-x-reverse md:flex-row text-sm tracking-widest text-[11px] font-black">
               {navContent.links.map((link: NavLink, idx: number) => (
-                <li key={idx} className={link.dropdown ? "relative group/drop" : ""}>
+                <li key={idx} className={`${link.dropdown ? "relative group/drop" : ""} ${link.label !== 'Home' ? 'uppercase' : ''}`}>
                    {link.dropdown ? (
                       <>
                          <button 
@@ -196,21 +197,47 @@ export function Navbar({ content, settings }: { content?: NavbarContent; setting
                 </li>
              ))}
 
-             <li className="md:hidden mt-8">
-                <Link href={dashboardHref} className="block w-full text-center text-white bg-[#b50a0a] hover:bg-[#990000] font-black rounded-lg text-xs px-6 py-4 transition-all">
-                   {user ? 'Dashboard' : 'Get Started'}
-                </Link>
-             </li>
+             <li className="md:hidden mt-8 flex flex-col gap-4">
+                 {user ? (
+                   <Link href={dashboardHref} className="block w-full text-center text-white bg-[#b50a0a] hover:bg-[#990000] font-black rounded-lg text-xs px-6 py-4 transition-all">
+                      Dashboard
+                   </Link>
+                 ) : (
+                   <>
+                     <Link href="/login" className="block w-full text-center text-[#b50a0a] border-2 border-[#b50a0a] font-black rounded-lg text-xs px-6 py-4 transition-all">
+                        Login
+                     </Link>
+                     <Link href="/register" className="block w-full text-center text-white bg-[#b50a0a] hover:bg-[#990000] font-black rounded-lg text-xs px-6 py-4 transition-all">
+                        Register
+                     </Link>
+                   </>
+                 )}
+              </li>
            </ul>
          </div>
 
          {/* CTA BUTTON */}
-          <div className="hidden md:flex order-3">
-            <Link href={dashboardHref}>
-              <button type="button" className="text-white bg-[#b50a0a] hover:bg-[#990000] font-black rounded-lg text-[10px] tracking-widest uppercase px-8 py-3.5 shadow-md transition-all hover:shadow-xl transform active:scale-95">
-                {user ? 'Dashboard' : 'Get Started'}
-              </button>
-            </Link>
+          <div className="hidden md:flex items-center gap-4 order-3">
+            {user ? (
+              <Link href={dashboardHref}>
+                <button type="button" className="text-white bg-[#b50a0a] hover:bg-[#990000] font-black rounded-xl text-[10px] tracking-widest uppercase px-8 py-3.5 shadow-md transition-all hover:shadow-xl transform active:scale-95">
+                  Dashboard
+                </button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login">
+                  <button type="button" className="text-gray-700 hover:text-[#b50a0a] font-black text-[10px] tracking-widest uppercase px-4 transition-all">
+                    Login
+                  </button>
+                </Link>
+                <Link href="/register">
+                  <button type="button" className="text-white bg-[#b50a0a] hover:bg-[#990000] font-black rounded-xl text-[10px] tracking-widest uppercase px-8 py-3.5 shadow-md transition-all hover:shadow-xl transform active:scale-95">
+                    Register
+                  </button>
+                </Link>
+              </>
+            )}
           </div>
 
       </div>

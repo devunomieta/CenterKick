@@ -36,10 +36,10 @@ interface HomeClientProps {
   storyPosts: Post[];
   dummyPlayers: Player[];
   highlightPosts: Post[];
-  siteContent: any;
-  navContent?: any;
-  footerContent?: any;
-  siteSettings?: any;
+  siteContent: Record<string, any>;
+  navContent?: Record<string, any>;
+  footerContent?: Record<string, any>;
+  siteSettings?: Record<string, any>;
 }
 
 const IMG_HERO_DEFAULT = "https://images.unsplash.com/photo-1518605368461-1ee7e537d45c?auto=format&fit=crop&w=1200&q=80";
@@ -280,11 +280,18 @@ export function HomeClient({ layout, heroPosts, storyPosts, dummyPlayers, highli
                         </div>
                         <span className="text-white/80 text-[10px] md:text-xs font-black uppercase tracking-[0.4em] mb-4">{ctaContent.subtitle || 'I have a question?'}</span>
                         <h2 className="text-3xl md:text-5xl font-black text-white leading-tight uppercase tracking-tighter italic mb-10 max-w-2xl">{ctaContent.title || 'Our agency works with athletes of all levels'}</h2>
-                        <Link href={ctaContent.primaryButtonLink || "/contact"}>
-                           <button className="bg-white text-[#b50a0a] px-12 py-4 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-gray-50 transition-all hover:-translate-y-1 active:scale-95 flex items-center gap-2">
-                              {ctaContent.primaryButtonText || 'Partner With Us'} <ArrowRight className="w-4 h-4" />
-                           </button>
-                        </Link>
+                        <div className="flex flex-col sm:flex-row items-center gap-6 mb-10">
+                           <Link href="/register">
+                              <button className="bg-white text-[#b50a0a] px-12 py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-gray-50 transition-all hover:-translate-y-1 active:scale-95 flex items-center gap-3 group">
+                                 Join the Network <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                              </button>
+                           </Link>
+                           <Link href="/login">
+                              <button className="bg-transparent text-white border-2 border-white/20 px-12 py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-white/10 transition-all hover:-translate-y-1 active:scale-95 flex items-center gap-3">
+                                 Access Dashboard
+                              </button>
+                           </Link>
+                        </div>
                      </div>
                      <div className="absolute inset-0 opacity-10 pointer-events-none">
                         <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2"></div>

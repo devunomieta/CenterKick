@@ -32,13 +32,13 @@ interface Tag {
 
 interface BlogFeedClientProps {
   layout: string[];
-  siteContent: Record<string, { title: string; subtitle: string }>;
+  siteContent: Record<string, any>;
   initialPosts: BlogPost[];
   categories: Category[];
   tags: Tag[];
-  navContent?: any;
-  footerContent?: any;
-  siteSettings?: any;
+  navContent?: Record<string, any>;
+  footerContent?: Record<string, any>;
+  siteSettings?: Record<string, any>;
 }
 
 export default function BlogFeedClient({ layout, siteContent, initialPosts, categories, tags, navContent, footerContent, siteSettings }: BlogFeedClientProps) {
