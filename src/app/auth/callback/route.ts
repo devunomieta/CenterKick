@@ -67,7 +67,7 @@ export async function GET(request: Request) {
         finalNext = '/dashboard/subscription'
       }
     } else {
-      finalNext = '/register/google-onboarding'
+      finalNext = '/onboarding'
     }
   }
 
