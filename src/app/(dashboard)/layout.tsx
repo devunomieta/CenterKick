@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Home, Users, BarChart2, Settings, Menu, Bell, X, Shield } from 'lucide-react';
+import { Home, Users, BarChart2, Settings, Menu, Bell, X, Shield, Search } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { SignOutButton } from '@/components/dashboard/SignOutButton';
@@ -31,9 +31,9 @@ export default async function DashboardLayout({
     .eq('user_id', user.id)
     .single();
 
-  // 1. Enforce Profile Onboarding (for Google Auth signups)
+  // 1. Enforce Profile Onboarding
   if (!userRecord || !profile) {
-    redirect('/register/google-onboarding');
+    redirect('/onboarding');
   }
 
   const role = userRecord?.role || 'player';
@@ -104,10 +104,17 @@ export default async function DashboardLayout({
               <span className="text-sm uppercase tracking-widest">My Profile</span>
             </Link>
 
-            {(role === 'player' || role === 'athlete') && (
+            {(role === 'player' || role === 'athlete' || role === 'coach') && (
               <Link href="/dashboard/stats" className="flex items-center gap-3 px-4 py-3 hover:text-white hover:bg-white/5 rounded-xl font-bold transition-all">
                 <BarChart2 className="w-5 h-5" />
                 <span className="text-sm uppercase tracking-widest">Stats & Media</span>
+              </Link>
+            )}
+
+            {(role === 'agent' || role === 'scout' || role === 'organization') && (
+              <Link href="/dashboard/scout" className="flex items-center gap-3 px-4 py-3 hover:text-white hover:bg-white/5 rounded-xl font-bold transition-all">
+                <Search className="w-5 h-5" />
+                <span className="text-sm uppercase tracking-widest">Discovery</span>
               </Link>
             )}
 
