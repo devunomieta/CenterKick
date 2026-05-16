@@ -9,7 +9,7 @@ import {
   MapPin, Phone, Calendar, ArrowRight, User, AlertCircle,
   Search, Building, ShieldCheck, CreditCard, CheckCircle2, ArrowLeft
 } from 'lucide-react';
-import { saveOnboarding } from './actions';
+import { saveOnboarding, saveDraftOnboarding } from './actions';
 import { createClient } from '@/lib/supabase/client';
 
 export default function OnboardingPage() {
@@ -82,23 +82,51 @@ export default function OnboardingPage() {
         setPaymentSettings(settings.content);
       }
 
-      // Check if they already have a profile
+      // Fetch any existing profile data to pre-fill
       const { data: profile } = await supabase
         .from('profiles')
-        .select('status')
+        .select('*')
         .eq('user_id', user.id)
         .single();
 
-      if (profile && profile.status === 'active') {
-        router.push('/dashboard');
-      } else if (profile && profile.status === 'pending') {
-        setIsInitializing(false);
-      } else {
-        setIsInitializing(false);
+      if (profile) {
+        if (profile.first_name) setFullName(`${profile.first_name} ${profile.last_name || ''}`.trim());
+        if (profile.phone) setPhone(profile.phone);
+        if (profile.date_of_birth) setDob(profile.date_of_birth);
+        if (profile.nationality) setCountry(profile.nationality);
+        
+        if (profile.status === 'active') {
+          router.push('/dashboard');
+          return;
+        }
       }
+
+      // Also check role from users table
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      if (userData?.role) setRole(userData.role);
+
+      setIsInitializing(false);
     }
     checkAuth();
   }, [router]);
+
+  const handleNextStep = async (nextStep: 1 | 2 | 3) => {
+    // Save draft to DB so they can continue on another device
+    await saveDraftOnboarding({
+      role,
+      fullName,
+      phone,
+      dob,
+      country,
+      step: nextStep
+    });
+    setStep(nextStep);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,7 +261,7 @@ export default function OnboardingPage() {
               </div>
 
               <button
-                onClick={() => setStep(2)}
+                onClick={() => handleNextStep(2)}
                 className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#a20000] transition-all flex items-center justify-center gap-3 shadow-xl"
               >
                 Continue to Details <ChevronRight className="w-4 h-4" />

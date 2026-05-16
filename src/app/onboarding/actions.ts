@@ -2,6 +2,57 @@
 
 import { createClient } from '@/lib/supabase/server';
 
+export async function saveDraftOnboarding(formData: Partial<{
+  role: string;
+  fullName: string;
+  phone: string;
+  dob: string;
+  country: string;
+  step: number;
+}>) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  try {
+    if (formData.role) {
+      await supabase
+        .from('users')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          role: formData.role as any
+        });
+    }
+
+    if (formData.fullName || formData.phone || formData.dob || formData.country) {
+      const names = formData.fullName?.split(' ') || [];
+      const firstName = names[0] || undefined;
+      const lastName = names.slice(1).join(' ') || undefined;
+
+      await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
+          ...(firstName && { first_name: firstName }),
+          ...(lastName && { last_name: lastName }),
+          ...(formData.phone && { phone: formData.phone }),
+          ...(formData.dob && { date_of_birth: formData.dob }),
+          ...(formData.country && { nationality: formData.country }),
+          status: 'pending' // Keep it pending during draft
+        });
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Draft save error:', err);
+    return { success: false };
+  }
+}
+
 export async function saveOnboarding(formData: {
   role: string;
   fullName: string;
@@ -47,8 +98,8 @@ export async function saveOnboarding(formData: {
         last_name: lastName,
         phone: phone,
         date_of_birth: dob,
-        nationality: country, // The schema uses 'nationality' or 'country' depending on migration, 20240329000001 renamed it
-        status: 'pending', // Pending verification of payment
+        nationality: country, 
+        status: 'pending', 
         verification_requested: true
       });
 
@@ -57,8 +108,7 @@ export async function saveOnboarding(formData: {
       return { success: false, error: profileError.message };
     }
 
-    // 3. Log the payment reference in a transactions table or similar
-    // Based on the migration list, there is a transactions_table.sql
+    // 3. Log the payment reference
     const { error: transError } = await supabase
        .from('transactions')
        .insert({
@@ -72,8 +122,6 @@ export async function saveOnboarding(formData: {
 
     if (transError) {
        console.error('Error logging transaction:', transError);
-       // We don't necessarily want to block the whole flow if transaction log fails, 
-       // but for mandatory payment we should.
     }
 
     return { success: true };

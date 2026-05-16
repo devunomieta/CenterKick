@@ -7,6 +7,9 @@ import { BannerManager } from '@/components/dashboard/BannerManager';
 
 import { ToastProvider } from '@/context/ToastContext';
 
+import { getCachedSettings } from '@/lib/cms';
+import { getCachedData } from '@/lib/redis';
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -19,17 +22,25 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
-  const { data: userRecord } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  // Cache user basic record
+  const userRecord = await getCachedData(`user:record:${user.id}`, async () => {
+    const { data } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    return data;
+  }, 1800); // 30 minutes
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
+  // Cache profile basic record
+  const profile = await getCachedData(`user:profile:${user.id}`, async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+    return data;
+  }, 1800);
 
   // 1. Enforce Profile Onboarding
   if (!userRecord || !profile) {
@@ -52,15 +63,8 @@ export default async function DashboardLayout({
     redirect('/admin');
   }
 
-  // Fetch Site Settings for Branding
-  const { data: siteSettingsData } = await supabase
-    .from('site_content')
-    .select('content')
-    .eq('page', 'settings')
-    .eq('section', 'system')
-    .single();
-  
-  const siteSettings = siteSettingsData?.content || {};
+  // Fetch Site Settings from Cache
+  const siteSettings = await getCachedSettings() || {};
   const resolveUrl = (url: string | undefined) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;

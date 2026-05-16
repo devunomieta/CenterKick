@@ -22,7 +22,7 @@ interface SiteSettings {
   logoUrl?: string;
 }
 
-export function Navbar({ content }: { content?: NavbarContent }) {
+export function Navbar({ content, settings }: { content?: NavbarContent; settings?: SiteSettings | null }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null); // Supabase User type is complex, keeping any for now but could use User from @supabase/supabase-js
@@ -68,6 +68,10 @@ export function Navbar({ content }: { content?: NavbarContent }) {
     }
 
     const getSettings = async () => {
+       if (settings) {
+         setSiteSettings(settings);
+         return;
+       }
        const { data } = await supabase
          .from('site_content')
          .select('content')

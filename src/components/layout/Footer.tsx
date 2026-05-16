@@ -15,12 +15,16 @@ interface FooterContent {
   columns: FooterColumn[];
 }
 
-export function Footer({ content }: { content?: FooterContent }) {
+export function Footer({ content, settings }: { content?: FooterContent; settings?: { footerLogoUrl?: string; logoUrl?: string; siteTitle?: string } | null }) {
   const [siteSettings, setSiteSettings] = useState<{ footerLogoUrl?: string; logoUrl?: string; siteTitle?: string } | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
     const getSettings = async () => {
+       if (settings) {
+          setSiteSettings(settings);
+          return;
+       }
        const { data } = await supabase
          .from('site_content')
          .select('content')
@@ -30,7 +34,7 @@ export function Footer({ content }: { content?: FooterContent }) {
        if (data?.content) setSiteSettings(data.content);
     };
     getSettings();
-  }, [supabase]);
+  }, [supabase, settings]);
 
   const resolveUrl = (url: string | undefined) => {
     if (!url) return '';
