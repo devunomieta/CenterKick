@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function saveDraftOnboarding(formData: Partial<{
   role: string;
@@ -11,6 +12,7 @@ export async function saveDraftOnboarding(formData: Partial<{
   step: number;
 }>) {
   const supabase = await createClient();
+  const adminClient = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -19,7 +21,7 @@ export async function saveDraftOnboarding(formData: Partial<{
 
   try {
     if (formData.role) {
-      await supabase
+      await adminClient
         .from('users')
         .upsert({
           id: user.id,
@@ -33,15 +35,15 @@ export async function saveDraftOnboarding(formData: Partial<{
       const firstName = names[0] || undefined;
       const lastName = names.slice(1).join(' ') || undefined;
 
-      await supabase
+      await adminClient
         .from('profiles')
         .upsert({
           user_id: user.id,
           ...(firstName && { first_name: firstName }),
           ...(lastName && { last_name: lastName }),
-          ...(formData.phone && { phone: formData.phone }),
+          ...(formData.phone && { phone_number: formData.phone }),
           ...(formData.dob && { date_of_birth: formData.dob }),
-          ...(formData.country && { nationality: formData.country }),
+          ...(formData.country && { country: formData.country }),
           status: 'pending' // Keep it pending during draft
         });
     }
@@ -60,22 +62,43 @@ export async function saveOnboarding(formData: {
   dob: string;
   country: string;
   paymentReference: string;
+  paymentMethod?: string;
+  proofName?: string;
+  proofEmail?: string;
+  proofFileName?: string;
 }) {
   const supabase = await createClient();
+  const adminClient = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return { success: false, error: 'Unauthorized' };
   }
 
-  const { role, fullName, phone, dob, country, paymentReference } = formData;
+  const { 
+    role, fullName, phone, dob, country, 
+    paymentReference, paymentMethod, proofName, 
+    proofEmail, proofFileName 
+  } = formData;
+  
   const names = fullName.split(' ');
   const firstName = names[0] || '';
   const lastName = names.slice(1).join(' ') || '';
 
   try {
-    // 1. Update user record in users table
-    const { error: userError } = await supabase
+    // 1. Fetch dynamic amount from settings
+    const { data: settings } = await supabase
+      .from('site_content')
+      .select('content')
+      .eq('page', 'settings')
+      .eq('section', 'payment')
+      .single();
+
+    const plans = settings?.content?.plans || {};
+    const amount = Number(plans[role]?.amount || 15000);
+
+    // 2. Update user record in users table
+    const { error: userError } = await adminClient
       .from('users')
       .upsert({
         id: user.id,
@@ -89,16 +112,16 @@ export async function saveOnboarding(formData: {
       return { success: false, error: userError.message };
     }
 
-    // 2. Create/Update profile record in profiles table
-    const { error: profileError } = await supabase
+    // 3. Create/Update profile record in profiles table
+    const { error: profileError } = await adminClient
       .from('profiles')
       .upsert({
         user_id: user.id,
         first_name: firstName,
         last_name: lastName,
-        phone: phone,
+        phone_number: phone, 
         date_of_birth: dob,
-        nationality: country, 
+        country: country, 
         status: 'pending', 
         verification_requested: true
       });
@@ -108,16 +131,18 @@ export async function saveOnboarding(formData: {
       return { success: false, error: profileError.message };
     }
 
-    // 3. Log the payment reference
-    const { error: transError } = await supabase
+    // 4. Log the payment reference in transactions
+    const { error: transError } = await adminClient
        .from('transactions')
        .insert({
           user_id: user.id,
-          amount: 15000,
+          amount: amount,
           type: 'subscription',
           status: 'pending',
           reference: paymentReference,
-          description: `Onboarding subscription for ${role}`
+          description: paymentMethod === 'bank' 
+            ? `Bank Settlement: ${proofName} (${proofEmail}) - File: ${proofFileName || 'None'}`
+            : `Onboarding subscription for ${role}`
        });
 
     if (transError) {

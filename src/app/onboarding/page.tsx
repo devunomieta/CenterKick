@@ -6,11 +6,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { 
   Trophy, Users, Briefcase, ChevronRight, 
-  MapPin, Phone, Calendar, ArrowRight, User, AlertCircle,
+  Phone, Calendar, ArrowRight, User, AlertCircle,
   Search, Building, ShieldCheck, CreditCard, CheckCircle2, ArrowLeft
 } from 'lucide-react';
 import { saveOnboarding, saveDraftOnboarding } from './actions';
 import { createClient } from '@/lib/supabase/client';
+import { CountrySelect } from '@/components/common/CountrySelect';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -27,8 +28,21 @@ export default function OnboardingPage() {
   const [dob, setDob] = useState('');
   const [country, setCountry] = useState('');
   const [paymentRef, setPaymentRef] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'gateway' | 'bank'>('gateway');
+  const [proofName, setProofName] = useState('');
+  const [proofEmail, setProofEmail] = useState('');
+  const [proofFile, setProofFile] = useState<File | null>(null);
 
-  const [paymentSettings, setPaymentSettings] = useState<{ paymentLink: string }>({ paymentLink: 'https://paystack.com/pay/centerkick-pro' });
+  const [paymentSettings, setPaymentSettings] = useState<any>({ 
+    paymentLink: 'https://paystack.com/pay/centerkick-pro',
+    plans: {
+      player: { amount: '15000' },
+      coach: { amount: '20000' },
+      agent: { amount: '30000' },
+      scout: { amount: '25000' },
+      organization: { amount: '50000' }
+    }
+  });
 
   // Persistence logic
   useEffect(() => {
@@ -91,9 +105,9 @@ export default function OnboardingPage() {
 
       if (profile) {
         if (profile.first_name) setFullName(`${profile.first_name} ${profile.last_name || ''}`.trim());
-        if (profile.phone) setPhone(profile.phone);
+        if (profile.phone_number) setPhone(profile.phone_number);
         if (profile.date_of_birth) setDob(profile.date_of_birth);
-        if (profile.nationality) setCountry(profile.nationality);
+        if (profile.country) setCountry(profile.country);
         
         if (profile.status === 'active') {
           router.push('/dashboard');
@@ -156,7 +170,13 @@ export default function OnboardingPage() {
         phone,
         dob,
         country,
-        paymentReference: paymentRef
+        paymentReference: paymentRef,
+        paymentMethod,
+        proofName,
+        proofEmail,
+        // For now, we'll just send the name of the file if present, 
+        // a real implementation would upload to storage first.
+        proofFileName: proofFile?.name 
       });
 
       if (res.success) {
@@ -323,17 +343,11 @@ export default function OnboardingPage() {
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Country</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input
-                        type="text"
-                        required
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        placeholder="Nigeria"
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all placeholder:text-slate-300"
-                      />
-                    </div>
+                    <CountrySelect
+                      value={country}
+                      onChange={setCountry}
+                      required
+                    />
                   </div>
                 </div>
 
@@ -350,41 +364,182 @@ export default function OnboardingPage() {
 
           {step === 2 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              {/* Mandatory Payment Section */}
-              <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden mb-8">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#a20000] blur-[80px] opacity-20"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CreditCard className="w-5 h-5 text-[#a20000]" />
-                    <h3 className="text-sm font-black uppercase tracking-widest">Mandatory Subscription</h3>
-                  </div>
-                  <p className="text-[11px] text-slate-400 font-medium mb-6">
-                    To activate your professional profile, a quarterly subscription fee of <span className="text-white font-bold">₦15,000</span> is required. 
-                    Please pay via Paystack and provide your reference below.
-                  </p>
-                  <a 
-                    href={paymentSettings.paymentLink} 
-                    target="_blank" 
-                    className="inline-flex items-center gap-2 bg-[#a20000] text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg"
-                  >
-                    Pay via Payment Gateway <ArrowRight className="w-4 h-4" />
-                  </a>
-                </div>
+              {/* Pricing Highlight */}
+              <div className="text-center mb-6">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Total Activation Fee</p>
+                <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter">
+                  ₦{Number(paymentSettings.plans?.[role]?.amount || 15000).toLocaleString()}
+                </h2>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                  {paymentSettings.plans?.[role]?.frequency || 'One-time Payment'} for {role} Profile
+                </p>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Payment Reference / Transaction ID</label>
-                <div className="relative">
-                  <ShieldCheck className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a20000]" />
-                  <input
-                    type="text"
-                    required
-                    value={paymentRef}
-                    onChange={(e) => setPaymentRef(e.target.value)}
-                    placeholder="e.g. T234567890"
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all placeholder:text-slate-300"
-                  />
+              {/* Payment Method Toggle */}
+              <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                <button
+                  onClick={() => setPaymentMethod('gateway')}
+                  className={`flex-1 flex items-center justify-center gap-3 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${paymentMethod === 'gateway' ? 'bg-white text-slate-900 shadow-md border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  <CreditCard className="w-4 h-4" /> Payment Gateway
+                </button>
+                <button
+                  onClick={() => setPaymentMethod('bank')}
+                  className={`flex-1 flex items-center justify-center gap-3 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${paymentMethod === 'bank' ? 'bg-white text-slate-900 shadow-md border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  <Building className="w-4 h-4" /> Bank Settlement
+                </button>
+              </div>
+
+              {paymentMethod === 'gateway' ? (
+                <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#a20000] blur-[80px] opacity-20"></div>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-4">
+                      <CreditCard className="w-5 h-5 text-[#a20000]" />
+                      <h3 className="text-sm font-black uppercase tracking-widest">Gateway Payment</h3>
+                    </div>
+                    <p className="text-[11px] text-slate-400 font-medium mb-6 leading-relaxed">
+                      Pay instantly using Paystack/Stripe. Your account will be flagged for priority verification once the transaction is logged.
+                    </p>
+                    <a 
+                      href={paymentSettings.paymentLink || 'https://paystack.com/pay/centerkick-pro'} 
+                      target="_blank" 
+                      className="inline-flex items-center gap-2 bg-[#a20000] text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg"
+                    >
+                      Open Payment Portal <ArrowRight className="w-4 h-4" />
+                    </a>
+                  </div>
                 </div>
+              ) : (
+                <div className="bg-white rounded-3xl p-8 border-2 border-slate-100 space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500 blur-[80px] opacity-10"></div>
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="space-y-4 flex-1">
+                      <div className="flex items-center gap-3 mb-1">
+                        <Building className="w-5 h-5 text-amber-600" />
+                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-900">Local Bank Transfer</h3>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex flex-col">
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Institution</span>
+                          <span className="text-xs font-black text-slate-900 uppercase tracking-tight">{paymentSettings.bankName || 'OPAY'}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex flex-col">
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Acc. Name</span>
+                            <span className="text-[11px] font-bold text-slate-900">{paymentSettings.accountName || 'CENTERKICK'}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Number</span>
+                            <span className="text-[11px] font-bold text-slate-900 tracking-wider">{paymentSettings.accountNumber || '0123456789'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-2xl md:w-48">
+                      <p className="text-[10px] font-bold text-slate-500 leading-relaxed italic text-center">
+                        "After transfer, please provide proof details for manual confirmation."
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Settlement Proof Module */}
+              <div className="space-y-6 pt-6 border-t border-slate-50">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    {paymentMethod === 'bank' ? 'Transfer Reference / Name' : 'Payment Reference / Transaction ID'}
+                  </label>
+                  <div className="relative">
+                    <ShieldCheck className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a20000]" />
+                    <input
+                      type="text"
+                      required
+                      value={paymentRef}
+                      onChange={(e) => setPaymentRef(e.target.value)}
+                      placeholder={paymentMethod === 'bank' ? "Enter your bank transfer name" : "e.g. T234567890"}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none transition-all placeholder:text-slate-300"
+                    />
+                  </div>
+                </div>
+
+                {paymentMethod === 'bank' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Depositor Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={proofName}
+                        onChange={(e) => setProofName(e.target.value)}
+                        placeholder="Name on transfer"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Depositor Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={proofEmail}
+                        onChange={(e) => setProofEmail(e.target.value)}
+                        placeholder="Your email address"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#a20000] outline-none"
+                      />
+                    </div>
+                    <div className="md:col-span-2 space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Proof of Payment (Image/PDF)</label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                          className="hidden"
+                          id="proof-upload"
+                        />
+                        {!proofFile ? (
+                          <label 
+                            htmlFor="proof-upload"
+                            className="w-full flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-8 hover:border-[#a20000] hover:bg-red-50/20 transition-all cursor-pointer group"
+                          >
+                            <CreditCard className="w-8 h-8 text-slate-300 group-hover:text-[#a20000] mb-3" />
+                            <span className="text-xs font-black uppercase text-slate-900 tracking-widest">
+                              Choose File to Upload
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-400 mt-1">PNG, JPG or PDF up to 5MB</span>
+                          </label>
+                        ) : (
+                          <div className="relative w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-xl bg-white border border-slate-100 flex items-center justify-center overflow-hidden">
+                              {proofFile.type.startsWith('image/') ? (
+                                <img 
+                                  src={URL.createObjectURL(proofFile)} 
+                                  alt="Preview" 
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <ShieldCheck className="w-8 h-8 text-[#a20000]" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] font-black text-slate-900 truncate uppercase tracking-tight">{proofFile.name}</p>
+                              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{(proofFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                            </div>
+                            <button 
+                              type="button"
+                              onClick={() => setProofFile(null)}
+                              className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors rounded-lg"
+                            >
+                              <AlertCircle className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-4 pt-8">
@@ -411,22 +566,40 @@ export default function OnboardingPage() {
           )}
 
           {step === 3 && (
-            <div className="text-center py-12 space-y-6 animate-in zoom-in duration-700">
-              <div className="w-20 h-20 rounded-full bg-green-50 text-green-500 flex items-center justify-center mx-auto shadow-xl shadow-green-100/50">
-                <CheckCircle2 className="w-10 h-10" />
+            <div className="text-center py-12 space-y-8 animate-in zoom-in duration-700">
+              <div className="w-24 h-24 rounded-[40px] bg-green-50 text-green-500 flex items-center justify-center mx-auto shadow-xl shadow-green-100/50 border border-green-100 relative">
+                <div className="absolute inset-0 bg-green-500 blur-2xl opacity-20 rounded-full animate-pulse"></div>
+                <CheckCircle2 className="w-12 h-12 relative z-10" />
               </div>
-              <div>
-                <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-2">Registration Submitted!</h2>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
+              
+              <div className="space-y-4">
+                <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none">Registration Submitted!</h2>
+                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-[0.2em] leading-relaxed max-w-sm mx-auto">
                   Your profile and payment are under review. <br />
                   You will be redirected to the dashboard shortly.
                 </p>
               </div>
-              <div className="flex justify-center pt-6">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#a20000] animate-bounce mx-1"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-[#a20000] animate-bounce delay-75 mx-1"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-[#a20000] animate-bounce delay-150 mx-1"></div>
+
+              <div className="flex flex-col items-center gap-6 pt-4">
+                <Link href="/dashboard" className="w-full max-w-[280px]">
+                  <button className="w-full bg-[#a20000] text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-red-700 transition-all shadow-xl shadow-red-900/20 flex items-center justify-center gap-3 group">
+                    Enter Dashboard <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </Link>
+                
+                <div className="flex justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#a20000] animate-bounce mx-1"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#a20000] animate-bounce delay-75 mx-1"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#a20000] animate-bounce delay-150 mx-1"></div>
+                </div>
               </div>
+
+              {/* Robust Redirect Logic */}
+              <script dangerouslySetInnerHTML={{ __html: `
+                setTimeout(function() {
+                  window.location.href = '/dashboard';
+                }, 5000);
+              `}} />
             </div>
           )}
         </div>

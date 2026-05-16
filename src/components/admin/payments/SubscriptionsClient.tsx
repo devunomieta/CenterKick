@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import {
    CreditCard, ExternalLink, Shield, Save,
-   Zap, DollarSign, UserCheck
+   Zap, DollarSign, UserCheck, Search, Users
 } from 'lucide-react';
 import { updatePaymentSettings } from '@/app/admin/payments/subscriptions/actions';
 
@@ -68,7 +68,7 @@ export function SubscriptionsClient({
       }
 
       // 6. Role-Based Plans Validation
-      const rolesToValidate = ['player', 'coach', 'agent'];
+      const rolesToValidate = ['player', 'coach', 'agent', 'scout', 'organization'];
       rolesToValidate.forEach(roleId => {
          const plan = settings.plans?.[roleId] || {};
          const amountStr = String(plan.amount || '');
@@ -107,6 +107,8 @@ export function SubscriptionsClient({
       { id: 'player', label: 'Player Accounts', color: 'from-blue-600/20', icon: UserCheck },
       { id: 'coach', label: 'Coach Accounts', color: 'from-amber-600/20', icon: Zap },
       { id: 'agent', label: 'Agent Accounts', color: 'from-purple-600/20', icon: Shield },
+      { id: 'scout', label: 'Scout Accounts', color: 'from-teal-600/20', icon: Search },
+      { id: 'organization', label: 'Organization Accounts', color: 'from-rose-600/20', icon: Users },
    ];
 
    const updatePlan = (roleId: string, field: string, value: string) => {
@@ -394,7 +396,7 @@ export function SubscriptionsClient({
                <div className="h-px flex-1 bg-gray-100"></div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
                {roles.map((role) => {
                   const plan = settings.plans?.[role.id] || {};
                   const Icon = role.icon;
