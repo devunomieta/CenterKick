@@ -39,12 +39,13 @@ interface HomeClientProps {
   siteContent: any;
   navContent?: any;
   footerContent?: any;
+  siteSettings?: any;
 }
 
 const IMG_HERO_DEFAULT = "https://images.unsplash.com/photo-1518605368461-1ee7e537d45c?auto=format&fit=crop&w=1200&q=80";
 const IMG_NEWS_DEFAULT = "https://images.unsplash.com/photo-1431324155629-1a6d0a11f472?auto=format&fit=crop&w=600&q=80";
 
-export function HomeClient({ layout, heroPosts, storyPosts, dummyPlayers, highlightPosts, siteContent, navContent, footerContent }: HomeClientProps) {
+export function HomeClient({ layout, heroPosts, storyPosts, dummyPlayers, highlightPosts, siteContent, navContent, footerContent, siteSettings }: HomeClientProps) {
    const [heroSlide, setHeroSlide] = useState(0);
    const [storyPage, setStoryPage] = useState(1);
    const [currentIdx, setCurrentIdx] = useState(0);
@@ -330,7 +331,7 @@ export function HomeClient({ layout, heroPosts, storyPosts, dummyPlayers, highli
 
    return (
       <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-primary/20">
-         <Navbar content={navContent} />
+         <Navbar content={navContent} settings={siteSettings} />
          <main className="pt-32 pb-0 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-4 md:mt-10">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                {layout.map(key => renderSection(key))}
@@ -338,7 +339,7 @@ export function HomeClient({ layout, heroPosts, storyPosts, dummyPlayers, highli
          </main>
          
 
-         <Footer content={footerContent} />
+         <Footer content={footerContent} settings={siteSettings} />
       </div>
    );
 }

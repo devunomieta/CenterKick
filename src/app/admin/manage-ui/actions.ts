@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { getCachedData, redis } from '@/lib/redis';
 
 /**
  * Updates the order of sections for a specific page
@@ -21,6 +22,8 @@ export async function updatePageLayout(slug: string, layout: string[]) {
 
   revalidatePath('/', 'layout');
   revalidatePath(slug);
+  // Invalidate Redis cache
+  await redis.del(`layout:${slug}`);
   return { success: true };
 }
 
@@ -57,6 +60,11 @@ export async function updateSectionContent(page: string, section: string, conten
 
   revalidatePath('/', 'layout');
   revalidatePath(page === '/' ? '/' : page);
+  // Invalidate Redis cache
+  await redis.del(`content:${page}:${section}`);
+  if (['navbar', 'footer'].includes(page)) {
+    await redis.del('global_cms_data');
+  }
   return { success: true };
 }
 
@@ -78,17 +86,20 @@ export async function getManageablePages() {
  * Fetches global CMS data (Navbar, Footer, etc.)
  */
 export async function getGlobalCMSData() {
-  const supabase = await createClient();
-  
-  const { data: globalData } = await supabase
-    .from('site_content')
-    .select('*')
-    .in('page', ['navbar', 'footer']);
+  return getCachedData('global_cms_data_v2', async () => {
+    const supabase = await createClient();
+    
+    const { data: globalData } = await supabase
+      .from('site_content')
+      .select('*')
+      .in('page', ['navbar', 'footer', 'settings']);
 
-  const navContent = globalData?.find(c => c.page === 'navbar' && c.section === 'navbar')?.content || null;
-  const footerContent = globalData?.find(c => c.page === 'footer' && c.section === 'footer')?.content || null;
+    const navContent = globalData?.find(c => c.page === 'navbar' && c.section === 'navbar')?.content || null;
+    const footerContent = globalData?.find(c => c.page === 'footer' && c.section === 'footer')?.content || null;
+    const siteSettings = globalData?.find(c => c.page === 'settings' && c.section === 'system')?.content || null;
 
-  return { navContent, footerContent };
+    return { navContent, footerContent, siteSettings };
+  }, 3600); // Cache for 1 hour
 }
 /**
  * Seeds initial site pages if they don't exist

@@ -38,9 +38,10 @@ interface BlogFeedClientProps {
   tags: Tag[];
   navContent?: any;
   footerContent?: any;
+  siteSettings?: any;
 }
 
-export default function BlogFeedClient({ layout, siteContent, initialPosts, categories, tags, navContent, footerContent }: BlogFeedClientProps) {
+export default function BlogFeedClient({ layout, siteContent, initialPosts, categories, tags, navContent, footerContent, siteSettings }: BlogFeedClientProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -162,13 +163,13 @@ export default function BlogFeedClient({ layout, siteContent, initialPosts, cate
       default: return null;
     }
   };
-  return (
+   return (
     <div className="space-y-0 min-h-screen bg-white selection:bg-red-50">
-      <Navbar content={navContent} />
+      <Navbar content={navContent} settings={siteSettings} />
       <div className="pt-20">
          {layout.map(key => renderSection(key))}
       </div>
-      <Footer content={footerContent} />
+      <Footer content={footerContent} settings={siteSettings} />
     </div>
   );
 }

@@ -23,9 +23,12 @@ interface ContactContent {
 interface ContactClientProps {
   layout: string[];
   content: ContactContent;
+  navContent?: any;
+  footerContent?: any;
+  siteSettings?: any;
 }
 
-export function ContactClient({ layout, content }: ContactClientProps) {
+export function ContactClient({ layout, content, navContent, footerContent, siteSettings }: ContactClientProps) {
    const [openFaq, setOpenFaq] = useState<number | null>(0);
 
    const renderSection = (key: string) => {
@@ -139,7 +142,7 @@ export function ContactClient({ layout, content }: ContactClientProps) {
 
    return (
       <div className="min-h-screen bg-white flex flex-col font-sans selection:bg-[#b50a0a] selection:text-white">
-         <Navbar />
+         <Navbar content={navContent} settings={siteSettings} />
          <main className="flex-grow pt-[104px]">
             {layout.includes('header') && renderSection('header')}
             {(layout.includes('info') || layout.includes('form')) && (
@@ -152,7 +155,7 @@ export function ContactClient({ layout, content }: ContactClientProps) {
             )}
             {layout.includes('faqs') && renderSection('faqs')}
          </main>
-         <Footer />
+         <Footer content={footerContent} settings={siteSettings} />
       </div>
    );
 }
