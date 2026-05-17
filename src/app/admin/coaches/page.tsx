@@ -160,7 +160,7 @@ export default async function AdminCoachesPage({
         {stats.map((stat, i) => (
           <Link
             key={i}
-            href={stat.tab === 'prospects' ? `/admin/prospects?role=coach` : `/admin/coaches?tab=${stat.tab === 'subscribed' ? 'all' : stat.tab}&page=1`}
+            href={stat.tab === 'prospects' ? `/admin/approvals?tab=prospects&role=coach` : `/admin/coaches?tab=${stat.tab === 'subscribed' ? 'all' : stat.tab}&page=1`}
             className={`bg-white p-5 rounded-[1.5rem] border-2 transition-all duration-300 relative overflow-hidden group active:scale-95 ${tab === stat.tab ? 'border-[#b50a0a] shadow-xl shadow-red-900/10' : 'border-gray-100 shadow-sm hover:border-gray-200 hover:shadow-md'}`}
           >
             <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>

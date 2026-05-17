@@ -82,18 +82,27 @@ export async function updateSession(request: NextRequest) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('status')
+      .select('status, verification_requested')
       .eq('user_id', user.id)
       .single();
 
     isActive = userRecord?.is_active ?? true;
     profileStatus = profile?.status ?? null;
+    const verificationRequested = profile?.verification_requested ?? false;
 
     // 5. Mandatory Onboarding for participants without an active profile
     if (!isOnboardingPath && !isPublicAdminPath && (isDashboardPath || isAdminPath)) {
-      if (profileStatus !== 'active') {
+      const isPendingButSubmitted = profileStatus === 'pending' && verificationRequested;
+      if (profileStatus !== 'active' && !isPendingButSubmitted) {
         const url = request.nextUrl.clone();
         url.pathname = '/onboarding';
+        return NextResponse.redirect(url);
+      }
+
+      // Enforce subscription verification check for pending participants in the dashboard
+      if (profileStatus !== 'active' && isDashboardPath && request.nextUrl.pathname !== '/dashboard/subscription') {
+        const url = request.nextUrl.clone();
+        url.pathname = '/dashboard/subscription';
         return NextResponse.redirect(url);
       }
     }

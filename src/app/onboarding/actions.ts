@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { redis } from '@/lib/redis';
+import { sanitizeName, sanitizePhone, sanitizeCountry, sanitizeReference, sanitizeString } from '@/lib/sanitize';
 
 export async function saveDraftOnboarding(formData: Partial<{
   role: string;
@@ -19,33 +21,104 @@ export async function saveDraftOnboarding(formData: Partial<{
     return { success: false, error: 'Unauthorized' };
   }
 
+  // Escape role input
+  const safeRole = formData.role ? sanitizeString(formData.role) : undefined;
+
   try {
-    if (formData.role) {
+    if (safeRole) {
       await adminClient
         .from('users')
         .upsert({
           id: user.id,
           email: user.email,
-          role: formData.role as any
+          role: safeRole as any
         });
     }
 
-    if (formData.fullName || formData.phone || formData.dob || formData.country) {
-      const names = formData.fullName?.split(' ') || [];
+    const safeFullName = formData.fullName ? sanitizeName(formData.fullName) : undefined;
+    const safePhone = formData.phone ? sanitizePhone(formData.phone) : undefined;
+    const safeCountry = formData.country ? sanitizeCountry(formData.country) : undefined;
+    const safeDob = formData.dob ? sanitizeString(formData.dob) : undefined;
+
+    if (safeFullName || safePhone || safeDob || safeCountry) {
+      const names = safeFullName?.split(' ') || [];
       const firstName = names[0] || undefined;
       const lastName = names.slice(1).join(' ') || undefined;
 
-      await adminClient
+      const { data: existingProfiles, error: fetchError } = await adminClient
         .from('profiles')
-        .upsert({
-          user_id: user.id,
-          ...(firstName && { first_name: firstName }),
-          ...(lastName && { last_name: lastName }),
-          ...(formData.phone && { phone_number: formData.phone }),
-          ...(formData.dob && { date_of_birth: formData.dob }),
-          ...(formData.country && { country: formData.country }),
-          status: 'pending' // Keep it pending during draft
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (fetchError) {
+        console.error('Error fetching existing profiles for draft:', fetchError);
+        return { success: false, error: fetchError.message };
+      }
+
+      if (existingProfiles && existingProfiles.length > 0) {
+        const masterProfile = existingProfiles[0];
+        
+        const { error: profileError } = await adminClient
+          .from('profiles')
+          .update({
+            ...(firstName && { first_name: firstName }),
+            ...(lastName && { last_name: lastName }),
+            ...(safePhone && { phone_number: safePhone }),
+            ...(safeDob && { date_of_birth: safeDob }),
+            ...(safeCountry && { country: safeCountry }),
+            status: 'pending' // Keep it pending during draft
+          })
+          .eq('id', masterProfile.id);
+
+        if (profileError) {
+          console.error('Error updating master draft profile:', profileError);
+          return { success: false, error: profileError.message };
+        }
+
+        // Clean up duplicates
+        if (existingProfiles.length > 1) {
+          const dupIds = existingProfiles.slice(1).map(p => p.id);
+          const { error: deleteError } = await adminClient
+            .from('profiles')
+            .delete()
+            .in('id', dupIds);
+          
+          if (deleteError) {
+            console.error('Error cleaning up duplicate draft profiles:', deleteError);
+          } else {
+            console.log(`[Self-Heal] Successfully deleted ${dupIds.length} duplicate draft profiles for user ${user.id}`);
+          }
+        }
+      } else {
+        // Insert new draft profile
+        const { error: profileError } = await adminClient
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            ...(firstName && { first_name: firstName }),
+            ...(lastName && { last_name: lastName }),
+            ...(safePhone && { phone_number: safePhone }),
+            ...(safeDob && { date_of_birth: safeDob }),
+            ...(safeCountry && { country: safeCountry }),
+            status: 'pending'
+          });
+
+        if (profileError) {
+          console.error('Error inserting draft profile:', profileError);
+          return { success: false, error: profileError.message };
+        }
+      }
+    }
+
+    // Invalidate stale draft cache keys
+    try {
+      await Promise.all([
+        redis.del(`user:record:${user.id}`),
+        redis.del(`user:profile:${user.id}`)
+      ]);
+    } catch (cacheErr) {
+      console.error('Error clearing draft Redis cache:', cacheErr);
     }
 
     return { success: true };
@@ -75,13 +148,19 @@ export async function saveOnboarding(formData: {
     return { success: false, error: 'Unauthorized' };
   }
 
-  const { 
-    role, fullName, phone, dob, country, 
-    paymentReference, paymentMethod, proofName, 
-    proofEmail, proofFileName 
-  } = formData;
+  // High-security input sanitization
+  const safeRole = sanitizeString(formData.role);
+  const safeFullName = sanitizeName(formData.fullName);
+  const safePhone = sanitizePhone(formData.phone);
+  const safeDob = sanitizeString(formData.dob);
+  const safeCountry = sanitizeCountry(formData.country);
+  const safePaymentReference = sanitizeReference(formData.paymentReference);
+  const safePaymentMethod = formData.paymentMethod ? sanitizeString(formData.paymentMethod) : undefined;
+  const safeProofName = formData.proofName ? sanitizeName(formData.proofName) : undefined;
+  const safeProofEmail = formData.proofEmail ? sanitizeString(formData.proofEmail) : undefined;
+  const safeProofFileName = formData.proofFileName ? sanitizeString(formData.proofFileName) : undefined;
   
-  const names = fullName.split(' ');
+  const names = safeFullName.split(' ');
   const firstName = names[0] || '';
   const lastName = names.slice(1).join(' ') || '';
 
@@ -95,7 +174,7 @@ export async function saveOnboarding(formData: {
       .single();
 
     const plans = settings?.content?.plans || {};
-    const amount = Number(plans[role]?.amount || 15000);
+    const amount = Number(plans[safeRole]?.amount || 15000);
 
     // 2. Update user record in users table
     const { error: userError } = await adminClient
@@ -103,7 +182,7 @@ export async function saveOnboarding(formData: {
       .upsert({
         id: user.id,
         email: user.email,
-        role: role as any,
+        role: safeRole as any,
         is_active: true
       });
 
@@ -113,40 +192,112 @@ export async function saveOnboarding(formData: {
     }
 
     // 3. Create/Update profile record in profiles table
-    const { error: profileError } = await adminClient
+    // Query existing profiles for the user to handle cleanups and self-heal duplicates
+    const { data: existingProfiles, error: fetchError } = await adminClient
       .from('profiles')
-      .upsert({
-        user_id: user.id,
-        first_name: firstName,
-        last_name: lastName,
-        phone_number: phone, 
-        date_of_birth: dob,
-        country: country, 
-        status: 'pending', 
-        verification_requested: true
-      });
+      .select('id')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
 
-    if (profileError) {
-      console.error('Error upserting profile:', profileError);
-      return { success: false, error: profileError.message };
+    if (fetchError) {
+      console.error('Error fetching existing profiles:', fetchError);
+      return { success: false, error: fetchError.message };
+    }
+
+    let profileId: string;
+    
+    if (existingProfiles && existingProfiles.length > 0) {
+      const masterProfile = existingProfiles[0];
+      profileId = masterProfile.id;
+
+      // Update the master profile
+      const { error: profileError } = await adminClient
+        .from('profiles')
+        .update({
+          first_name: firstName,
+          last_name: lastName,
+          phone_number: safePhone, 
+          date_of_birth: safeDob,
+          country: safeCountry, 
+          status: 'pending', 
+          verification_requested: true
+        })
+        .eq('id', profileId);
+
+      if (profileError) {
+        console.error('Error updating master profile:', profileError);
+        return { success: false, error: profileError.message };
+      }
+
+      // Clean up all other duplicate profiles for this user
+      if (existingProfiles.length > 1) {
+        const dupIds = existingProfiles.slice(1).map(p => p.id);
+        const { error: deleteError } = await adminClient
+          .from('profiles')
+          .delete()
+          .in('id', dupIds);
+        
+        if (deleteError) {
+          console.error('Error cleaning up duplicate profiles:', deleteError);
+        } else {
+          console.log(`[Self-Heal] Successfully deleted ${dupIds.length} duplicate profiles for user ${user.id}`);
+        }
+      }
+    } else {
+      // Insert new profile
+      const { data: profileData, error: profileError } = await adminClient
+        .from('profiles')
+        .insert({
+          user_id: user.id,
+          first_name: firstName,
+          last_name: lastName,
+          phone_number: safePhone, 
+          date_of_birth: safeDob,
+          country: safeCountry, 
+          status: 'pending', 
+          verification_requested: true
+        })
+        .select('id')
+        .single();
+
+      if (profileError || !profileData) {
+        console.error('Error inserting profile:', profileError);
+        return { success: false, error: profileError?.message || 'Failed to create profile.' };
+      }
+      profileId = profileData.id;
     }
 
     // 4. Log the payment reference in transactions
     const { error: transError } = await adminClient
        .from('transactions')
        .insert({
-          user_id: user.id,
+          user_id: profileId, // Using correct profiles.id reference
           amount: amount,
-          type: 'subscription',
+          currency: 'NGN',
           status: 'pending',
-          reference: paymentReference,
-          description: paymentMethod === 'bank' 
-            ? `Bank Settlement: ${proofName} (${proofEmail}) - File: ${proofFileName || 'None'}`
-            : `Onboarding subscription for ${role}`
+          reference: safePaymentReference,
+          method: safePaymentMethod === 'bank' ? 'direct_transfer' : 'paystack_integration',
+          metadata: {
+             type: 'subscription',
+             description: safePaymentMethod === 'bank' 
+               ? `Bank Settlement: ${safeProofName} (${safeProofEmail}) - File: ${safeProofFileName || 'None'}`
+               : `Onboarding subscription for ${safeRole}`
+          }
        });
 
     if (transError) {
        console.error('Error logging transaction:', transError);
+    }
+
+    // 5. Invalidate stale dashboard session cache keys to prevent redirect loops
+    try {
+      await Promise.all([
+        redis.del(`user:record:${user.id}`),
+        redis.del(`user:profile:${user.id}`)
+      ]);
+      console.log(`[Redis] Successfully invalidated cache keys for user: ${user.id}`);
+    } catch (cacheErr) {
+      console.error('Error clearing onboarding Redis cache keys:', cacheErr);
     }
 
     return { success: true };

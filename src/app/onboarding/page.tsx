@@ -109,7 +109,7 @@ export default function OnboardingPage() {
         if (profile.date_of_birth) setDob(profile.date_of_birth);
         if (profile.country) setCountry(profile.country);
         
-        if (profile.status === 'active') {
+        if (profile.status === 'active' || (profile.status === 'pending' && profile.verification_requested)) {
           router.push('/dashboard');
           return;
         }
@@ -128,6 +128,16 @@ export default function OnboardingPage() {
     }
     checkAuth();
   }, [router]);
+
+  // Redirect to dashboard after onboarding success
+  useEffect(() => {
+    if (step === 3) {
+      const timer = setTimeout(() => {
+        router.push('/dashboard');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [step, router]);
 
   const handleNextStep = async (nextStep: 1 | 2 | 3) => {
     // Validate Step 1 before moving to payment
@@ -593,13 +603,6 @@ export default function OnboardingPage() {
                   <div className="w-1.5 h-1.5 rounded-full bg-[#a20000] animate-bounce delay-150 mx-1"></div>
                 </div>
               </div>
-
-              {/* Robust Redirect Logic */}
-              <script dangerouslySetInnerHTML={{ __html: `
-                setTimeout(function() {
-                  window.location.href = '/dashboard';
-                }, 5000);
-              `}} />
             </div>
           )}
         </div>

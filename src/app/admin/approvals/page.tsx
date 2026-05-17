@@ -1,0 +1,85 @@
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { ApprovalsClient } from '@/components/admin/approvals/ApprovalsClient';
+import { redirect } from 'next/navigation';
+
+export default async function AdminApprovalsPage({
+  searchParams
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const supabase = await createClient();
+  const adminClient = createAdminClient(); // Bypasses RLS to reliably fetch all queues
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    redirect('/login');
+  }
+
+  // Fetch current user's role to check permissions
+  const { data: userRecord } = await adminClient
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (!['superadmin', 'admin', 'operations', 'finance'].includes(userRecord?.role)) {
+    redirect('/admin');
+  }
+
+  const resolvedParams = await searchParams;
+  const currentTab = (resolvedParams.tab as string) || 'registrations';
+
+  // 1. Fetch Registrations awaiting verification/approval (status = 'pending' and user_id is not null)
+  const { data: pendingRegistrations } = await adminClient
+    .from('profiles')
+    .select('*')
+    .eq('status', 'pending')
+    .not('user_id', 'is', null)
+    .order('created_at', { ascending: false });
+
+  // Fetch staff unassigned verification queue
+  const { data: pendingStaff } = await adminClient
+    .from('users')
+    .select('*, profiles(first_name, last_name, email, country)')
+    .eq('role', 'unassigned')
+    .eq('is_verification_requested', true)
+    .order('created_at', { ascending: false });
+
+  // 2. Fetch Pending Profile Edits
+  const { data: pendingEdits } = await adminClient
+    .from('profile_edits')
+    .select('*, profiles(first_name, last_name, email, role, country)')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  // 3. Fetch Prospects (Unlinked profiles with user_id = null)
+  const { data: prospects } = await adminClient
+    .from('profiles')
+    .select('*, transactions(status)')
+    .is('user_id', null)
+    .not('email', 'is', null)
+    .order('created_at', { ascending: false });
+
+  // 4. Fetch Pending Payments (Direct transfers awaiting confirmation)
+  const { data: pendingPayments } = await adminClient
+    .from('transactions')
+    .select('*, profiles(first_name, last_name, email, role)')
+    .eq('status', 'pending')
+    .eq('method', 'direct_transfer')
+    .order('created_at', { ascending: false });
+
+  return (
+    <div className="space-y-6">
+      <ApprovalsClient 
+        pendingRegistrations={pendingRegistrations || []}
+        pendingStaff={pendingStaff || []}
+        pendingEdits={pendingEdits || []}
+        prospects={prospects || []}
+        pendingPayments={pendingPayments || []}
+        activeTab={currentTab}
+        currentUserRole={userRecord?.role || 'admin'}
+      />
+    </div>
+  );
+}

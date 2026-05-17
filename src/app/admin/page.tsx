@@ -35,9 +35,9 @@ export default async function AdminDashboard() {
   };
 
   const dashboardStats = [
-    { label: 'Users', value: totalUsersCount || 0, icon: Users, path: '/admin/roles', color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Pending Requests', value: pendingRequestsCount || 0, icon: Shield, path: '/admin/players', color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Approved Profiles', value: approvedProfilesCount || 0, icon: Star, path: '/admin/players', color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Users', value: totalUsersCount || 0, icon: Users, path: '/admin/users', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Pending Requests', value: pendingRequestsCount || 0, icon: Shield, path: '/admin/approvals', color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Approved Profiles', value: approvedProfilesCount || 0, icon: Star, path: '/admin/users', color: 'text-green-600', bg: 'bg-green-50' },
     { label: 'Blog Posts', value: blogPostsCount || 0, icon: FileText, path: '/admin/blog', color: 'text-[#b50a0a]', bg: 'bg-red-50' },
   ];
 
@@ -174,7 +174,7 @@ export default async function AdminDashboard() {
          {[
            { label: 'Role Management', desc: 'Admins & Staff Access', path: '/admin/roles', icon: Shield },
            { label: 'Platform Settings', desc: 'Global configuration', path: '/admin/settings', icon: Settings },
-           { label: 'System Audit', desc: 'Activity & Event Logs', path: '/admin/roles', icon: Activity },
+           { label: 'System Audit', desc: 'Activity & Event Logs', path: '/admin/logs', icon: Activity },
          ].map((tool, i) => (
            <Link key={i} href={tool.path} className="flex items-center gap-5 p-6 bg-white border border-gray-100 rounded-3xl hover:border-[#b50a0a] hover:shadow-xl hover:shadow-red-900/5 transition-all group">
               <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-red-50 group-hover:text-[#b50a0a] transition-all">

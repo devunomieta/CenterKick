@@ -19,7 +19,10 @@ export function AdminSidebar({ role }: { role: string }) {
     {
       group: 'Core',
       items: [
-        { label: 'Overview', href: '/admin', icon: LayoutDashboard }
+        { label: 'Overview', href: '/admin', icon: LayoutDashboard },
+        ...(['superadmin', 'admin', 'operations', 'finance'].includes(role) 
+          ? [{ label: 'Approvals Hub', href: '/admin/approvals', icon: ShieldCheck }] 
+          : [])
       ]
     },
     ...(!isBlogger && !isFinance ? [{

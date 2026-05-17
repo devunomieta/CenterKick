@@ -50,13 +50,6 @@ export default async function DashboardLayout({
   const role = userRecord?.role || 'player';
   const status = profile?.status || 'pending';
 
-  // 2. Enforce Subscription Payment
-  const { headers: nextHeaders } = await import('next/headers');
-  const pathname = (await nextHeaders()).get('x-pathname') || '';
-  if (status !== 'active' && pathname !== '/dashboard/subscription') {
-    redirect('/dashboard/subscription');
-  }
-
   // Forced Redirect for Administrative roles to the unified Admin Portal
   const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
   if (adminRoles.includes(role)) {

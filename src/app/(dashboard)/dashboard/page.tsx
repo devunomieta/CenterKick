@@ -1,21 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
 import { 
-  Users, 
-  TrendingUp, 
-  ExternalLink, 
-  Star, 
-  Target, 
-  Eye, 
-  Calendar,
-  ChevronRight,
-  Shield,
-  AlertTriangle,
-  ArrowRight
+  Users, TrendingUp, ExternalLink, Star, Target, Eye, 
+  Calendar, ChevronRight, Shield, AlertTriangle, ArrowRight,
+  CheckCircle, Globe, Award, FileText, Smartphone, Mail, MapPin
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-
-
+import { FlagIcon } from '@/components/common/FlagIcon';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -36,9 +27,29 @@ export default async function DashboardPage() {
   const role = userRecord?.role || 'player';
   const name = profile ? `${profile.first_name} ${profile.last_name}` : user?.email?.split('@')[0];
 
+  const roleLabels: Record<string, string> = {
+    player: 'Athlete / Player',
+    coach: 'Technical Coach',
+    agent: 'Licensed Agent',
+    scout: 'Professional Scout',
+    organization: 'Organization / Club',
+  };
+
+  const getProfileStatusBadge = () => {
+    switch (profile?.status) {
+      case 'active':
+        return <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-[9px] font-black uppercase border border-green-100 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Fully Verified & Active</span>;
+      case 'pending':
+        return <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[9px] font-black uppercase border border-amber-100 flex items-center gap-1 animate-pulse"><ClockIcon className="w-3 h-3 animate-spin" /> Pending Review</span>;
+      case 'rejected':
+        return <span className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-[9px] font-black uppercase border border-red-100 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Proof Verification Rejected</span>;
+      default:
+        return <span className="px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-black uppercase border border-gray-200 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Incomplete / Unsubmitted</span>;
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-
 
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -55,11 +66,14 @@ export default async function DashboardPage() {
                </div>
             </div>
           )}
-          <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">
-            Welcome back, <span className="text-[#b50a0a]">{name}</span>
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">
+              Welcome back, <span className="text-[#b50a0a]">{name}</span>
+            </h1>
+            {profile?.country && <FlagIcon country={profile.country} className="w-5 h-3 rounded-sm shadow-sm shrink-0" />}
+          </div>
           <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">
-            &quot;Here&apos;s what&apos;s happening with your profile today.&quot;
+            Role: <span className="text-gray-900">{roleLabels[role] || role}</span> • Platform Oversight Panel
           </p>
         </div>
         <div className="flex gap-3">
@@ -78,7 +92,7 @@ export default async function DashboardPage() {
           { label: 'Profile Views', value: '1,284', icon: Eye, trend: '+12%', color: 'text-blue-600', bg: 'bg-blue-50' },
           { label: 'Network Reach', value: '452', icon: Users, trend: '+5%', color: 'text-purple-600', bg: 'bg-purple-50' },
           { label: 'Appearances', value: '12', icon: Target, trend: 'Last 30d', color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Market Value', value: 'PRO', icon: TrendingUp, trend: 'Activate Plan', color: 'text-[#b50a0a]', bg: 'bg-red-50' },
+          { label: 'Market Value', value: profile?.market_value ? `$${profile.market_value}` : 'PRO', icon: TrendingUp, trend: 'Activate Plan', color: 'text-[#b50a0a]', bg: 'bg-red-50' },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-4">
@@ -96,6 +110,168 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Feed/Content Column */}
         <div className="lg:col-span-2 space-y-8">
+          
+          {/* Active Professional Registry Card (Part 1 Implementation) */}
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-50 pb-6">
+               <div className="flex items-center gap-3">
+                  <Star className="w-5 h-5 text-[#b50a0a]" />
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-gray-900">
+                      My Professional Registry
+                    </h3>
+                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Live Athlete/Staff Verification Sync</p>
+                  </div>
+               </div>
+               {getProfileStatusBadge()}
+            </div>
+
+            {profile ? (
+              <div className="space-y-6">
+                {/* Role Specific Parameters Overview */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {/* Athlete/Player Fields */}
+                  {(role === 'player' || role === 'athlete') && (
+                    <>
+                      <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Primary Position</p>
+                        <p className="text-sm font-black text-gray-900 mt-1">{profile.position || 'N/A'}</p>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Dominant Foot</p>
+                        <p className="text-sm font-black text-gray-900 mt-1">{profile.foot || 'N/A'}</p>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Jersey Number</p>
+                        <p className="text-sm font-black text-gray-900 mt-1">{profile.jersey_number ? `#${profile.jersey_number}` : 'N/A'}</p>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Height / Weight</p>
+                        <p className="text-sm font-black text-gray-900 mt-1">{profile.height_cm ? `${profile.height_cm}cm` : 'N/A'} / {profile.weight_kg ? `${profile.weight_kg}kg` : 'N/A'}</p>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Market Valuation</p>
+                        <p className="text-sm font-black text-gray-900 mt-1">{profile.market_value ? `$${profile.market_value}` : 'N/A'}</p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Coach Fields */}
+                  {role === 'coach' && (
+                    <>
+                      <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Tactical Formation</p>
+                        <p className="text-sm font-black text-gray-900 mt-1">{profile.formation || 'N/A'}</p>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Technical License</p>
+                        <p className="text-sm font-black text-gray-900 mt-1">{profile.license || 'N/A'}</p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Agent / Scout / Organization Fields */}
+                  {(role === 'agent' || role === 'scout' || role === 'organization') && (
+                    <>
+                      <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50 col-span-2">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Agency / Club Affiliation</p>
+                        <p className="text-sm font-black text-gray-900 mt-1">{profile.agency_name || 'N/A'}</p>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">FIFA License Code</p>
+                        <p className="text-sm font-black text-gray-900 mt-1 font-mono">{profile.license_code || 'N/A'}</p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Shared Info */}
+                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Nationality / Location</p>
+                    <p className="text-sm font-black text-gray-900 mt-1 flex items-center gap-1.5">{profile.country || 'N/A'}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Registered Phone</p>
+                    <p className="text-sm font-black text-gray-900 mt-1">{profile.phone_number || 'N/A'}</p>
+                  </div>
+                </div>
+
+                {/* Proof Document Verification Tracking */}
+                <div className="p-5 bg-red-50/20 border border-red-100/50 rounded-2xl space-y-3">
+                  <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest">Verification Credentials Proof Status</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl">
+                      <div>
+                        <p className="text-[8px] font-black text-gray-400 uppercase">1. Official ID / Passport</p>
+                        <p className="text-[10px] font-bold text-gray-900 mt-0.5">{profile.id_proof_url ? 'Document Submitted' : 'Missing Identity File'}</p>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase ${profile.id_proof_url ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}>
+                        {profile.id_proof_url ? 'Pending Verification' : 'Required'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl">
+                      <div>
+                        <p className="text-[8px] font-black text-gray-400 uppercase">2. License Certificate Proof</p>
+                        <p className="text-[10px] font-bold text-gray-900 mt-0.5">{profile.license_proof_url ? 'Document Submitted' : 'Missing Credentials File'}</p>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase ${profile.license_proof_url ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}>
+                        {profile.license_proof_url ? 'Pending Verification' : 'Required'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Achievements List */}
+                {profile.achievements && profile.achievements.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><Award className="w-3.5 h-3.5 text-yellow-500" /> Career Highlights & Achievements</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {(profile.achievements as Array<{title: string, year: string}>).map((ach, idx) => (
+                        <div key={idx} className="p-3 bg-gray-50 border border-gray-100 rounded-xl flex items-center gap-3">
+                          <Award className="w-4 h-4 text-yellow-500 shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold text-gray-900 leading-none">{ach.title}</p>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase mt-1">Conferred: {ach.year || 'N/A'}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Social Links */}
+                {profile.social_links && Object.values(profile.social_links).some(v => !!v) && (
+                  <div className="space-y-3 pt-4 border-t border-gray-50">
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Public Verification Handles</p>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(profile.social_links).map(([platform, link]) => {
+                        if (!link) return null;
+                        return (
+                          <span key={platform} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100 text-[9px] font-black uppercase text-gray-900">
+                            <Globe className="w-3 h-3 text-gray-400" />
+                            {platform}: <span className="text-gray-500 font-bold normal-case">{link as string}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            ) : (
+              <div className="p-12 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center">
+                 <AlertTriangle className="w-10 h-10 text-amber-500 mb-3" />
+                 <p className="text-xs font-black uppercase text-gray-900">No profile identity established yet</p>
+                 <p className="text-[10px] text-gray-400 max-w-xs mt-2 leading-relaxed">
+                   Please complete your professional registration by going to the Profile Editor.
+                 </p>
+                 <Link href="/dashboard/profile" className="mt-4 px-6 py-2.5 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all">
+                   Create Profile Registry
+                 </Link>
+              </div>
+            )}
+          </div>
+
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="p-8 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -206,5 +382,14 @@ export default async function DashboardPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Small helper component
+function ClockIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
   );
 }
