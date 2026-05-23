@@ -26,7 +26,16 @@ export async function login(formData: FormData) {
     .eq('id', data.user.id)
     .single();
 
-  if (userRecord && !userRecord.is_active) {
+  // Retrieve profile status to identify if this is a new pending account awaiting payment confirmation
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('status')
+    .eq('user_id', data.user.id)
+    .maybeSingle();
+
+  const isPendingNewAccount = !profile || profile.status === 'pending';
+
+  if (userRecord && !userRecord.is_active && !isPendingNewAccount) {
     await supabase.auth.signOut();
     return { error: 'Your account is currently inactive. Please contact an administrator.' };
   }

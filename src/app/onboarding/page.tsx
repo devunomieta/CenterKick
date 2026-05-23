@@ -9,14 +9,21 @@ import {
   Phone, Calendar, ArrowRight, User, AlertCircle,
   Search, Building, ShieldCheck, CreditCard, CheckCircle2, ArrowLeft
 } from 'lucide-react';
-import { saveOnboarding, saveDraftOnboarding } from './actions';
+import { saveOnboarding, saveDraftOnboarding, uploadPaymentProof } from './actions';
 import { createClient } from '@/lib/supabase/client';
 import { CountrySelect } from '@/components/common/CountrySelect';
+
+interface PaymentSettings {
+  paymentLink: string;
+  plans: Record<string, { amount: string; frequency?: string }>;
+  bankName?: string;
+  accountName?: string;
+  accountNumber?: string;
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [userEmail, setUserEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +40,7 @@ export default function OnboardingPage() {
   const [proofEmail, setProofEmail] = useState('');
   const [proofFile, setProofFile] = useState<File | null>(null);
 
-  const [paymentSettings, setPaymentSettings] = useState<any>({ 
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({ 
     paymentLink: 'https://paystack.com/pay/centerkick-pro',
     plans: {
       player: { amount: '15000' },
@@ -50,12 +57,14 @@ export default function OnboardingPage() {
     if (saved) {
       try {
         const data = JSON.parse(saved);
-        if (data.step) setStep(data.step);
-        if (data.role) setRole(data.role);
-        if (data.fullName) setFullName(data.fullName);
-        if (data.phone) setPhone(data.phone);
-        if (data.dob) setDob(data.dob);
-        if (data.country) setCountry(data.country);
+        setTimeout(() => {
+          if (data.step) setStep(data.step);
+          if (data.role) setRole(data.role);
+          if (data.fullName) setFullName(data.fullName);
+          if (data.phone) setPhone(data.phone);
+          if (data.dob) setDob(data.dob);
+          if (data.country) setCountry(data.country);
+        }, 0);
       } catch (e) {
         console.error('Failed to load onboarding progress', e);
       }
@@ -81,8 +90,6 @@ export default function OnboardingPage() {
         router.push('/login');
         return;
       }
-
-      setUserEmail(user.email || '');
       
       // Fetch payment settings from CMS
       const { data: settings } = await supabase
@@ -174,6 +181,19 @@ export default function OnboardingPage() {
     }
 
     try {
+      let uploadedUrl = undefined;
+      if (paymentMethod === 'bank' && proofFile) {
+        const uploadData = new FormData();
+        uploadData.append('file', proofFile);
+        const uploadRes = await uploadPaymentProof(uploadData);
+        if (uploadRes.error) {
+          setError(`Failed to upload payment proof: ${uploadRes.error}`);
+          setIsLoading(false);
+          return;
+        }
+        uploadedUrl = uploadRes.publicUrl;
+      }
+
       const res = await saveOnboarding({
         role,
         fullName,
@@ -184,9 +204,8 @@ export default function OnboardingPage() {
         paymentMethod,
         proofName,
         proofEmail,
-        // For now, we'll just send the name of the file if present, 
-        // a real implementation would upload to storage first.
-        proofFileName: proofFile?.name 
+        proofFileName: proofFile?.name,
+        proofFileUrl: uploadedUrl
       });
 
       if (res.success) {
@@ -380,6 +399,9 @@ export default function OnboardingPage() {
                 <h2 className="text-4xl font-black text-slate-900 italic tracking-tighter">
                   ₦{Number(paymentSettings.plans?.[role]?.amount || 15000).toLocaleString()}
                 </h2>
+                <p className="text-[10px] font-bold text-gray-400 lowercase tracking-wide italic mt-0.5">
+                  ~ ${(Number(paymentSettings.plans?.[role]?.amount || 15000) / 1500).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} usd conversion
+                </p>
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
                   {paymentSettings.plans?.[role]?.frequency || 'One-time Payment'} for {role} Profile
                 </p>
@@ -449,7 +471,7 @@ export default function OnboardingPage() {
                     </div>
                     <div className="bg-slate-50 p-4 rounded-2xl md:w-48">
                       <p className="text-[10px] font-bold text-slate-500 leading-relaxed italic text-center">
-                        "After transfer, please provide proof details for manual confirmation."
+                        &quot;After transfer, please provide proof details for manual confirmation.&quot;
                       </p>
                     </div>
                   </div>

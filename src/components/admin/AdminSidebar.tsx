@@ -68,7 +68,9 @@ export function AdminSidebar({ role }: { role: string }) {
         <div key={idx} className="space-y-1">
           <span className="px-4 text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">{section.group}</span>
           {section.items.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = item.href === '/admin' 
+              ? pathname === '/admin' 
+              : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}

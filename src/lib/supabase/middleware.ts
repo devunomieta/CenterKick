@@ -107,8 +107,9 @@ export async function updateSession(request: NextRequest) {
       }
     }
 
-    // 6. Block deactivated/banned participants
-    if (!isActive && !isPublicAdminPath && !isOnboardingPath && (isDashboardPath || isAdminPath)) {
+    // 6. Block deactivated/banned participants (allow new accounts awaiting approval)
+    const isPendingNewAccount = !profileStatus || profileStatus === 'pending';
+    if (!isActive && !isPendingNewAccount && !isPublicAdminPath && !isOnboardingPath && (isDashboardPath || isAdminPath)) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       url.searchParams.set('error', 'Your account has been restricted.');

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { SignOutButton } from '@/components/dashboard/SignOutButton';
 import { BannerManager } from '@/components/dashboard/BannerManager';
+import { DashboardSidebarNav } from '@/components/dashboard/DashboardSidebarNav';
 
 import { ToastProvider } from '@/context/ToastContext';
 
@@ -90,51 +91,7 @@ export default async function DashboardLayout({
             </Link>
           </div>
 
-          <nav className="flex-1 p-6 space-y-2 overflow-y-auto">
-            <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-white bg-white/10 rounded-xl font-bold transition-all border border-white/5">
-              <Home className="w-5 h-5 text-[#b50a0a]" />
-              <span className="text-sm uppercase tracking-widest">Overview</span>
-            </Link>
-            
-            <Link href="/dashboard/profile" className="flex items-center gap-3 px-4 py-3 hover:text-white hover:bg-white/5 rounded-xl font-bold transition-all">
-              <Users className="w-5 h-5" />
-              <span className="text-sm uppercase tracking-widest">My Profile</span>
-            </Link>
-
-            {(role === 'player' || role === 'athlete' || role === 'coach') && (
-              <Link href="/dashboard/stats" className="flex items-center gap-3 px-4 py-3 hover:text-white hover:bg-white/5 rounded-xl font-bold transition-all">
-                <BarChart2 className="w-5 h-5" />
-                <span className="text-sm uppercase tracking-widest">Stats & Media</span>
-              </Link>
-            )}
-
-            {(role === 'agent' || role === 'scout' || role === 'organization') && (
-              <Link href="/dashboard/scout" className="flex items-center gap-3 px-4 py-3 hover:text-white hover:bg-white/5 rounded-xl font-bold transition-all">
-                <Search className="w-5 h-5" />
-                <span className="text-sm uppercase tracking-widest">Discovery</span>
-              </Link>
-            )}
-
-            {role === 'agent' && (
-              <Link href="/dashboard/portfolio" className="flex items-center gap-3 px-4 py-3 hover:text-white hover:bg-white/5 rounded-xl font-bold transition-all">
-                <Users className="w-5 h-5" />
-                <span className="text-sm uppercase tracking-widest">Portfolio</span>
-              </Link>
-            )}
-
-
-            <div className="pt-8 mt-8 border-t border-gray-800">
-              <span className="px-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Management</span>
-              <Link href="/dashboard/subscription" className="flex items-center gap-3 px-4 py-3 mt-4 hover:text-white hover:bg-white/5 rounded-xl font-bold transition-all">
-                <Shield className="w-5 h-5" />
-                <span className="text-sm uppercase tracking-widest">Subscription</span>
-              </Link>
-              <Link href="/dashboard/settings" className="flex items-center gap-3 px-4 py-3 hover:text-white hover:bg-white/5 rounded-xl font-bold transition-all">
-                <Settings className="w-5 h-5" />
-                <span className="text-sm uppercase tracking-widest">Settings</span>
-              </Link>
-            </div>
-          </nav>
+          <DashboardSidebarNav role={role} />
 
           <div className="p-6 border-t border-gray-800">
             <SignOutButton />

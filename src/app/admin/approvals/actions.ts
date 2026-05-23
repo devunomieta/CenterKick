@@ -38,7 +38,14 @@ export async function approvePaymentTransaction(transactionId: string, reason: s
 
   // Confirm the transaction and activate the profile/subscription
   const updates = [
-    admin.from('transactions').update({ status: 'confirmed', updated_at: new Date().toISOString() }).eq('id', transactionId)
+    admin.from('transactions').update({ 
+      status: 'confirmed', 
+      updated_at: new Date().toISOString(),
+      metadata: {
+        ...(typeof tx.metadata === 'object' && tx.metadata !== null ? tx.metadata : {}),
+        approval_comment: safeReason
+      }
+    }).eq('id', transactionId)
   ];
 
   if (tx.user_id) {
@@ -98,7 +105,14 @@ export async function rejectPaymentTransaction(transactionId: string, reason: st
 
   const { error } = await admin
     .from('transactions')
-    .update({ status: 'failed', updated_at: new Date().toISOString() })
+    .update({ 
+      status: 'failed', 
+      updated_at: new Date().toISOString(),
+      metadata: {
+        ...(typeof tx.metadata === 'object' && tx.metadata !== null ? tx.metadata : {}),
+        rejection_reason: safeReason
+      }
+    })
     .eq('id', transactionId);
 
   if (error) return { success: false, error: error.message };
@@ -244,6 +258,26 @@ export async function approveNewRegistration(profileId: string, reason: string =
     .single();
 
   if (!profile) return { success: false, error: 'Profile not found' };
+
+  // Ensure first subscription transaction is approved
+  const { data: firstTx, error: txError } = await admin
+    .from('transactions')
+    .select('status')
+    .eq('user_id', profileId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (txError) {
+    return { success: false, error: 'Failed to verify user transaction status: ' + txError.message };
+  }
+
+  if (!firstTx || firstTx.status !== 'confirmed') {
+    return { 
+      success: false, 
+      error: 'Cannot approve registration. The user\'s first subscription transaction has not been approved yet. Please approve their bank transfer payment first.' 
+    };
+  }
 
   const updates = [
     admin.from('profiles').update({ status: 'active' }).eq('id', profileId)

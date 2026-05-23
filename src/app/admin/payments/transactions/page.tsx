@@ -2,10 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { TransactionsClient } from '@/components/admin/payments/TransactionsClient';
 import { redirect } from 'next/navigation';
 
-export default async function AdminTransactionsPage({
-  searchParams,
-}: {
-  searchParams: { 
+export default async function AdminTransactionsPage(props: {
+  searchParams: Promise<{ 
     page?: string; 
     q?: string; 
     status?: string; 
@@ -13,8 +11,9 @@ export default async function AdminTransactionsPage({
     year?: string;
     month?: string;
     day?: string;
-  };
+  }>;
 }) {
+  const searchParams = await props.searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -46,14 +45,14 @@ export default async function AdminTransactionsPage({
     for (let i = 0; i < 45; i++) {
       const daysAgo = Math.floor(Math.random() * 365);
       const txDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
-      const amount = Math.floor(Math.random() * 450) + 50; // $50 - $500
+      const amount = (Math.floor(Math.random() * 4) + 1) * 15000; // NGN 15k - 60k
       const ref = `TXN-${txDate.getFullYear()}${(txDate.getMonth() + 1).toString().padStart(2, '0')}${txDate.getDate().toString().padStart(2, '0')}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
       
       dummyTxs.push({
         user_id: profileIds.length > 0 ? profileIds[Math.floor(Math.random() * profileIds.length)] : null,
         reference: ref,
         amount: amount,
-        currency: 'USD',
+        currency: 'NGN',
         status: statuses[Math.floor(Math.random() * statuses.length)],
         method: methods[Math.floor(Math.random() * methods.length)],
         created_at: txDate.toISOString(),
@@ -111,10 +110,13 @@ export default async function AdminTransactionsPage({
   // Fetch real stats
   const { data: revenueData } = await supabase
     .from('transactions')
-    .select('amount, created_at')
+    .select('amount, currency, created_at')
     .eq('status', 'confirmed');
   
-  const totalRevenue = revenueData?.reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
+  const totalRevenue = revenueData?.reduce((sum, tx) => {
+    const amount = Number(tx.amount);
+    return sum + (tx.currency === 'USD' ? amount * 1500 : amount);
+  }, 0) || 0;
 
   const { count: activeSubs } = await supabase
     .from('profiles')
@@ -167,7 +169,7 @@ export default async function AdminTransactionsPage({
 
   revenueData?.forEach(tx => {
     const date = new Date(tx.created_at);
-    const amount = Number(tx.amount);
+    const amount = tx.currency === 'USD' ? Number(tx.amount) * 1500 : Number(tx.amount);
 
     // 1. Daily calculation (if within the last 7 days)
     const diffTime = Math.abs(now.getTime() - date.getTime());

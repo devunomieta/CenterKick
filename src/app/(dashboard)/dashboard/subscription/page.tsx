@@ -7,16 +7,53 @@ import {
   History, 
   Check, 
   ChevronRight, 
-  Star,
-  Zap,
-  Calendar,
-  Globe
+  Star, 
+  Zap, 
+  Calendar, 
+  Globe, 
+  X, 
+  Building, 
+  FileText, 
+  Eye, 
+  CreditCard 
 } from 'lucide-react';
+
+interface UserProfile {
+  role?: string;
+  status?: string;
+  verification_requested?: boolean;
+}
+
+interface CMSPaymentSettings {
+  paymentLink: string;
+}
+
+interface UserTransaction {
+  id: string;
+  reference: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'confirmed' | 'failed' | 'refunded';
+  method: string;
+  created_at: string;
+  metadata?: {
+    reason?: string;
+    comment?: string;
+    rejection_reason?: string;
+    approval_comment?: string;
+    proofName?: string;
+    proofEmail?: string;
+    proofFileName?: string;
+    proofFileUrl?: string;
+  };
+}
 
 export default function SubscriptionPage() {
   const [activeTab, setActiveTab] = useState('My Plan');
-  const [profile, setProfile] = useState<any>(null);
-  const [paymentSettings, setPaymentSettings] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [paymentSettings, setPaymentSettings] = useState<CMSPaymentSettings | null>(null);
+  const [transactions, setTransactions] = useState<UserTransaction[]>([]);
+  const [inspectTransaction, setInspectTransaction] = useState<UserTransaction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [msg, setMsg] = useState<{type: 'success'|'error', text: string}|null>(null);
@@ -27,13 +64,6 @@ export default function SubscriptionPage() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        // Fetch subscription
-        const { data: subData } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-        
         // Fetch profile for verification status
         const { data: profData } = await supabase
           .from('profiles')
@@ -51,6 +81,13 @@ export default function SubscriptionPage() {
         
         setProfile(profData);
         setPaymentSettings(settings?.content || { paymentLink: 'https://paystack.com/pay/centerkick-pro' });
+
+        // Fetch user transaction history securely
+        const { getUserTransactions } = await import('./actions');
+        const txRes = await getUserTransactions();
+        if (txRes && txRes.transactions) {
+          setTransactions(txRes.transactions);
+        }
       }
       setIsLoading(false);
     }
@@ -76,9 +113,21 @@ export default function SubscriptionPage() {
     setIsSubmitting(false);
   };
 
+  const rolePrices: Record<string, number> = {
+    player: 15000,
+    coach: 20000,
+    agent: 30000,
+    scout: 25000,
+    organization: 50000
+  };
+  const userRole = profile?.role || 'player';
+  const basePrice = rolePrices[userRole] || 15000;
+  const usdPrice = basePrice / 1500;
+
   const plan = {
-    name: "Quarterly Pro",
-    price: "₦15,000",
+    name: `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} Pro`,
+    price: `₦${basePrice.toLocaleString()}`,
+    usdEquivalent: `$${usdPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     period: "Per Quarter",
     status: profile?.status === 'active' ? 'Active' : (profile?.verification_requested ? 'Pending Approval' : 'Unverified'),
     features: [
@@ -137,16 +186,21 @@ export default function SubscriptionPage() {
                            <Star className="w-3 h-3 fill-current" /> Professional Tier
                         </div>
                         <h2 className="text-4xl font-black text-gray-900 uppercase tracking-tight">{plan.name}</h2>
-                        <div className="flex items-baseline gap-2">
-                           <span className="text-3xl font-black text-[#b50a0a] italic">{plan.price}</span>
-                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{plan.period}</span>
-                        </div>
+                         <div className="flex flex-col gap-1">
+                            <div className="flex items-baseline gap-2">
+                               <span className="text-3xl font-black text-[#b50a0a] italic">{plan.price}</span>
+                               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{plan.period}</span>
+                            </div>
+                            <p className="text-[11px] font-bold text-gray-400 lowercase tracking-wide italic">
+                               ~ {plan.usdEquivalent} usd conversion
+                            </p>
+                         </div>
                         
                         {plan.status === 'Unverified' && (
                            <div className="pt-6 space-y-6">
                               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-relaxed">To activate your professional badge and unlock all features, please complete payment using the secure link below.</p>
                               <a 
-                                 href={paymentSettings.paymentLink} 
+                                 href={paymentSettings?.paymentLink || '#'} 
                                  target="_blank" 
                                  rel="noopener noreferrer"
                                  className="inline-flex items-center gap-3 bg-gray-900 text-white px-10 py-5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] hover:bg-[#b50a0a] transition-all shadow-xl hover:-translate-y-1"
@@ -249,24 +303,206 @@ export default function SubscriptionPage() {
             </div>
           )}
 
-          {activeTab === 'History' && (
-            <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
-               <div className="p-8 border-b border-gray-100">
-                  <h3 className="text-sm font-black uppercase tracking-widest text-gray-900">Transaction History</h3>
-               </div>
-               <div className="divide-y divide-gray-50">
-                  <div className="p-12 text-center">
-                     <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4 text-gray-300">
-                        <History className="w-6 h-6" />
-                     </div>
-                     <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">No Transactions Found</p>
-                     <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-relaxed">Your payment history will appear here once you activate your first professional plan.</p>
-                  </div>
-               </div>
-            </div>
-          )}
+           {activeTab === 'History' && (
+             <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
+                <div className="p-8 border-b border-gray-100 flex items-center justify-between">
+                   <h3 className="text-sm font-black uppercase tracking-widest text-gray-900">Transaction History</h3>
+                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-full">
+                     {transactions.length} records
+                   </span>
+                </div>
+                <div className="divide-y divide-gray-50">
+                   {transactions.length === 0 ? (
+                      <div className="p-12 text-center">
+                         <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4 text-gray-300">
+                            <History className="w-6 h-6" />
+                         </div>
+                         <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">No Transactions Found</p>
+                         <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-relaxed">Your payment history will appear here once you activate your first professional plan.</p>
+                      </div>
+                   ) : (
+                      transactions.map((tx) => (
+                         <div 
+                            key={tx.id} 
+                            onClick={() => setInspectTransaction(tx)}
+                            className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50/50 transition-all cursor-pointer group"
+                         >
+                            <div className="space-y-1">
+                               <div className="flex items-center gap-3">
+                                  <span className="text-xs font-black uppercase tracking-tight text-gray-900 group-hover:text-[#b50a0a] transition-colors">{tx.reference}</span>
+                                  <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                     tx.status === 'confirmed' ? 'bg-green-50 text-green-700 border border-green-100' :
+                                     tx.status === 'pending' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                                     tx.status === 'failed' ? 'bg-red-50 text-red-700 border border-red-100' :
+                                     'bg-gray-50 text-gray-700 border border-gray-100'
+                                  }`}>
+                                     {tx.status}
+                                  </span>
+                               </div>
+                               <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                  <span>{tx.method.replace('_', ' ')}</span>
+                                  <span>•</span>
+                                  <span>{new Date(tx.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4 text-right justify-between md:justify-end">
+                               <div>
+                                  <p className="text-lg font-black text-gray-900 italic">
+                                     {tx.currency === 'USD' ? '$' : '₦'}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  </p>
+                                  {(tx.metadata?.rejection_reason || tx.metadata?.reason) && (
+                                     <p className="text-[9px] font-bold text-red-500 uppercase tracking-wider mt-1 max-w-xs md:ml-auto">
+                                        Reason: {tx.metadata.rejection_reason || tx.metadata.reason}
+                                     </p>
+                                  )}
+                                  {(tx.metadata?.approval_comment || tx.metadata?.comment) && (
+                                     <p className="text-[9px] font-bold text-green-600 uppercase tracking-wider mt-1 max-w-xs md:ml-auto">
+                                        Note: {tx.metadata.approval_comment || tx.metadata.comment}
+                                     </p>
+                                  )}
+                               </div>
+                               <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 opacity-0 group-hover:opacity-100 group-hover:bg-red-50 group-hover:text-[#b50a0a] transition-all">
+                                  <Eye className="w-4 h-4" />
+                               </div>
+                            </div>
+                         </div>
+                      ))
+                   )}
+                </div>
+             </div>
+           )}
         </div>
       </div>
+
+      {/* User Transaction Details Modal */}
+      {inspectTransaction && (
+         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setInspectTransaction(null)}>
+           <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
+             <button onClick={() => setInspectTransaction(null)} className="absolute top-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10 cursor-pointer">
+               <X className="w-5 h-5 text-gray-400" />
+             </button>
+             <div className="p-10 pb-10">
+               <div className="flex items-center gap-6 mb-10">
+                 <div className="w-16 h-16 rounded-2xl bg-slate-900 text-[#b50a0a] flex items-center justify-center font-black text-2xl shrink-0">
+                   {inspectTransaction.currency === 'USD' ? '$' : '₦'}
+                 </div>
+                 <div>
+                   <h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none mb-2">Transaction Details</h2>
+                   <p className="text-[10px] font-black text-[#b50a0a] uppercase tracking-[0.2em]">Reference: {inspectTransaction.reference}</p>
+                 </div>
+               </div>
+               
+               <div className="grid grid-cols-2 gap-y-8 mb-8 text-left">
+                 <div className="space-y-1">
+                   <div className="flex items-center gap-1.5 text-[9px] font-black text-gray-400 uppercase tracking-widest"><CreditCard className="w-3.5 h-3.5" /> Amount</div>
+                   <p className="text-sm font-black text-slate-900 italic">
+                      {inspectTransaction.currency === 'USD' ? '$' : '₦'}{Number(inspectTransaction.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} {inspectTransaction.currency}
+                   </p>
+                 </div>
+                 <div className="space-y-1">
+                   <div className="flex items-center gap-1.5 text-[9px] font-black text-gray-400 uppercase tracking-widest"><Calendar className="w-3.5 h-3.5" /> Date</div>
+                   <p className="text-sm font-bold text-slate-800">
+                      {new Date(inspectTransaction.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                   </p>
+                 </div>
+                 <div className="space-y-1">
+                   <div className="flex items-center gap-1.5 text-[9px] font-black text-gray-400 uppercase tracking-widest"><Building className="w-3.5 h-3.5" /> Method</div>
+                   <p className="text-sm font-bold text-slate-800 uppercase">
+                      {inspectTransaction.method.replace('_', ' ')}
+                   </p>
+                 </div>
+                 <div className="space-y-1">
+                   <div className="flex items-center gap-1.5 text-[9px] font-black text-gray-400 uppercase tracking-widest font-black"><Globe className="w-3.5 h-3.5" /> Status</div>
+                   <div>
+                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                        inspectTransaction.status === 'confirmed' ? 'bg-green-50 text-green-700 border border-green-100' :
+                        inspectTransaction.status === 'pending' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                        inspectTransaction.status === 'failed' ? 'bg-red-50 text-red-700 border border-red-100' :
+                        'bg-gray-50 text-gray-700 border border-gray-100'
+                     }`}>
+                       {inspectTransaction.status}
+                     </span>
+                   </div>
+                 </div>
+               </div>
+
+               {/* Rejection comment */}
+               {inspectTransaction.status === 'failed' && (inspectTransaction.metadata?.rejection_reason || inspectTransaction.metadata?.reason) && (
+                 <div className="bg-red-50 rounded-[2rem] p-6 mb-8 border border-red-100 space-y-2 text-left">
+                   <p className="text-[9px] font-black uppercase text-red-700 tracking-widest">Rejection Reason</p>
+                   <p className="text-red-900 text-xs font-bold leading-relaxed">
+                      {inspectTransaction.metadata.rejection_reason || inspectTransaction.metadata.reason}
+                   </p>
+                 </div>
+               )}
+
+               {/* Approval Comment */}
+               {inspectTransaction.status === 'confirmed' && (inspectTransaction.metadata?.approval_comment || inspectTransaction.metadata?.comment) && (
+                 <div className="bg-green-50 rounded-[2rem] p-6 mb-8 border border-green-100 space-y-2 text-left">
+                   <p className="text-[9px] font-black uppercase text-green-700 tracking-widest">Admin Note</p>
+                   <p className="text-green-900 text-xs font-bold leading-relaxed">
+                      {inspectTransaction.metadata.approval_comment || inspectTransaction.metadata.comment}
+                   </p>
+                 </div>
+               )}
+
+               {/* Direct Transfer receipt preview */}
+               {inspectTransaction.method === 'direct_transfer' && (
+                 <div className="bg-slate-50 rounded-[2rem] p-6 border border-slate-100 space-y-4 text-left">
+                   <h4 className="text-[10px] font-black uppercase text-slate-900 tracking-wider flex items-center gap-2">
+                     <Building className="w-4 h-4 text-amber-600" /> Uploaded Proof
+                   </h4>
+                   <div className="grid grid-cols-2 gap-4 text-xs font-medium text-slate-600">
+                     <div>
+                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Depositor</p>
+                       <p className="font-bold text-slate-800">{inspectTransaction.metadata?.proofName || 'N/A'}</p>
+                     </div>
+                     <div>
+                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Depositor Email</p>
+                       <p className="font-bold text-slate-800 break-all">{inspectTransaction.metadata?.proofEmail || 'N/A'}</p>
+                     </div>
+                   </div>
+                   
+                   {inspectTransaction.metadata?.proofFileUrl ? (
+                     <div className="space-y-2 pt-2 border-t border-slate-200/60">
+                       {inspectTransaction.metadata.proofFileUrl.toLowerCase().endsWith('.pdf') ? (
+                         <a
+                           href={inspectTransaction.metadata.proofFileUrl}
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-xs font-bold text-[#b50a0a] hover:bg-slate-50 transition-all shadow-sm"
+                         >
+                           <FileText className="w-4 h-4 text-[#b50a0a]" /> Open PDF Receipt
+                         </a>
+                       ) : (
+                         <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-white max-h-48 flex items-center justify-center shadow-inner group">
+                           <img
+                             src={inspectTransaction.metadata.proofFileUrl}
+                             alt="Payment Receipt"
+                             className="max-h-48 w-full object-contain p-2"
+                           />
+                           <a
+                             href={inspectTransaction.metadata.proofFileUrl}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="absolute bottom-3 right-3 bg-slate-900/80 hover:bg-slate-900 text-white px-3.5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest backdrop-blur-sm transition-all shadow-lg"
+                           >
+                             Open Full Image
+                           </a>
+                         </div>
+                       )}
+                     </div>
+                   ) : inspectTransaction.metadata?.proofFileName ? (
+                     <div className="pt-2 border-t border-slate-200/60 text-xs font-bold text-slate-500">
+                       Receipt File: {inspectTransaction.metadata.proofFileName}
+                     </div>
+                   ) : null}
+                 </div>
+               )}
+             </div>
+           </div>
+         </div>
+       )}
     </div>
   );
 }

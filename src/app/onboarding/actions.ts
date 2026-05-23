@@ -5,6 +5,58 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { redis } from '@/lib/redis';
 import { sanitizeName, sanitizePhone, sanitizeCountry, sanitizeReference, sanitizeString } from '@/lib/sanitize';
 
+export async function uploadPaymentProof(formData: FormData) {
+  const supabase = await createClient();
+  const file = formData.get('file') as File;
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: 'Unauthorized' };
+  }
+
+  if (!file) {
+    return { error: 'No file provided' };
+  }
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `receipt-${user.id}-${Date.now()}.${fileExt}`;
+
+  try {
+    const { data: buckets } = await supabase.storage.listBuckets();
+    if (!buckets?.find(b => b.id === 'payment-receipts')) {
+      await supabase.storage.createBucket('payment-receipts', {
+        public: true,
+        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'application/pdf'],
+        fileSizeLimit: 5242880 // 5MB
+      });
+    }
+
+    const { error } = await supabase.storage
+      .from('payment-receipts')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (error) {
+      console.error('Error uploading payment receipt:', error);
+      return { error: error.message };
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('payment-receipts')
+      .getPublicUrl(fileName);
+
+    const shortenedUrl = publicUrl.split('/public/')[1] ? `/${publicUrl.split('/public/')[1]}` : publicUrl;
+
+    return { success: true, publicUrl: shortenedUrl };
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'Storage error';
+    console.error('Storage bucket operation failed:', err);
+    return { error: errorMsg };
+  }
+}
+
 export async function saveDraftOnboarding(formData: Partial<{
   role: string;
   fullName: string;
@@ -31,7 +83,7 @@ export async function saveDraftOnboarding(formData: Partial<{
         .upsert({
           id: user.id,
           email: user.email,
-          role: safeRole as any
+          role: safeRole as 'player' | 'coach' | 'scout' | 'agent' | 'organization'
         });
     }
 
@@ -122,7 +174,7 @@ export async function saveDraftOnboarding(formData: Partial<{
     }
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err) {
     console.error('Draft save error:', err);
     return { success: false };
   }
@@ -139,6 +191,7 @@ export async function saveOnboarding(formData: {
   proofName?: string;
   proofEmail?: string;
   proofFileName?: string;
+  proofFileUrl?: string;
 }) {
   const supabase = await createClient();
   const adminClient = createAdminClient();
@@ -159,6 +212,7 @@ export async function saveOnboarding(formData: {
   const safeProofName = formData.proofName ? sanitizeName(formData.proofName) : undefined;
   const safeProofEmail = formData.proofEmail ? sanitizeString(formData.proofEmail) : undefined;
   const safeProofFileName = formData.proofFileName ? sanitizeString(formData.proofFileName) : undefined;
+  const safeProofFileUrl = formData.proofFileUrl ? sanitizeString(formData.proofFileUrl) : undefined;
   
   const names = safeFullName.split(' ');
   const firstName = names[0] || '';
@@ -177,13 +231,14 @@ export async function saveOnboarding(formData: {
     const amount = Number(plans[safeRole]?.amount || 15000);
 
     // 2. Update user record in users table
+    // Keep user inactive (is_active: false) until the first subscription payment is approved
     const { error: userError } = await adminClient
       .from('users')
       .upsert({
         id: user.id,
         email: user.email,
-        role: safeRole as any,
-        is_active: true
+        role: safeRole as 'player' | 'coach' | 'scout' | 'agent' | 'organization',
+        is_active: false
       });
 
     if (userError) {
@@ -281,7 +336,11 @@ export async function saveOnboarding(formData: {
              type: 'subscription',
              description: safePaymentMethod === 'bank' 
                ? `Bank Settlement: ${safeProofName} (${safeProofEmail}) - File: ${safeProofFileName || 'None'}`
-               : `Onboarding subscription for ${safeRole}`
+               : `Onboarding subscription for ${safeRole}`,
+             proofName: safeProofName,
+             proofEmail: safeProofEmail,
+             proofFileName: safeProofFileName,
+             proofFileUrl: safeProofFileUrl
           }
        });
 
@@ -301,8 +360,8 @@ export async function saveOnboarding(formData: {
     }
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err) {
     console.error('Onboarding action crash:', err);
-    return { success: false, error: err.message || 'An unexpected error occurred.' };
+    return { success: false, error: err instanceof Error ? err.message : 'An unexpected error occurred.' };
   }
 }

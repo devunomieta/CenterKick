@@ -23,12 +23,13 @@ export async function saveGoogleOnboarding(formData: {
 
   try {
     // 1. Create/Update user record in users table
+    // Keep user inactive (is_active: false) until the first subscription payment is approved
     const { error: userError } = await supabase
       .from('users')
       .upsert({
         id: user.id,
         role: role,
-        is_active: true
+        is_active: false
       });
 
     if (userError) {

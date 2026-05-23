@@ -1,14 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { 
   Search, ChevronLeft, ChevronRight, 
   CreditCard, DollarSign, Clock, TrendingUp,
   Globe, CheckCircle, XCircle,
-  UserCheck, UserX, Activity
+  UserCheck, UserX, Activity,
+  Ban, ShieldCheck, RefreshCcw, X, Eye,
+  Building, FileText
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DateDisplay } from '@/components/common/DateDisplay';
+import { useToast } from '@/context/ToastContext';
+import { approvePaymentTransaction, rejectPaymentTransaction } from '@/app/admin/approvals/actions';
 
 interface Transaction {
   id: string;
@@ -23,6 +27,25 @@ interface Transaction {
     last_name: string;
     email: string;
   } | null;
+  metadata?: {
+    proofName?: string;
+    proofEmail?: string;
+    proofFileName?: string;
+    proofFileUrl?: string;
+    rejection_reason?: string;
+    approval_comment?: string;
+    reason?: string;
+    comment?: string;
+  };
+}
+
+interface StatItem {
+  icon: string;
+  label: string;
+  trend: string;
+  color: string;
+  value: number | string;
+  isCurrency?: boolean;
 }
 
 export function TransactionsClient({
@@ -41,7 +64,7 @@ export function TransactionsClient({
   totalCount: number,
   currentPage: number,
   pageSize: number,
-  stats: any[],
+  stats: StatItem[],
   dailyData: { name: string, value: number }[],
   monthlyData: { name: string, value: number }[],
   yearlyData: { name: string, value: number }[],
@@ -52,17 +75,51 @@ export function TransactionsClient({
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [timeframe, setTimeframe] = useState('Monthly');
-  const [currency, setCurrency] = useState<'USD' | 'NGN'>('USD');
+  const [currency, setCurrency] = useState<'USD' | 'NGN'>('NGN');
   const exchangeRate = 1500; // 1 USD = 1500 NGN standard conversion
 
   const totalPages = Math.ceil(totalCount / pageSize);
+  
+  const { showToast } = useToast();
+  const [_isPending, startTransition] = useTransition();
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [decisionAction, setDecisionAction] = useState<{
+    id: string;
+    type: 'approve' | 'reject';
+    title: string;
+    subtitle: string;
+    targetName: string;
+    targetEmail: string;
+  } | null>(null);
+  const [decisionReason, setDecisionReason] = useState('');
+  const [inspectPayment, setInspectPayment] = useState<Transaction | null>(null);
+
+  const runApprovalAction = async (id: string, actionFn: () => Promise<{ success: boolean; error?: string }>) => {
+    setActionLoadingId(id);
+    try {
+      const res = await actionFn();
+      if (res.success) {
+        showToast("Request processed successfully and user notified via email.", "success");
+        startTransition(() => {
+          router.refresh();
+        });
+      } else {
+        showToast(res.error || "Failed to process request.", "error");
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "An unexpected error occurred.";
+      showToast(errorMsg, "error");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
 
   // Dynamic currency and formatting helper
-  const formatVal = (val: number) => {
+  const formatVal = (val: number, decimals = 2) => {
     if (currency === 'NGN') {
-      return `₦${(val * exchangeRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      return `₦${val.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
     }
-    return `$${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `$${(val / exchangeRate).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
   };
 
   const getGrowthData = () => {
@@ -130,7 +187,7 @@ export function TransactionsClient({
     }
   };
 
-  const IconMap: { [key: string]: any } = {
+  const IconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     DollarSign,
     UserCheck,
     UserX,
@@ -187,34 +244,47 @@ export function TransactionsClient({
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-               <div className="lg:col-span-3 h-56 flex items-end justify-between gap-4 px-4">
+               <div className="lg:col-span-3 h-56 flex items-end justify-between gap-4 px-4 relative">
+                  {/* Background Horizontal Gridlines */}
+                  <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20 pr-4 pb-8">
+                     <div className="border-b border-dashed border-white/10 w-full h-0"></div>
+                     <div className="border-b border-dashed border-white/10 w-full h-0"></div>
+                     <div className="border-b border-dashed border-white/10 w-full h-0"></div>
+                     <div className="w-full h-0"></div>
+                  </div>
+
                   {currentGrowthData.map((d, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-4 group/bar h-full justify-end">
-                       <div className="relative w-full h-full flex flex-col justify-end">
+                    <div key={i} className="flex-1 flex flex-col items-center gap-4 group/bar h-full justify-end relative z-10">
+                       <div className="relative w-full h-40 flex flex-col justify-end items-center">
+                          {/* Pill Track */}
+                          <div className="absolute inset-y-0 w-3 bg-white/[0.04] rounded-full left-1/2 -translate-x-1/2"></div>
+                          {/* Filled Neon Bar */}
                           <div 
-                            className="w-full bg-white/10 rounded-t-xl transition-all duration-700 group-hover/bar:bg-[#b50a0a] group-hover/bar:shadow-[0_0_20px_rgba(181,10,10,0.4)]" 
+                            className="w-3 bg-gradient-to-t from-[#b50a0a] to-[#ff2b2b] rounded-full transition-all duration-1000 relative z-10 shadow-[0_0_12px_rgba(181,10,10,0.35)] group-hover/bar:shadow-[0_0_20px_rgba(255,43,43,0.65)] group-hover/bar:from-[#c90c0c] group-hover/bar:to-[#ff5555]" 
                             style={{ height: `${(d.value / maxGrowthValue) * 100}%` }}
                           ></div>
-                          <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all text-xs font-black text-[#b50a0a] whitespace-nowrap bg-white px-3 py-1.5 rounded-lg shadow-xl border border-gray-100">
+                          {/* Value Tooltip */}
+                          <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all text-[10px] font-black text-[#b50a0a] whitespace-nowrap bg-white px-2.5 py-1.5 rounded-lg shadow-xl border border-gray-100 z-20">
                              {formatVal(d.value)}
                           </div>
                        </div>
-                       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{d.name}</span>
+                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{d.name}</span>
                     </div>
                   ))}
                </div>
 
-               <div className="bg-white/5 border border-white/10 rounded-3xl p-6 flex flex-col justify-center space-y-6">
-                  <div>
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Current Projection</p>
-                    <div className="flex items-baseline gap-2">
-                       <span className="text-3xl font-black text-[#e53e3e] italic tracking-tight">+{formatVal(currentProjection)}</span>
+               <div className="bg-white/[0.02] border border-white/[0.06] rounded-[2rem] p-6 flex flex-col justify-center space-y-6 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] overflow-hidden">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1">Current Projection</p>
+                    <div className="flex items-baseline gap-0.5 text-[#ff3a3a] text-lg sm:text-xl xl:text-[22px] font-black italic tracking-tighter whitespace-nowrap overflow-visible">
+                       <span>+</span>
+                       <span>{formatVal(currentProjection, 0)}</span>
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                       <span className="text-gray-400 uppercase">Growth Rate</span>
-                       <span className="text-green-400 font-black">+{growthRate.toFixed(1)}%</span>
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider">
+                       <span className="text-gray-400">Growth Rate</span>
+                       <span className="text-green-400">+{growthRate.toFixed(1)}%</span>
                     </div>
                     <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
                        <div className="w-[72%] h-full bg-[#b50a0a] rounded-full shadow-[0_0_10px_rgba(181,10,10,0.5)]"></div>
@@ -319,21 +389,22 @@ export function TransactionsClient({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-600">
+          <table className="w-full text-left text-sm text-gray-600 table-auto">
             <thead className="bg-[#f8f9fa] border-b border-gray-100">
               <tr>
-                 <th className="px-5 py-3 text-xs font-extrabold uppercase tracking-widest text-[#b50a0a]">Reference / ID</th>
-                 <th className="px-5 py-3 text-xs font-extrabold uppercase tracking-widest text-[#b50a0a]">Payer Details</th>
-                 <th className="px-5 py-3 text-xs font-extrabold uppercase tracking-widest text-[#b50a0a]">Amount</th>
-                 <th className="px-5 py-3 text-xs font-extrabold uppercase tracking-widest text-[#b50a0a]">Gateway</th>
-                 <th className="px-5 py-3 text-xs font-extrabold uppercase tracking-widest text-[#b50a0a]">Status</th>
-                 <th className="px-5 py-3 text-xs font-extrabold uppercase tracking-widest text-[#b50a0a] text-right">Date</th>
+                 <th className="px-3 py-3 text-[10px] font-extrabold uppercase tracking-wider text-[#b50a0a]">Reference / ID</th>
+                 <th className="px-3 py-3 text-[10px] font-extrabold uppercase tracking-wider text-[#b50a0a]">Payer Details</th>
+                 <th className="px-3 py-3 text-[10px] font-extrabold uppercase tracking-wider text-[#b50a0a]">Amount</th>
+                 <th className="px-3 py-3 text-[10px] font-extrabold uppercase tracking-wider text-[#b50a0a]">Gateway</th>
+                 <th className="px-3 py-3 text-[10px] font-extrabold uppercase tracking-wider text-[#b50a0a]">Status</th>
+                 <th className="px-3 py-3 text-[10px] font-extrabold uppercase tracking-wider text-[#b50a0a]">Date</th>
+                 <th className="px-3 py-3 text-[10px] font-extrabold uppercase tracking-wider text-[#b50a0a] text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
                {transactions.length === 0 ? (
                  <tr>
-                    <td colSpan={6} className="px-5 py-12 text-center">
+                    <td colSpan={7} className="px-3 py-12 text-center">
                        <CreditCard className="w-10 h-10 text-gray-200 mx-auto mb-3" />
                        <p className="text-xs font-black uppercase tracking-widest text-gray-400">No transactions recorded yet.</p>
                     </td>
@@ -341,42 +412,88 @@ export function TransactionsClient({
                ) : (
                  transactions.map((tx) => (
                    <tr key={tx.id} className="hover:bg-gray-50/50 transition-colors group">
-                      <td className="px-5 py-3.5">
+                      <td className="px-3 py-2.5">
                          <div className="flex flex-col">
-                            <span className="font-extrabold text-gray-900 uppercase text-xs tracking-tight">{tx.reference}</span>
-                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-1">ID: {tx.id.slice(0, 8)}</span>
+                            <span className="font-extrabold text-gray-900 uppercase text-[11px] tracking-tight">{tx.reference}</span>
+                            <span className="text-[10px] font-semibold text-gray-400 mt-0.5">ID: {tx.id.slice(0, 8)}</span>
                          </div>
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-3 py-2.5">
                          <div className="flex flex-col">
-                            <p className="font-bold text-gray-900 leading-none text-xs">{tx.profiles?.first_name} {tx.profiles?.last_name}</p>
-                            <p className="text-xs font-medium text-gray-400 mt-1">{tx.profiles?.email}</p>
+                            <p className="font-bold text-gray-900 leading-none text-[11px]">{tx.profiles?.first_name} {tx.profiles?.last_name}</p>
+                            <p className="text-[10px] font-medium text-gray-400 mt-0.5 truncate max-w-[160px]">{tx.profiles?.email}</p>
                          </div>
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-3 py-2.5">
                          <div className="flex flex-col">
-                            <span className="font-extrabold text-gray-900 text-sm italic tracking-tight">{formatVal(Number(tx.amount))}</span>
-                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">{currency}</span>
+                            <span className="font-extrabold text-gray-900 text-xs italic tracking-tight">{formatVal(Number(tx.amount))}</span>
+                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">{currency}</span>
                          </div>
                       </td>
-                      <td className="px-5 py-3.5">
-                         <div className="flex items-center gap-2">
-                            <Globe className="w-4 h-4 text-black" />
-                            <span className="text-xs font-bold text-gray-700 uppercase tracking-widest">{getMethodLabel(tx.method)}</span>
+                      <td className="px-3 py-2.5">
+                         <div className="flex items-center gap-1.5">
+                            <Globe className="w-3.5 h-3.5 text-black shrink-0" />
+                            <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wider">{getMethodLabel(tx.method)}</span>
                          </div>
                       </td>
-                      <td className="px-5 py-3.5">
-                         <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold uppercase tracking-widest ${getStatusColor(tx.status)}`}>
-                            {tx.status === 'confirmed' ? <CheckCircle className="w-3.5 h-3.5" /> : tx.status === 'failed' ? <XCircle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                      <td className="px-3 py-2.5">
+                         <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[9px] font-bold uppercase tracking-wider ${getStatusColor(tx.status)}`}>
+                            {tx.status === 'confirmed' ? <CheckCircle className="w-3 h-3" /> : tx.status === 'failed' ? <XCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                             {tx.status}
                          </div>
                       </td>
-                      <td className="px-5 py-3.5 text-right">
-                         <div className="flex flex-col items-end">
-                            <DateDisplay date={tx.created_at} className="text-xs font-bold text-gray-800 uppercase" />
-                            <span className="text-xs font-medium text-gray-400 mt-1">
+                      <td className="px-3 py-2.5">
+                         <div className="flex flex-col">
+                            <DateDisplay date={tx.created_at} className="text-[10px] font-bold text-gray-800 uppercase" />
+                            <span className="text-[9px] font-medium text-gray-400 mt-0.5">
                                {new Date(tx.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
+                         </div>
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                         <div className="flex items-center justify-end gap-1.5">
+                            {/* Preview Action - Available for all transactions */}
+                            <button
+                              onClick={() => setInspectPayment(tx)}
+                              className="w-8.5 h-8.5 rounded-full bg-gray-50 hover:bg-gray-950 hover:text-white flex items-center justify-center text-gray-600 transition-all border border-gray-100 shadow-sm cursor-pointer"
+                              title="Preview Transaction Details"
+                            >
+                               <Eye className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Approve/Reject Actions - Awaiting verification status */}
+                            {tx.status === 'pending' && tx.method === 'direct_transfer' && (
+                               <>
+                                  <button 
+                                    onClick={() => setDecisionAction({
+                                      id: tx.id,
+                                      type: 'approve',
+                                      title: 'Approve Payment',
+                                      subtitle: 'Confirm bank settlement receipt & activate subscription',
+                                      targetName: tx.profiles ? `${tx.profiles.first_name} ${tx.profiles.last_name}` : 'N/A',
+                                      targetEmail: tx.profiles?.email || 'N/A'
+                                    })}
+                                    className="w-7 h-7 rounded-full bg-green-50 hover:bg-green-600 hover:text-white flex items-center justify-center text-green-600 transition-all border border-green-100 shadow-sm cursor-pointer"
+                                    title="Approve Transaction"
+                                  >
+                                     <CheckCircle className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button 
+                                    onClick={() => setDecisionAction({
+                                      id: tx.id,
+                                      type: 'reject',
+                                      title: 'Reject Payment',
+                                      subtitle: 'Decline transfer proof & mark transaction as failed',
+                                      targetName: tx.profiles ? `${tx.profiles.first_name} ${tx.profiles.last_name}` : 'N/A',
+                                      targetEmail: tx.profiles?.email || 'N/A'
+                                    })}
+                                    className="w-7 h-7 rounded-full bg-red-50 hover:bg-red-600 hover:text-white flex items-center justify-center text-red-650 transition-all border border-red-100 shadow-sm cursor-pointer"
+                                    title="Reject Transaction"
+                                  >
+                                     <X className="w-3.5 h-3.5" />
+                                  </button>
+                               </>
+                            )}
                          </div>
                       </td>
                    </tr>
@@ -391,7 +508,7 @@ export function TransactionsClient({
            <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">
               Viewing <span className="text-[#b50a0a] font-extrabold">{transactions.length}</span> of <span className="text-[#b50a0a] font-extrabold">{totalCount}</span> Transactions
            </p>
-           <div className="flex items-center gap-2">
+           <div className="flex items-center gap-1.5">
               <button 
                 onClick={() => navigateToPage(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -420,6 +537,266 @@ export function TransactionsClient({
            </div>
         </div>
       </div>
+
+      {/* Transaction Details Inspector Modal */}
+      {inspectPayment && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setInspectPayment(null)}>
+          <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setInspectPayment(null)} className="absolute top-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10 cursor-pointer">
+              <X className="w-5 h-5 text-gray-400" />
+            </button>
+            <div className="p-10 pb-6">
+              <div className="flex items-center gap-6 mb-10">
+                <div className="w-16 h-16 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center border border-green-100 font-black text-2xl shrink-0">
+                  $
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none mb-2">Transaction Details</h2>
+                  <p className="text-[10px] font-black text-[#b50a0a] uppercase tracking-[0.2em]">Reference: {inspectPayment.reference}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-y-10 mb-10">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-300 uppercase tracking-widest font-black"><UserCheck className="w-3.5 h-3.5" /> Payer Name</div>
+                  <p className="text-[14px] font-black text-gray-900 truncate pr-4">
+                    {inspectPayment.profiles ? `${inspectPayment.profiles.first_name} ${inspectPayment.profiles.last_name}` : 'N/A'}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-300 uppercase tracking-widest font-black"><Globe className="w-3.5 h-3.5" /> Email Address</div>
+                  <p className="text-[14px] font-black text-gray-900 truncate pr-4">{inspectPayment.profiles?.email || 'N/A'}</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-300 uppercase tracking-widest font-black"><CreditCard className="w-3.5 h-3.5" /> Transaction Amount</div>
+                  <p className="text-[14px] font-black text-green-600 uppercase italic font-black">{formatVal(Number(inspectPayment.amount))} {inspectPayment.currency}</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-300 uppercase tracking-widest font-black"><Clock className="w-3.5 h-3.5" /> Payment Method / Gateway</div>
+                  <p className="text-[14px] font-black text-gray-900 uppercase font-bold">{getMethodLabel(inspectPayment.method)}</p>
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-300 uppercase tracking-widest font-black"><Activity className="w-3.5 h-3.5" /> Transaction Status</div>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[9px] font-bold uppercase tracking-wider ${getStatusColor(inspectPayment.status)}`}>
+                      {inspectPayment.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {inspectPayment.method === 'direct_transfer' && (
+                <div className="bg-slate-50 rounded-[2rem] p-6 mb-8 border border-slate-100 space-y-4 text-left">
+                  <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
+                    <h4 className="text-[10px] font-black uppercase text-slate-900 tracking-wider flex items-center gap-2">
+                      <Building className="w-4 h-4 text-amber-600" /> Direct Transfer Details
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Depositor Name</p>
+                      <p className="text-xs font-bold text-slate-800">{inspectPayment.metadata?.proofName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Depositor Email</p>
+                      <p className="text-xs font-bold text-slate-800 break-all">{inspectPayment.metadata?.proofEmail || 'N/A'}</p>
+                    </div>
+                  </div>
+                  {inspectPayment.metadata?.proofFileUrl ? (
+                    <div className="space-y-2 pt-2 border-t border-slate-200/60">
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Uploaded Proof Receipt</p>
+                      {inspectPayment.metadata.proofFileUrl.toLowerCase().endsWith('.pdf') ? (
+                        <a
+                          href={inspectPayment.metadata.proofFileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-xs font-bold text-[#b50a0a] hover:bg-slate-50 transition-all shadow-sm"
+                        >
+                          <FileText className="w-4 h-4 text-[#b50a0a]" /> Open PDF Receipt
+                        </a>
+                      ) : (
+                        <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-white max-h-56 flex items-center justify-center shadow-inner group">
+                          <img
+                            src={inspectPayment.metadata.proofFileUrl}
+                            alt="Payment Receipt"
+                            className="max-h-56 w-full object-contain p-2"
+                          />
+                          <a
+                            href={inspectPayment.metadata.proofFileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="absolute bottom-3 right-3 bg-slate-900/80 hover:bg-slate-900 text-white px-3.5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest backdrop-blur-sm transition-all shadow-lg"
+                          >
+                            Open Full Image
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ) : inspectPayment.metadata?.proofFileName ? (
+                    <div className="pt-2 border-t border-slate-200/60">
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Uploaded File Name</p>
+                      <p className="text-xs font-bold text-slate-600">{inspectPayment.metadata.proofFileName}</p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+              {inspectPayment.status === 'failed' && (inspectPayment.metadata?.rejection_reason || inspectPayment.metadata?.reason) && (
+                <div className="bg-red-50 rounded-[2rem] p-6 mb-8 border border-red-100 space-y-2 text-left">
+                  <p className="text-[9px] font-black uppercase text-red-700 tracking-widest">Rejection Reason</p>
+                  <p className="text-red-900 text-xs font-bold leading-relaxed">{inspectPayment.metadata.rejection_reason || inspectPayment.metadata.reason}</p>
+                </div>
+              )}
+
+              {inspectPayment.status === 'confirmed' && (inspectPayment.metadata?.approval_comment || inspectPayment.metadata?.comment) && (
+                <div className="bg-green-50 rounded-[2rem] p-6 mb-8 border border-green-100 space-y-2 text-left">
+                  <p className="text-[9px] font-black uppercase text-green-700 tracking-widest">Approval Comment</p>
+                  <p className="text-green-900 text-xs font-bold leading-relaxed">{inspectPayment.metadata.approval_comment || inspectPayment.metadata.comment}</p>
+                </div>
+              )}
+
+              {inspectPayment.status === 'pending' && inspectPayment.method === 'direct_transfer' ? (
+                <div className="bg-gray-50 rounded-[2.5rem] p-6 mb-10 border border-gray-100 flex items-center justify-between animate-pulse">
+                  <div>
+                    <p className="text-[9px] font-black uppercase text-gray-900 tracking-widest">Verify Settlement Funds</p>
+                    <p className="text-gray-400 text-[10px] leading-relaxed mt-1">Please confirm that funds matching reference <strong>{inspectPayment.reference}</strong> are fully cleared in the corporate bank account.</p>
+                  </div>
+                </div>
+              ) : null}
+
+              {inspectPayment.status === 'pending' && inspectPayment.method === 'direct_transfer' ? (
+                <div className="flex gap-4">
+                  <button 
+                    onClick={() => {
+                      setInspectPayment(null);
+                      setDecisionAction({
+                        id: inspectPayment.id,
+                        type: 'approve',
+                        title: 'Approve Payment',
+                        subtitle: 'Confirm bank settlement receipt & activate subscription',
+                        targetName: inspectPayment.profiles ? `${inspectPayment.profiles.first_name} ${inspectPayment.profiles.last_name}` : 'N/A',
+                        targetEmail: inspectPayment.profiles?.email || 'N/A'
+                      });
+                    }}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-[11px] transition-all text-center flex items-center justify-center gap-2 shadow-lg shadow-green-900/10 cursor-pointer"
+                  >
+                    <CheckCircle className="w-4 h-4" /> Confirm & Activate
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setInspectPayment(null);
+                      setDecisionAction({
+                        id: inspectPayment.id,
+                        type: 'reject',
+                        title: 'Reject Payment',
+                        subtitle: 'Decline transfer proof & mark transaction as failed',
+                        targetName: inspectPayment.profiles ? `${inspectPayment.profiles.first_name} ${inspectPayment.profiles.last_name}` : 'N/A',
+                        targetEmail: inspectPayment.profiles?.email || 'N/A'
+                      });
+                    }}
+                    className="flex-1 bg-red-50 hover:bg-red-100 text-red-650 border border-red-100 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-[11px] transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" /> Reject Payment
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setInspectPayment(null)}
+                  className="w-full bg-gray-900 hover:bg-gray-950 text-white py-5 rounded-[2rem] font-black uppercase tracking-[0.25em] text-[11px] transition-all cursor-pointer"
+                >
+                  Close Preview
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generic Reason Decision Modal */}
+      {decisionAction && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => { setDecisionAction(null); setDecisionReason(''); }}>
+          <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => { setDecisionAction(null); setDecisionReason(''); }} className="absolute top-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10 cursor-pointer">
+              <X className="w-5 h-5 text-gray-400" />
+            </button>
+            <div className="p-10 pb-8">
+              <div className="flex items-center gap-4 mb-8">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white ${decisionAction.type.startsWith('approve') ? 'bg-green-600' : 'bg-red-600'}`}>
+                  {decisionAction.type.startsWith('approve') ? <ShieldCheck className="w-6 h-6" /> : <Ban className="w-6 h-6" />}
+                </div>
+                <div>
+                  <h3 className="text-xl font-black uppercase tracking-tight italic text-gray-955">{decisionAction.title}</h3>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">{decisionAction.subtitle}</p>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 border border-gray-100 rounded-[2.5rem] p-6 mb-6 space-y-3">
+                <div className="flex justify-between text-[10px] font-bold">
+                  <span className="text-gray-400 uppercase">Target Name</span>
+                  <span className="text-gray-950 font-black">{decisionAction.targetName}</span>
+                </div>
+                <div className="flex justify-between text-[10px] font-bold">
+                  <span className="text-gray-400 uppercase">Email Address</span>
+                  <span className="text-gray-955 font-black">{decisionAction.targetEmail}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 mb-6">
+                <label className="text-[10px] font-black text-gray-955 uppercase tracking-widest block ml-1">
+                  Reason / Email Note (Optional)
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder={
+                    decisionAction.type.startsWith('approve')
+                      ? "Add welcoming remarks or verification details..."
+                      : "Provide a detailed reason for the rejection..."
+                  }
+                  value={decisionReason}
+                  onChange={(e) => setDecisionReason(e.target.value)}
+                  className="w-full p-4 bg-gray-50 border-none rounded-2xl text-xs font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all text-gray-950 placeholder:text-gray-400 resize-none animate-in fade-in"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  disabled={actionLoadingId !== null}
+                  onClick={async () => {
+                    const actId = decisionAction.id;
+                    const actType = decisionAction.type;
+                    const r = decisionReason;
+                    
+                    setDecisionAction(null);
+                    setDecisionReason('');
+
+                    await runApprovalAction(actId, () => {
+                      if (actType === 'approve') {
+                        return approvePaymentTransaction(actId, r);
+                      } else {
+                        return rejectPaymentTransaction(actId, r);
+                      }
+                    });
+                  }}
+                  className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all shadow-lg flex items-center justify-center gap-1.5 cursor-pointer ${
+                    decisionAction.type.startsWith('approve')
+                      ? 'bg-green-600 hover:bg-green-700 shadow-green-900/10'
+                      : 'bg-red-600 hover:bg-red-700 shadow-red-900/10'
+                  }`}
+                >
+                  {actionLoadingId !== null ? <RefreshCcw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  Confirm & Notify
+                </button>
+                <button
+                  onClick={() => { setDecisionAction(null); setDecisionReason(''); }}
+                  className="px-6 py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
