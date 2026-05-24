@@ -40,7 +40,7 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
       <div className="min-h-screen bg-white">
          <Navbar />
 
-         <main className="pt-32">
+         <main className="pt-20 sm:pt-32">
             {/* Back Button Bar */}
             <div className="bg-white border-b border-gray-100 py-4">
                <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
@@ -54,7 +54,7 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                </div>
             </div>
             {/* Hero Section / Banner */}
-            <div className="relative h-[450px] w-full bg-gray-900 overflow-hidden">
+            <div className="relative h-[280px] sm:h-[450px] w-full bg-gray-900 overflow-hidden">
                <img 
                   src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2000&auto=format&fit=crop" 
                   className="absolute inset-0 w-full h-full object-cover opacity-40 grayscale" 
@@ -71,7 +71,7 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                      />
                   </div>
                   <div className="mt-8 text-center z-20">
-                     <h1 className="text-5xl font-black text-white uppercase tracking-tighter drop-shadow-2xl">
+                     <h1 className="text-3xl sm:text-5xl font-black text-white mb-4 uppercase tracking-tighter drop-shadow-xl">
                         {profile.first_name} <br /> 
                         <span className="text-[#a20000]">{profile.last_name}</span>
                      </h1>

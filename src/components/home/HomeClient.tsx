@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   PlayCircle, 
   ArrowRight, 
@@ -147,7 +148,7 @@ export function ProfileCarousel({ items, renderItem }: ProfileCarouselProps) {
 
   return (
     <div 
-      className="relative w-full overflow-hidden group"
+      className="relative w-full overflow-hidden group touch-pan-y"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -225,7 +226,7 @@ export function HomeClient({
     <div className="min-h-screen bg-[#fafafa] font-sans text-gray-900 selection:bg-[#b50a0a]/10 selection:text-[#b50a0a]">
       <Navbar content={navContent} settings={siteSettings} />
 
-      <main className="pt-32 pb-24 overflow-hidden">
+      <main className="pt-20 sm:pt-32 pb-24 overflow-hidden">
         
         {/* ==================== A. HERO GRID SECTION ==================== */}
         <section className="max-w-[1200px] mx-auto px-4 lg:px-0 mb-20">
@@ -241,10 +242,13 @@ export function HomeClient({
               <div className="lg:col-span-7">
                 <Link href={`/news/${mainNews.slug}`} className="group relative block w-full aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto lg:h-[500px] rounded-[2rem] overflow-hidden shadow-xl border border-gray-100 bg-black">
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10" />
-                  <img 
+                  <Image 
                     src={mainNews.cover_image_url || IMG_HERO_DEFAULT} 
                     alt={mainNews.title} 
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"
+                    fill
+                    priority
+                    sizes="(max-width:1024px) 100vw, 60vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"
                   />
                   <div className="absolute top-6 left-6 z-20">
                     <span className="bg-[#b50a0a] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
@@ -272,10 +276,12 @@ export function HomeClient({
                     className="group relative flex-1 min-h-[235px] rounded-[2rem] overflow-hidden shadow-md border border-gray-100 bg-black block"
                   >
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent z-10" />
-                    <img 
+                    <Image 
                       src={news.cover_image_url || IMG_NEWS_DEFAULT} 
                       alt={news.title} 
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80"
+                      fill
+                      sizes="(max-width:1024px) 100vw, 40vw"
+                      className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-80"
                     />
                     <div className="absolute top-6 left-6 z-20">
                       <span className="bg-white/90 backdrop-blur-sm text-gray-900 text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
@@ -315,10 +321,12 @@ export function HomeClient({
                 renderItem={(news) => (
                   <Link href={`/news/${news.slug}`} className="group relative block aspect-[4/5] rounded-[1.8rem] overflow-hidden bg-black border border-gray-100 shadow-md">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10" />
-                    <img 
+                    <Image 
                       src={news.cover_image_url || IMG_NEWS_DEFAULT} 
                       alt={news.title} 
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80"
+                      fill
+                      sizes="256px"
+                      className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-80"
                     />
                     <div className="absolute bottom-0 left-0 p-5 z-20 w-full">
                       <DateDisplay date={news.published_at} className="text-white/60 text-[8px] font-bold uppercase tracking-widest mb-1.5 block" />
@@ -358,10 +366,12 @@ export function HomeClient({
             renderItem={(player) => (
               <Link href={`/athletes/${player.slug}`} className="group relative block aspect-[4/5] rounded-3xl overflow-hidden bg-black shadow-lg border border-gray-100">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10" />
-                <img 
+                <Image 
                   src={player.avatar_url || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop"} 
                   alt={getDisplayName(player)} 
-                  className="absolute inset-0 w-full h-full object-cover transition-all duration-700 grayscale group-hover:grayscale-0 group-hover:scale-105 opacity-85"
+                  fill
+                  sizes="(max-width:640px) 90vw, (max-width:1024px) 50vw, 256px"
+                  className="object-cover transition-all duration-700 grayscale group-hover:grayscale-0 group-hover:scale-105 opacity-85"
                 />
                 
                 <div className="absolute top-4 right-4 z-20 bg-black/40 backdrop-blur-md rounded-full px-3 py-1 border border-white/10">
@@ -401,7 +411,7 @@ export function HomeClient({
               </div>
               <div className="flex flex-wrap gap-4 shrink-0">
                 <Link href="/register">
-                  <button className="bg-[#b50a0a] hover:bg-white text-white hover:text-black font-black text-[10px] tracking-[0.2em] uppercase px-8 py-4.5 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
+                  <button className="bg-[#b50a0a] hover:bg-white text-white hover:text-black font-black text-[10px] tracking-[0.2em] uppercase px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
                     Register Profile <ArrowRight className="w-4 h-4" />
                   </button>
                 </Link>
@@ -435,10 +445,12 @@ export function HomeClient({
             renderItem={(coach) => (
               <Link href={`/coaches/${coach.slug}`} className="group relative block aspect-[4/5] rounded-3xl overflow-hidden bg-white shadow-lg border border-gray-100 hover:border-[#b50a0a]/30 transition-colors">
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/10 to-transparent z-10" />
-                <img 
+                <Image 
                   src={coach.avatar_url || "https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=600&auto=format&fit=crop"} 
                   alt={getDisplayName(coach)} 
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  fill
+                  sizes="(max-width:640px) 90vw, (max-width:1024px) 50vw, 256px"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 
                 <div className="absolute top-4 left-4 z-20">
@@ -480,7 +492,7 @@ export function HomeClient({
               </div>
               <div className="flex flex-wrap gap-4 shrink-0">
                 <Link href="/register">
-                  <button className="bg-white hover:bg-black text-black hover:text-white font-black text-[10px] tracking-[0.2em] uppercase px-8 py-4.5 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
+                  <button className="bg-white hover:bg-black text-black hover:text-white font-black text-[10px] tracking-[0.2em] uppercase px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
                     Create Coach Profile <ArrowRight className="w-4 h-4" />
                   </button>
                 </Link>
@@ -515,10 +527,12 @@ export function HomeClient({
               <div className="group bg-white border border-gray-100 rounded-[2rem] p-6 shadow-md hover:shadow-xl transition-all duration-500 h-full flex flex-col justify-between">
                 <div>
                   <div className="relative w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-4 border border-gray-100">
-                    <img 
+                    <Image 
                       src={agent.avatar_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=600&auto=format&fit=crop"} 
                       alt={getDisplayName(agent)} 
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                      fill
+                      sizes="80px"
+                      className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                     />
                   </div>
                   
@@ -569,7 +583,7 @@ export function HomeClient({
               </div>
               <div className="flex flex-wrap gap-4 shrink-0">
                 <Link href="/register">
-                  <button className="bg-white hover:bg-[#b50a0a] text-black hover:text-white font-black text-[10px] tracking-[0.2em] uppercase px-8 py-4.5 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
+                  <button className="bg-white hover:bg-[#b50a0a] text-black hover:text-white font-black text-[10px] tracking-[0.2em] uppercase px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
                     Join As Scout / Agent <ArrowRight className="w-4 h-4" />
                   </button>
                 </Link>
@@ -650,7 +664,7 @@ export function HomeClient({
               </div>
               <div className="flex flex-wrap gap-4 shrink-0">
                 <Link href="/register">
-                  <button className="bg-gray-900 hover:bg-amber-600 text-white font-black text-[10px] tracking-[0.2em] uppercase px-8 py-4.5 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
+                  <button className="bg-gray-900 hover:bg-amber-600 text-white font-black text-[10px] tracking-[0.2em] uppercase px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
                     Register Organisation <ArrowRight className="w-4 h-4" />
                   </button>
                 </Link>
@@ -686,10 +700,12 @@ export function HomeClient({
                 className="group relative rounded-2xl overflow-hidden aspect-video sm:aspect-[4/5] bg-black border border-gray-100 shadow-md block"
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent z-10" />
-                <img 
+                <Image 
                   src={post.cover_image_url || IMG_NEWS_DEFAULT} 
                   alt={post.title} 
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80"
+                  fill
+                  sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 20vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-80"
                 />
                 
                 {/* Play Button Overlay */}
@@ -742,14 +758,14 @@ export function HomeClient({
                 We work alongside corporate sponsors, state sports organizations, scouts associations, and global media outlets to provide premium scouting systems and athlete logistics.
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center gap-6">
+              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                 <Link href="/contact">
-                  <button className="bg-white hover:bg-black text-[#b50a0a] hover:text-white px-12 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl transition-all hover:-translate-y-0.5 active:scale-95 flex items-center gap-2">
+                  <button className="w-full sm:w-auto bg-white hover:bg-black text-[#b50a0a] hover:text-white px-12 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl transition-all hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2">
                     Contact Business Team <ArrowRight className="w-4 h-4" />
                   </button>
                 </Link>
                 <Link href="/about">
-                  <button className="bg-transparent text-white border-2 border-white/20 hover:bg-white/10 px-12 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:-translate-y-0.5 active:scale-95">
+                  <button className="w-full sm:w-auto bg-transparent text-white border-2 border-white/20 hover:bg-white/10 px-12 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:-translate-y-0.5 active:scale-95">
                     View Partnership Deck
                   </button>
                 </Link>

@@ -39,7 +39,7 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
       <div className="min-h-screen bg-white">
          <Navbar />
 
-         <main className="pt-32">
+         <main className="pt-20 sm:pt-32">
             {/* Back Button Bar */}
             <div className="bg-white border-b border-gray-100 py-4">
                <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
@@ -53,13 +53,13 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
                </div>
             </div>
             {/* Header / Hero Section */}
-            <div className="relative h-[500px] w-full bg-[#0a0a0a] overflow-hidden">
+            <div className="relative h-[320px] sm:h-[500px] w-full bg-[#0a0a0a] overflow-hidden">
                <div className="absolute inset-0 opacity-10">
                   <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_30%,#a20000,transparent)]"></div>
                </div>
 
-               <div className="max-w-[1200px] mx-auto px-4 lg:px-0 h-full flex items-center gap-12 relative z-10">
-                  <div className="relative group shrink-0">
+               <div className="max-w-[1200px] mx-auto px-4 lg:px-0 h-full flex flex-col sm:flex-row items-center gap-6 sm:gap-12 relative z-10 py-6 sm:py-0">
+                  <div className="relative group shrink-0 hidden sm:block">
                      <div className="w-56 h-56 lg:w-72 lg:h-72 rounded-[48px] overflow-hidden border-4 border-white/5 shadow-2xl transition-all duration-700 group-hover:rounded-[24px]">
                         <Image 
                            src={profile.avatar_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=800&auto=format&fit=crop"} 
@@ -73,9 +73,9 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
                      </div>
                   </div>
 
-                  <div className="flex-1 space-y-6">
+                  <div className="flex-1 space-y-4 sm:space-y-6">
                      <span className="text-[#a20000] font-black text-xs uppercase tracking-[0.4em] block">Certified Lead Agent</span>
-                     <h1 className="text-5xl lg:text-7xl font-black text-white uppercase tracking-tighter leading-none">
+                     <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white uppercase tracking-tighter leading-none">
                         {profile.first_name} <br />
                         <span className="text-[#a20000]">{profile.last_name}</span>
                      </h1>
@@ -100,9 +100,9 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
             </div>
 
             {/* Quick Metrics Bar */}
-            <div className="bg-gray-50 border-y border-gray-100 py-12">
+            <div className="bg-gray-50 border-y border-gray-100 py-8 sm:py-12">
                <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-12">
                      <div className="text-center md:text-left">
                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Total Transfers</span>
                         <span className="text-4xl font-black text-gray-900 leading-none">{metrics.transfers}+</span>

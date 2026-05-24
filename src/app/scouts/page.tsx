@@ -70,9 +70,9 @@ export default function ScoutsPage() {
       <div className="min-h-screen bg-white">
          <Navbar />
 
-         <main className="pt-32">
+         <main className="pt-20 sm:pt-32">
             {/* Split Hero Section */}
-            <div className="bg-gray-50 py-16">
+            <div className="bg-gray-50 py-10 sm:py-16">
                <div className="max-w-[1200px] mx-auto px-4 lg:px-0 flex flex-col lg:flex-row items-center gap-12">
                   <div className="w-full lg:w-1/2">
                      <span className="text-[#a20000] font-bold text-xs uppercase tracking-[0.2em] mb-4 block">Talent Identifiers</span>
@@ -90,7 +90,7 @@ export default function ScoutsPage() {
                      </Link>
                   </div>
 
-                  <div className="w-full lg:w-1/2 grid grid-cols-2 gap-4 h-[500px]">
+                  <div className="w-full lg:w-1/2 grid grid-cols-2 gap-4 h-[280px] sm:h-[400px] lg:h-[500px]">
                      <div className="h-full overflow-hidden rounded-2xl relative group">
                         <img 
                            src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=800&auto=format&fit=crop" 
@@ -122,7 +122,7 @@ export default function ScoutsPage() {
             </div>
 
             {/* Scouts Grid Section */}
-            <div className="max-w-[1200px] mx-auto px-4 lg:px-0 py-24">
+            <div className="max-w-[1200px] mx-auto px-4 lg:px-0 py-10 sm:py-24">
                {/* Interactive Filter Bar */}
                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 border-b border-gray-100 pb-8">
                   <div>
@@ -170,7 +170,7 @@ export default function ScoutsPage() {
                      <p className="text-gray-900 font-bold uppercase tracking-widest">No matching scouts found.</p>
                   </div>
                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8">
                      {filteredScouts.map((scout) => {
                         const displayName = scout.full_name || `${scout.first_name || ''} ${scout.last_name || ''}`.trim() || 'Anonymous Scout';
                         return (

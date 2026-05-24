@@ -32,7 +32,7 @@ export default function OrgDetailsClient({ profile }: OrgDetailsClientProps) {
       <div className="min-h-screen bg-white">
          <Navbar />
 
-         <main className="pt-32">
+         <main className="pt-20 sm:pt-32">
             {/* Back Button Bar */}
             <div className="bg-white border-b border-gray-100 py-4">
                <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
@@ -46,7 +46,7 @@ export default function OrgDetailsClient({ profile }: OrgDetailsClientProps) {
                </div>
             </div>
             {/* Hero Banner */}
-            <div className="relative h-[400px] w-full bg-gray-900 overflow-hidden">
+            <div className="relative h-[280px] sm:h-[400px] w-full bg-gray-900 overflow-hidden">
                <img 
                   src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=2000&auto=format&fit=crop" 
                   className="absolute inset-0 w-full h-full object-cover opacity-35 grayscale" 
@@ -67,7 +67,7 @@ export default function OrgDetailsClient({ profile }: OrgDetailsClientProps) {
                      )}
                   </div>
                   <div className="mt-6 text-center z-20">
-                     <h1 className="text-4xl font-black text-white uppercase tracking-tighter drop-shadow-2xl">
+                     <h1 className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tighter drop-shadow-2xl">
                         {displayName}
                      </h1>
                      <div className="flex items-center justify-center gap-2 mt-2">
@@ -109,7 +109,7 @@ export default function OrgDetailsClient({ profile }: OrgDetailsClientProps) {
             </div>
 
             {/* Content Body */}
-            <div className="max-w-[1000px] mx-auto px-4 lg:px-0 py-16">
+            <div className="max-w-[1000px] mx-auto px-4 lg:px-0 py-8 sm:py-16">
                {activeTab === "Profile" && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                      <div className="md:col-span-2 space-y-12">

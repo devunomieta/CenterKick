@@ -71,9 +71,9 @@ export default function AgentsPage() {
       <div className="min-h-screen bg-white text-gray-900">
          <Navbar />
 
-         <main className="pt-32">
+         <main className="pt-20 sm:pt-32">
             {/* Business Hero Section */}
-            <div className="relative bg-[#0a0a0a] py-32 overflow-hidden border-b border-white/5">
+            <div className="relative bg-[#0a0a0a] py-16 sm:py-32 overflow-hidden border-b border-white/5">
                <div className="absolute inset-0 opacity-20">
                   <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_120%,#4a0000,transparent)]"></div>
                </div>
@@ -81,18 +81,18 @@ export default function AgentsPage() {
                <div className="max-w-[1200px] mx-auto px-4 lg:px-0 relative z-10">
                   <div className="max-w-3xl">
                      <span className="text-[#a20000] font-black text-xs uppercase tracking-[0.4em] mb-6 block drop-shadow-[0_0_15px_rgba(162,0,0,0.5)]">Certified Network</span>
-                     <h1 className="text-6xl lg:text-8xl font-black text-white leading-none mb-8 tracking-tighter">
+                     <h1 className="text-4xl sm:text-6xl lg:text-8xl font-black text-white leading-none mb-6 sm:mb-8 tracking-tighter">
                         PRO <br />
                         <span className="text-[#a20000]">AGENTS</span>
                      </h1>
                      <p className="text-gray-400 text-xl font-medium leading-relaxed mb-12">
                         Connect with the world&apos;s most influential football agents and agencies. Professional representation for players and coaches seeking global opportunities.
                      </p>
-                     <div className="flex flex-wrap gap-6">
-                        <button className="bg-[#a20000] text-white px-10 py-5 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-[#8a0000] transition-all shadow-[0_20px_40px_rgba(162,0,0,0.3)]">
+                     <div className="flex flex-wrap gap-3 sm:gap-6">
+                        <button className="bg-[#a20000] text-white px-6 sm:px-10 py-4 sm:py-5 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-[#8a0000] transition-all shadow-[0_20px_40px_rgba(162,0,0,0.3)]">
                            Find Representation
                         </button>
-                        <button className="bg-white/10 backdrop-blur-md text-white border border-white/10 px-10 py-5 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-white/20 transition-all">
+                        <button className="bg-white/10 backdrop-blur-md text-white border border-white/10 px-6 sm:px-10 py-4 sm:py-5 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-white/20 transition-all">
                            Partner With Us
                         </button>
                      </div>
@@ -101,7 +101,7 @@ export default function AgentsPage() {
             </div>
 
             {/* Agents Grid */}
-            <div className="max-w-[1200px] mx-auto px-4 lg:px-0 py-24">
+            <div className="max-w-[1200px] mx-auto px-4 lg:px-0 py-10 sm:py-24">
                {/* Interactive Filter Bar */}
                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 border-b border-gray-100 pb-8">
                   <div className="flex items-center gap-4">
@@ -149,7 +149,7 @@ export default function AgentsPage() {
                      <p className="text-gray-900 font-bold uppercase tracking-widest">No matching agents found.</p>
                   </div>
                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8">
                      {filteredAgents.map((agent) => (
                         <Link 
                            href={`/agents/${agent.slug}`} 

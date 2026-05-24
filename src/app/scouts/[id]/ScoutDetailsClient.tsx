@@ -31,7 +31,7 @@ export default function ScoutDetailsClient({ profile }: ScoutDetailsClientProps)
       <div className="min-h-screen bg-white">
          <Navbar />
 
-         <main className="pt-32">
+         <main className="pt-20 sm:pt-32">
             {/* Back Button Bar */}
             <div className="bg-white border-b border-gray-100 py-4">
                <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
@@ -46,12 +46,12 @@ export default function ScoutDetailsClient({ profile }: ScoutDetailsClientProps)
             </div>
 
             {/* Header / Hero Section */}
-            <div className="relative h-[500px] w-full bg-[#0a0a0a] overflow-hidden">
+            <div className="relative h-[320px] sm:h-[500px] w-full bg-[#0a0a0a] overflow-hidden">
                <div className="absolute inset-0 opacity-10">
                   <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_30%,#a20000,transparent)]"></div>
                </div>
 
-               <div className="max-w-[1200px] mx-auto px-4 lg:px-0 h-full flex items-center gap-12 relative z-10">
+               <div className="max-w-[1200px] mx-auto px-4 lg:px-0 h-full flex flex-col sm:flex-row items-center gap-6 sm:gap-12 relative z-10 py-6 sm:py-0">
                   <div className="relative group shrink-0">
                      <div className="w-56 h-56 lg:w-72 lg:h-72 rounded-[48px] overflow-hidden border-4 border-white/5 shadow-2xl transition-all duration-700 group-hover:rounded-[24px]">
                         <img 
@@ -65,9 +65,9 @@ export default function ScoutDetailsClient({ profile }: ScoutDetailsClientProps)
                      </div>
                   </div>
 
-                  <div className="flex-1 space-y-6">
+                  <div className="flex-1 space-y-4 sm:space-y-6">
                      <span className="text-[#a20000] font-black text-xs uppercase tracking-[0.4em] block">Verified Talent Scout</span>
-                     <h1 className="text-5xl lg:text-7xl font-black text-white uppercase tracking-tighter leading-none">
+                     <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white uppercase tracking-tighter leading-none">
                         {profile.first_name} <br />
                         <span className="text-[#a20000]">{profile.last_name}</span>
                      </h1>
@@ -106,7 +106,7 @@ export default function ScoutDetailsClient({ profile }: ScoutDetailsClientProps)
             </div>
 
             {/* Content Area */}
-            <div className="max-w-[1200px] mx-auto px-4 lg:px-0 py-20">
+            <div className="max-w-[1200px] mx-auto px-4 lg:px-0 py-6 sm:py-20">
                {activeTab === "Bio" && (
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
                      <div className="lg:col-span-2 space-y-12">

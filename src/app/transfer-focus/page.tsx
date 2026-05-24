@@ -223,12 +223,12 @@ export default function TransferFocusPage() {
       <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
          <Navbar />
 
-         <main className="flex-grow pt-32">
+         <main className="flex-grow pt-20 sm:pt-32">
             {/* Dark Hero Header */}
-            <div className="bg-[#1a1a1a] py-14 px-4 border-b-4 border-[#b50a0a]">
+            <div className="bg-[#1a1a1a] py-8 sm:py-14 px-4 border-b-4 border-[#b50a0a]">
                <div className="max-w-[1200px] mx-auto text-white flex flex-col items-center md:items-start text-center md:text-left">
                   <span className="text-[#b50a0a] text-[10px] font-black uppercase tracking-[0.3em] mb-2">Live Availability Registry</span>
-                  <h1 className="text-4xl md:text-[44px] font-black uppercase tracking-widest leading-none italic drop-shadow-md">
+                  <h1 className="text-3xl sm:text-[44px] font-black uppercase tracking-widest leading-none italic drop-shadow-md">
                      TRANSFER <span className="text-[#b50a0a]">FOCUS</span>
                   </h1>
                   <p className="text-[12px] md:text-[13px] text-gray-400 mt-2 font-semibold tracking-wide">
@@ -256,7 +256,7 @@ export default function TransferFocusPage() {
                </div>
             </div>
 
-            <div className="max-w-[1200px] mx-auto px-4 py-10 flex flex-col gap-8">
+            <div className="max-w-[1200px] mx-auto px-4 py-6 sm:py-10 flex flex-col gap-6 sm:gap-8">
 
                {/* Search & Filter Bar */}
                <div className="flex flex-col gap-4">

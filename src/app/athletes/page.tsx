@@ -71,10 +71,10 @@ export default function AthletesPage() {
       <div className="min-h-screen bg-white">
          <Navbar />
 
-         <main className="pt-32">
+         <main className="pt-20 sm:pt-32">
             {/* Split Hero Section */}
-            <div className="bg-gray-50 py-16">
-               <div className="max-w-[1200px] mx-auto px-4 lg:px-0 flex flex-col lg:flex-row items-center gap-12">
+            <div className="bg-gray-50 py-10 sm:py-16">
+               <div className="max-w-[1200px] mx-auto px-4 lg:px-0 flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
                   <div className="w-full lg:w-1/2">
                      <span className="text-[#a20000] font-bold text-xs uppercase tracking-[0.2em] mb-4 block">Rising Stars</span>
                      <h1 className="text-5xl lg:text-7xl font-black text-gray-900 leading-[1.1] mb-6 uppercase tracking-tight">
@@ -91,7 +91,7 @@ export default function AthletesPage() {
                      </Link>
                   </div>
 
-                  <div className="w-full lg:w-1/2 grid grid-cols-2 gap-4 h-[500px]">
+                  <div className="w-full lg:w-1/2 grid grid-cols-2 gap-4 h-[280px] sm:h-[400px] lg:h-[500px]">
                      <div className="h-full overflow-hidden rounded-2xl relative group">
                         <img 
                            src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=800&auto=format&fit=crop" 
@@ -123,7 +123,7 @@ export default function AthletesPage() {
             </div>
 
             {/* Players Grid Section with py-24 to fix overlap */}
-            <div className="max-w-[1200px] mx-auto px-4 lg:px-0 py-24">
+            <div className="max-w-[1200px] mx-auto px-4 lg:px-0 py-10 sm:py-24">
                {/* Dynamic Filter Controls */}
                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 border-b border-gray-100 pb-8">
                   <div>
@@ -131,7 +131,7 @@ export default function AthletesPage() {
                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Discover rising football talent</p>
                   </div>
                   
-                  <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                      {/* Search Input */}
                      <div className="relative">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -140,7 +140,7 @@ export default function AthletesPage() {
                            placeholder="Search athletes..."
                            value={searchQuery}
                            onChange={(e) => setSearchQuery(e.target.value)}
-                           className="pl-11 pr-6 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold uppercase tracking-wider text-gray-900 focus:outline-none focus:border-[#a20000] focus:ring-1 focus:ring-[#a20000] w-64 transition-all"
+                           className="pl-11 pr-6 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold uppercase tracking-wider text-gray-900 focus:outline-none focus:border-[#a20000] focus:ring-1 focus:ring-[#a20000] w-full sm:w-64 transition-all"
                         />
                      </div>
 
@@ -171,7 +171,7 @@ export default function AthletesPage() {
                      <p className="text-gray-900 font-bold uppercase tracking-widest">No matching athlete profiles found.</p>
                   </div>
                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                      {filteredAthletes.map((athlete) => (
                         <Link href={`/athletes/${athlete.slug}`} key={athlete.id} className="relative aspect-[4/5] rounded-xl overflow-hidden group cursor-pointer shadow-md hover:shadow-xl transition-shadow bg-black block">
                            <img
