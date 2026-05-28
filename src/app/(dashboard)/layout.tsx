@@ -24,33 +24,34 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
-  // Cache user basic record
-  const userRecord = await getCachedData(`user:record:${user.id}`, async () => {
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-    return data;
-  }, 1800); // 30 minutes
-
-  // Cache profile basic record
-  const profile = await getCachedData(`user:profile:${user.id}`, async () => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-    return data;
-  }, 1800);
+  // Fetch user record, profile record, and site settings in parallel from cache
+  const [userRecord, profile, siteSettings] = await Promise.all([
+    getCachedData(`user:record:${user.id}`, async () => {
+      const { data } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      return data;
+    }, 1800),
+    getCachedData(`user:profile:${user.id}`, async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      return data;
+    }, 1800),
+    getCachedSettings().then(res => res || {})
+  ]);
 
   // 1. Enforce Profile Onboarding
   if (!userRecord || !profile) {
     redirect('/onboarding');
   }
 
-  const role = userRecord?.role || 'player';
-  const status = profile?.status || 'pending';
+  const role = (userRecord as any)?.role || 'player';
+  const status = (profile as any)?.status || 'pending';
 
   // Forced Redirect for Administrative roles to the unified Admin Portal
   const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
@@ -58,8 +59,6 @@ export default async function DashboardLayout({
     redirect('/admin');
   }
 
-  // Fetch Site Settings from Cache
-  const siteSettings = await getCachedSettings() || {};
   const resolveUrl = (url: string | undefined) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;

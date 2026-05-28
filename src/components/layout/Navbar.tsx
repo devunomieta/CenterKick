@@ -28,7 +28,7 @@ export function Navbar({ content, settings }: { content?: Record<string, unknown
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string>('player');
-  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(settings || null);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
   const supabase = createClient();

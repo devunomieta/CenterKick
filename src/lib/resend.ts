@@ -134,3 +134,53 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
     throw error;
   }
 }
+
+export async function sendOtpEmail(email: string, otp: string) {
+  try {
+    const data = await resend.emails.send({
+      from: 'CenterKick Security <security@centerkick.com>',
+      to: [email],
+      subject: 'Verify Your CenterKick Account',
+      html: `
+        <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; color: #1f2937; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px;">
+            <div style="text-align: center; margin-bottom: 32px;">
+                <div style="display: inline-block; padding: 12px; border-radius: 12px; background-color: #a20000; margin-bottom: 16px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h1 style="font-size: 24px; font-weight: 800; color: #111827; margin: 0; text-transform: uppercase; letter-spacing: -0.025em;">CenterKick</h1>
+                <p style="font-size: 14px; font-weight: 600; color: #a20000; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em;">Security Center</p>
+            </div>
+            
+            <div style="margin-bottom: 32px; text-align: center;">
+                <p style="font-size: 16px; line-height: 24px; color: #4b5563; text-align: left; margin-bottom: 24px;">
+                    Hello, <br/><br/>
+                    Thank you for signing up for CenterKick. Please use the verification code below to complete your registration:
+                </p>
+                
+                <div style="background-color: #f9fafb; border: 1px solid #f3f4f6; border-radius: 16px; padding: 24px; margin-bottom: 24px; display: inline-block; letter-spacing: 0.25em; font-size: 32px; font-weight: 900; color: #111827;">
+                    ${otp}
+                </div>
+
+                <p style="font-size: 14px; line-height: 20px; color: #6b7280; text-align: center;">
+                    This code will expire in 10 minutes.
+                </p>
+            </div>
+            
+            <div style="border-top: 1px solid #f3f4f6; padding-top: 24px; text-align: center;">
+                <p style="font-size: 12px; color: #9ca3af; margin-bottom: 8px;">
+                    If you did not request this code, you can safely ignore this email.
+                </p>
+                <p style="font-size: 11px; color: #9ca3af; text-transform: uppercase; font-weight: 700;">
+                    &copy; 2026 CenterKick. All rights reserved.
+                </p>
+            </div>
+        </div>
+      `,
+    });
+    return data;
+  } catch (error) {
+    console.error('Failed to send OTP email:', error);
+    throw error;
+  }
+}
+

@@ -16,7 +16,7 @@ interface FooterContent {
 }
 
 export function Footer({ content, settings }: { content?: any; settings?: any }) {
-  const [siteSettings, setSiteSettings] = useState<{ footerLogoUrl?: string; logoUrl?: string; siteTitle?: string } | null>(null);
+  const [siteSettings, setSiteSettings] = useState<{ footerLogoUrl?: string; logoUrl?: string; siteTitle?: string } | null>(settings || null);
   const supabase = createClient();
 
   useEffect(() => {

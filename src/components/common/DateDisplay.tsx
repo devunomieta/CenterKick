@@ -22,13 +22,12 @@ export function DateDisplay({ date, showTime = false, className = "" }: DateDisp
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   
-  // Before mounting, we render a stable, locale-independent format or nothing
-  // to avoid hydration mismatch with the server's locale.
+  // Before mounting, we render a stable, locale-independent format using UTC
+  // to avoid timezone-based hydration mismatches between the server and the client.
   if (!mounted) {
-    // ISO-like format is stable
-    const y = dateObj.getFullYear();
-    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const d = String(dateObj.getDate()).padStart(2, '0');
+    const y = dateObj.getUTCFullYear();
+    const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getUTCDate()).padStart(2, '0');
     return <span className={className}>{`${y}-${m}-${d}`}</span>;
   }
 

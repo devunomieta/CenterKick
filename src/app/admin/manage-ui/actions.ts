@@ -62,8 +62,8 @@ export async function updateSectionContent(page: string, section: string, conten
   revalidatePath(page === '/' ? '/' : page);
   // Invalidate Redis cache
   await redis.del(`content:${page}:${section}`);
-  if (['navbar', 'footer'].includes(page)) {
-    await redis.del('global_cms_data');
+  if (['navbar', 'footer', 'settings'].includes(page)) {
+    await redis.del('global_cms_data_v2');
   }
   return { success: true };
 }
