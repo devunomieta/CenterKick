@@ -7,6 +7,7 @@ import { sanitizeName, sanitizePhone, sanitizeCountry, sanitizeReference, saniti
 
 export async function uploadPaymentProof(formData: FormData) {
   const supabase = await createClient();
+  const adminClient = createAdminClient();
   const file = formData.get('file') as File;
   
   const { data: { user } } = await supabase.auth.getUser();
@@ -22,16 +23,16 @@ export async function uploadPaymentProof(formData: FormData) {
   const fileName = `receipt-${user.id}-${Date.now()}.${fileExt}`;
 
   try {
-    const { data: buckets } = await supabase.storage.listBuckets();
+    const { data: buckets } = await adminClient.storage.listBuckets();
     if (!buckets?.find(b => b.id === 'payment-receipts')) {
-      await supabase.storage.createBucket('payment-receipts', {
+      await adminClient.storage.createBucket('payment-receipts', {
         public: true,
         allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'application/pdf'],
         fileSizeLimit: 5242880 // 5MB
       });
     }
 
-    const { error } = await supabase.storage
+    const { error } = await adminClient.storage
       .from('payment-receipts')
       .upload(fileName, file, {
         cacheControl: '3600',
@@ -43,7 +44,7 @@ export async function uploadPaymentProof(formData: FormData) {
       return { error: error.message };
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = adminClient.storage
       .from('payment-receipts')
       .getPublicUrl(fileName);
 

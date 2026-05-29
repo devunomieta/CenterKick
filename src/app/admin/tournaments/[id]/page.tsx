@@ -15,7 +15,7 @@ import {
 } from '../actions';
 import { TournamentTabs } from './TournamentTabs';
 
-export default async function TournamentManagementPage({ params }: { params: { id: string } }) {
+export default async function TournamentManagementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
 

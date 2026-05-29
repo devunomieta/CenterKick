@@ -3,6 +3,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import AgentDetailsClient from './AgentDetailsClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AgentPage({ params }: { params: Promise<{ id: string }> }) {
    const { id } = await params;
    const supabaseUser = await createClient();

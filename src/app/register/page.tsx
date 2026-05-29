@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, AlertCircle, CheckCircle2, ArrowRight, Chrome, ArrowLeft } from "lucide-react";
 import Link from 'next/link';
-import { signup, verifyOtp } from '@/app/login/actions';
+import { signup, verifyOtp, resendOtp } from '@/app/login/actions';
 import { PasswordField } from '@/components/common/PasswordField';
 import { useRouter } from 'next/navigation';
 
@@ -14,6 +14,51 @@ export default function RegisterPage() {
    const [showOtp, setShowOtp] = useState(false);
    const [email, setEmail] = useState('');
    const [otp, setOtp] = useState('');
+   const [timeLeft, setTimeLeft] = useState(600);
+   const [resendCooldown, setResendCooldown] = useState(60);
+   const [isResending, setIsResending] = useState(false);
+
+   useEffect(() => {
+      if (!showOtp) return;
+
+      const interval = setInterval(() => {
+         setTimeLeft((prev) => {
+            if (prev <= 1) {
+               clearInterval(interval);
+               return 0;
+            }
+            return prev - 1;
+         });
+
+         setResendCooldown((prev) => {
+            if (prev <= 0) return 0;
+            return prev - 1;
+         });
+      }, 1000);
+
+      return () => clearInterval(interval);
+   }, [showOtp]);
+
+   const handleResend = async () => {
+      if (resendCooldown > 0 || isResending) return;
+      setIsResending(true);
+      setStatus(null);
+
+      try {
+         const result = await resendOtp(email);
+         if (result.error) {
+            setStatus({ type: 'error', message: result.error });
+         } else if (result.success) {
+            setTimeLeft(600);
+            setResendCooldown(60);
+            setStatus({ type: 'success', message: result.message });
+         }
+      } catch (err) {
+         setStatus({ type: 'error', message: 'Failed to resend code.' });
+      } finally {
+         setIsResending(false);
+      }
+   };
 
    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -172,14 +217,25 @@ export default function RegisterPage() {
                            className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-6 py-5 text-2xl font-black tracking-[0.5em] text-center focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 placeholder:text-gray-200"
                            maxLength={6}
                         />
-                        <p className="text-[9px] text-center text-gray-400 font-bold uppercase tracking-widest mt-4">
-                           Enter the 6-digit code sent to <span className="text-gray-900">{email}</span>
-                        </p>
+                        <div className="flex flex-col items-center gap-2 mt-4">
+                           <p className="text-[9px] text-center text-gray-400 font-bold uppercase tracking-widest">
+                              Enter the 6-digit code sent to <span className="text-gray-900">{email}</span>
+                           </p>
+                           {timeLeft > 0 ? (
+                              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                 Code expires in <span className="text-[#a20000]">{Math.floor(timeLeft / 60)}:${('0' + (timeLeft % 60)).slice(-2)}</span>
+                              </p>
+                           ) : (
+                              <p className="text-[9px] font-black text-red-600 uppercase tracking-widest">
+                                 Code expired. Please request a new one.
+                              </p>
+                           )}
+                        </div>
                      </div>
 
                      <button
                         type="submit"
-                        disabled={isLoading}
+                        disabled={isLoading || timeLeft === 0}
                         className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#a20000] transition-all flex items-center justify-center gap-3 shadow-xl transform active:scale-95 disabled:opacity-50"
                      >
                         {isLoading ? (
@@ -189,13 +245,30 @@ export default function RegisterPage() {
                         )}
                      </button>
 
-                     <button 
-                        type="button"
-                        onClick={() => setShowOtp(false)}
-                        className="w-full text-center text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors"
-                     >
-                        Change Email Address
-                     </button>
+                     <div className="flex flex-col items-center gap-3 pt-2">
+                        {resendCooldown > 0 ? (
+                           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                              Resend code in {resendCooldown}s
+                           </span>
+                        ) : (
+                           <button
+                              type="button"
+                              onClick={handleResend}
+                              disabled={isResending}
+                              className="text-[9px] font-black text-[#a20000] uppercase tracking-widest hover:underline disabled:opacity-50"
+                           >
+                              {isResending ? 'Sending...' : 'Resend Verification Code'}
+                           </button>
+                        )}
+                        
+                        <button 
+                           type="button"
+                           onClick={() => setShowOtp(false)}
+                           className="text-center text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors"
+                        >
+                           Change Email Address
+                        </button>
+                     </div>
                   </form>
                )}
             </div>

@@ -37,7 +37,7 @@ export default async function CoachPage({ params }: { params: Promise<{ id: stri
          .select('role')
          .eq('id', user?.id || '')
          .single();
-      
+
       if (currentUser?.role !== 'superadmin') {
          notFound();
       }

@@ -3,6 +3,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import OrgDetailsClient from './OrgDetailsClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function OrgPage({ params }: { params: Promise<{ id: string }> }) {
    const { id } = await params;
    const supabaseUser = await createClient();

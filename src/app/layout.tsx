@@ -9,32 +9,47 @@ const inter = Inter({ subsets: ["latin"] });
 import { createClient } from '@/lib/supabase/server';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('site_content')
-    .select('content')
-    .eq('page', 'settings')
-    .eq('section', 'system')
-    .single();
+  try {
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data } = await supabase
+      .from('site_content')
+      .select('content')
+      .eq('page', 'settings')
+      .eq('section', 'system')
+      .single();
 
-  const settings = data?.content || {};
-  
-  const resolveUrl = (url: string) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    return `${baseUrl}/storage/v1/object/public${url.startsWith('/') ? '' : '/'}${url}`;
-  };
+    const settings = data?.content || {};
+    
+    const resolveUrl = (url: string) => {
+      if (!url) return '';
+      if (url.startsWith('http')) return url;
+      const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      return `${baseUrl}/storage/v1/object/public${url.startsWith('/') ? '' : '/'}${url}`;
+    };
 
-  const faviconUrl = resolveUrl(settings.faviconUrl) || "/favicon.ico";
-  
-  return {
-    title: settings.siteTitle || "CenterKick | Sports Profile Management",
-    description: "Premium sports profile management and subscription platform.",
-    icons: {
-      icon: faviconUrl,
-    }
-  };
+    const faviconUrl = resolveUrl(settings.faviconUrl) || "/favicon.ico";
+    
+    return {
+      title: settings.siteTitle || "CenterKick | Sports Profile Management",
+      description: "Premium sports profile management and subscription platform.",
+      icons: {
+        icon: faviconUrl,
+      }
+    };
+  } catch (err) {
+    console.error("Warning: Could not fetch metadata settings during build-time:", err);
+    return {
+      title: "CenterKick | Sports Profile Management",
+      description: "Premium sports profile management and subscription platform.",
+      icons: {
+        icon: "/favicon.ico",
+      }
+    };
+  }
 }
 
 import { ToastProvider } from "@/context/ToastContext";
@@ -50,8 +65,8 @@ export default function RootLayout({
         <ToastProvider>
           {children}
         </ToastProvider>
-        <SpeedInsights />
-        <Analytics />
+        {/* <SpeedInsights /> */}
+        {/* <Analytics /> */}
       </body>
     </html>
   );

@@ -35,7 +35,7 @@ export default async function ScoutPage({ params }: { params: Promise<{ id: stri
          .select('role')
          .eq('id', user?.id || '')
          .single();
-      
+
       if (currentUser?.role !== 'superadmin') {
          notFound();
       }

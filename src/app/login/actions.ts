@@ -101,19 +101,27 @@ export async function verifyOtp(email: string, token: string) {
   const supabase = await createClient();
 
   const redisKey = `signup:otp:${email}`;
-  let pendingDataStr: string | null = null;
+  let pendingData: any = null;
   try {
-    pendingDataStr = await redis.get(redisKey);
+    pendingData = await redis.get(redisKey);
   } catch (redisError) {
     console.error('[Redis Error] Failed to get OTP registration data:', redisError);
     return { error: 'Verification system error. Please try again.' };
   }
 
-  if (!pendingDataStr) {
+  if (!pendingData) {
     return { error: 'Verification code has expired or was not requested. Please sign up again.' };
   }
 
-  const pendingData = JSON.parse(pendingDataStr);
+  // Parse if string, otherwise use directly if already parsed by Upstash client
+  if (typeof pendingData === 'string') {
+    try {
+      pendingData = JSON.parse(pendingData);
+    } catch (parseError) {
+      console.error('[JSON Parse Error] Failed to parse pending registration data:', parseError);
+      return { error: 'Verification system error. Please try again.' };
+    }
+  }
 
   if (pendingData.otp !== token.trim()) {
     return { error: 'Invalid verification code.' };
@@ -187,4 +195,44 @@ export async function signout() {
   await supabase.auth.signOut();
   revalidatePath('/', 'layout');
   redirect('/');
+}
+
+export async function resendOtp(email: string) {
+  const cooldownKey = `signup:cooldown:${email}`;
+  const redisKey = `signup:otp:${email}`;
+
+  try {
+    // 1. Rate limiting check (60s cooldown)
+    const cooldownExists = await redis.get(cooldownKey);
+    if (cooldownExists) {
+      return { error: 'Please wait at least 60 seconds before requesting a new code.' };
+    }
+
+    // 2. Fetch original password to preserve during reset
+    let pendingData: any = await redis.get(redisKey);
+    if (!pendingData) {
+      return { error: 'Your signup session has expired. Please sign up again.' };
+    }
+
+    if (typeof pendingData === 'string') {
+      pendingData = JSON.parse(pendingData);
+    }
+
+    // 3. Generate new 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // 4. Save with fresh 10-minute expiry
+    await redis.set(redisKey, JSON.stringify({ password: pendingData.password, otp }), { ex: 600 });
+
+    // 5. Apply rate limit cooldown key for 60 seconds
+    await redis.set(cooldownKey, '1', { ex: 60 });
+
+    // 6. Resend email
+    await sendOtpEmail(email, otp);
+
+    return { success: true, message: 'A new verification code has been sent.' };
+  } catch (error: any) {
+    console.error('[Resend Error] Failed to resend OTP:', error);
+    return { error: 'Failed to resend verification email. Please try again.' };
+  }
 }

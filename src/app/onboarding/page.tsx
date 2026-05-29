@@ -83,55 +83,77 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     async function checkAuth() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-      
-      // Fetch payment settings from CMS
-      const { data: settings } = await supabase
-        .from('site_content')
-        .select('content')
-        .eq('page', 'settings')
-        .eq('section', 'payment')
-        .single();
-      
-      if (settings?.content) {
-        setPaymentSettings(settings.content);
-      }
-
-      // Fetch any existing profile data to pre-fill
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profile) {
-        if (profile.first_name) setFullName(`${profile.first_name} ${profile.last_name || ''}`.trim());
-        if (profile.phone_number) setPhone(profile.phone_number);
-        if (profile.date_of_birth) setDob(profile.date_of_birth);
-        if (profile.country) setCountry(profile.country);
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        let user = session?.user;
         
-        if (profile.status === 'active' || (profile.status === 'pending' && profile.verification_requested)) {
-          router.push('/dashboard');
+        if (!user) {
+          const { data: { user: fetchedUser } } = await supabase.auth.getUser();
+          user = fetchedUser || undefined;
+        }
+
+        if (!user) {
+          router.push('/login');
           return;
         }
+        
+        // Fetch payment settings from CMS (optional, don't crash on fail)
+        try {
+          const { data: settings } = await supabase
+            .from('site_content')
+            .select('content')
+            .eq('page', 'settings')
+            .eq('section', 'payment')
+            .single();
+          
+          if (settings?.content) {
+            setPaymentSettings(settings.content);
+          }
+        } catch (settingsError) {
+          console.error('[Onboarding] Failed to load payment settings:', settingsError);
+        }
+
+        // Fetch any existing profile data to pre-fill (optional, don't crash on fail)
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+          if (profile) {
+            if (profile.first_name) setFullName(`${profile.first_name} ${profile.last_name || ''}`.trim());
+            if (profile.phone_number) setPhone(profile.phone_number);
+            if (profile.date_of_birth) setDob(profile.date_of_birth);
+            if (profile.country) setCountry(profile.country);
+            
+            if (profile.status === 'active' || (profile.status === 'pending' && profile.verification_requested)) {
+              router.push('/dashboard');
+              return;
+            }
+          }
+        } catch (profileError) {
+          console.error('[Onboarding] Failed to load profile:', profileError);
+        }
+
+        // Also check role from users table (optional, don't crash on fail)
+        try {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          if (userData?.role) setRole(userData.role);
+        } catch (userError) {
+          console.error('[Onboarding] Failed to load user role:', userError);
+        }
+      } catch (err) {
+        console.error('[Onboarding] Critical auth initialization failure:', err);
+      } finally {
+        setIsInitializing(false);
       }
-
-      // Also check role from users table
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      
-      if (userData?.role) setRole(userData.role);
-
-      setIsInitializing(false);
     }
     checkAuth();
   }, [router]);

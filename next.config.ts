@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 
+// Force reboot dev server for redis config
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
