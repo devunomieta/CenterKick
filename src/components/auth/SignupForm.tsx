@@ -61,7 +61,7 @@ export function SignupForm({ email, role }: { email: string, role: string }) {
 
   return (
     <form onSubmit={handleSignup} className="space-y-5">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">First Name</label>
           <input

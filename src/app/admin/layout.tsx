@@ -77,7 +77,7 @@ export default async function AdminLayout({
     <div className="flex h-screen bg-[#f8f9fa] overflow-hidden">
       {/* Admin Sidebar - Desktop Only */}
       <aside className="hidden lg:flex w-72 bg-gray-900 flex-col text-gray-300 shrink-0">
-        <div className="h-20 flex items-center px-8 border-b border-gray-800 bg-black/20">
+        <div className="h-20 flex items-center px-4 md:px-8 border-b border-gray-800 bg-black/20">
           <Link href="/admin" className="flex items-center gap-3">
             {adminLogoUrl ? (
                <div className="relative h-7 w-auto max-w-full flex items-center justify-start overflow-hidden">
@@ -99,18 +99,12 @@ export default async function AdminLayout({
 
         <AdminSidebar role={userRecord?.role || 'player'} />
 
-        <div className="p-6 border-t border-gray-800 flex flex-col gap-4">
-           <Link href="/dashboard" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors">
-              <Home className="w-4 h-4" /> User Dashboard
-           </Link>
-           <SignOutButton />
-        </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Admin Top Header */}
-        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-6 sm:px-8 shadow-sm relative z-10 shrink-0">
+        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-6 sm:px-4 md:px-8 shadow-sm relative z-10 shrink-0">
           <div className="flex items-center gap-4">
             <AdminMobileNav role={userRecord?.role || 'player'} adminLogoUrl={adminLogoUrl} />
             
@@ -135,8 +129,8 @@ export default async function AdminLayout({
         </header>
 
         {/* Dynamic Page Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-8">
-           <div className="max-w-[1400px] mx-auto animate-in fade-in duration-500">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-4 md:p-8">
+           <div className="max-w-full max-w-[1400px] mx-auto animate-in fade-in duration-500">
               {children}
            </div>
         </main>

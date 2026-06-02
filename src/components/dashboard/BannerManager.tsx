@@ -15,7 +15,7 @@ export function BannerManager({ status }: BannerManagerProps) {
     <div className="flex flex-col">
       {/* Critical Notice: Non-dismissible */}
       {status === 'pending' && (
-        <div className="bg-[#b50a0a] text-white px-8 py-3 flex items-center justify-between shadow-lg relative overflow-hidden">
+        <div className="bg-[#b50a0a] text-white px-4 md:px-8 py-3 flex items-center justify-between shadow-lg relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full bg-black/10 pointer-events-none"></div>
           <div className="flex items-center gap-4 relative z-10">
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
@@ -36,7 +36,7 @@ export function BannerManager({ status }: BannerManagerProps) {
 
       {/* General Notice: Dismissible */}
       {showGeneral && (
-        <div className="bg-white border-b border-gray-100 text-gray-900 px-8 py-3 flex items-center justify-between group transition-all duration-500">
+        <div className="bg-white border-b border-gray-100 text-gray-900 px-4 md:px-8 py-3 flex items-center justify-between group transition-all duration-500">
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-[#b50a0a]">
               <Info className="w-4 h-4" />

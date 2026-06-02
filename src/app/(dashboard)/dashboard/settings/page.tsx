@@ -68,7 +68,7 @@ export default function SettingsPage() {
   if (isLoading) return <div className="pt-20 text-center font-black uppercase tracking-widest animate-pulse">Loading Settings...</div>;
 
   return (
-    <div className="max-w-[1000px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+    <div className="max-w-full max-w-[1000px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <div>
         <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">Account <span className="text-[#b50a0a]">Settings</span></h1>
         <p className="text-gray-900 text-[10px] font-bold uppercase tracking-widest mt-1">Manage your credentials, security and preferences.</p>
@@ -102,7 +102,7 @@ export default function SettingsPage() {
 
         <div className="flex-1">
           {activeSection === 'Account' && (
-            <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-8 md:p-12 space-y-8 animate-in fade-in duration-500">
+            <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-4 md:p-8 md:p-12 space-y-8 animate-in fade-in duration-500">
               <h2 className="text-sm font-black uppercase tracking-widest text-gray-900">Profile & Visibility</h2>
               <div className="space-y-4">
                 <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Email Address (Registered)</label>
@@ -122,7 +122,7 @@ export default function SettingsPage() {
                   </select>
                 </div>
 
-                <button type="submit" disabled={isSaving} className="w-full sm:w-auto px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md">
+                <button type="submit" disabled={isSaving} className="w-full sm:w-auto px-4 md:px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md">
                   Save Settings
                 </button>
               </form>
@@ -130,9 +130,9 @@ export default function SettingsPage() {
           )}
 
           {activeSection === 'Security' && (
-            <form onSubmit={handlePasswordUpdate} className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-8 md:p-12 space-y-8 animate-in fade-in duration-500">
+            <form onSubmit={handlePasswordUpdate} className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-4 md:p-8 md:p-12 space-y-8 animate-in fade-in duration-500">
               <h2 className="text-sm font-black uppercase tracking-widest text-gray-900">Update Password</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
                 <div className="space-y-4">
                   <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">New Password</label>
                   <input name="password" required type="password" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold text-black outline-none focus:ring-2 focus:ring-[#b50a0a]" />
@@ -143,14 +143,14 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <button type="submit" disabled={isSaving} className="w-full sm:w-auto px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md">
+              <button type="submit" disabled={isSaving} className="w-full sm:w-auto px-4 md:px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md">
                 {isSaving ? 'Updating...' : 'Update Password'}
               </button>
             </form>
           )}
 
           {activeSection === 'Notifications' && (
-            <form onSubmit={handlePreferencesSave} className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-8 md:p-12 space-y-8 animate-in fade-in duration-500">
+            <form onSubmit={handlePreferencesSave} className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-4 md:p-8 md:p-12 space-y-8 animate-in fade-in duration-500">
               <h2 className="text-sm font-black uppercase tracking-widest text-gray-900">Email Notifications</h2>
               <div className="space-y-6">
                 <label className="flex items-center gap-4 cursor-pointer">
@@ -180,7 +180,7 @@ export default function SettingsPage() {
                 </label>
               </div>
 
-              <button type="submit" disabled={isSaving} className="w-full sm:w-auto px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md">
+              <button type="submit" disabled={isSaving} className="w-full sm:w-auto px-4 md:px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md">
                 Save Preferences
               </button>
             </form>

@@ -22,7 +22,7 @@ export default async function DataManagementPage() {
   }
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-slate-50/30">
+    <div className="p-4 md:p-8 max-w-full max-w-[1600px] mx-auto min-h-screen bg-slate-50/30">
       <FootballDataManagement />
     </div>
   );

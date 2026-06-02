@@ -228,14 +228,14 @@ export default function FootballDataManagement() {
         </div>
 
         {/* List Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-40 animate-pulse">
               <div className="w-12 h-12 rounded-full border-4 border-slate-100 border-t-[#b50a0a] animate-spin mb-4"></div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Synchronizing registry table...</p>
             </div>
           ) : filteredData.length > 0 ? (
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
                 <tr className="bg-slate-50/30 border-b border-slate-100">
                   <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Identifier</th>
@@ -374,7 +374,7 @@ export default function FootballDataManagement() {
                   <Search className="w-10 h-10" />
                </div>
                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Entry Not Found</h3>
-               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2 max-w-[300px] leading-relaxed italic">The requested data point was not found in the {activeTab} registry.</p>
+               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2 max-w-full max-w-[300px] leading-relaxed italic">The requested data point was not found in the {activeTab} registry.</p>
                <button 
                   onClick={() => setSearchQuery('')}
                   className="mt-8 text-[10px] font-black text-[#b50a0a] uppercase tracking-widest border-b-2 border-[#b50a0a]/20 hover:border-[#b50a0a] transition-all"
@@ -479,7 +479,7 @@ export default function FootballDataManagement() {
                 )}
 
                 {activeTab === 'seasons' && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Temporal Sort Index</label>
                       <input 

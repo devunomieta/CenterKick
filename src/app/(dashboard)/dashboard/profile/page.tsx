@@ -239,7 +239,7 @@ export default function ProfileEditor() {
   if (isLoading) return <div className="pt-20 text-center font-black uppercase tracking-widest animate-pulse">Loading Editor...</div>;
 
   return (
-    <div className="max-w-[1000px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+    <div className="max-w-full max-w-[1000px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8">
         <div>
           <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">My <span className="text-[#b50a0a]">Profile</span></h1>
@@ -248,7 +248,7 @@ export default function ProfileEditor() {
         <button 
           onClick={handleSave}
           disabled={isSaving}
-          className="px-8 py-3.5 bg-gray-900 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center justify-center gap-3 shadow-xl disabled:opacity-50"
+          className="px-4 md:px-8 py-3.5 bg-gray-900 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center justify-center gap-3 shadow-xl disabled:opacity-50"
         >
           {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save className="w-4 h-4" />}
           Save Changes
@@ -286,7 +286,7 @@ export default function ProfileEditor() {
 
         {/* Editor Main Content */}
         <div className="flex-1">
-          <form id="profile-form" className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden p-8 md:p-12 space-y-12">
+          <form id="profile-form" className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden p-4 md:p-8 md:p-12 space-y-12">
             
             {activeTab === 'Basic Info' && (
               <div className="space-y-10 animate-in fade-in duration-500">
@@ -312,7 +312,7 @@ export default function ProfileEditor() {
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
                   <div className="space-y-4">
                     <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">First Name</label>
                     <input name="first_name" type="text" defaultValue={profile?.first_name} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
@@ -323,7 +323,7 @@ export default function ProfileEditor() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
                   <div className="space-y-4">
                     <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Date of Birth</label>
                     <div className="relative">
@@ -341,7 +341,7 @@ export default function ProfileEditor() {
                 </div>
 
                 {/* Admin Doubly-Verified Identity Proof Section */}
-                <div className="p-8 bg-red-50/20 border border-red-100/50 rounded-3xl space-y-4">
+                <div className="p-4 md:p-8 bg-red-50/20 border border-red-100/50 rounded-3xl space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <h4 className="text-[10px] font-black uppercase text-gray-900 tracking-widest">Official Nationality Verification</h4>
@@ -377,7 +377,7 @@ export default function ProfileEditor() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-gray-50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8 pt-8 border-t border-gray-50">
                   <div className="space-y-4">
                     <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Public Contact Email</label>
                     <div className="relative">
@@ -452,7 +452,7 @@ export default function ProfileEditor() {
                   </div>
                 ) : role === 'coach' ? (
                   <div className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
                       <div className="space-y-4">
                         <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Preferred Formation</label>
                         <select name="formation" defaultValue={profile?.formation} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
@@ -474,7 +474,7 @@ export default function ProfileEditor() {
                     </div>
 
                     {/* Technical Coach License Verification */}
-                    <div className="p-8 bg-red-50/20 border border-red-100/50 rounded-3xl space-y-4">
+                    <div className="p-4 md:p-8 bg-red-50/20 border border-red-100/50 rounded-3xl space-y-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                           <h4 className="text-[10px] font-black uppercase text-gray-900 tracking-widest">Coaching License Verification</h4>
@@ -512,7 +512,7 @@ export default function ProfileEditor() {
                   </div>
                 ) : (
                   <div className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
                       <div className="space-y-4">
                         <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Agency Name</label>
                         <input name="agency_name" type="text" defaultValue={profile?.agency_name} placeholder="Global Talent Management" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" />
@@ -524,7 +524,7 @@ export default function ProfileEditor() {
                     </div>
 
                     {/* FIFA Agent License Verification */}
-                    <div className="p-8 bg-red-50/20 border border-red-100/50 rounded-3xl space-y-4">
+                    <div className="p-4 md:p-8 bg-red-50/20 border border-red-100/50 rounded-3xl space-y-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                           <h4 className="text-[10px] font-black uppercase text-gray-900 tracking-widest">FIFA Agent License Verification</h4>
@@ -603,7 +603,7 @@ export default function ProfileEditor() {
                <div className="space-y-10 animate-in fade-in duration-500">
                   <div className="space-y-4">
                     <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Professional Bio</label>
-                    <textarea name="bio" rows={8} defaultValue={profile?.bio} placeholder="Describe your professional journey, skills, and ambitions..." className="w-full bg-gray-50 border-none rounded-3xl px-8 py-6 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none leading-relaxed text-black placeholder:text-gray-900" />
+                    <textarea name="bio" rows={8} defaultValue={profile?.bio} placeholder="Describe your professional journey, skills, and ambitions..." className="w-full bg-gray-50 border-none rounded-3xl px-4 md:px-8 py-6 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none leading-relaxed text-black placeholder:text-gray-900" />
                   </div>
 
                   {(role === 'agent' || role === 'organization') && (
@@ -667,7 +667,7 @@ export default function ProfileEditor() {
                               <Camera className="w-8 h-8" />
                            </div>
                            <p className="text-xs font-black uppercase tracking-widest text-gray-900 mb-2">Upload Highlight Reel</p>
-                           <p className="text-[10px] font-medium text-gray-900 leading-relaxed max-w-[250px]">Click to select or drag and drop your best match clips here.</p>
+                           <p className="text-[10px] font-medium text-gray-900 leading-relaxed max-w-full max-w-[250px]">Click to select or drag and drop your best match clips here.</p>
                          </>
                        )}
                     </div>
@@ -675,7 +675,7 @@ export default function ProfileEditor() {
 
                   <div className="space-y-6 pt-10 border-t border-gray-50">
                     <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Action Photos</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                        {[1, 2, 3].map((_, i) => (
                          <div key={i} className="aspect-square bg-gray-100 rounded-2xl relative group overflow-hidden">
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">

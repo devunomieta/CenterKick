@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { 
   Search, Filter, Mail, Calendar, CheckCircle, Clock, 
   MoreVertical, UserPlus, Globe, Shield, MapPin, 
-  ExternalLink, Building2, UserCheck
+  ExternalLink, Building2, UserCheck, Trophy, Users, User, Search as SearchIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -16,7 +16,7 @@ interface RoleDirectoryClientProps {
   pageSize: number;
   roleLabel: string;
   roleSlug: string;
-  icon: any;
+  iconName: string;
 }
 
 export function RoleDirectoryClient({ 
@@ -26,8 +26,17 @@ export function RoleDirectoryClient({
   pageSize, 
   roleLabel, 
   roleSlug,
-  icon: Icon
+  iconName
 }: RoleDirectoryClientProps) {
+  const IconComponent = () => {
+    switch(iconName) {
+      case 'Trophy': return <Trophy className="w-3 h-3 text-white" />;
+      case 'Users': return <Users className="w-3 h-3 text-white" />;
+      case 'User': return <User className="w-3 h-3 text-white" />;
+      case 'Search': return <SearchIcon className="w-3 h-3 text-white" />;
+      default: return <User className="w-3 h-3 text-white" />;
+    }
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -45,7 +54,7 @@ export function RoleDirectoryClient({
   return (
     <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Search & Filters */}
-      <div className="p-8 border-b border-gray-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-gray-50/30">
+      <div className="p-4 md:p-8 border-b border-gray-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-gray-50/30">
         <div className="relative flex-1 max-w-xl">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -79,8 +88,8 @@ export function RoleDirectoryClient({
       </div>
 
       {/* Table Section */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+      <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
+        <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr className="bg-gray-50/20">
               <th className="px-10 py-6 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">Profile / Identity</th>
@@ -104,7 +113,7 @@ export function RoleDirectoryClient({
                           )}
                        </div>
                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#b50a0a] rounded-lg border-2 border-white flex items-center justify-center shadow-lg">
-                          <Icon className="w-3 h-3 text-white" />
+                          <IconComponent />
                        </div>
                     </div>
                     <div>
@@ -158,7 +167,7 @@ export function RoleDirectoryClient({
       </div>
 
       {/* Pagination & Summary */}
-      <div className="p-8 border-t border-gray-50 flex items-center justify-between bg-gray-50/20">
+      <div className="p-4 md:p-8 border-t border-gray-50 flex items-center justify-between bg-gray-50/20">
         <div className="flex items-center gap-3">
            <div className="w-2 h-2 bg-[#b50a0a] rounded-full animate-pulse"></div>
            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">

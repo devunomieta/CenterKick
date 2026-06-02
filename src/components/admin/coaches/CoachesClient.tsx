@@ -165,7 +165,7 @@ export function CoachesClient({
       {/* Search & Filters */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-6 space-y-6">
         <form onSubmit={handleSearch} className="flex flex-wrap gap-3">
-           <div className="relative flex-1 min-w-[200px]">
+           <div className="relative flex-1 min-w-0 md:min-w-full max-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black" />
               <input 
                 type="text" 
@@ -226,7 +226,7 @@ export function CoachesClient({
 
         {/* Coaches Table */}
         <div className="overflow-x-auto -mx-6">
-          <table className="w-full text-left text-sm text-gray-600">
+          <table className="w-full text-left text-sm text-gray-600 whitespace-nowrap">
             <thead className="bg-[#f8f9fa] border-b border-gray-100">
               <tr>
                 <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-[#b50a0a]">Coach Information</th>
@@ -275,7 +275,7 @@ export function CoachesClient({
                     </td>
                     <td className="px-6 py-4">
                        <div className="flex flex-col">
-                          <span className="text-[10px] font-black text-gray-900 uppercase tracking-tighter truncate max-w-[150px]">{coach.league || 'Independent'}</span>
+                          <span className="text-[10px] font-black text-gray-900 uppercase tracking-tighter truncate max-w-full max-w-[150px]">{coach.league || 'Independent'}</span>
                           <div className="flex items-center gap-2 mt-1">
                              {role === 'operations' ? (
                                <RestrictedAccessInline />
@@ -424,7 +424,7 @@ export function CoachesClient({
                            </div>
                          )}
                       </div>
-                     <div className="p-4 bg-gray-50/50 rounded-2xl md:col-span-2 grid grid-cols-2 gap-4 border border-gray-100">
+                     <div className="p-4 bg-gray-50/50 rounded-2xl md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-100">
                          <div className="space-y-1">
                             <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Coaching Role</label>
                             <select name="position" className="w-full bg-white border border-gray-100 rounded-lg p-2 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-gray-900">

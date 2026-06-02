@@ -44,7 +44,7 @@ export default function PlayerDashboard() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Media & Highlights</h2>
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 hover:bg-gray-50 transition-colors cursor-pointer flex flex-col items-center justify-center text-center">
+        <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 md:p-8 hover:bg-gray-50 transition-colors cursor-pointer flex flex-col items-center justify-center text-center">
           <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-3">
             <UploadCloud className="w-6 h-6 text-primary" />
           </div>

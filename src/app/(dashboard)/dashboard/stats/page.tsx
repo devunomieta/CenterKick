@@ -47,7 +47,7 @@ export default function StatsPage() {
   if (isLoading) return <div className="pt-20 text-center font-black uppercase tracking-widest animate-pulse">Loading Stats & Analytics...</div>;
 
   return (
-    <div className="max-w-[1000px] mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+    <div className="max-w-full max-w-[1000px] mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">Stats & <span className="text-[#b50a0a]">Media</span></h1>
@@ -63,7 +63,7 @@ export default function StatsPage() {
 
       {/* Analytics Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-[30px] border border-gray-100 shadow-sm p-8 flex items-center gap-6">
+        <div className="bg-white rounded-[30px] border border-gray-100 shadow-sm p-4 md:p-8 flex items-center gap-6">
           <div className="w-14 h-14 rounded-2xl bg-red-50 text-[#b50a0a] flex items-center justify-center shadow-inner">
             <Eye className="w-6 h-6" />
           </div>
@@ -74,7 +74,7 @@ export default function StatsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-[30px] border border-gray-100 shadow-sm p-8 flex items-center gap-6">
+        <div className="bg-white rounded-[30px] border border-gray-100 shadow-sm p-4 md:p-8 flex items-center gap-6">
           <div className="w-14 h-14 rounded-2xl bg-red-50 text-[#b50a0a] flex items-center justify-center shadow-inner">
             <Trophy className="w-6 h-6" />
           </div>
@@ -85,7 +85,7 @@ export default function StatsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-[30px] border border-gray-100 shadow-sm p-8 flex items-center gap-6">
+        <div className="bg-white rounded-[30px] border border-gray-100 shadow-sm p-4 md:p-8 flex items-center gap-6">
           <div className="w-14 h-14 rounded-2xl bg-red-50 text-[#b50a0a] flex items-center justify-center shadow-inner">
             <BarChart3 className="w-6 h-6" />
           </div>
@@ -97,9 +97,9 @@ export default function StatsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-4 md:p-8">
         {/* Match Statistics Form */}
-        <form onSubmit={handleSave} className="lg:col-span-2 bg-white rounded-[40px] border border-gray-100 shadow-sm p-8 md:p-12 space-y-8">
+        <form onSubmit={handleSave} className="lg:col-span-2 bg-white rounded-[40px] border border-gray-100 shadow-sm p-4 md:p-8 md:p-12 space-y-8">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-2 h-10 bg-[#b50a0a] rounded-full"></div>
             <div>
@@ -108,7 +108,7 @@ export default function StatsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Matches Played</label>
               <input type="number" value={stats.matchesPlayed} onChange={(e) => setStats({...stats, matchesPlayed: parseInt(e.target.value) || 0})} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold text-black outline-none focus:ring-2 focus:ring-[#b50a0a]" />
@@ -127,13 +127,13 @@ export default function StatsPage() {
             </div>
           </div>
 
-          <button type="submit" disabled={isSaving} className="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-black text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md flex items-center justify-center gap-2">
+          <button type="submit" disabled={isSaving} className="w-full sm:w-auto px-4 md:px-8 py-4 bg-gray-900 hover:bg-black text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md flex items-center justify-center gap-2">
             <Save className="w-4 h-4" /> Save Performance Stats
           </button>
         </form>
 
         {/* Media Reels Side panel */}
-        <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-8 space-y-6">
+        <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-4 md:p-8 space-y-6">
           <h3 className="text-xs font-black uppercase tracking-widest text-gray-900">Featured Highlight</h3>
           <div className="aspect-video bg-gray-900 rounded-3xl flex flex-col items-center justify-center text-center p-6 relative overflow-hidden group">
             <div className="w-12 h-12 rounded-full bg-[#b50a0a] text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform cursor-pointer">

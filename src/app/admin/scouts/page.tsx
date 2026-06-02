@@ -89,7 +89,7 @@ export default async function AdminScoutsPage({
         pageSize={pageSize}
         roleLabel="Scout"
         roleSlug="scouts"
-        icon={Search}
+        iconName="Search"
       />
     </div>
   );

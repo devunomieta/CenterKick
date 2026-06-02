@@ -30,7 +30,7 @@ export function AdminMobileNav({ role, adminLogoUrl }: { role: string; adminLogo
 
       {/* Drawer Overlay & Backdrop */}
       {isOpen && (
-        <div className="mobile-drawer-container fixed inset-0 z-[150] lg:hidden flex">
+        <div className="mobile-drawer-container fixed inset-0 z-[999] lg:hidden flex">
           {/* Backdrop overlay */}
           <div 
             className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
@@ -83,7 +83,6 @@ export function AdminMobileNav({ role, adminLogoUrl }: { role: string; adminLogo
               >
                 <Home className="w-4 h-4" /> User Dashboard
               </Link>
-              <SignOutButton />
             </div>
           </aside>
         </div>

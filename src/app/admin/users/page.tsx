@@ -109,11 +109,11 @@ export default async function AdminUsersPage({
       </div>
 
       {/* Sub-counts for Roles */}
-      <div className="bg-gray-900 rounded-[2rem] p-8 text-white flex flex-wrap gap-12 border border-white/5 relative overflow-hidden">
+      <div className="bg-gray-900 rounded-[2rem] p-4 md:p-8 text-white flex flex-wrap gap-12 border border-white/5 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#b50a0a] rounded-full blur-[100px] opacity-10 -mr-32 -mt-32"></div>
         <div>
           <p className="text-[8px] font-black text-[#b50a0a] uppercase tracking-[0.3em] mb-1">Role Distribution</p>
-          <div className="flex gap-8">
+          <div className="flex gap-4 md:p-8">
             <div><p className="text-xl font-black">{playersCount || 0}</p><p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Players</p></div>
             <div><p className="text-xl font-black">{coachesCount || 0}</p><p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Coaches</p></div>
             <div><p className="text-xl font-black">{agentsCount || 0}</p><p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Agents</p></div>

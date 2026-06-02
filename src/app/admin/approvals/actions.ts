@@ -272,16 +272,22 @@ export async function approveNewRegistration(profileId: string, reason: string =
     return { success: false, error: 'Failed to verify user transaction status: ' + txError.message };
   }
 
-  if (!firstTx || firstTx.status !== 'confirmed') {
-    return { 
-      success: false, 
-      error: 'Cannot approve registration. The user\'s first subscription transaction has not been approved yet. Please approve their bank transfer payment first.' 
-    };
+  const updates: any[] = [];
+
+  // Automatically confirm pending transaction if it exists
+  if (firstTx && firstTx.status === 'pending') {
+    updates.push(
+      admin.from('transactions').update({
+        status: 'confirmed',
+        updated_at: new Date().toISOString(),
+        metadata: { auto_approved_with_account: true, approval_comment: 'Auto-approved with profile registration.' }
+      }).eq('user_id', profileId).eq('status', 'pending')
+    );
   }
 
-  const updates = [
-    admin.from('profiles').update({ status: 'active' }).eq('id', profileId)
-  ];
+  updates.push(
+    admin.from('profiles').update({ status: 'active', is_subscribed: true }).eq('id', profileId)
+  );
 
   if (profile.user_id) {
     updates.push(

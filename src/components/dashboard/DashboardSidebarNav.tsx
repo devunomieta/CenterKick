@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Users, BarChart2, Settings, Shield, Search } from 'lucide-react';
+import { SignOutButton } from '@/components/dashboard/SignOutButton';
 
 interface DashboardSidebarNavProps {
   role: string;
@@ -71,6 +72,9 @@ export function DashboardSidebarNav({ role }: DashboardSidebarNavProps) {
           <Settings className={getIconClasses('/dashboard/settings')} />
           <span className="text-sm uppercase tracking-widest">Settings</span>
         </Link>
+        <div className="scale-95 origin-left mt-2">
+          <SignOutButton />
+        </div>
       </div>
     </nav>
   );

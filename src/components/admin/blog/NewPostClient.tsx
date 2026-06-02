@@ -604,7 +604,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
 
       <div className="max-w-4xl mx-auto px-6 pt-12">
         <div className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden flex flex-col transition-all">
-          <div className="p-8 sm:p-12 space-y-12">
+          <div className="p-4 md:p-8 sm:p-12 space-y-12">
              <div className="space-y-8">
                 <div className="space-y-2 group">
                    <label className="text-[10px] font-black text-black uppercase tracking-widest ml-1 opacity-100">Title</label>
@@ -713,7 +713,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
              )}
           </div>
 
-          <div className="bg-gray-50/30 border-t border-gray-100 p-8 sm:p-12">
+          <div className="bg-gray-50/30 border-t border-gray-100 p-4 md:p-8 sm:p-12">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
               <div className="space-y-10">
                  <div className="space-y-2">
@@ -849,7 +849,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                      setGalleryUsage('cover');
                      setIsGalleryOpen(true);
                    }}
-                   className="aspect-[16/9] bg-white rounded-3xl border border-gray-100 flex flex-col items-center justify-center p-8 text-center group cursor-pointer hover:border-black/20 hover:shadow-lg transition-all overflow-hidden relative shadow-sm"
+                   className="aspect-[16/9] bg-white rounded-3xl border border-gray-100 flex flex-col items-center justify-center p-4 md:p-8 text-center group cursor-pointer hover:border-black/20 hover:shadow-lg transition-all overflow-hidden relative shadow-sm"
                  >
                     {formData.cover_image_url ? (
                        <>
@@ -879,7 +879,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
             </div>
 
             {/* SEO Section: Full Width */}
-            <div className="p-8 sm:p-12 space-y-12 border-t border-gray-100 bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.02)] mt-24">
+            <div className="p-4 md:p-8 sm:p-12 space-y-12 border-t border-gray-100 bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.02)] mt-24">
                <div className="space-y-2">
                   <h4 className="text-[11px] font-black text-black uppercase tracking-[0.2em] flex items-center gap-2">
                      <Globe className="w-4 h-4 text-[#b50a0a]" />

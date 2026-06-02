@@ -79,7 +79,7 @@ export function LiveMatchModal({ fixture, tournamentId, matchEvents, onClose }: 
         className="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         {/* Header */}
-        <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+        <div className="px-4 md:px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center border border-red-100 text-[#b50a0a]">
               <Activity className="w-5 h-5" />
@@ -94,10 +94,10 @@ export function LiveMatchModal({ fixture, tournamentId, matchEvents, onClose }: 
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 flex flex-col md:flex-row gap-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col md:flex-row gap-4 md:p-8">
           {/* Left Column: Score & Status */}
           <div className="w-full md:w-1/2 space-y-8">
-            <div className="bg-gray-900 rounded-[32px] p-8 text-white relative overflow-hidden shadow-xl">
+            <div className="bg-gray-900 rounded-[32px] p-4 md:p-8 text-white relative overflow-hidden shadow-xl">
               <div className="absolute top-0 right-0 w-64 h-64 bg-[#b50a0a] blur-[100px] opacity-20 -translate-y-1/2 translate-x-1/2"></div>
               
               <div className="relative z-10 flex flex-col items-center gap-6">
@@ -150,10 +150,10 @@ export function LiveMatchModal({ fixture, tournamentId, matchEvents, onClose }: 
             </div>
 
             {/* Event Form */}
-            <div className="bg-white border border-gray-100 rounded-[32px] p-8 shadow-sm">
+            <div className="bg-white border border-gray-100 rounded-[32px] p-4 md:p-8 shadow-sm">
               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Log New Event</h4>
               <form onSubmit={handleAddEvent} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Team</label>
                     <select name="team_id" required className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[10px] font-black text-gray-900 uppercase tracking-widest outline-none focus:ring-2 focus:ring-[#b50a0a]">
@@ -180,7 +180,7 @@ export function LiveMatchModal({ fixture, tournamentId, matchEvents, onClose }: 
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="col-span-2 space-y-2">
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Player Name</label>
                     <input name="player_name" required placeholder="E.G. JOHN DOE" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[10px] font-black text-gray-900 uppercase tracking-widest outline-none focus:ring-2 focus:ring-[#b50a0a] placeholder:text-gray-300" />

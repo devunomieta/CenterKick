@@ -59,26 +59,26 @@ export default async function AdminSystemErrorsPage() {
         </div>
       ) : (
         <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
+            <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Time</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">User</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Error</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Context</th>
+                  <th className="px-4 md:px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Time</th>
+                  <th className="px-4 md:px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">User</th>
+                  <th className="px-4 md:px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Error</th>
+                  <th className="px-4 md:px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Context</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {logs.map((log: any) => (
                   <tr key={log.id} className="hover:bg-gray-50/50 transition-colors group">
-                    <td className="px-8 py-6 align-top">
+                    <td className="px-4 md:px-8 py-6 align-top">
                       <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                         <Clock className="w-3 h-3 text-gray-400" />
                         {new Date(log.created_at).toLocaleString()}
                       </div>
                     </td>
-                    <td className="px-8 py-6 align-top">
+                    <td className="px-4 md:px-8 py-6 align-top">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2 text-xs font-bold text-gray-900">
                           <User className="w-3 h-3 text-gray-400" />
@@ -92,7 +92,7 @@ export default async function AdminSystemErrorsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-8 py-6 align-top max-w-md">
+                    <td className="px-4 md:px-8 py-6 align-top max-w-md">
                       <div className="flex gap-2">
                         <AlertTriangle className="w-4 h-4 text-[#b50a0a] shrink-0 mt-0.5" />
                         <div className="space-y-2 w-full">
@@ -113,14 +113,14 @@ export default async function AdminSystemErrorsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6 align-top text-xs text-gray-500 font-medium">
+                    <td className="px-4 md:px-8 py-6 align-top text-xs text-gray-500 font-medium">
                       <div className="space-y-2">
                         <p className="flex items-center gap-2 font-bold text-gray-900 text-[10px] uppercase tracking-widest">
                           <Activity className="w-3 h-3 text-[#b50a0a]" />
                           {log.activity_context || 'N/A'}
                         </p>
                         {log.page_url && (
-                          <p className="text-[10px] text-gray-400 truncate max-w-[200px]" title={log.page_url}>
+                          <p className="text-[10px] text-gray-400 truncate max-w-full max-w-[200px]" title={log.page_url}>
                             {log.page_url}
                           </p>
                         )}

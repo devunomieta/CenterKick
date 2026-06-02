@@ -94,9 +94,9 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Middle Section: Trends & Recent Work */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-4 md:p-8">
            {/* Engagement Glance */}
-           <div className="lg:col-span-2 bg-gray-900 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl shadow-gray-400/20">
+           <div className="lg:col-span-2 bg-gray-900 rounded-[2rem] p-4 md:p-8 text-white relative overflow-hidden shadow-2xl shadow-gray-400/20">
               <div className="absolute top-0 right-0 w-64 h-64 bg-[#b50a0a] rounded-full blur-[120px] opacity-10 -mr-32 -mt-32"></div>
               
               <div className="relative z-10">
@@ -142,7 +142,7 @@ export default async function AdminDashboard() {
            </div>
 
            {/* Quick Tools Card */}
-           <div className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm flex flex-col justify-between">
+           <div className="bg-white rounded-[2rem] p-4 md:p-8 border border-gray-100 shadow-sm flex flex-col justify-between">
               <div>
                  <h2 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 font-bold">CMS Operations</h2>
                  <div className="space-y-4">
@@ -168,7 +168,7 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Bottom Section: Recent Articles */}
-        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 space-y-6">
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-4 md:p-8 space-y-6">
            <div>
               <h2 className="text-[12px] font-black text-gray-900 uppercase tracking-widest leading-none">Your Recent Publications</h2>
               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-2 italic">Quick access to recently created articles and drafts.</p>
@@ -285,9 +285,9 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Middle Section: Trends & Revenue */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-4 md:p-8">
          {/* Financial Glance */}
-         <div className="lg:col-span-2 bg-gray-900 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl shadow-gray-400/20">
+         <div className="lg:col-span-2 bg-gray-900 rounded-[2rem] p-4 md:p-8 text-white relative overflow-hidden shadow-2xl shadow-gray-400/20">
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#b50a0a] rounded-full blur-[120px] opacity-10 -mr-32 -mt-32"></div>
             
             <div className="relative z-10">
@@ -332,7 +332,7 @@ export default async function AdminDashboard() {
          </div>
 
          {/* Subscriptions Card */}
-         <div className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm flex flex-col justify-between">
+         <div className="bg-white rounded-[2rem] p-4 md:p-8 border border-gray-100 shadow-sm flex flex-col justify-between">
             <div>
                <h2 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">User Subscriptions</h2>
                <div className="space-y-5">

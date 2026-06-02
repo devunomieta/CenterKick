@@ -164,18 +164,18 @@ export function RolesClient({
         </div>
         <button 
           onClick={() => setIsInviteModalOpen(true)}
-          className="bg-[#b50a0a] hover:bg-black text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 shadow-xl shadow-red-900/20 active:scale-95 group"
+          className="bg-[#b50a0a] hover:bg-black text-white px-4 md:px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 shadow-xl shadow-red-900/20 active:scale-95 group"
         >
           <UserPlus className="w-4 h-4 group-hover:rotate-12 transition-transform" /> Invite Team Member
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-10">
         <div className="lg:col-span-2 space-y-10">
            
            {/* Verification Queue */}
            {verificationQueue.length > 0 && (
-             <div className="bg-red-50/30 rounded-[2.5rem] border border-red-100/50 p-8 space-y-6">
+             <div className="bg-red-50/30 rounded-[2.5rem] border border-red-100/50 p-4 md:p-8 space-y-6">
                 <div className="flex items-center justify-between">
                    <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-xl bg-[#b50a0a] flex items-center justify-center text-white shadow-lg">
@@ -222,7 +222,7 @@ export function RolesClient({
 
            {/* Admin List */}
            <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-200/50 overflow-hidden">
-             <div className="p-8 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+             <div className="p-4 md:p-8 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                    <h2 className="text-[12px] font-black text-gray-900 uppercase tracking-widest leading-none">Administrative Staff</h2>
                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-2 italic">Full list of active and inactive administrators.</p>
@@ -238,8 +238,8 @@ export function RolesClient({
                    />
                 </div>
              </div>
-             <div className="overflow-x-auto">
-               <table className="w-full text-left text-sm">
+             <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
+               <table className="w-full text-left text-sm whitespace-nowrap">
                  <tbody className="divide-y divide-gray-50">
                    {filteredAdmins.map((admin: Record<string, any>) => (
                      <tr key={admin.id} className="hover:bg-gray-50/50 transition-colors border-b border-gray-100 last:border-0">
@@ -316,12 +316,12 @@ export function RolesClient({
            {/* Pending Invitations */}
            {invitations.length > 0 && (
              <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
-               <div className="p-8 border-b border-gray-50">
+               <div className="p-4 md:p-8 border-b border-gray-50">
                   <h2 className="text-[12px] font-black text-gray-900 uppercase tracking-widest">Pending Access Tokens</h2>
                   <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-2 italic">Invitations sent that are yet to be claimed.</p>
                </div>
-               <div className="overflow-x-auto">
-                 <table className="w-full text-left text-sm text-gray-600">
+               <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
+                 <table className="w-full text-left text-sm text-gray-600 whitespace-nowrap">
                    <tbody className="divide-y divide-gray-50">
                      {invitations.map((invite: Record<string, any>) => (
                        <tr key={invite.id} className="hover:bg-gray-50/50 transition-colors">
@@ -402,7 +402,7 @@ export function RolesClient({
            <div className="relative bg-white w-full max-w-xl rounded-[3rem] shadow-2xl p-10 animate-in zoom-in slide-in-from-bottom-8 duration-500 ease-out border border-white/20">
               <button 
                 onClick={() => setIsInviteModalOpen(false)}
-                className="absolute top-8 right-8 p-3 text-gray-300 hover:text-black hover:bg-gray-50 rounded-2xl transition-all"
+                className="absolute top-4 md:p-8 right-8 p-3 text-gray-300 hover:text-black hover:bg-gray-50 rounded-2xl transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -469,7 +469,7 @@ export function RolesClient({
                   setIsPreviewModalOpen(false);
                   setSelectedUser(null);
                 }}
-                className="absolute top-8 right-8 p-3 text-gray-300 hover:text-black hover:bg-gray-50 rounded-2xl transition-all"
+                className="absolute top-4 md:p-8 right-8 p-3 text-gray-300 hover:text-black hover:bg-gray-50 rounded-2xl transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -489,7 +489,7 @@ export function RolesClient({
                  )}
               </div>
 
-              <div className="grid grid-cols-2 gap-8 mb-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8 mb-10">
                  <div className="space-y-1">
                     <p className="flex items-center gap-2 text-[9px] font-black text-gray-400 uppercase tracking-widest">
                        <MapPin className="w-3 h-3 text-[#b50a0a]" /> Location
@@ -506,7 +506,7 @@ export function RolesClient({
 
               <div className="space-y-4">
                  <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-2 italic">Assign Role & Approve Access</label>
-                 <div className="grid grid-cols-2 gap-3">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {[
                       ...(isSuper ? [{id: 'admin', label: 'Administrator', icon: ShieldCheck}] : []),
                       {id: 'blogger', label: 'Blogger', icon: FileText},

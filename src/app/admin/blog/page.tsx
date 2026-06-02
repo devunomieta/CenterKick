@@ -43,10 +43,10 @@ export default async function BlogDashboard({
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="relative overflow-hidden bg-white rounded-[3rem] p-12 border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] group">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#b50a0a]/5 rounded-full blur-[100px] -mr-32 -mt-32 transition-all duration-1000 group-hover:bg-[#b50a0a]/10"></div>
+        <div className="absolute top-0 right-0 w-full max-w-[400px] h-[400px] bg-[#b50a0a]/5 rounded-full blur-[100px] -mr-32 -mt-32 transition-all duration-1000 group-hover:bg-[#b50a0a]/10"></div>
         
         <div className="relative z-10 space-y-10">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 md:p-8">
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-slate-50 rounded-full border border-slate-100">
                 <span className="w-1.5 h-1.5 bg-[#b50a0a] rounded-full"></span>

@@ -28,7 +28,7 @@ export default async function AdminTournamentsPage() {
         </div>
 
         <Link href="/admin/tournaments/new">
-          <button className="bg-gray-900 text-white px-8 py-5 rounded-[20px] font-black uppercase tracking-widest text-[10px] hover:bg-[#b50a0a] transition-all flex items-center gap-3 shadow-xl transform active:scale-95 group">
+          <button className="bg-gray-900 text-white px-4 md:px-8 py-5 rounded-[20px] font-black uppercase tracking-widest text-[10px] hover:bg-[#b50a0a] transition-all flex items-center gap-3 shadow-xl transform active:scale-95 group">
             <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" /> 
             Create Tournament
           </button>
@@ -36,7 +36,7 @@ export default async function AdminTournamentsPage() {
       </div>
 
       {/* Tournament Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-2 xl:grid-cols-1 md:grid-cols-3 gap-4 md:p-8">
         {tournaments?.map((tournament) => (
           <div key={tournament.id} className="bg-white border border-gray-100 rounded-[40px] overflow-hidden group hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] transition-all duration-500 flex flex-col">
             <div className="h-40 bg-gray-50 relative overflow-hidden flex items-center justify-center">
@@ -67,7 +67,7 @@ export default async function AdminTournamentsPage() {
                 {tournament.description || 'No description provided for this tournament.'}
               </p>
 
-              <div className="grid grid-cols-2 gap-4 mb-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                   <div className="flex items-center gap-2 mb-1">
                     <Calendar className="w-3 h-3 text-gray-400" />

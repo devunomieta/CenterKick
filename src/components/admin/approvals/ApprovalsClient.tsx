@@ -315,7 +315,7 @@ export function ApprovalsClient({
                   </span>
                 )}
               </div>
-              {isActive && (
+              {(isActive || c.count > 0) && (
                 <div className="absolute top-6 right-6 w-2 h-2 bg-[#b50a0a] rounded-full animate-ping"></div>
               )}
             </button>
@@ -369,7 +369,7 @@ export function ApprovalsClient({
         </div>
 
         {/* Tab content rendering */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
           {tab === 'registrations' && (
             <div className="divide-y divide-gray-50">
               {((filtered as any).sports.length === 0 && (filtered as any).staff.length === 0) ? (
@@ -600,7 +600,7 @@ export function ApprovalsClient({
           )}
 
           {tab === 'prospects' && (
-            <table className="w-full text-left text-sm text-gray-600">
+            <table className="w-full text-left text-sm text-gray-600 whitespace-nowrap">
               <thead className="bg-[#f8f9fa] border-b border-gray-100">
                 <tr>
                   <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-[#b50a0a]">Prospect Identity</th>
@@ -627,10 +627,10 @@ export function ApprovalsClient({
                           </div>
                           <div>
                             <div className="flex items-center gap-2 mb-0.5">
-                              <p className="font-black text-gray-900 leading-none truncate max-w-[150px]">{prospect.first_name} {prospect.last_name}</p>
+                              <p className="font-black text-gray-900 leading-none truncate max-w-full max-w-[150px]">{prospect.first_name} {prospect.last_name}</p>
                               <FlagIcon country={prospect.country} className="w-3 h-2" />
                             </div>
-                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest truncate max-w-[200px]">{prospect.email || 'No email'}</p>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest truncate max-w-full max-w-[200px]">{prospect.email || 'No email'}</p>
                           </div>
                         </div>
                       </td>
@@ -779,7 +779,7 @@ export function ApprovalsClient({
             <button onClick={() => { setDecisionAction(null); setDecisionReason(''); }} className="absolute top-6 right-6 w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10">
               <X className="w-4 h-4 text-gray-400" />
             </button>
-            <div className="p-8">
+            <div className="p-4 md:p-8">
               <div className="flex items-center gap-3 mb-6">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${decisionAction.type.startsWith('approve') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                   {decisionAction.type.startsWith('approve') ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
@@ -874,7 +874,7 @@ export function ApprovalsClient({
       {inspectRegistration && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setInspectRegistration(null)}>
           <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl max-h-[90vh] overflow-y-auto relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setInspectRegistration(null)} className="absolute top-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-[200]">
+            <button onClick={() => setInspectRegistration(null)} className="absolute top-4 md:p-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-[200]">
               <X className="w-5 h-5 text-gray-400" />
             </button>
             <div className="p-10 pb-6">
@@ -900,7 +900,7 @@ export function ApprovalsClient({
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-y-6 mb-10 border-b border-gray-100 pb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 mb-10 border-b border-gray-100 pb-6">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-[8px] font-black text-gray-400 uppercase tracking-widest"><Mail className="w-3.5 h-3.5" /> Email Address</div>
                   <p className="text-xs font-black text-gray-900 truncate pr-4">{inspectRegistration.email || 'No email'}</p>
@@ -946,7 +946,7 @@ export function ApprovalsClient({
                   </h4>
                   
                   {inspectRegistration.role === 'player' && (
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="bg-gray-50/50 border border-gray-100 p-3 rounded-2xl">
                         <span className="text-[7px] font-black text-gray-400 uppercase block tracking-wider">Position</span>
                         <span className="text-xs font-black text-gray-900">{inspectRegistration.position || 'N/A'}</span>
@@ -975,7 +975,7 @@ export function ApprovalsClient({
                   )}
 
                   {inspectRegistration.role === 'coach' && (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="bg-gray-50/50 border border-gray-100 p-3 rounded-2xl">
                         <span className="text-[7px] font-black text-gray-400 uppercase block tracking-wider">Preferred Formation</span>
                         <span className="text-xs font-black text-gray-900">{inspectRegistration.formation || 'N/A'}</span>
@@ -988,7 +988,7 @@ export function ApprovalsClient({
                   )}
 
                   {(inspectRegistration.role === 'agent' || inspectRegistration.role === 'scout' || inspectRegistration.role === 'organization') && (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="bg-gray-50/50 border border-gray-100 p-3 rounded-2xl">
                         <span className="text-[7px] font-black text-gray-400 uppercase block tracking-wider">Agency / Club Name</span>
                         <span className="text-xs font-black text-gray-900">{inspectRegistration.agency_name || 'N/A'}</span>
@@ -1009,7 +1009,7 @@ export function ApprovalsClient({
                     <FileText className="w-4 h-4 text-[#b50a0a]" />
                     Uploaded Document Proofs
                   </h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {inspectRegistration.id_proof_url && (
                       <div className="bg-gray-50/50 border border-gray-100 p-4 rounded-2xl flex items-center justify-between gap-4">
                         <div className="min-w-0">
@@ -1104,7 +1104,7 @@ export function ApprovalsClient({
       {inspectPayment && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setInspectPayment(null)}>
           <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setInspectPayment(null)} className="absolute top-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10">
+            <button onClick={() => setInspectPayment(null)} className="absolute top-4 md:p-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10">
               <X className="w-5 h-5 text-gray-400" />
             </button>
             <div className="p-10 pb-6">
@@ -1118,7 +1118,7 @@ export function ApprovalsClient({
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-y-10 mb-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-10 mb-10">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 uppercase tracking-widest"><User className="w-3.5 h-3.5" /> Payer Name</div>
                   <p className="text-[14px] font-black text-gray-900 truncate pr-4">
@@ -1197,7 +1197,7 @@ export function ApprovalsClient({
       {selectedProspect && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setSelectedProspect(null)}>
           <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setSelectedProspect(null)} className="absolute top-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10">
+            <button onClick={() => setSelectedProspect(null)} className="absolute top-4 md:p-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10">
               <X className="w-5 h-5 text-gray-400" />
             </button>
             <div className="p-10 pb-6">
@@ -1211,7 +1211,7 @@ export function ApprovalsClient({
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-y-10 mb-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-10 mb-10">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 uppercase tracking-widest"><Mail className="w-3.5 h-3.5" /> Email Address</div>
                   <p className="text-[14px] font-black text-gray-900 truncate pr-4">{selectedProspect.email || 'No email'}</p>
@@ -1257,7 +1257,7 @@ export function ApprovalsClient({
       {selectedStaff && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setSelectedStaff(null)}>
           <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setSelectedStaff(null)} className="absolute top-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10">
+            <button onClick={() => setSelectedStaff(null)} className="absolute top-4 md:p-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10">
               <X className="w-5 h-5 text-gray-400" />
             </button>
             <div className="p-10 pb-6">
@@ -1275,7 +1275,7 @@ export function ApprovalsClient({
 
               <div className="space-y-4 mb-8">
                 <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Assign Target Role</label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {[
                     { id: 'admin', label: 'Administrator', icon: ShieldCheck },
                     { id: 'blogger', label: 'Blogger / Editor', icon: FileText },

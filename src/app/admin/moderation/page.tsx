@@ -18,7 +18,7 @@ export default async function ModerationPage() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    return <div className="p-8 text-red-500 bg-red-50 border border-red-100 rounded-2xl font-black uppercase tracking-widest">Error loading profiles: {error.message}</div>;
+    return <div className="p-4 md:p-8 text-red-500 bg-red-50 border border-red-100 rounded-2xl font-black uppercase tracking-widest">Error loading profiles: {error.message}</div>;
   }
 
   return (
@@ -33,21 +33,21 @@ export default async function ModerationPage() {
       </div>
 
       <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+        <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
+          <table className="w-full text-left whitespace-nowrap">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">User / Profile</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Role</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Joined</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Actions</th>
+                <th className="px-4 md:px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">User / Profile</th>
+                <th className="px-4 md:px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Role</th>
+                <th className="px-4 md:px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                <th className="px-4 md:px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Joined</th>
+                <th className="px-4 md:px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {profiles?.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-8 py-20 text-center">
+                  <td colSpan={5} className="px-4 md:px-8 py-20 text-center">
                     <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4 text-gray-300">
                       <User className="w-6 h-6" />
                     </div>
@@ -57,7 +57,7 @@ export default async function ModerationPage() {
               ) : (
                 profiles?.map((profile) => (
                   <tr key={profile.id} className="hover:bg-gray-50/50 transition-colors group">
-                    <td className="px-8 py-6">
+                    <td className="px-4 md:px-8 py-6">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
                            {profile.avatar_url ? (
@@ -79,12 +79,12 @@ export default async function ModerationPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 md:px-8 py-6">
                       <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[9px] font-black uppercase tracking-widest">
                         {profile.users?.role || 'player'}
                       </span>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 md:px-8 py-6">
                       <div className="flex items-center gap-2">
                         <div className={`w-1.5 h-1.5 rounded-full ${
                           profile.status === 'active' ? 'bg-green-500' : 
@@ -102,12 +102,12 @@ export default async function ModerationPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 md:px-8 py-6">
                       <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                         {new Date(profile.created_at).toLocaleDateString()}
                       </span>
                     </td>
-                    <td className="px-8 py-6 text-right">
+                    <td className="px-4 md:px-8 py-6 text-right">
                        <ModerationActions profile={profile} />
                     </td>
                   </tr>

@@ -76,7 +76,7 @@ export default async function TournamentManagementPage({ params }: { params: Pro
             <button className="p-4 rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all shadow-sm">
               <Trash2 className="w-5 h-5" />
             </button>
-            <button className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-[#b50a0a] transition-all shadow-xl">
+            <button className="bg-gray-900 text-white px-4 md:px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-[#b50a0a] transition-all shadow-xl">
               Save Changes
             </button>
           </div>

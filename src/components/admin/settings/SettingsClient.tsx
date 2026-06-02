@@ -196,7 +196,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-300">
+          <div className="bg-white rounded-[2.5rem] p-4 md:p-8 max-w-md w-full shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-300">
             <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mb-6">
               <Trash2 className="w-8 h-8 text-red-500" />
             </div>
@@ -234,7 +234,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
           <button 
             onClick={handleClearCache}
             disabled={isClearing}
-            className="group min-w-[200px] bg-white border border-gray-200 text-gray-900 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-start gap-3 hover:bg-gray-50 hover:border-gray-100 disabled:opacity-50"
+            className="group min-w-0 md:min-w-full max-w-[200px] bg-white border border-gray-200 text-gray-900 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-start gap-3 hover:bg-gray-50 hover:border-gray-100 disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 text-orange-500 ${isClearing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
             <span className="text-left leading-none">{isClearing ? 'Clearing...' : 'Clear System Cache'}</span>
@@ -242,7 +242,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:p-8">
         {/* Navigation Sidebar */}
         <div className="space-y-3">
           {sections.map((section) => (
@@ -289,7 +289,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-8">
+                <div className="grid grid-cols-1 gap-4 md:p-8">
                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Platform Name</label>
                       <input 
@@ -326,7 +326,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
                     <button 
                       onClick={handleSave}
                       disabled={isSaving}
-                      className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-black flex items-center gap-4 disabled:opacity-50 shadow-xl shadow-gray-100"
+                      className="bg-gray-900 text-white px-4 md:px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-black flex items-center gap-4 disabled:opacity-50 shadow-xl shadow-gray-100"
                     >
                       <Save className="w-4 h-4 text-[#b50a0a]" />
                       {isSaving ? 'Saving...' : 'Save Global Settings'}
@@ -348,7 +348,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
                    <div className="space-y-2 col-span-2">
                       <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Resend API Key</label>
                       <div className="relative">
@@ -410,7 +410,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
                     <button 
                       onClick={handleSave}
                       disabled={isSaving}
-                      className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-black flex items-center gap-4 disabled:opacity-50 shadow-xl shadow-gray-100"
+                      className="bg-gray-900 text-white px-4 md:px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-black flex items-center gap-4 disabled:opacity-50 shadow-xl shadow-gray-100"
                     >
                       <Save className="w-4 h-4 text-[#b50a0a]" />
                       {isSaving ? 'Saving...' : 'Save Mail Settings'}
@@ -453,7 +453,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
                     <button 
                       onClick={handleSave}
                       disabled={isSaving}
-                      className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-black flex items-center gap-4 disabled:opacity-50 shadow-xl shadow-gray-100"
+                      className="bg-gray-900 text-white px-4 md:px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-black flex items-center gap-4 disabled:opacity-50 shadow-xl shadow-gray-100"
                     >
                       <Save className="w-4 h-4 text-[#b50a0a]" />
                       {isSaving ? 'Saving...' : 'Save Security Settings'}
@@ -471,8 +471,8 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-8">
-<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-4 md:p-8">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
    <div className="space-y-6">
       <h4 className="text-[9px] font-black text-gray-900 uppercase tracking-widest px-1">Site & Footer</h4>
       <ImageUpload 
@@ -504,7 +504,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
       />
    </div>
 </div>
-<div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8 pt-6">
     <ImageUpload 
       label="Favicon Asset (ICO/PNG)" 
       value={settings.faviconUrl || ''} 
@@ -524,7 +524,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
                     <button 
                       onClick={handleSave}
                       disabled={isSaving}
-                      className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-black flex items-center gap-4 disabled:opacity-50 shadow-xl shadow-gray-100"
+                      className="bg-gray-900 text-white px-4 md:px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-black flex items-center gap-4 disabled:opacity-50 shadow-xl shadow-gray-100"
                     >
                       <Save className="w-4 h-4 text-[#b50a0a]" />
                       {isSaving ? 'Saving...' : 'Save Asset Settings'}

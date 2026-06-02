@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Users, UserCheck, Briefcase, FileText, PenTool,
-  ShieldCheck, CreditCard, Settings, LayoutDashboard, Clock, Trophy, Search, Database
+  ShieldCheck, CreditCard, Settings, LayoutDashboard, Clock, Trophy, Search, Database, AlertTriangle
 } from 'lucide-react';
+import { SignOutButton } from '@/components/dashboard/SignOutButton';
+import { Home } from 'lucide-react';
 
 export function AdminSidebar({ role }: { role: string }) {
   const pathname = usePathname();
@@ -58,7 +60,10 @@ export function AdminSidebar({ role }: { role: string }) {
           { label: 'Transactions', href: '/admin/payments/transactions', icon: CreditCard },
           { label: 'Subscriptions', href: '/admin/payments/subscriptions', icon: Settings }
         ] : []),
-        ...(role === 'superadmin' ? [{ label: 'System Settings', href: '/admin/settings', icon: Settings }] : [])
+        ...(role === 'superadmin' ? [
+          { label: 'System Settings', href: '/admin/settings', icon: Settings },
+          { label: 'System Errors', href: '/admin/system-errors', icon: AlertTriangle }
+        ] : [])
       ]
     }
   ];
@@ -90,6 +95,20 @@ export function AdminSidebar({ role }: { role: string }) {
           })}
         </div>
       ))}
+
+      <div className="pt-4 mt-4 border-t border-gray-800/50 space-y-1">
+        <span className="px-4 text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">Session</span>
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-gray-400 hover:text-white hover:bg-white/5 group"
+        >
+          <Home className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+          <span className="text-[11px] uppercase tracking-widest text-gray-400 group-hover:text-white">User Dashboard</span>
+        </Link>
+        <div className="scale-95 origin-left">
+          <SignOutButton />
+        </div>
+      </div>
     </nav>
   );
 }

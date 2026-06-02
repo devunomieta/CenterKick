@@ -198,7 +198,7 @@ function StatFormModal({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-300">
-        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="p-4 md:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div>
             <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">
               {initialData ? 'Edit Career Record' : 'Add Career Record'}
@@ -212,7 +212,7 @@ function StatFormModal({
         
         <div className="p-10 space-y-8 max-h-[70vh] overflow-y-auto">
           {/* Season & League */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Football Season</label>
               <select 
@@ -277,7 +277,7 @@ function StatFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                 <Activity className="w-3 h-3 text-slate-400" /> Appearances
@@ -353,7 +353,7 @@ function StatFormModal({
           </div>
         </div>
 
-        <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+        <div className="p-4 md:p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
           <button 
             onClick={() => onSave(formData)}
             className="flex-1 bg-slate-900 text-white rounded-2xl py-4 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#b50a0a] transition-all shadow-xl shadow-slate-200"
@@ -411,7 +411,7 @@ function TransferFormModal({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-300">
-        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="p-4 md:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div>
             <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">
               {initialData ? 'Edit Transfer Record' : 'Add Transfer Record'}
@@ -424,7 +424,7 @@ function TransferFormModal({
         </div>
         
         <div className="p-10 space-y-8 max-h-[70vh] overflow-y-auto">
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Season</label>
               <select 
@@ -483,7 +483,7 @@ function TransferFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">New Club (Joined)</label>
                 <div className="relative">
@@ -572,7 +572,7 @@ function TransferFormModal({
           </div>
         </div>
 
-        <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+        <div className="p-4 md:p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
           <button 
             onClick={() => onSave(formData)}
             className="flex-1 bg-slate-900 text-white rounded-2xl py-4 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#b50a0a] transition-all shadow-xl shadow-slate-200"
@@ -626,7 +626,7 @@ function AchievementFormModal({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white rounded-[2.5rem] w-full max-w-xl overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-300">
-        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="p-4 md:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div>
             <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">
               {initialData ? 'Edit Career Honour' : 'Add Career Honour'}
@@ -650,7 +650,7 @@ function AchievementFormModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Year / Season</label>
               <select 
@@ -698,7 +698,7 @@ function AchievementFormModal({
           </div>
         </div>
 
-        <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+        <div className="p-4 md:p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
           <button 
             onClick={() => onSave(formData)}
             className="flex-1 bg-slate-900 text-white rounded-2xl py-4 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#b50a0a] transition-all shadow-xl shadow-slate-200"
@@ -778,7 +778,7 @@ function MediaGalleryModal({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-300">
-        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="p-4 md:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div>
             <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Manage Media Gallery</h3>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Video, Photos & External Portfolios</p>
@@ -894,7 +894,7 @@ function MediaGalleryModal({
           </div>
         </div>
 
-        <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+        <div className="p-4 md:p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
           <button 
             onClick={() => onSave(formData)}
             className="flex-1 bg-slate-900 text-white rounded-2xl py-4 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200"
@@ -913,12 +913,12 @@ function MediaGalleryModal({
       {/* Large Preview Overlay */}
       {previewUrl && (
         <div 
-          className="fixed inset-0 z-[300] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-8 animate-in fade-in duration-300"
+          className="fixed inset-0 z-[300] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-300"
           onClick={() => setPreviewUrl(null)}
         >
           <button 
             onClick={() => setPreviewUrl(null)}
-            className="absolute top-8 right-8 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all transition-transform hover:scale-110"
+            className="absolute top-4 md:p-8 right-8 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all transition-transform hover:scale-110"
           >
             <X className="w-6 h-6" />
           </button>
@@ -1339,8 +1339,8 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
         onChange={(e) => e.target.files?.[0] && handleAvatarUpload(e.target.files[0])}
       />
       {/* Dashboard Top Bar - Sticky below Admin Nav */}
-      <div className="bg-white border-b border-slate-200 px-8 py-4 sticky top-[-32px] z-[100] shadow-sm mx-[-32px] mt-[-32px] mb-8">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+      <div className="bg-white border-b border-slate-200 px-4 md:px-8 py-4 sticky top-[-32px] z-[100] shadow-sm mx-[-32px] mt-[-32px] mb-8">
+        <div className="max-w-full max-w-[1400px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link 
               href="/admin/players"
@@ -1349,7 +1349,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
               <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
               Back to Players
             </Link>
-            <div className="h-4 w-[1px] bg-slate-200"></div>
+            <div className="h-4 w-full max-w-[1px] bg-slate-200"></div>
             <div className="flex items-center gap-4">
               <div 
                 className={`w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white overflow-hidden shadow-lg cursor-pointer group/avatar relative ${avatarUploading ? 'animate-pulse' : ''}`}
@@ -1400,9 +1400,9 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto w-full flex gap-8 px-8 pb-12 flex-1 items-start">
+      <div className="max-w-full max-w-[1400px] mx-auto w-full flex gap-4 md:p-8 px-4 md:px-8 pb-12 flex-1 items-start">
         {/* Left Sidebar - Profile Summary - Sticky */}
-        <div className="w-72 bg-white border border-slate-100 p-6 rounded-[2.5rem] flex flex-col gap-8 sticky top-[72px] shadow-sm shadow-slate-200/50">
+        <div className="w-72 bg-white border border-slate-100 p-6 rounded-[2.5rem] flex flex-col gap-4 md:p-8 sticky top-[72px] shadow-sm shadow-slate-200/50">
           <div 
             className={`relative group cursor-pointer overflow-hidden rounded-[2rem] ${avatarUploading ? 'animate-pulse opacity-50' : ''}`}
             onClick={() => !avatarUploading && avatarInputRef.current?.click()}
@@ -1467,7 +1467,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
         <div className="flex-1 min-w-0">
           {activeTab === 'profile' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
-              <div className="grid grid-cols-1 gap-8">
+              <div className="grid grid-cols-1 gap-4 md:p-8">
                 {/* Identity Card */}
                 <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[4rem] -z-0 transition-all group-hover:bg-slate-100"></div>
@@ -1487,7 +1487,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                       {[
                         { label: 'First Name', value: player.first_name, field: 'first_name', type: 'text' },
                         { label: 'Last Name', value: player.last_name, field: 'last_name', type: 'text' },
@@ -1557,7 +1557,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                       {(() => {
                         const currentLeague = displayValue('league' as keyof Player, player.league);
                         const availableClubs = clubs.filter((c: Record<string, any>) => c.leagues?.name === currentLeague).map((c: Record<string, any>) => c.name);
@@ -1732,7 +1732,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                   <p className="text-sm font-bold text-slate-400 mt-2 max-w-sm mx-auto">Start building this player&apos;s professional history by adding their first season data.</p>
                   <button 
                     onClick={() => { setEditingStat(null); setSelectedSeasonForAdd(null); setShowStatModal(true); }}
-                    className="mt-8 px-8 py-4 bg-[#b50a0a] text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-900 transition-all shadow-xl shadow-red-900/20"
+                    className="mt-8 px-4 md:px-8 py-4 bg-[#b50a0a] text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-900 transition-all shadow-xl shadow-red-900/20"
                   >
                     + Create First Record
                   </button>
@@ -1756,7 +1756,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                     </div>
                     
                     <div className="overflow-x-auto rounded-2xl border border-slate-100">
-                      <table className="w-full text-left border-collapse">
+                      <table className="w-full text-left border-collapse whitespace-nowrap">
                         <thead>
                           <tr className="bg-slate-50 border-b border-slate-100">
                             <th className="px-4 py-4 text-[8px] font-black uppercase tracking-widest text-slate-400">Club / Team</th>
@@ -1869,7 +1869,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                     </div>
                   ) : (
                     <div className="overflow-x-auto rounded-[1.5rem] border border-white/5 bg-white/5 backdrop-blur-md">
-                      <table className="w-full text-left border-collapse">
+                      <table className="w-full text-left border-collapse whitespace-nowrap">
                         <thead>
                           <tr className="border-b border-white/10">
                             <th className="px-4 py-4 text-[8px] font-black uppercase tracking-widest text-slate-500">Season / Date</th>
@@ -1995,7 +1995,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                         target.style.height = 'auto';
                         target.style.height = `${target.scrollHeight}px`;
                       }}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-8 text-[13px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-all resize-none overflow-hidden"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-4 md:p-8 text-[13px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-all resize-none overflow-hidden"
                       value={displayValue('bio', player.bio || '') as string}
                       onChange={(e) => updateField('bio', e.target.value)}
                       placeholder="Share the professional journey, key milestones, and personal story of this athlete..."
@@ -2007,7 +2007,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                   </div>
                 ) : (
                   <div className="relative">
-                    <div className="p-8 bg-slate-50/50 rounded-[1.5rem] border border-slate-100 relative group/bio shadow-inner">
+                    <div className="p-4 md:p-8 bg-slate-50/50 rounded-[1.5rem] border border-slate-100 relative group/bio shadow-inner">
                       <div className="text-[13px] font-medium text-slate-600 leading-[1.8] whitespace-pre-wrap">
                         {player.bio || "No professional biography has been provided for this athlete yet. Use the edit button to share their professional journey and achievements."}
                       </div>
@@ -2160,10 +2160,10 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                         <Trophy className="w-10 h-10 text-slate-100" />
                       </div>
                       <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest">No achievements yet</h4>
-                      <p className="text-[10px] text-slate-400 mt-2 max-w-[240px] text-center">Start adding official trophies, medals, and awards to showcase this player&apos;s success.</p>
+                      <p className="text-[10px] text-slate-400 mt-2 max-w-full max-w-[240px] text-center">Start adding official trophies, medals, and awards to showcase this player&apos;s success.</p>
                       <button 
                         onClick={() => { setEditingAchievement(null); setShowAchievementModal(true); }}
-                        className="mt-8 px-8 py-3 bg-white text-slate-900 border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
+                        className="mt-8 px-4 md:px-8 py-3 bg-white text-slate-900 border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
                       >
                         + Add First Achievement
                       </button>
@@ -2186,7 +2186,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
           {/* Tab 4: Gallery */}
           {activeTab === 'gallery' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-10">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-4 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-900 shadow-sm border border-slate-100">
                     <ImageIcon className="w-6 h-6" />
@@ -2202,7 +2202,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                     href={player.media_gallery.external_gallery_url.startsWith('http') ? player.media_gallery.external_gallery_url : `https://${player.media_gallery.external_gallery_url}`} 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-8 py-4 bg-slate-50 text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-3 border border-slate-200"
+                    className="px-4 md:px-8 py-4 bg-slate-50 text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-3 border border-slate-200"
                   >
                     Visit Global Portfolio <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -2210,7 +2210,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
               </div>
 
               {/* Video Highlight - Primary focus */}
-              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm overflow-hidden group">
+              <div className="bg-white rounded-[2.5rem] p-4 md:p-8 border border-slate-100 shadow-sm overflow-hidden group">
                  <div className="flex items-center gap-3 mb-6">
                     <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600">
                        <Activity className="w-4 h-4" />
@@ -2244,7 +2244,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Latest Action Images</h4>
                     <span className="text-[10px] font-bold text-slate-400">Total: {player.media_gallery?.action_images?.filter(img => img && img.trim() !== '').length || 0}</span>
                  </div>
-                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 lg:grid-cols-5 gap-4">
                     {(player.media_gallery?.action_images && player.media_gallery.action_images.filter(img => img && img.trim() !== '').length > 0) ? (
                        player.media_gallery.action_images.filter(img => img && img.trim() !== '').map((img, i) => (
                           <div key={i} className="group relative aspect-square rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer">
@@ -2291,7 +2291,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
           {/* Tab 5: News */}
           {activeTab === 'news' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
-              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm mb-8">
+              <div className="bg-white rounded-[2.5rem] p-4 md:p-8 border border-slate-100 shadow-sm mb-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-900">
@@ -2333,7 +2333,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                         }
                       }}
                       disabled={isUpdatingTags || !newTagInput.trim()}
-                      className="bg-[#b50a0a] hover:bg-black text-white px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                      className="bg-[#b50a0a] hover:bg-black text-white px-4 md:px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50"
                     >
                       {isUpdatingTags ? 'Syncing...' : 'Add Tag'}
                     </button>
@@ -2381,7 +2381,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                           fill
                         />
                       </div>
-                      <div className="flex-1 p-8 flex flex-col justify-between">
+                      <div className="flex-1 p-4 md:p-8 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-[9px] font-black uppercase text-[#b50a0a] tracking-widest">{news.category?.name || 'Story'}</span>

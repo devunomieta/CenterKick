@@ -74,7 +74,7 @@ export default async function DashboardLayout({
       <div className="flex h-screen bg-gray-50 overflow-hidden">
         {/* Sidebar */}
         <aside className="w-72 bg-gray-900 hidden md:flex flex-col text-gray-300">
-          <div className="h-20 flex items-center px-8 border-b border-gray-800">
+          <div className="h-20 flex items-center px-4 md:px-8 border-b border-gray-800">
             <Link href="/" className="flex items-center gap-3 w-full">
               {sidebarLogoUrl ? (
                  <div className="relative h-7 w-auto max-w-full flex items-center justify-start overflow-hidden">
@@ -90,12 +90,7 @@ export default async function DashboardLayout({
               )}
             </Link>
           </div>
-
           <DashboardSidebarNav role={role} />
-
-          <div className="p-6 border-t border-gray-800">
-            <SignOutButton />
-          </div>
         </aside>
 
         {/* Main Content */}
@@ -112,7 +107,7 @@ export default async function DashboardLayout({
           />
 
           {/* Page Content */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-8">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 md:p-8">
             {children}
           </main>
         </div>

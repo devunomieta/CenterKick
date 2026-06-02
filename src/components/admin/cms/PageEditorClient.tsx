@@ -64,7 +64,7 @@ export default function PageEditorClient({ page, content, categories }: PageEdit
       
       {/* Sidebar: Layout Manager */}
       <div className="lg:w-80 space-y-6">
-        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8 sticky top-24">
+        <div className="bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8 sticky top-24">
            <div>
               <Link href="/admin/manage-ui" className="text-[9px] font-black text-[#b50a0a] uppercase tracking-widest flex items-center gap-2 mb-4 hover:translate-x-1 transition-transform">
                  <ChevronUp className="w-3 h-3 -rotate-90" /> Back to Dashboard
@@ -185,7 +185,7 @@ function SectionEditor({ page, section, initialContent, categories }: { page: st
           <button 
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-[#b50a0a] text-white px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all flex items-center gap-3 shadow-xl shadow-red-900/10 disabled:opacity-50"
+            className="bg-[#b50a0a] text-white px-4 md:px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all flex items-center gap-3 shadow-xl shadow-red-900/10 disabled:opacity-50"
           >
              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
              Publish Changes
@@ -259,7 +259,7 @@ function renderFields(section: string, content: any, onChange: (f: string, v: an
   switch (section) {
     case 'hero':
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
            <TextInput label="Hero Title" field="title" placeholder="Platform Newsroom..." />
            <TextInput label="Hero Subtitle" field="subtitle" placeholder="Exclusive updates..." />
            <div className="md:col-span-2 shadow-sm">
@@ -269,7 +269,7 @@ function renderFields(section: string, content: any, onChange: (f: string, v: an
       );
     case 'cta':
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
            <TextInput label="CTA Subtitle" field="subtitle" placeholder="Ready to Rise?" />
            <TextInput label="CTA Title" field="title" placeholder="Professional Football Network" />
            <TextInput label="Primary Button Text" field="primaryButtonText" placeholder="Contact Our Agency" />

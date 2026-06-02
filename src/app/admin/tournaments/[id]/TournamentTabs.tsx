@@ -136,7 +136,7 @@ function StatisticsTab({ matchEvents, fixtures }: { matchEvents: any[], fixtures
   }).sort((a, b) => b.count - a.count);
 
   const StatCard = ({ title, data, unit = '', color = 'text-gray-900' }: { title: string, data: any[], unit?: string, color?: string }) => (
-    <div className="bg-white border border-gray-100 rounded-[32px] p-8 shadow-sm space-y-6">
+    <div className="bg-white border border-gray-100 rounded-[32px] p-4 md:p-8 shadow-sm space-y-6">
       <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</h4>
       <div className="space-y-4">
         {data.slice(0, 3).map((item, i) => (
@@ -180,12 +180,12 @@ function StatisticsTab({ matchEvents, fixtures }: { matchEvents: any[], fixtures
         <StatCard title="Clean Sheets" data={cleanSheets} color="text-green-600" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
+      <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-4 md:p-8 pt-4">
         <div className="lg:col-span-2 bg-gray-900 rounded-[40px] p-10 text-white shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#b50a0a] blur-[150px] opacity-10 -translate-y-1/2 translate-x-1/2"></div>
           <div className="relative z-10 space-y-8">
             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gameplay Efficiency</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
               <div className="space-y-2">
                 <p className="text-[9px] font-black text-gray-500 uppercase">Shots PG</p>
                 <p className="text-3xl font-black">{(shots.reduce((a, b) => a + b.count, 0) / (finishedFixturesCount || 1)).toFixed(1)}</p>
@@ -266,7 +266,7 @@ function OverviewTab({ tournament }: { tournament: any }) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-4 md:p-8">
       <div className="lg:col-span-2 space-y-8">
         <div className="bg-white border border-gray-100 rounded-[40px] p-10 space-y-8 shadow-sm">
           <div className="flex items-center justify-between">
@@ -400,10 +400,10 @@ function OverviewTab({ tournament }: { tournament: any }) {
               Control whether this tournament is visible to the public. Private leagues are only accessible via special links or invitations.
             </p>
             <div className="flex items-center gap-4 pt-2">
-              <button className="bg-[#b50a0a] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white hover:text-gray-900 transition-all">
+              <button className="bg-[#b50a0a] text-white px-4 md:px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white hover:text-gray-900 transition-all">
                 Make Private
               </button>
-              <button className="bg-white/5 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all border border-white/10">
+              <button className="bg-white/5 text-white px-4 md:px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all border border-white/10">
                 Generate Access Key
               </button>
             </div>
@@ -412,7 +412,7 @@ function OverviewTab({ tournament }: { tournament: any }) {
       </div>
 
       <div className="space-y-8">
-        <div className="bg-white border border-gray-100 rounded-[40px] p-8 space-y-6 shadow-sm">
+        <div className="bg-white border border-gray-100 rounded-[40px] p-4 md:p-8 space-y-6 shadow-sm">
           <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Quick Stats</h4>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
@@ -459,7 +459,7 @@ function TeamRosterModal({ team, onClose }: { team: any, onClose: () => void }) 
         exit={{ opacity: 0, scale: 0.95 }}
         className="bg-white rounded-[40px] w-full max-w-lg overflow-hidden border border-gray-100 shadow-2xl"
       >
-        <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+        <div className="p-4 md:p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center">
               {team.team_logo_url ? (
@@ -481,7 +481,7 @@ function TeamRosterModal({ team, onClose }: { team: any, onClose: () => void }) 
           </button>
         </div>
 
-        <div className="p-8 max-h-[400px] overflow-y-auto space-y-4">
+        <div className="p-4 md:p-8 max-h-[400px] overflow-y-auto space-y-4">
           {isLoading ? (
             <div className="py-12 flex justify-center">
               <div className="w-6 h-6 border-2 border-[#b50a0a]/30 border-t-[#b50a0a] rounded-full animate-spin"></div>
@@ -536,7 +536,7 @@ function TeamsTab({ tournament, teams, isAdding, setIsAdding }: { tournament: an
         </div>
         <button 
           onClick={() => setIsAdding(true)}
-          className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-[#b50a0a] transition-all flex items-center gap-2 shadow-lg"
+          className="bg-gray-900 text-white px-4 md:px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-[#b50a0a] transition-all flex items-center gap-2 shadow-lg"
         >
           <Plus className="w-3.5 h-3.5" /> Add Team
         </button>
@@ -553,7 +553,7 @@ function TeamsTab({ tournament, teams, isAdding, setIsAdding }: { tournament: an
           </div>
           <div className="text-center space-y-2">
             <h4 className="text-lg font-black text-gray-900 uppercase">Add New Team</h4>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest max-w-[200px]">Enter team details to register them</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest max-w-full max-w-[200px]">Enter team details to register them</p>
           </div>
           <form action={async (formData) => {
             await addTeam(tournament.id, formData);
@@ -578,7 +578,7 @@ function TeamsTab({ tournament, teams, isAdding, setIsAdding }: { tournament: an
               />
             </div>
             <div className="flex gap-2 mt-2">
-              <button className="flex-1 bg-[#b50a0a] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-900 transition-all">
+              <button className="flex-1 bg-[#b50a0a] text-white px-4 md:px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-900 transition-all">
                 Add Team
               </button>
               <button type="button" onClick={() => setIsAdding(false)} className="px-6 py-4 rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-gray-900 transition-all font-black uppercase tracking-widest text-[10px]">
@@ -589,9 +589,9 @@ function TeamsTab({ tournament, teams, isAdding, setIsAdding }: { tournament: an
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3 gap-6">
         {teams.map((team) => (
-          <div key={team.id} className="bg-white border border-gray-100 rounded-[32px] p-8 flex items-center justify-between group hover:shadow-xl transition-all duration-500">
+          <div key={team.id} className="bg-white border border-gray-100 rounded-[32px] p-4 md:p-8 flex items-center justify-between group hover:shadow-xl transition-all duration-500">
             <div className="flex items-center gap-5">
               <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center border border-gray-100 group-hover:scale-110 transition-transform duration-500">
                 {team.team_logo_url ? (
@@ -683,7 +683,7 @@ function FixturesTab({ tournament, fixtures, teams, isAdding, setIsAdding, match
         </div>
         <button 
           onClick={() => setIsAdding(true)}
-          className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-[#b50a0a] transition-all flex items-center gap-2 shadow-lg"
+          className="bg-gray-900 text-white px-4 md:px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-[#b50a0a] transition-all flex items-center gap-2 shadow-lg"
         >
           <Plus className="w-3.5 h-3.5" /> Create Fixture
         </button>
@@ -707,7 +707,7 @@ function FixturesTab({ tournament, fixtures, teams, isAdding, setIsAdding, match
             setIsAdding(false);
             setHomeTeamId('');
             setAwayTeamId('');
-          }} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          }} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
             <div className="space-y-3">
               <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Home Team</label>
               <select 
@@ -810,7 +810,7 @@ function FixturesTab({ tournament, fixtures, teams, isAdding, setIsAdding, match
               {groupedFixtures[round].map((fixture: any) => (
                 <div key={fixture.id} className="bg-white border border-gray-100 rounded-[24px] p-4 flex items-center justify-between group hover:shadow-lg hover:border-gray-200 transition-all duration-300">
                   {/* Compact Date Block */}
-                  <div className="flex items-center gap-4 min-w-[150px]">
+                  <div className="flex items-center gap-4 min-w-full max-w-[150px]">
                     <div className="flex flex-col items-center justify-center w-14 h-14 bg-[#b50a0a] rounded-2xl shadow-sm group-hover:scale-105 transition-transform">
                       <span className="text-[8px] font-black text-white/80 uppercase">
                         {format(new Date(fixture.match_date), 'MMM')}
@@ -823,13 +823,13 @@ function FixturesTab({ tournament, fixtures, teams, isAdding, setIsAdding, match
                       <span className="block text-[9px] font-black text-[#b50a0a] uppercase tracking-widest">{fixture.round}</span>
                       <div className="flex items-center gap-1 text-gray-400">
                         <MapPin className="w-3 h-3" />
-                        <span className="text-[8px] font-bold uppercase tracking-widest truncate max-w-[100px]">{fixture.venue || 'TBA'}</span>
+                        <span className="text-[8px] font-bold uppercase tracking-widest truncate max-w-full max-w-[100px]">{fixture.venue || 'TBA'}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Scoreline */}
-                  <div className="flex-1 flex items-center justify-center gap-4 md:gap-8 px-4">
+                  <div className="flex-1 flex items-center justify-center gap-4 md:gap-4 md:p-8 px-4">
                     <span className="flex-1 text-right text-xs md:text-sm font-black text-gray-900 uppercase tracking-tight truncate">
                       {fixture.home_team?.team_name}
                     </span>
@@ -960,12 +960,12 @@ function StandingsTab({ teams, fixtures, type }: { teams: any[], fixtures: any[]
       </div>
 
       <div className="bg-white border border-gray-100 rounded-[40px] overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
+          <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="px-8 py-6 text-[9px] font-black text-gray-400 uppercase tracking-widest">#</th>
-                <th className="px-8 py-6 text-[9px] font-black text-gray-400 uppercase tracking-widest">Team</th>
+                <th className="px-4 md:px-8 py-6 text-[9px] font-black text-gray-400 uppercase tracking-widest">#</th>
+                <th className="px-4 md:px-8 py-6 text-[9px] font-black text-gray-400 uppercase tracking-widest">Team</th>
                 <th className="px-6 py-6 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">P</th>
                 <th className="px-6 py-6 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">W</th>
                 <th className="px-6 py-6 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">D</th>
@@ -973,18 +973,18 @@ function StandingsTab({ teams, fixtures, type }: { teams: any[], fixtures: any[]
                 <th className="px-6 py-6 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">GF</th>
                 <th className="px-6 py-6 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">GA</th>
                 <th className="px-6 py-6 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">GD</th>
-                <th className="px-8 py-6 text-[9px] font-black text-gray-900 uppercase tracking-widest text-center">Pts</th>
+                <th className="px-4 md:px-8 py-6 text-[9px] font-black text-gray-900 uppercase tracking-widest text-center">Pts</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {sortedTeams.map((team, index) => (
                 <tr key={team.id} className="group hover:bg-gray-50/50 transition-colors">
-                  <td className="px-8 py-6">
+                  <td className="px-4 md:px-8 py-6">
                     <span className={`text-xs font-black ${index < 3 ? 'text-[#b50a0a]' : 'text-gray-400'}`}>
                       {index + 1}
                     </span>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-4 md:px-8 py-6">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
                         {team.team_logo_url ? (
@@ -1005,7 +1005,7 @@ function StandingsTab({ teams, fixtures, type }: { teams: any[], fixtures: any[]
                   <td className="px-6 py-6 text-[11px] font-bold text-gray-500 text-center">
                     {team.goal_difference}
                   </td>
-                  <td className="px-8 py-6 text-sm font-black text-gray-900 text-center">{team.points}</td>
+                  <td className="px-4 md:px-8 py-6 text-sm font-black text-gray-900 text-center">{team.points}</td>
                 </tr>
               ))}
             </tbody>

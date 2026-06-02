@@ -110,7 +110,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
       </Link>
 
       {/* Header Card */}
-      <div className="bg-gray-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-xl shadow-gray-900/10">
+      <div className="bg-gray-900 rounded-[2.5rem] p-4 md:p-8 text-white relative overflow-hidden shadow-xl shadow-gray-900/10">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#b50a0a] rounded-full blur-[100px] opacity-10 -mr-32 -mt-32" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
@@ -139,7 +139,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
           </div>
 
           {/* Quick Stats */}
-          <div className="flex gap-8 shrink-0 bg-white/5 border border-white/10 p-6 rounded-[1.8rem] backdrop-blur-sm">
+          <div className="flex gap-4 md:p-8 shrink-0 bg-white/5 border border-white/10 p-6 rounded-[1.8rem] backdrop-blur-sm">
             <div className="text-center px-2">
               <p className="text-2xl font-black">{profile ? '100%' : '0%'}</p>
               <p className="text-[8px] text-white/40 font-black uppercase tracking-widest mt-1">Completion</p>
@@ -156,13 +156,13 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-4 md:p-8">
         
         {/* Left Columns (Profile Information Panels) */}
         <div className="lg:col-span-2 space-y-8">
 
           {/* 1. Basic Info Section */}
-          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 space-y-6">
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4 md:p-8 space-y-6">
             <h2 className="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center gap-2 border-b border-gray-50 pb-4">
               <User className="w-4 h-4 text-[#b50a0a]" /> Personal Identity & Basic Info
             </h2>
@@ -197,7 +197,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
           {/* 2. Category / Role-Specific Specifications */}
           {profile && (user.role === 'player' || user.role === 'coach' || user.role === 'agent' || user.role === 'scout' || user.role === 'organization') && (
-            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 space-y-6">
+            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4 md:p-8 space-y-6">
               <h2 className="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center gap-2 border-b border-gray-50 pb-4">
                 <ShieldCheck className="w-4 h-4 text-[#b50a0a]" /> 
                 {roleLabels[user.role]} Professional Specifications
@@ -256,7 +256,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
           {/* 3. Credentials & Official Document Proofs */}
           {profile && (profile.id_proof_url || profile.license_proof_url) && (
-            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 space-y-6">
+            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4 md:p-8 space-y-6">
               <h2 className="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center gap-2 border-b border-gray-50 pb-4">
                 <FileText className="w-4 h-4 text-[#b50a0a]" /> Uploaded Identity & Credentials Documents
               </h2>
@@ -323,11 +323,11 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
           {/* 4. Social Links & Digital Handles */}
           {profile && profile.social_links && Object.values(profile.social_links).some(v => !!v) && (
-            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 space-y-6">
+            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4 md:p-8 space-y-6">
               <h2 className="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center gap-2 border-b border-gray-50 pb-4">
                 <Globe className="w-4 h-4 text-[#b50a0a]" /> Social Verification & Networks
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {Object.entries(profile.social_links).map(([platform, link]) => {
                   if (!link) return null;
                   const targetUrl = (link as string).startsWith('http') ? (link as string) : `https://${link}`;
@@ -350,7 +350,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
           {/* 5. Career Achievements & Awards */}
           {profile && profile.achievements && profile.achievements.length > 0 && (
-            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 space-y-6">
+            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4 md:p-8 space-y-6">
               <h2 className="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center gap-2 border-b border-gray-50 pb-4">
                 <Award className="w-4 h-4 text-[#b50a0a]" /> Career Timeline & Achievements
               </h2>
@@ -371,7 +371,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
           )}
 
           {/* 6. User Account Subscription Specs */}
-          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 space-y-6">
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4 md:p-8 space-y-6">
             <h2 className="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center gap-2 border-b border-gray-50 pb-4">
               <CreditCard className="w-4 h-4 text-[#b50a0a]" /> Subscription Plan Status
             </h2>

@@ -399,8 +399,8 @@ export default function CoachProfileClient({
       />
       
       {/* Dashboard Top Bar - Sticky */}
-      <div className="bg-white border-b border-slate-200 px-8 py-4 sticky top-[-32px] z-[100] shadow-sm mx-[-32px] mt-[-32px] mb-8">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+      <div className="bg-white border-b border-slate-200 px-4 md:px-8 py-4 sticky top-[-32px] z-[100] shadow-sm mx-[-32px] mt-[-32px] mb-8">
+        <div className="max-w-full max-w-[1400px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link 
               href="/admin/coaches"
@@ -409,7 +409,7 @@ export default function CoachProfileClient({
               <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
               Back to Coaches
             </Link>
-            <div className="h-4 w-[1px] bg-slate-200"></div>
+            <div className="h-4 w-full max-w-[1px] bg-slate-200"></div>
             <div className="flex items-center gap-4">
               <div 
                 className={`w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white overflow-hidden shadow-lg cursor-pointer group/avatar relative ${avatarUploading ? 'animate-pulse' : ''}`}
@@ -458,9 +458,9 @@ export default function CoachProfileClient({
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto w-full flex gap-8 px-8 pb-12 flex-1 items-start">
+      <div className="max-w-full max-w-[1400px] mx-auto w-full flex gap-4 md:p-8 px-4 md:px-8 pb-12 flex-1 items-start">
         {/* Left Sidebar - Profile Summary - Sticky */}
-        <div className="w-72 bg-white border border-slate-100 p-6 rounded-[2.5rem] flex flex-col gap-8 sticky top-[72px] shadow-sm shadow-slate-200/50">
+        <div className="w-72 bg-white border border-slate-100 p-6 rounded-[2.5rem] flex flex-col gap-4 md:p-8 sticky top-[72px] shadow-sm shadow-slate-200/50">
           <div 
             className={`relative group cursor-pointer overflow-hidden rounded-[2rem] ${avatarUploading ? 'animate-pulse opacity-50' : ''}`}
             onClick={() => !avatarUploading && avatarInputRef.current?.click()}
@@ -527,7 +527,7 @@ export default function CoachProfileClient({
         <div className="flex-1 min-w-0">
           {activeTab === 'profile' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
-              <div className="grid grid-cols-1 gap-8">
+              <div className="grid grid-cols-1 gap-4 md:p-8">
                 {/* Identity Card */}
                 <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[4rem] -z-0 transition-all group-hover:bg-slate-100"></div>
@@ -547,7 +547,7 @@ export default function CoachProfileClient({
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                       {[
                         { label: 'First Name', value: coach.first_name, field: 'first_name', type: 'text' },
                         { label: 'Last Name', value: coach.last_name, field: 'last_name', type: 'text' },
@@ -615,7 +615,7 @@ export default function CoachProfileClient({
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                       {(() => {
                         const currentLeague = displayValue('league' as keyof Coach, coach.league);
                         const availableClubs = clubs.filter((c: Record<string, any>) => c.leagues?.name === currentLeague).map((c: Record<string, any>) => c.name);
@@ -708,7 +708,7 @@ export default function CoachProfileClient({
                   <div className="space-y-6 relative">
                     <textarea 
                       rows={5}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-8 text-[13px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-[#b50a0a] focus:border-transparent outline-none transition-all resize-none"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-4 md:p-8 text-[13px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-[#b50a0a] focus:border-transparent outline-none transition-all resize-none"
                       value={displayValue('bio', coach.bio || '') as string}
                       onChange={(e) => updateField('bio', e.target.value)}
                       placeholder="Share your coaching philosophy, career highlights, and methodology..."
@@ -720,7 +720,7 @@ export default function CoachProfileClient({
                   </div>
                 ) : (
                   <div className="relative">
-                    <div className="p-8 bg-slate-50/50 rounded-[1.5rem] border border-slate-100 relative group/bio shadow-inner">
+                    <div className="p-4 md:p-8 bg-slate-50/50 rounded-[1.5rem] border border-slate-100 relative group/bio shadow-inner">
                       <div className="text-[13px] font-medium text-slate-600 leading-[1.8] whitespace-pre-wrap">
                         {coach.bio || "No professional biography has been provided yet."}
                       </div>
@@ -753,16 +753,16 @@ export default function CoachProfileClient({
 
                 return (
                   <div key={type} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-                    <div className="bg-slate-50 px-8 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div className="bg-slate-50 px-4 md:px-8 py-4 border-b border-slate-100 flex items-center justify-between">
                       <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
                          <Activity className="w-3.5 h-3.5" /> {type === 'club' ? 'Club Management' : 'International Management'}
                       </h4>
                     </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse">
+                    <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
+                      <table className="w-full text-left border-collapse whitespace-nowrap">
                         <thead>
                           <tr className="border-b border-slate-50">
-                            <th className="px-8 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Season</th>
+                            <th className="px-4 md:px-8 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Season</th>
                             <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">{type === 'club' ? 'Club / League' : 'Nation'}</th>
                             <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">G</th>
                             <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">W</th>
@@ -771,13 +771,13 @@ export default function CoachProfileClient({
                             <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center text-emerald-600">Wins %</th>
                             <th className="px-6 py-4 text-[9px] font-black text-[#b50a0a] uppercase tracking-widest text-center">Specialized</th>
                             <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Trophies</th>
-                            <th className="px-8 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                            <th className="px-4 md:px-8 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
                           {filteredStats.map((stat) => (
                             <tr key={stat.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
-                              <td className="px-8 py-5 text-[12px] font-black text-slate-900 italic tracking-tighter">{stat.season}</td>
+                              <td className="px-4 md:px-8 py-5 text-[12px] font-black text-slate-900 italic tracking-tighter">{stat.season}</td>
                               <td className="px-6 py-5">
                                 <div className="flex flex-col">
                                   <span className="text-[13px] font-black text-slate-900 uppercase tracking-tight">
@@ -862,7 +862,7 @@ export default function CoachProfileClient({
                                   )}
                                 </div>
                               </td>
-                              <td className="px-8 py-5 text-right">
+                              <td className="px-4 md:px-8 py-5 text-right">
                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <button 
                                     onClick={() => { setEditingStat(stat); setIsStatModalOpen(true); }}
@@ -893,10 +893,10 @@ export default function CoachProfileClient({
                     <Activity className="w-8 h-8" />
                   </div>
                   <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-2">No Performance Records</h4>
-                  <p className="text-[11px] text-slate-400 font-medium max-w-[280px] mx-auto leading-relaxed">Start adding coaching statistics to build a comprehensive professional history.</p>
+                  <p className="text-[11px] text-slate-400 font-medium max-w-full max-w-[280px] mx-auto leading-relaxed">Start adding coaching statistics to build a comprehensive professional history.</p>
                   <button 
                     onClick={() => { setEditingStat(null); setIsStatModalOpen(true); }}
-                    className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#b50a0a] transition-all shadow-lg shadow-slate-200"
+                    className="mt-8 px-4 md:px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#b50a0a] transition-all shadow-lg shadow-slate-200"
                   >
                     Create First Stat
                   </button>
@@ -920,9 +920,9 @@ export default function CoachProfileClient({
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3 gap-6">
                 {coachAchievements.map((award) => (
-                  <div key={award.id} className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm relative group hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300">
+                  <div key={award.id} className="bg-white border border-slate-100 p-4 md:p-8 rounded-[2.5rem] shadow-sm relative group hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300">
                     <div className="absolute top-0 right-0 w-20 h-20 bg-amber-50 rounded-bl-[2.5rem] -mr-0 -mt-0 -z-0 transition-all group-hover:bg-amber-100/50"></div>
                     <div className="relative z-10">
                       <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 mb-6 group-hover:scale-110 transition-transform shadow-sm border border-amber-100/50">
@@ -961,10 +961,10 @@ export default function CoachProfileClient({
                     <Award className="w-8 h-8" />
                   </div>
                   <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-2">No Awards Recorded</h4>
-                  <p className="text-[11px] text-slate-400 font-medium max-w-[280px] mx-auto leading-relaxed">Showcase coach's professional achievements and historical honours.</p>
+                  <p className="text-[11px] text-slate-400 font-medium max-w-full max-w-[280px] mx-auto leading-relaxed">Showcase coach's professional achievements and historical honours.</p>
                   <button 
                     onClick={() => { setEditingAchievement(null); setIsAchievementModalOpen(true); }}
-                    className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#b50a0a] transition-all shadow-lg shadow-slate-200"
+                    className="mt-8 px-4 md:px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#b50a0a] transition-all shadow-lg shadow-slate-200"
                   >
                     Add Award
                   </button>
@@ -1059,7 +1059,7 @@ export default function CoachProfileClient({
                     <ImageIcon className="w-4 h-4 text-slate-400" />
                     <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Multimedia Gallery</h4>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                     {/* Highlight Video (First Slot if exists) */}
                     {coach.media_gallery?.highlight_video_url && (
                       <div className="aspect-square bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-sm group cursor-pointer relative border border-slate-800">
@@ -1101,7 +1101,7 @@ export default function CoachProfileClient({
 
            {activeTab === 'news' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
-              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm mb-8">
+              <div className="bg-white rounded-[2.5rem] p-4 md:p-8 border border-slate-100 shadow-sm mb-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-900">
@@ -1143,7 +1143,7 @@ export default function CoachProfileClient({
                         }
                       }}
                       disabled={isUpdatingTags || !newTagInput.trim()}
-                      className="bg-[#b50a0a] hover:bg-black text-white px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                      className="bg-[#b50a0a] hover:bg-black text-white px-4 md:px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50"
                     >
                       {isUpdatingTags ? 'Syncing...' : 'Add Tag'}
                     </button>
@@ -1192,7 +1192,7 @@ export default function CoachProfileClient({
                           fill
                         />
                       </div>
-                      <div className="flex-1 p-8 flex flex-col justify-between">
+                      <div className="flex-1 p-4 md:p-8 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-[9px] font-black uppercase text-[#b50a0a] tracking-widest">{news.category?.name || 'Story'}</span>
@@ -1234,7 +1234,7 @@ export default function CoachProfileClient({
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-12">
                        <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-500">Subscription Hub</h3>
-                       <span className={`${coach.is_subscribed ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-slate-700'} px-8 py-2.5 rounded-full text-[12px] font-black uppercase tracking-widest transition-all`}>
+                       <span className={`${coach.is_subscribed ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-slate-700'} px-4 md:px-8 py-2.5 rounded-full text-[12px] font-black uppercase tracking-widest transition-all`}>
                           {coach.is_subscribed ? 'Coach Premium' : 'Standard Access'}
                        </span>
                     </div>
@@ -1460,7 +1460,7 @@ function StatModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-2xl shadow-slate-900/20 animate-in slide-in-from-bottom-8 duration-500">
-        <div className="bg-slate-900 p-8 text-white flex items-center justify-between">
+        <div className="bg-slate-900 p-4 md:p-8 text-white flex items-center justify-between">
           <div>
             <h3 className="text-xl font-black uppercase tracking-tight">{editingStat ? 'Edit Statistic' : 'Add Coaching Stat'}</h3>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Record role-specific performance metrics</p>
@@ -1468,8 +1468,8 @@ function StatModal({
           <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-2xl transition-all"><X className="w-5 h-5" /></button>
         </div>
         
-        <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-2 gap-6">
+        <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="p-4 md:p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Team Type</label>
               <select 
@@ -1498,7 +1498,7 @@ function StatModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Season</label>
               <select 
@@ -1553,7 +1553,7 @@ function StatModal({
           </div>
 
           {/* General Stats */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Games</label>
               <input type="number" className="w-full bg-slate-50 border-none rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all" value={formData.games_managed || 0} onChange={(e) => setFormData({ ...formData, games_managed: parseInt(e.target.value) || 0 })} />
@@ -1572,7 +1572,7 @@ function StatModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Leagues Won</label>
               <input type="number" className="w-full bg-slate-50 border-none rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-[#b50a0a] transition-all" value={formData.leagues_won || 0} onChange={(e) => setFormData({ ...formData, leagues_won: parseInt(e.target.value) || 0 })} />
@@ -1644,7 +1644,7 @@ function StatModal({
              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 flex items-center gap-2">
                 <Target className="w-3 h-3" /> {formData.role} Specialized Metrics
              </h4>
-             <div className="grid grid-cols-3 gap-6">
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {(formData.role === 'Primary Coach' || formData.role === 'Assistant Coach') && (
                   <>
                     <div className="space-y-2">
@@ -1721,7 +1721,7 @@ function StatModal({
           </div>
 
           <div className="pt-8 flex items-center justify-end gap-4 border-t border-slate-50">
-            <button type="button" onClick={onClose} className="px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">Cancel</button>
+            <button type="button" onClick={onClose} className="px-4 md:px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">Cancel</button>
             <button 
               type="submit" disabled={isSaving}
               className="px-10 py-4 bg-slate-900 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-widest hover:bg-[#b50a0a] transition-all shadow-xl shadow-slate-200 flex items-center gap-2 disabled:opacity-50"
@@ -1773,7 +1773,7 @@ function AchievementModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-2xl shadow-slate-900/20 animate-in slide-in-from-bottom-8 duration-500">
-        <div className="bg-slate-900 p-8 text-white flex items-center justify-between">
+        <div className="bg-slate-900 p-4 md:p-8 text-white flex items-center justify-between">
           <div>
             <h3 className="text-xl font-black uppercase tracking-tight">{editingAchievement ? 'Edit Award' : 'Add New Award'}</h3>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Honours, trophies and professional recognition</p>
@@ -1781,8 +1781,8 @@ function AchievementModal({
           <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-2xl transition-all"><X className="w-5 h-5" /></button>
         </div>
         
-        <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="p-8 space-y-8">
-          <div className="grid grid-cols-2 gap-6">
+        <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="p-4 md:p-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2 col-span-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Achievement Title</label>
               <input 
@@ -1834,7 +1834,7 @@ function AchievementModal({
           </div>
 
           <div className="pt-8 flex items-center justify-end gap-4 border-t border-slate-50">
-            <button type="button" onClick={onClose} className="px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">Cancel</button>
+            <button type="button" onClick={onClose} className="px-4 md:px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">Cancel</button>
             <button 
               type="submit" disabled={isSaving}
               className="px-10 py-4 bg-slate-900 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-widest hover:bg-[#b50a0a] transition-all shadow-xl shadow-slate-200 flex items-center gap-2 disabled:opacity-50"
@@ -1921,7 +1921,7 @@ function TacticsMediaModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto">
       <div className="bg-white rounded-[3rem] w-full max-w-3xl my-8 overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
-        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+        <div className="p-4 md:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
           <div>
             <h3 className="text-xl font-black uppercase tracking-tight">Tactics & Media Manager</h3>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Videos, Photos & Technical Systems</p>
@@ -1941,7 +1941,7 @@ function TacticsMediaModal({
               <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Functional Tactical Controls</h4>
             </div>
 
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Attacking Approach</label>
                 <select 
@@ -2029,7 +2029,7 @@ function TacticsMediaModal({
 
             <div className="space-y-4">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Action & Tactical Images (Max 5)</label>
-              <div className="grid grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {formData.media_gallery.action_images.map((url, i) => (
                   <div key={i} className="relative aspect-square">
                     <div className="w-full h-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl overflow-hidden group hover:border-indigo-400 transition-all">
@@ -2078,7 +2078,7 @@ function TacticsMediaModal({
           </div>
         </div>
 
-        <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+        <div className="p-4 md:p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
           <button 
             onClick={() => onSave(formData)}
             className="flex-1 bg-slate-900 text-white rounded-[2rem] py-5 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-[#b50a0a] transition-all shadow-xl shadow-slate-200"

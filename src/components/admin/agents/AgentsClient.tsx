@@ -140,7 +140,7 @@ export function AgentsClient({
       {/* Search & Filters */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-6 space-y-6">
         <form onSubmit={handleSearch} className="flex flex-wrap gap-3">
-           <div className="relative flex-1 min-w-[200px]">
+           <div className="relative flex-1 min-w-0 md:min-w-full max-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black" />
               <input 
                 type="text" 
@@ -183,7 +183,7 @@ export function AgentsClient({
 
         {/* Agents Table */}
         <div className="overflow-x-auto -mx-6">
-          <table className="w-full text-left text-sm text-gray-600">
+          <table className="w-full text-left text-sm text-gray-600 whitespace-nowrap">
             <thead className="bg-[#f8f9fa] border-b border-gray-100">
               <tr>
                 <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-[#b50a0a]">Agent Details</th>
@@ -226,7 +226,7 @@ export function AgentsClient({
                     </td>
                     <td className="px-6 py-4">
                        <div className="flex flex-col">
-                          <span className="text-[10px] font-black text-gray-900 uppercase tracking-tighter truncate max-w-[150px]">{agent.agency_name || 'Independent'}</span>
+                          <span className="text-[10px] font-black text-gray-900 uppercase tracking-tighter truncate max-w-full max-w-[150px]">{agent.agency_name || 'Independent'}</span>
                           <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5 italic">Sports Management</span>
                        </div>
                     </td>
@@ -377,7 +377,7 @@ export function AgentsClient({
                           </div>
                         )}
                      </div>
-                    <div className="p-4 bg-gray-50/50 rounded-2xl md:col-span-2 grid grid-cols-2 gap-4 border border-gray-100">
+                    <div className="p-4 bg-gray-50/50 rounded-2xl md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-100">
                         <div className="space-y-1 md:col-span-2">
                            <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Agency Name</label>
                            <input name="agency_name" required type="text" className="w-full bg-white border border-gray-100 rounded-lg p-3 text-[10px] font-bold focus:ring-1 focus:ring-[#b50a0a] text-black" placeholder="Ex: Gestifute Sports" />

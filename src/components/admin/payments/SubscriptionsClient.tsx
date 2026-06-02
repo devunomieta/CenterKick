@@ -137,7 +137,7 @@ export function SubscriptionsClient({
             <button
                onClick={handleSave}
                disabled={isSaving}
-               className="bg-black text-white px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-gray-200 hover:bg-[#b50a0a] transition-all flex items-center gap-3 disabled:opacity-50"
+               className="bg-black text-white px-4 md:px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-gray-200 hover:bg-[#b50a0a] transition-all flex items-center gap-3 disabled:opacity-50"
             >
                {isSaving ? 'Processing...' : 'Deploy Changes'}
                <Save className="w-4 h-4" />
@@ -152,9 +152,9 @@ export function SubscriptionsClient({
             </div>
          )}
 
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
             {/* Universal Payment Link */}
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+            <div className="bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
                <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-600 border border-gray-100">
                      <ExternalLink className="w-6 h-6" />
@@ -198,7 +198,7 @@ export function SubscriptionsClient({
             </div>
 
             {/* Bank Settlement */}
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+            <div className="bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
                <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100">
                      <DollarSign className="w-6 h-6" />
@@ -221,7 +221,7 @@ export function SubscriptionsClient({
                      />
                      {errors.bankName && <p className="text-[9px] font-bold text-red-500 ml-1 mt-1">{errors.bankName}</p>}
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div className="space-y-1.5">
                         <label className="text-[8px] font-black text-gray-900 uppercase tracking-widest ml-1">Acc. Name</label>
                         <input
@@ -247,9 +247,9 @@ export function SubscriptionsClient({
          </div>
 
 
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3 gap-4 md:p-8">
             {/* Paystack Full Integration */}
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative overflow-hidden group">
+            <div className="bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative overflow-hidden group">
                <div className="absolute top-0 right-0 w-24 h-24 bg-teal-50/50 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-teal-100/50 transition-colors"></div>
                <div className="relative z-10 flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -291,7 +291,7 @@ export function SubscriptionsClient({
             </div>
 
             {/* Stripe Full Integration */}
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative overflow-hidden group">
+            <div className="bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative overflow-hidden group">
                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50/50 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-indigo-100/50 transition-colors"></div>
                <div className="relative z-10 flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -338,7 +338,7 @@ export function SubscriptionsClient({
             </div>
 
             {/* PayPal Full Integration */}
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative overflow-hidden group">
+            <div className="bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative overflow-hidden group">
                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-blue-100/50 transition-colors"></div>
                <div className="relative z-10 flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -396,7 +396,7 @@ export function SubscriptionsClient({
                <div className="h-px flex-1 bg-gray-100"></div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3 xl:grid-cols-1 md:grid-cols-3 gap-4 md:p-8">
                {roles.map((role) => {
                   const plan = settings.plans?.[role.id] || {};
                   const Icon = role.icon;
@@ -404,7 +404,7 @@ export function SubscriptionsClient({
                      <div key={role.id} className="bg-gray-900 p-10 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
                         <div className={`absolute top-0 right-0 w-48 h-48 bg-gradient-to-br ${role.color} to-transparent blur-[60px] rounded-full -mr-24 -mt-24 group-hover:scale-125 transition-transform duration-700`}></div>
 
-                        <div className="relative z-10 flex flex-col h-full gap-8">
+                        <div className="relative z-10 flex flex-col h-full gap-4 md:p-8">
                            <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
                                  <Icon className="w-5 h-5 text-white" />

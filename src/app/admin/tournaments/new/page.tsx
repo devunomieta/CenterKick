@@ -39,7 +39,7 @@ export default function NewTournamentPage() {
   };
 
   return (
-    <div className="max-w-[1000px] mx-auto space-y-10">
+    <div className="max-w-full max-w-[1000px] mx-auto space-y-10">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2">
@@ -62,7 +62,7 @@ export default function NewTournamentPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-10 pb-20">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-10 pb-20">
         <div className="lg:col-span-2 space-y-10">
           {/* Core Info */}
           <div className="bg-white border border-gray-100 rounded-[40px] p-10 space-y-8 shadow-sm">
@@ -128,7 +128,7 @@ export default function NewTournamentPage() {
               <h3 className="text-sm font-black uppercase tracking-widest text-gray-900">Timeline & Format</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
               <div className="space-y-4">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tournament Type</label>
                 <select 
@@ -179,7 +179,7 @@ export default function NewTournamentPage() {
             </button>
           </div>
 
-          <div className="bg-white border border-gray-100 rounded-[40px] p-8 text-center space-y-4">
+          <div className="bg-white border border-gray-100 rounded-[40px] p-4 md:p-8 text-center space-y-4">
             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Need help with formats?</p>
             <Link href="/admin/docs/tournaments" className="text-[10px] font-black text-[#b50a0a] uppercase tracking-widest hover:underline">
               Read Management Guide

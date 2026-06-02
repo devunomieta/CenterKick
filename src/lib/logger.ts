@@ -12,8 +12,8 @@ export async function logErrorToServer(error: any, context?: ErrorLogContext) {
   try {
     const adminClient = createAdminClient();
 
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const stackTrace = error instanceof Error ? error.stack : undefined;
+    const errorMessage = error instanceof Error ? error.message : (error?.message || String(error));
+    const stackTrace = error instanceof Error ? error.stack : (error?.stack || undefined);
 
     await adminClient.from('system_error_logs').insert({
       user_id: context?.userId || null,

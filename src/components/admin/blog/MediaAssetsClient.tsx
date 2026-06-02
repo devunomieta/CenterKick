@@ -74,7 +74,7 @@ export default function MediaAssetsClient({ assets: initialAssets }: MediaPagePr
                   setIsLoading(false);
               }} 
            />
-           <button className="bg-black text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 shadow-xl hover:bg-[#b50a0a] group-hover:-translate-y-0.5">
+           <button className="bg-black text-white px-4 md:px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 shadow-xl hover:bg-[#b50a0a] group-hover:-translate-y-0.5">
               {isLoading ? <Plus className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               Upload New Asset
            </button>
@@ -101,7 +101,7 @@ export default function MediaAssetsClient({ assets: initialAssets }: MediaPagePr
       </div>
 
       {/* Assets Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 lg:grid-cols-5 gap-6">
         {filteredAssets.map(asset => (
           <div key={asset.id} className="group relative aspect-square bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition-all hover:-translate-y-1">
               <Image 
@@ -140,7 +140,7 @@ export default function MediaAssetsClient({ assets: initialAssets }: MediaPagePr
 
               <div className="absolute top-4 left-4">
                 <div className="bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
-                   <p className="text-[7px] font-black text-white uppercase tracking-widest truncate max-w-[100px]">
+                   <p className="text-[7px] font-black text-white uppercase tracking-widest truncate max-w-full max-w-[100px]">
                       {asset.filename.split('.').pop()}
                    </p>
                 </div>

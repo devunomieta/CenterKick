@@ -89,7 +89,7 @@ export default async function AdminOrganizationsPage({
         pageSize={pageSize}
         roleLabel="Organization"
         roleSlug="organizations"
-        icon={Trophy}
+        iconName="Trophy"
       />
     </div>
   );

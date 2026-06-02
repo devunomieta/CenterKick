@@ -29,7 +29,7 @@ export default function ScoutDashboard() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3 gap-6">
           {players.map((player) => (
             <div key={player.id} className="border border-gray-100 rounded-2xl overflow-hidden hover:shadow-md transition-shadow group">
               <div className="h-48 bg-gray-900 relative">

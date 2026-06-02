@@ -95,7 +95,7 @@ export default function BlogManagementClient({
             onClick={closePanel}
           ></div>
           <div className="fixed top-0 right-0 h-screen w-full max-w-xl bg-white z-[210] shadow-2xl p-0 animate-in slide-in-from-right duration-500 flex flex-col">
-            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+            <div className="p-4 md:p-8 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
                <div>
                   <h3 className="text-2xl font-black italic uppercase tracking-tighter flex items-center gap-3">
                      {activeTab === 'categories' && <Folder className="w-6 h-6 text-[#b50a0a]" />}
@@ -110,7 +110,7 @@ export default function BlogManagementClient({
                </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 custom-scrollbar">
                {/* Search bar inside panel */}
                <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
@@ -264,7 +264,7 @@ export default function BlogManagementClient({
                )}
                {activeTab === 'assets' && (
                   <div className="space-y-8">
-                     <div className="p-8 bg-gray-50 rounded-[2rem] border border-dashed border-gray-200 text-center group hover:border-[#b50a0a]/30 transition-all cursor-pointer relative overflow-hidden">
+                     <div className="p-4 md:p-8 bg-gray-50 rounded-[2rem] border border-dashed border-gray-200 text-center group hover:border-[#b50a0a]/30 transition-all cursor-pointer relative overflow-hidden">
                         <input 
                            type="file" 
                            className="absolute inset-0 opacity-0 cursor-pointer" 
@@ -297,7 +297,7 @@ export default function BlogManagementClient({
                         <p className="text-[8px] text-gray-400 uppercase tracking-widest mt-1">PNG, JPG or WebP (Max 5MB)</p>
                      </div>
 
-                     <div className="grid grid-cols-2 gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {initialAssets
                           .filter(a => a.filename?.toLowerCase().includes(searchQuery.toLowerCase()))
                           .map(asset => (

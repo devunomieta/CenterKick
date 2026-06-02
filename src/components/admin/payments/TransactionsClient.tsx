@@ -198,11 +198,11 @@ export function TransactionsClient({
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* 1. Full-Width Growth Monitor */}
-      <div className="bg-gray-950 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group border border-white/5">
+      <div className="bg-gray-950 p-4 md:p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group border border-white/5">
          <div className="absolute inset-0 bg-gradient-to-br from-[#b50a0a]/20 via-transparent to-transparent"></div>
          <div className="absolute -right-20 -top-20 w-80 h-80 bg-[#b50a0a]/10 blur-[100px] rounded-full"></div>
          
-         <div className="relative z-10 flex flex-col gap-8">
+         <div className="relative z-10 flex flex-col gap-4 md:p-8">
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-2xl bg-[#b50a0a] flex items-center justify-center shadow-2xl shadow-red-900/40">
@@ -243,7 +243,7 @@ export function TransactionsClient({
                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:p-8">
                <div className="lg:col-span-3 h-56 flex items-end justify-between gap-4 px-4 relative">
                   {/* Background Horizontal Gridlines */}
                   <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20 pr-4 pb-8">
@@ -326,7 +326,7 @@ export function TransactionsClient({
 
       {/* 3. Filterable Transaction Ledger */}
       <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-gray-50 space-y-6">
+        <div className="p-4 md:p-8 border-b border-gray-50 space-y-6">
            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                  <h2 className="text-sm font-black text-gray-800 uppercase tracking-widest underline decoration-[#b50a0a] decoration-4 underline-offset-8">Transaction Archives</h2>
@@ -355,7 +355,7 @@ export function TransactionsClient({
            </div>
            
            <div className="flex flex-wrap gap-3">
-              <form onSubmit={handleSearch} className="relative flex-1 min-w-[300px]">
+              <form onSubmit={handleSearch} className="relative flex-1 min-w-0 md:min-w-full max-w-[300px]">
                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                  <input 
                    type="text"
@@ -388,8 +388,8 @@ export function TransactionsClient({
            </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-600 table-auto">
+        <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
+          <table className="w-full text-left text-sm text-gray-600 table-auto whitespace-nowrap">
             <thead className="bg-[#f8f9fa] border-b border-gray-100">
               <tr>
                  <th className="px-3 py-3 text-[10px] font-extrabold uppercase tracking-wider text-[#b50a0a]">Reference / ID</th>
@@ -421,7 +421,7 @@ export function TransactionsClient({
                       <td className="px-3 py-2.5">
                          <div className="flex flex-col">
                             <p className="font-bold text-gray-900 leading-none text-[11px]">{tx.profiles?.first_name} {tx.profiles?.last_name}</p>
-                            <p className="text-[10px] font-medium text-gray-400 mt-0.5 truncate max-w-[160px]">{tx.profiles?.email}</p>
+                            <p className="text-[10px] font-medium text-gray-400 mt-0.5 truncate max-w-full max-w-[160px]">{tx.profiles?.email}</p>
                          </div>
                       </td>
                       <td className="px-3 py-2.5">
@@ -542,7 +542,7 @@ export function TransactionsClient({
       {inspectPayment && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setInspectPayment(null)}>
           <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setInspectPayment(null)} className="absolute top-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10 cursor-pointer">
+            <button onClick={() => setInspectPayment(null)} className="absolute top-4 md:p-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10 cursor-pointer">
               <X className="w-5 h-5 text-gray-400" />
             </button>
             <div className="p-10 pb-6">
@@ -556,7 +556,7 @@ export function TransactionsClient({
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-y-10 mb-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-10 mb-10">
                 <div className="space-y-2">
                   <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-300 uppercase tracking-widest font-black"><UserCheck className="w-3.5 h-3.5" /> Payer Name</div>
                   <p className="text-[14px] font-black text-gray-900 truncate pr-4">
@@ -592,7 +592,7 @@ export function TransactionsClient({
                       <Building className="w-4 h-4 text-amber-600" /> Direct Transfer Details
                     </h4>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Depositor Name</p>
                       <p className="text-xs font-bold text-slate-800">{inspectPayment.metadata?.proofName || 'N/A'}</p>
@@ -716,7 +716,7 @@ export function TransactionsClient({
       {decisionAction && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => { setDecisionAction(null); setDecisionReason(''); }}>
           <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => { setDecisionAction(null); setDecisionReason(''); }} className="absolute top-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10 cursor-pointer">
+            <button onClick={() => { setDecisionAction(null); setDecisionReason(''); }} className="absolute top-4 md:p-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10 cursor-pointer">
               <X className="w-5 h-5 text-gray-400" />
             </button>
             <div className="p-10 pb-8">

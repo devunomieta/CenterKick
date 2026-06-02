@@ -252,8 +252,8 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
       />
       
       {/* Dashboard Top Bar - Sticky */}
-      <div className="bg-white border-b border-slate-200 px-8 py-4 sticky top-[-32px] z-[100] shadow-sm mx-[-32px] mt-[-32px] mb-8">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+      <div className="bg-white border-b border-slate-200 px-4 md:px-8 py-4 sticky top-[-32px] z-[100] shadow-sm mx-[-32px] mt-[-32px] mb-8">
+        <div className="max-w-full max-w-[1400px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link 
               href="/admin/agents"
@@ -262,7 +262,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
               <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
               Back to Agents
             </Link>
-            <div className="h-4 w-[1px] bg-slate-200"></div>
+            <div className="h-4 w-full max-w-[1px] bg-slate-200"></div>
             <div className="flex items-center gap-4">
               <div 
                 className={`w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white overflow-hidden shadow-lg cursor-pointer group/avatar relative ${avatarUploading ? 'animate-pulse' : ''}`}
@@ -311,9 +311,9 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto w-full flex gap-8 px-8 pb-12 flex-1 items-start">
+      <div className="max-w-full max-w-[1400px] mx-auto w-full flex gap-4 md:p-8 px-4 md:px-8 pb-12 flex-1 items-start">
         {/* Left Sidebar - Profile Summary - Sticky */}
-        <div className="w-72 bg-white border border-slate-100 p-6 rounded-[2.5rem] flex flex-col gap-8 sticky top-[72px] shadow-sm shadow-slate-200/50">
+        <div className="w-72 bg-white border border-slate-100 p-6 rounded-[2.5rem] flex flex-col gap-4 md:p-8 sticky top-[72px] shadow-sm shadow-slate-200/50">
           <div 
             className={`relative group cursor-pointer overflow-hidden rounded-[2rem] ${avatarUploading ? 'animate-pulse opacity-50' : ''}`}
             onClick={() => !avatarUploading && avatarInputRef.current?.click()}
@@ -369,7 +369,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
         <div className="flex-1 min-w-0">
           {activeTab === 'profile' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
-              <div className="grid grid-cols-1 gap-8">
+              <div className="grid grid-cols-1 gap-4 md:p-8">
                 {/* Identity Card */}
                 <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[4rem] -z-0 transition-all group-hover:bg-slate-100"></div>
@@ -389,7 +389,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                       {[
                         { label: 'First Name', value: agent.first_name, field: 'first_name', type: 'text' },
                         { label: 'Last Name', value: agent.last_name, field: 'last_name', type: 'text' },
@@ -457,7 +457,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                       {[
                         { label: 'Agency Name', value: agent.agency_name, field: 'agency_name', type: 'text' },
                         { label: 'License Code', value: agent.license_code || 'UNLICENSED', field: 'license_code', type: 'text' },
@@ -533,7 +533,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                   <div className="space-y-6 relative">
                     <textarea 
                       rows={8}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-8 text-[13px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-[#b50a0a] focus:border-transparent outline-none transition-all resize-none"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-4 md:p-8 text-[13px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-[#b50a0a] focus:border-transparent outline-none transition-all resize-none"
                       value={displayValue('bio', agent.bio || '') as string}
                       onChange={(e) => updateField('bio', e.target.value)}
                       placeholder="Describe your agency&apos;s mission, key achievements, and roster focus..."
@@ -545,7 +545,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                   </div>
                 ) : (
                   <div className="relative">
-                    <div className="p-8 bg-slate-50/50 rounded-[1.5rem] border border-slate-100 relative group/bio shadow-inner">
+                    <div className="p-4 md:p-8 bg-slate-50/50 rounded-[1.5rem] border border-slate-100 relative group/bio shadow-inner">
                       <div className="text-[13px] font-medium text-slate-600 leading-[1.8] whitespace-pre-wrap">
                         {agent.bio || "No company profile has been provided yet."}
                       </div>
@@ -573,21 +573,21 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
 
                {clients.length > 0 ? (
                   <div className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left border-collapse whitespace-nowrap">
                       <thead>
                         <tr className="bg-slate-50/50 border-b border-slate-100">
-                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Athlete</th>
+                          <th className="px-4 md:px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Athlete</th>
                           <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Role</th>
                           <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Country</th>
                           <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
                           <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Contract</th>
-                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+                          <th className="px-4 md:px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {clients.map((client) => (
                           <tr key={client.id} className="border-b border-slate-50 last:border-none hover:bg-slate-50/50 transition-colors group">
-                            <td className="px-8 py-4">
+                            <td className="px-4 md:px-8 py-4">
                               <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-[10px] overflow-hidden shrink-0 shadow-sm relative">
                                   {client.avatar_url ? (
@@ -628,7 +628,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                                 {client.agent_status || 'Pending'}
                               </span>
                             </td>
-                            <td className="px-8 py-4 text-right">
+                            <td className="px-4 md:px-8 py-4 text-right">
                               <div className="flex items-center justify-end gap-2">
                                 <Link 
                                   href={`/admin/${client.role === 'coach' ? 'coaches' : 'players'}/${client.slug}`}
@@ -660,7 +660,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                      <p className="text-[10px] text-slate-400 mt-2 max-w-xs mx-auto font-medium">Link players and coaches to manage their representation from this dashboard.</p>
                      <button 
                         onClick={() => setIsAddTalentModalOpen(true)}
-                        className="mt-8 bg-black text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#b50a0a] transition-all"
+                        className="mt-8 bg-black text-white px-4 md:px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#b50a0a] transition-all"
                      >
                         Link First Athlete
                      </button>
@@ -677,7 +677,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-12">
                        <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-500">Subscription Hub</h3>
-                       <span className={`${agent.is_subscribed ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-slate-700'} px-8 py-2.5 rounded-full text-[12px] font-black uppercase tracking-widest transition-all`}>
+                       <span className={`${agent.is_subscribed ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-slate-700'} px-4 md:px-8 py-2.5 rounded-full text-[12px] font-black uppercase tracking-widest transition-all`}>
                           {agent.is_subscribed ? 'Agency Premium' : 'Network Access'}
                        </span>
                     </div>
@@ -774,7 +774,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
       {isAddTalentModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
            <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-              <div className="p-8 border-b border-slate-100 flex items-center justify-between shrink-0">
+              <div className="p-4 md:p-8 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div>
                     <h3 className="text-base md:text-xl font-black italic uppercase tracking-tighter text-slate-900">Link New <span className="text-[#b50a0a]">Talent</span></h3>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Search and represent athletes within your agency</p>
@@ -784,7 +784,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                  </button>
               </div>
 
-              <div className="p-8 space-y-6 overflow-y-auto">
+              <div className="p-4 md:p-8 space-y-6 overflow-y-auto">
                  <div className="relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b50a0a]" />
                     <input 
@@ -845,7 +845,7 @@ export default function AgentProfileClient({ agent, initialClients }: AgentProfi
                  </div>
               </div>
 
-              <div className="p-8 pt-0 mt-auto shrink-0">
+              <div className="p-4 md:p-8 pt-0 mt-auto shrink-0">
                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center italic">Athletes already linked to an agent will not appear in search.</p>
               </div>
            </div>

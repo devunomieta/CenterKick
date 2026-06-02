@@ -42,7 +42,7 @@ export default async function AdminSignupPage({
            </div>
            <Link 
              href="/login"
-             className="inline-block px-8 py-4 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all"
+             className="inline-block px-4 md:px-8 py-4 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all"
            >
              Return to Login
            </Link>
@@ -52,7 +52,7 @@ export default async function AdminSignupPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-6 lg:px-8 font-sans">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-6 lg:px-4 md:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-xl">
         <div className="flex justify-center mb-8">
            <div className="w-16 h-16 bg-[#b50a0a] rounded-2xl flex items-center justify-center shadow-2xl shadow-red-900/20 rotate-3">

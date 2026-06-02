@@ -107,12 +107,12 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-4 md:p-8">
         {/* Main Feed/Content Column */}
         <div className="lg:col-span-2 space-y-8">
           
           {/* Active Professional Registry Card (Part 1 Implementation) */}
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-8 space-y-6">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-4 md:p-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-50 pb-6">
                <div className="flex items-center gap-3">
                   <Star className="w-5 h-5 text-[#b50a0a]" />
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
             {profile ? (
               <div className="space-y-6">
                 {/* Role Specific Parameters Overview */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-3 gap-4">
                   {/* Athlete/Player Fields */}
                   {(role === 'player' || role === 'athlete') && (
                     <>
@@ -273,7 +273,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="p-8 border-b border-gray-100 flex items-center justify-between">
+            <div className="p-4 md:p-8 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Star className="w-5 h-5 text-[#b50a0a]" />
                 <h3 className="text-sm font-black uppercase tracking-widest text-gray-900">
@@ -284,18 +284,18 @@ export default async function DashboardPage() {
                 Manage Stats
               </button>
             </div>
-            <div className="p-8">
-              <div className="h-64 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center p-8">
+            <div className="p-4 md:p-8">
+              <div className="h-64 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center p-4 md:p-8">
                 <TrendingUp className="w-12 h-12 text-gray-200 mb-4" />
                 <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Detailed Analytics Locked</p>
-                <p className="text-[10px] font-medium text-gray-400 max-w-[200px] leading-relaxed">Upgrade to a Professional Plan to see your performance metrics and heatmaps.</p>
+                <p className="text-[10px] font-medium text-gray-400 max-w-full max-w-[200px] leading-relaxed">Upgrade to a Professional Plan to see your performance metrics and heatmaps.</p>
                 <Link href="/dashboard/subscription" className="mt-4 text-[10px] font-black text-[#b50a0a] uppercase tracking-widest hover:underline">Activate Selection ₦15,000</Link>
               </div>
             </div>
           </div>
           
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="p-8 border-b border-gray-100 flex items-center justify-between">
+            <div className="p-4 md:p-8 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Calendar className="w-5 h-5 text-[#b50a0a]" />
                 <h3 className="text-sm font-black uppercase tracking-widest text-gray-900">Industry News</h3>
@@ -315,7 +315,7 @@ export default async function DashboardPage() {
 
         {/* Sidebar/Activity Column */}
         <div className="space-y-8">
-          <div className="bg-gray-900 rounded-3xl p-8 text-white relative overflow-hidden group">
+          <div className="bg-gray-900 rounded-3xl p-4 md:p-8 text-white relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#b50a0a] blur-[100px] opacity-20 -z-5"></div>
             <h3 className="text-lg font-black uppercase tracking-tighter mb-4 leading-none">Complete <br /> Your Profile</h3>
             <p className="text-[10px] font-medium text-gray-400 leading-relaxed mb-6">Profiles with 100% completion receive up to 5x more scouting interest.</p>
@@ -333,7 +333,7 @@ export default async function DashboardPage() {
           </div>
 
           {profile?.agent?.profiles && (
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 group">
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 md:p-8 group">
               <div className="flex items-center gap-3 mb-6">
                  <Shield className="w-4 h-4 text-[#b50a0a]" />
                  <h3 className="text-xs font-black uppercase tracking-widest text-gray-900">Representation</h3>
@@ -361,7 +361,7 @@ export default async function DashboardPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 md:p-8">
             <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 mb-6">Recent Activity</h3>
             <div className="space-y-6">
               {[

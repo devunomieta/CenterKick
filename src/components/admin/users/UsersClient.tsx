@@ -177,14 +177,14 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
             </div>
           </div>
         )}
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr className="bg-gray-50/30">
-              <th className="px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Account User</th>
-              <th className="px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Identity / Role</th>
-              <th className="px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Status</th>
-              <th className="px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Registered On</th>
-              <th className="px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 text-right">Actions</th>
+              <th className="px-4 md:px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Account User</th>
+              <th className="px-4 md:px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Identity / Role</th>
+              <th className="px-4 md:px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Status</th>
+              <th className="px-4 md:px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Registered On</th>
+              <th className="px-4 md:px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -197,13 +197,13 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
 
               return (
                 <tr key={user.id} className="hover:bg-gray-50/50 transition-colors group">
-                  <td className="px-8 py-6">
+                  <td className="px-4 md:px-8 py-6">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center font-black text-white text-xs border-2 border-white shadow-md shrink-0">
                         {user.email?.[0]?.toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-[11px] font-black text-gray-900 truncate max-w-[200px]">{user.email}</p>
+                        <p className="text-[11px] font-black text-gray-900 truncate max-w-full max-w-[200px]">{user.email}</p>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
                           {user.profile?.first_name
                             ? `${user.profile.first_name} ${user.profile.last_name || ''}`.trim()
@@ -213,7 +213,7 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
                     </div>
                   </td>
 
-                  <td className="px-8 py-6">
+                  <td className="px-4 md:px-8 py-6">
                     <div className="flex items-center gap-2">
                       <div className={`p-1.5 rounded-lg ${user.role ? 'bg-red-50 text-[#b50a0a]' : 'bg-gray-100 text-gray-400'}`}>
                         {getRoleIcon(user.role)}
@@ -224,7 +224,7 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
                     </div>
                   </td>
 
-                  <td className="px-8 py-6">
+                  <td className="px-4 md:px-8 py-6">
                     <div className="flex flex-col gap-2">
                       {getStatusBadge(profileStatus, isActive)}
                       {/* Inline Approve button for pending accounts */}
@@ -241,14 +241,14 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
                     </div>
                   </td>
 
-                  <td className="px-8 py-6">
+                  <td className="px-4 md:px-8 py-6">
                     <div className="flex items-center gap-2 text-gray-500">
                       <Calendar className="w-3.5 h-3.5" />
                       <span className="text-[10px] font-bold">{format(new Date(user.created_at), 'MMM dd, yyyy')}</span>
                     </div>
                   </td>
 
-                  <td className="px-8 py-6 text-right">
+                  <td className="px-4 md:px-8 py-6 text-right">
                     <div className="flex items-center justify-end gap-2">
                       {/* View Profile */}
                       <Link

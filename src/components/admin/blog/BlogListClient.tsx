@@ -134,30 +134,30 @@ export default function BlogListClient({ initialPosts }: BlogListClientProps) {
 
       {/* Main Table */}
       {filteredPosts.length === 0 ? (
-        <div className="px-8 py-20 text-center">
+        <div className="px-4 md:px-8 py-20 text-center">
           <FileText className="w-12 h-12 text-gray-100 mx-auto mb-4" />
           <p className="text-xs font-black uppercase tracking-widest text-gray-400">No matching content found.</p>
         </div>
       ) : (
         <div className="w-full overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-600 table-fixed border-collapse">
+          <table className="w-full text-left text-sm text-gray-600 table-fixed border-collapse whitespace-nowrap">
             <thead className="bg-[#f8f9fa] border-b border-gray-100">
               <tr>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-left">Title &amp; Excerpt</th>
-                <th className="hidden sm:table-cell w-[18%] px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-left">Category</th>
-                <th className="hidden sm:table-cell w-[15%] px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-left">Status</th>
-                <th className="w-[130px] px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                <th className="px-4 md:px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-left">Title &amp; Excerpt</th>
+                <th className="hidden sm:table-cell w-[18%] px-4 md:px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-left">Category</th>
+                <th className="hidden sm:table-cell w-[15%] px-4 md:px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-left">Status</th>
+                <th className="w-full max-w-[130px] px-4 md:px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {paginatedPosts.map((post) => (
                 <tr key={post.id} className="hover:bg-gray-50/50 transition-colors group">
-                  <td className="px-8 py-6">
+                  <td className="px-4 md:px-8 py-6">
                     <div className="max-w-full space-y-1.5">
                       <p className="font-bold text-gray-900 leading-tight group-hover:text-[#b50a0a] transition-colors line-clamp-1 break-words">{post.title}</p>
                       <p className="text-[10px] text-gray-400 line-clamp-1 break-words">{post.excerpt || 'No excerpt provided...'}</p>
                       <div className="flex flex-wrap items-center gap-2 text-[9px] font-black uppercase tracking-widest text-gray-400">
-                        <span className="text-gray-500 lowercase font-bold normal-case truncate max-w-[150px] block" title={post.author?.email}>
+                        <span className="text-gray-500 lowercase font-bold normal-case truncate max-w-full max-w-[150px] block" title={post.author?.email}>
                           {post.author?.email || 'System'}
                         </span>
                         <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
@@ -165,12 +165,12 @@ export default function BlogListClient({ initialPosts }: BlogListClientProps) {
                       </div>
                     </div>
                   </td>
-                  <td className="hidden sm:table-cell px-8 py-6 whitespace-nowrap">
+                  <td className="hidden sm:table-cell px-4 md:px-8 py-6 whitespace-nowrap">
                     <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest inline-block truncate max-w-full">
                       {post.category?.name || 'Uncategorized'}
                     </span>
                   </td>
-                  <td className="hidden sm:table-cell px-8 py-6 whitespace-nowrap">
+                  <td className="hidden sm:table-cell px-4 md:px-8 py-6 whitespace-nowrap">
                     <button
                       onClick={() => handleToggleStatus(post.id, post.published_at)}
                       disabled={loadingId === post.id}
@@ -183,7 +183,7 @@ export default function BlogListClient({ initialPosts }: BlogListClientProps) {
                       {loadingId === post.id && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
                     </button>
                   </td>
-                  <td className="px-8 py-6 text-right whitespace-nowrap">
+                  <td className="px-4 md:px-8 py-6 text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-2">
                       <div className="relative group/btn">
                         <Link
