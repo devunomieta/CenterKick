@@ -1,15 +1,32 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import sharp from 'sharp';
 
-export async function createPost(formData: FormData) {
+async function verifyCmsAccess() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) throw new Error('Unauthorized');
+
+  const { data: userRecord } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (!userRecord || !['superadmin', 'admin', 'blogger'].includes(userRecord.role)) {
+    throw new Error('Forbidden: Insufficient permissions');
+  }
+
+  return user;
+}
+
+export async function createPost(formData: FormData) {
+  const user = await verifyCmsAccess();
+  const adminClient = createAdminClient();
 
   const title = formData.get('title') as string;
   const slug = (formData.get('slug') as string || title)
@@ -28,14 +45,20 @@ export async function createPost(formData: FormData) {
   const og_image_url = formData.get('og_image_url') as string;
   const is_draft = formData.get('published') !== 'true';
   const tags = JSON.parse(formData.get('tags') as string || '[]');
+  
+  // Custom backdating support
+  const customPublishedAt = formData.get('published_at') as string;
+  const published_at = is_draft 
+    ? null 
+    : (customPublishedAt && customPublishedAt.trim() !== '' ? new Date(customPublishedAt).toISOString() : new Date().toISOString());
 
-  const { data: post, error } = await supabase
+  const { data: post, error } = await adminClient
     .from('cms_posts')
     .insert({
       author_id: user.id,
       title,
       slug,
-      type: 'news', // Default to news for blog
+      type: 'news',
       content,
       excerpt,
       cover_image_url,
@@ -44,7 +67,7 @@ export async function createPost(formData: FormData) {
       meta_description,
       og_image_url,
       is_draft,
-      published_at: !is_draft ? new Date().toISOString() : null,
+      published_at,
     })
     .select()
     .single();
@@ -59,7 +82,7 @@ export async function createPost(formData: FormData) {
       post_id: post.id,
       tag_id: tagId
     }));
-    await supabase.from('post_tags').insert(tagInserts);
+    await adminClient.from('post_tags').insert(tagInserts);
   }
 
   revalidatePath('/admin/blog');
@@ -69,7 +92,8 @@ export async function createPost(formData: FormData) {
 }
 
 export async function updatePost(postId: string, formData: FormData) {
-  const supabase = await createClient();
+  await verifyCmsAccess();
+  const adminClient = createAdminClient();
   
   const title = formData.get('title') as string;
   const slug = (formData.get('slug') as string || title)
@@ -86,22 +110,23 @@ export async function updatePost(postId: string, formData: FormData) {
   const meta_title = formData.get('meta_title') as string;
   const meta_description = formData.get('meta_description') as string;
   const og_image_url = formData.get('og_image_url') as string;
-  const is_draft = formData.get('published') !== 'true';
+  const isChangingToPublished = formData.get('published') === 'true';
   const tags = JSON.parse(formData.get('tags') as string || '[]');
 
   // Get current post to check status
-  const { data: currentPost } = await supabase
+  const { data: currentPost } = await adminClient
     .from('cms_posts')
     .select('published_at')
     .eq('id', postId)
     .single();
 
-  const isChangingToPublished = formData.get('published') === 'true';
+  // Custom backdating support
+  const customPublishedAt = formData.get('published_at') as string;
   const newPublishedAt = isChangingToPublished 
-    ? (currentPost?.published_at || new Date().toISOString()) 
+    ? (customPublishedAt && customPublishedAt.trim() !== '' ? new Date(customPublishedAt).toISOString() : (currentPost?.published_at || new Date().toISOString())) 
     : null;
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('cms_posts')
     .update({
       title,
@@ -124,13 +149,13 @@ export async function updatePost(postId: string, formData: FormData) {
   }
 
   // Handle Tags - Clear and Re-insert
-  await supabase.from('post_tags').delete().eq('post_id', postId);
+  await adminClient.from('post_tags').delete().eq('post_id', postId);
   if (tags.length > 0) {
     const tagInserts = tags.map((tagId: string) => ({
       post_id: postId,
       tag_id: tagId
     }));
-    await supabase.from('post_tags').insert(tagInserts);
+    await adminClient.from('post_tags').insert(tagInserts);
   }
 
   revalidatePath('/admin/blog');
@@ -140,9 +165,10 @@ export async function updatePost(postId: string, formData: FormData) {
 }
 
 export async function deletePost(postId: string) {
-  const supabase = await createClient();
+  await verifyCmsAccess();
+  const adminClient = createAdminClient();
   
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('cms_posts')
     .delete()
     .eq('id', postId);
@@ -158,10 +184,11 @@ export async function deletePost(postId: string) {
 }
 
 export async function togglePostStatus(postId: string, currentStatus: boolean) {
-  const supabase = await createClient();
+  await verifyCmsAccess();
+  const adminClient = createAdminClient();
   const newPublishedAt = currentStatus ? null : new Date().toISOString();
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('cms_posts')
     .update({
       is_draft: !!currentStatus,
@@ -180,12 +207,13 @@ export async function togglePostStatus(postId: string, currentStatus: boolean) {
 
 // Category Management
 export async function createCategory(formData: FormData) {
-  const supabase = await createClient();
+  await verifyCmsAccess();
+  const adminClient = createAdminClient();
   const name = formData.get('name') as string;
   const slug = formData.get('slug') as string || name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
   const description = formData.get('description') as string;
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('blog_categories')
     .insert({ name, slug, description });
 
@@ -195,12 +223,13 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function updateCategory(id: string, formData: FormData) {
-  const supabase = await createClient();
+  await verifyCmsAccess();
+  const adminClient = createAdminClient();
   const name = formData.get('name') as string;
   const slug = formData.get('slug') as string;
   const description = formData.get('description') as string;
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('blog_categories')
     .update({ name, slug, description, updated_at: new Date().toISOString() })
     .eq('id', id);
@@ -211,8 +240,9 @@ export async function updateCategory(id: string, formData: FormData) {
 }
 
 export async function deleteCategory(id: string) {
-  const supabase = await createClient();
-  const { error } = await supabase.from('blog_categories').delete().eq('id', id);
+  await verifyCmsAccess();
+  const adminClient = createAdminClient();
+  const { error } = await adminClient.from('blog_categories').delete().eq('id', id);
   if (error) return { error: error.message };
   revalidatePath('/admin/blog');
   return { success: true };
@@ -220,11 +250,12 @@ export async function deleteCategory(id: string) {
 
 // Tag Management
 export async function createTag(formData: FormData) {
-  const supabase = await createClient();
+  await verifyCmsAccess();
+  const adminClient = createAdminClient();
   const name = formData.get('name') as string;
   const slug = formData.get('slug') as string || name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('blog_tags')
     .insert({ name, slug });
 
@@ -234,16 +265,17 @@ export async function createTag(formData: FormData) {
 }
 
 export async function deleteTag(id: string) {
-  const supabase = await createClient();
-  const { error } = await supabase.from('blog_tags').delete().eq('id', id);
+  await verifyCmsAccess();
+  const adminClient = createAdminClient();
+  const { error } = await adminClient.from('blog_tags').delete().eq('id', id);
   if (error) return { error: error.message };
   revalidatePath('/admin/blog');
   return { success: true };
 }
 
 export async function getGlobalTags() {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const adminClient = createAdminClient();
+  const { data, error } = await adminClient
     .from('profiles')
     .select('tags');
 
@@ -257,10 +289,11 @@ export async function getGlobalTags() {
 }
 
 export async function quickCreateTag(name: string) {
-  const supabase = await createClient();
+  await verifyCmsAccess();
+  const adminClient = createAdminClient();
   const slug = name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
   
-  const { data: tag, error } = await supabase
+  const { data: tag, error } = await adminClient
     .from('blog_tags')
     .insert({ name, slug })
     .select()
@@ -272,8 +305,8 @@ export async function quickCreateTag(name: string) {
 }
 
 export async function isSlugUnique(slug: string, excludePostId?: string) {
-  const supabase = await createClient();
-  let query = supabase
+  const adminClient = createAdminClient();
+  let query = adminClient
     .from('cms_posts')
     .select('id')
     .eq('slug', slug);
@@ -288,8 +321,8 @@ export async function isSlugUnique(slug: string, excludePostId?: string) {
 
 // Asset Management
 export async function getAssets(limit: number = 50, offset: number = 0, search?: string) {
-  const supabase = await createClient();
-  let query = supabase
+  const adminClient = createAdminClient();
+  let query = adminClient
     .from('blog_assets')
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
@@ -317,10 +350,10 @@ export async function getAssets(limit: number = 50, offset: number = 0, search?:
 }
 
 export async function createAsset(url: string, filename: string, fileType: string, size: number) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await verifyCmsAccess();
+  const adminClient = createAdminClient();
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('blog_assets')
     .insert({ 
       url, 
@@ -336,17 +369,18 @@ export async function createAsset(url: string, filename: string, fileType: strin
 }
 
 export async function deleteAsset(id: string, fileName: string) {
-  const supabase = await createClient();
+  await verifyCmsAccess();
+  const adminClient = createAdminClient();
   
   // 1. Delete from Storage
-  const { error: storageError } = await supabase.storage
+  const { error: storageError } = await adminClient.storage
     .from('blog-images')
     .remove([fileName]);
 
   if (storageError) return { error: storageError.message };
 
   // 2. Delete from DB
-  const { error: dbError } = await supabase
+  const { error: dbError } = await adminClient
     .from('blog_assets')
     .delete()
     .eq('id', id);
@@ -358,7 +392,8 @@ export async function deleteAsset(id: string, fileName: string) {
 }
 
 export async function uploadBlogImage(formData: FormData) {
-  const supabase = await createClient();
+  const user = await verifyCmsAccess();
+  const adminClient = createAdminClient();
   const file = formData.get('file') as File;
   if (!file) return { error: 'No file provided' };
 
@@ -392,7 +427,7 @@ export async function uploadBlogImage(formData: FormData) {
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.webp`;
     const filePath = `${fileName}`;
 
-    const { data, error } = await supabase.storage
+    const { error } = await adminClient.storage
       .from('blog-images')
       .upload(filePath, optimizedBuffer, {
         contentType: 'image/webp',
@@ -401,7 +436,7 @@ export async function uploadBlogImage(formData: FormData) {
 
     if (error) return { error: error.message };
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = adminClient.storage
       .from('blog-images')
       .getPublicUrl(filePath);
 

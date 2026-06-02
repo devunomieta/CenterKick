@@ -86,7 +86,7 @@ export default async function PostPage({ params }: Props) {
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
          />
 
-         <main className="pt-36 pb-32">
+         <main className="pt-44 sm:pt-48 lg:pt-56 pb-32">
             <article className="max-w-4xl mx-auto px-4 lg:px-0">
                {/* Article Header */}
                <header className="mb-12 space-y-8 text-center lg:text-left">
@@ -136,7 +136,7 @@ export default async function PostPage({ params }: Props) {
                         <button className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-black hover:text-white transition-all">
                            <Share2 className="w-4 h-4" />
                         </button>
-                     </div>
+                      </div>
                   </div>
                </header>
 
@@ -155,7 +155,7 @@ export default async function PostPage({ params }: Props) {
 
                {/* Article Content */}
                <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:italic prose-headings:tracking-tighter prose-a:text-[#b50a0a] prose-strong:text-gray-900 prose-img:rounded-3xl prose-blockquote:border-[#b50a0a] prose-blockquote:bg-red-50/50 prose-blockquote:p-8 prose-blockquote:rounded-3xl prose-blockquote:italic">
-                  <div dangerouslySetInnerHTML={{ __html: post.content }} />
+                  <div dangerouslySetInnerHTML={{ __html: renderContentWithCaptions(post.content) }} />
                </div>
 
                {/* Tags */}
@@ -207,4 +207,21 @@ export default async function PostPage({ params }: Props) {
          <Footer />
       </div>
    );
+}
+
+function renderContentWithCaptions(content: string): string {
+  if (!content) return '';
+  return content.replace(/<img([^>]+)>/g, (match, attributes) => {
+    const altMatch = attributes.match(/alt="([^"]*)"/) || attributes.match(/alt='([^']*)'/);
+    const titleMatch = attributes.match(/title="([^"]*)"/) || attributes.match(/title='([^']*)'/);
+    const caption = (altMatch && altMatch[1]) || (titleMatch && titleMatch[1]);
+    
+    if (caption && caption.trim() !== '') {
+      return `<figure class="blog-figure my-8 flex flex-col items-center">
+        <img ${attributes}>
+        <figcaption class="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest mt-3 italic font-sans bg-gray-50 px-4 py-1.5 rounded-full border border-gray-100/50">${caption}</figcaption>
+      </figure>`;
+    }
+    return match;
+  });
 }

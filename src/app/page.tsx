@@ -1,7 +1,9 @@
-import { HomeClient } from '@/components/home/HomeClient';
+import { HomeClient } from '@/components/home/HomeClientNew';
 import { createClient } from '@/lib/supabase/server';
 import { getGlobalCMSData } from '@/app/admin/manage-ui/actions';
 import { getCachedData } from '@/lib/redis';
+
+// Recompilation trigger - v2
 
 export default async function Home() {
    const supabase = await createClient();

@@ -5,13 +5,9 @@ import Image from 'next/image';
 import { 
   PlayCircle, 
   ArrowRight, 
-  Star, 
   ChevronLeft, 
   ChevronRight, 
-  CheckCircle2, 
-  User, 
   MapPin, 
-  BadgeCheck, 
   Activity, 
   Video,
   ExternalLink,
@@ -79,15 +75,15 @@ function DesktopCarousel({ items, renderItem }: ProfileCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(baseItems.length);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
-  const [itemsPerView, setItemsPerView] = useState(5);
+  const [itemsPerView, setItemsPerView] = useState(4.25);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
-        setItemsPerView(5);
+        setItemsPerView(4.25);
       } else if (window.innerWidth >= 640) {
-        setItemsPerView(3);
+        setItemsPerView(2.5);
       } else {
         setItemsPerView(1.2);
       }
@@ -125,7 +121,11 @@ function DesktopCarousel({ items, renderItem }: ProfileCarouselProps) {
         className={`flex gap-6 pb-6 pt-2 px-1 ${isTransitioning ? 'transition-transform duration-500 ease-out' : ''}`}
         style={{ transform: `translateX(calc(-${currentIndex} * (${shiftPercent}% + ${shiftPx}px)))` }}>
         {list.map((item, idx) => (
-          <div key={idx} className="shrink-0 w-[calc(83.33%-20px)] sm:w-[calc(33.33%-16px)] lg:w-[calc(20%-20px)]">
+          <div 
+            key={idx} 
+            className="shrink-0"
+            style={{ width: `calc(${100 / itemsPerView}% - ${(24 * (itemsPerView - 1)) / itemsPerView}px)` }}
+          >
             {renderItem(item, idx % baseItems.length)}
           </div>
         ))}
@@ -145,7 +145,6 @@ function DesktopCarousel({ items, renderItem }: ProfileCarouselProps) {
 }
 
 const getDisplayName = (profile: any) => {
-
   if (!profile) return '';
   return profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Anonymous';
 };
@@ -157,7 +156,7 @@ export function HomeClient({
   agentsScouts, 
   organizations, 
   highlights, 
-  siteContent, 
+  siteContent: _siteContent, 
   navContent, 
   footerContent, 
   siteSettings 
@@ -178,7 +177,7 @@ export function HomeClient({
     <div className="min-h-screen bg-[#fafafa] font-sans text-gray-900 selection:bg-[#b50a0a]/10 selection:text-[#b50a0a]">
       <Navbar content={navContent} settings={siteSettings} />
 
-      <main className="pt-32 sm:pt-40 pb-24 overflow-hidden">
+      <main className="pt-48 sm:pt-56 lg:pt-64 pb-24 overflow-hidden">
         
         {/* ==================== A. HERO GRID SECTION ==================== */}
         <section className="max-w-[1200px] mx-auto px-4 lg:px-0 mb-20">
@@ -196,9 +195,9 @@ export function HomeClient({
                   href={`/news/${mainNews.slug}`} 
                   className="group block w-full rounded-[2.5rem] overflow-hidden shadow-xl border border-gray-100 bg-white hover:shadow-2xl transition-all duration-500"
                 >
-                  <div className="grid grid-cols-1 lg:grid-cols-12 h-full">
+                  <div className="flex flex-col h-full">
                     {/* Image Area */}
-                    <div className="lg:col-span-7 relative aspect-[16/10] lg:aspect-auto lg:h-[500px] overflow-hidden bg-black">
+                    <div className="relative w-full h-[250px] sm:h-[350px] md:h-[400px] lg:h-[480px] overflow-hidden bg-black">
                       <Image 
                         src={mainNews.cover_image_url || IMG_HERO_DEFAULT} 
                         alt={mainNews.title} 
@@ -207,14 +206,14 @@ export function HomeClient({
                         sizes="(max-width:1024px) 100vw, 60vw"
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
-                      <div className="absolute top-6 left-6 z-20">
+                      <div className="absolute top-6 right-6 z-20">
                         <span className="bg-[#b50a0a] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
                           Featured News
                         </span>
                       </div>
                     </div>
                     {/* Text Area */}
-                    <div className="lg:col-span-5 p-6 sm:p-8 lg:p-10 flex flex-col justify-between bg-white text-left">
+                    <div className="p-6 sm:p-8 lg:p-10 flex flex-col justify-between bg-white text-left flex-1">
                       <div className="flex flex-col">
                         <DateDisplay date={mainNews.published_at} className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-3 block" />
                         <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 leading-tight mb-4 tracking-tighter uppercase italic group-hover:text-[#b50a0a] transition-colors">
@@ -234,14 +233,14 @@ export function HomeClient({
 
               {/* Row 1 Col 2: Stacked news cards (40%) */}
               <div className="lg:col-span-5 flex flex-col justify-between gap-6">
-                {stackedNews.map((news, idx) => (
+                {stackedNews.map((news) => (
                   <Link 
                     key={news.id} 
                     href={`/news/${news.slug}`} 
-                    className="group flex flex-col sm:flex-row items-stretch gap-4 bg-white rounded-[2rem] p-4 shadow-sm border border-gray-100/80 hover:shadow-md hover:border-gray-200 transition-all duration-300 flex-1"
+                    className="group flex flex-col bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100/80 hover:shadow-md hover:border-gray-200 transition-all duration-300 flex-1"
                   >
                     {/* Image Area */}
-                    <div className="relative w-full sm:w-40 lg:w-44 aspect-[16/10] sm:aspect-square rounded-2xl overflow-hidden bg-black shrink-0">
+                    <div className="relative w-full h-[200px] sm:h-[280px] lg:h-[200px] overflow-hidden bg-black shrink-0">
                       <Image 
                         src={news.cover_image_url || IMG_NEWS_DEFAULT} 
                         alt={news.title} 
@@ -249,23 +248,28 @@ export function HomeClient({
                         sizes="(max-width:1024px) 100vw, 20vw"
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
-                      <div className="absolute top-3 left-3 z-20">
+                      <div className="absolute top-4 right-4 z-20">
                         <span className="bg-[#b50a0a] text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full shadow-md">
                           Hot Story
                         </span>
                       </div>
                     </div>
                     {/* Text Area */}
-                    <div className="flex-1 flex flex-col justify-center py-2 text-left">
-                      <DateDisplay date={news.published_at} className="text-gray-400 text-[8px] font-bold uppercase tracking-widest mb-2 block" />
-                      <h3 className="text-sm sm:text-base font-black text-gray-900 leading-snug tracking-tight uppercase line-clamp-3 group-hover:text-[#b50a0a] transition-colors">
-                        {news.title}
-                      </h3>
-                      {news.excerpt && (
-                        <p className="text-gray-500 text-xs mt-2 line-clamp-2 font-medium">
-                          {news.excerpt}
-                        </p>
-                      )}
+                    <div className="p-6 flex-1 flex flex-col justify-between text-left">
+                      <div>
+                        <DateDisplay date={news.published_at} className="text-gray-400 text-[8px] font-bold uppercase tracking-widest mb-2 block" />
+                        <h3 className="text-sm sm:text-base font-black text-gray-900 leading-snug tracking-tight uppercase line-clamp-3 group-hover:text-[#b50a0a] transition-colors">
+                          {news.title}
+                        </h3>
+                        {news.excerpt && (
+                          <p className="text-gray-500 text-xs mt-2 line-clamp-2 font-medium">
+                            {news.excerpt}
+                          </p>
+                        )}
+                      </div>
+                      <div className="mt-4 flex items-center gap-1.5 text-[9px] font-black text-[#b50a0a] uppercase tracking-widest group-hover:translate-x-1.5 transition-transform duration-300">
+                        Read Story <ArrowRight className="w-3.5 h-3.5" />
+                      </div>
                     </div>
                   </Link>
                 ))}
@@ -285,37 +289,70 @@ export function HomeClient({
             </div>
           )}
 
-          {/* Row 2: 7 news cards with auto scrolling carousel */}
+          {/* Row 2: More stories (carousel on desktop/tablet, vertical stack on mobile) */}
           {carouselNews.length > 0 && (
-            <div className="mt-12 bg-white/50 backdrop-blur-sm border border-gray-100 p-8 rounded-[2.5rem] shadow-sm">
+            <div className="mt-16">
               <h4 className="text-xs font-black tracking-widest uppercase text-gray-400 mb-6 text-left">More Recent Stories</h4>
-              <ProfileCarousel 
-                items={carouselNews}
-                renderItem={(news) => (
+              
+              {/* Desktop/Tablet Carousel */}
+              <div className="hidden sm:block">
+                <ProfileCarousel 
+                  items={carouselNews}
+                  renderItem={(news) => (
+                    <Link 
+                      href={`/news/${news.slug}`} 
+                      className="group flex flex-col bg-white rounded-[1.8rem] overflow-hidden border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300 h-full"
+                    >
+                      {/* Image Area */}
+                      <div className="relative w-full h-44 overflow-hidden bg-black shrink-0">
+                        <Image 
+                          src={news.cover_image_url || IMG_NEWS_DEFAULT} 
+                          alt={news.title} 
+                          fill
+                          sizes="256px"
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                      </div>
+                      {/* Text Area */}
+                      <div className="p-4 flex-1 flex flex-col justify-between text-left">
+                        <DateDisplay date={news.published_at} className="text-gray-400 text-[8px] font-bold uppercase tracking-widest mb-1.5 block" />
+                        <h5 className="text-xs font-black text-gray-900 leading-snug uppercase line-clamp-3 group-hover:text-[#b50a0a] transition-colors">
+                          {news.title}
+                        </h5>
+                      </div>
+                    </Link>
+                  )}
+                />
+              </div>
+
+              {/* Mobile Vertical Stack */}
+              <div className="flex flex-col gap-6 sm:hidden">
+                {carouselNews.map((news) => (
                   <Link 
+                    key={news.id}
                     href={`/news/${news.slug}`} 
-                    className="group flex flex-col bg-white rounded-[1.8rem] overflow-hidden border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300 h-full"
+                    className="group flex flex-col bg-white rounded-[1.8rem] overflow-hidden border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300"
                   >
                     {/* Image Area */}
-                    <div className="relative w-full aspect-[4/3] overflow-hidden bg-black shrink-0">
+                    <div className="relative w-full h-48 overflow-hidden bg-black shrink-0">
                       <Image 
                         src={news.cover_image_url || IMG_NEWS_DEFAULT} 
                         alt={news.title} 
                         fill
-                        sizes="256px"
+                        sizes="100vw"
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     </div>
                     {/* Text Area */}
-                    <div className="p-4 flex-1 flex flex-col justify-between text-left">
-                      <DateDisplay date={news.published_at} className="text-gray-400 text-[8px] font-bold uppercase tracking-widest mb-1.5 block" />
-                      <h5 className="text-xs font-black text-gray-900 leading-snug uppercase line-clamp-3 group-hover:text-[#b50a0a] transition-colors">
+                    <div className="p-5 text-left">
+                      <DateDisplay date={news.published_at} className="text-gray-400 text-[8px] font-bold uppercase tracking-widest mb-2 block" />
+                      <h5 className="text-sm font-black text-gray-900 leading-snug uppercase line-clamp-3 group-hover:text-[#b50a0a] transition-colors">
                         {news.title}
                       </h5>
                     </div>
                   </Link>
-                )}
-              />
+                ))}
+              </div>
             </div>
           )}
         </section>

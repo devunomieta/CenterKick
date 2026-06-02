@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Users, UserCheck, Briefcase, FileText, PenTool,
-  ShieldCheck, CreditCard, Settings, LayoutDashboard, Clock, Trophy, Search
+  ShieldCheck, CreditCard, Settings, LayoutDashboard, Clock, Trophy, Search, Database
 } from 'lucide-react';
 
 export function AdminSidebar({ role }: { role: string }) {
@@ -53,11 +53,12 @@ export function AdminSidebar({ role }: { role: string }) {
       group: 'Infrastructure',
       items: [
         ...(isSuperOrAdmin ? [{ label: 'Manage Roles', href: '/admin/roles', icon: ShieldCheck }] : []),
+        ...(['superadmin', 'admin', 'operations'].includes(role) ? [{ label: 'Data Management', href: '/admin/data-management', icon: Database }] : []),
         ...(isFinance || isSuperOrAdmin ? [
           { label: 'Transactions', href: '/admin/payments/transactions', icon: CreditCard },
           { label: 'Subscriptions', href: '/admin/payments/subscriptions', icon: Settings }
         ] : []),
-        ...(isSuperOrAdmin ? [{ label: 'System Settings', href: '/admin/settings', icon: Settings }] : [])
+        ...(role === 'superadmin' ? [{ label: 'System Settings', href: '/admin/settings', icon: Settings }] : [])
       ]
     }
   ];

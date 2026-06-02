@@ -160,7 +160,7 @@ export default function FootballDataManagement() {
         <div>
           <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-3">
             <Database className="w-8 h-8 text-[#b50a0a]" />
-            Football <span className="text-[#b50a0a]">Registry</span>
+            Data <span className="text-[#b50a0a]">Management</span>
           </h1>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 italic">Ecosystem constants & historical records management</p>
         </div>

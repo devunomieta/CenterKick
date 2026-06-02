@@ -26,3 +26,10 @@ body {
   background-color: var(--background);
   color: var(--foreground);
 }
+
+@media (min-width: 1024px) {
+  button[aria-label="Open Sidebar Menu"],
+  .mobile-drawer-container {
+    display: none !important;
+  }
+}

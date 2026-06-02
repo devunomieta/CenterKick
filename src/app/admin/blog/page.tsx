@@ -4,6 +4,7 @@ import Link from 'next/link';
 import BlogManagementClient from '@/components/admin/blog/BlogManagementClient';
 import BlogListClient from '@/components/admin/blog/BlogListClient';
 
+// Force Next.js compilation cache refresh trigger - v7
 export default async function BlogDashboard({ 
   searchParams 
 }: { 

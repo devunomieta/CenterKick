@@ -148,10 +148,10 @@ export function Navbar({ content, settings }: { content?: Record<string, unknown
 
   return (
     <>
-      <nav className={`fixed z-50 left-0 right-0 mx-auto transition-all duration-500 ease-out border backdrop-blur-xl ${
+      <nav className={`fixed z-50 left-0 right-0 mx-auto transition-all duration-500 ease-out backdrop-blur-xl ${
         isScrolled 
-          ? 'top-4 w-[calc(100%-2rem)] max-w-[1300px] bg-white/95 border-gray-200/50 shadow-2xl py-3 rounded-[2.5rem]' 
-          : 'top-8 w-[calc(100%-4rem)] max-w-[1240px] bg-white/60 border-white/20 shadow-sm py-4.5 rounded-[2rem]'
+          ? 'top-3 md:top-4 w-[calc(100%-1.5rem)] md:w-[calc(100%-2rem)] max-w-[1300px] bg-white/95 border border-gray-200/50 shadow-2xl py-2 md:py-2.5 rounded-full' 
+          : 'top-0 md:top-8 w-full md:w-[calc(100%-4rem)] max-w-[1240px] bg-white md:bg-white/60 border-b md:border border-gray-100 md:border-white/20 shadow-sm py-4 md:py-3.5 rounded-none md:rounded-[1.5rem]'
       }`}>
         <div className="max-w-[1200px] mx-auto flex items-center justify-between px-6 sm:px-8 h-12">
            

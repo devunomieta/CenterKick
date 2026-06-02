@@ -11,12 +11,13 @@ import { Underline as TiptapUnderline } from '@tiptap/extension-underline';
 import { TextAlign as TiptapTextAlign } from '@tiptap/extension-text-align';
 import { TextStyle as TiptapTextStyle } from '@tiptap/extension-text-style';
 import { Color as TiptapColor } from '@tiptap/extension-color';
+import { Node } from '@tiptap/core';
 import { 
   Save, Globe, Eye, Settings, Image as ImageIcon, 
   ChevronLeft, X, Check, Loader2, Link as LinkIcon,
   Bold, Italic, List, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Quote, Undo, Redo, Plus, Trash2,
-  Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, Type,
-  ChevronDown, FileText, Send, Trash, History
+  Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight,
+  ChevronDown, FileText, Send, Trash, History, ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
 import NextImage from 'next/image';
@@ -26,17 +27,94 @@ import { useToast } from '@/context/ToastContext';
 import MediaGallery from './MediaGallery';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Custom format helper for datetime-local input
+const formatDatetimeLocal = (dateString?: string) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const tzoffset = date.getTimezoneOffset() * 60000;
+  const localISOTime = (new Date(date.getTime() - tzoffset)).toISOString().slice(0, 16);
+  return localISOTime;
+};
+
+// Custom Tiptap Extension for Link Previews
+const LinkPreviewExtension = Node.create({
+  name: 'linkPreview',
+  group: 'block',
+  content: 'inline*',
+  defining: true,
+  
+  addAttributes() {
+    return {
+      url: { default: '' },
+      title: { default: '' },
+      description: { default: '' },
+      image: { default: '' },
+      domain: { default: '' },
+    };
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'a[data-link-preview]',
+        getAttrs: dom => {
+          const element = dom as HTMLElement;
+          return {
+            url: element.getAttribute('data-link-preview') || element.getAttribute('href') || '',
+            title: element.getAttribute('data-title') || '',
+            description: element.getAttribute('data-description') || '',
+            image: element.getAttribute('data-image') || '',
+            domain: element.getAttribute('data-domain') || '',
+          };
+        },
+      },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const { url, title, description, image, domain } = HTMLAttributes;
+    return [
+      'a',
+      {
+        href: url,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        class: 'link-preview-card border border-slate-200/60 rounded-3xl p-6 bg-slate-50/50 hover:bg-slate-50 transition-all flex flex-col md:flex-row gap-6 items-center my-8 cursor-pointer shadow-sm hover:shadow-md max-w-2xl mx-auto no-underline',
+        'data-link-preview': url,
+        'data-title': title,
+        'data-description': description,
+        'data-image': image,
+        'data-domain': domain,
+        style: 'text-decoration: none !important; display: flex;',
+      },
+      [
+        'div',
+        { class: 'flex-1 min-w-0 space-y-2', style: 'text-align: left;' },
+        ['span', { class: 'text-[9px] font-black uppercase text-[#b50a0a] tracking-widest block', style: 'margin-bottom: 4px;' }, 'External Link'],
+        ['h4', { class: 'text-sm font-black text-slate-900 uppercase tracking-tight line-clamp-2 no-underline', style: 'margin: 0; color: #0f172a; text-decoration: none !important;' }, title],
+        ['p', { class: 'text-[11px] font-bold text-slate-500 line-clamp-2 leading-relaxed no-underline', style: 'margin: 4px 0 0 0; color: #64748b; text-decoration: none !important;' }, description],
+        ['span', { class: 'text-[9px] font-black text-slate-400 uppercase tracking-widest block', style: 'margin-top: 4px; color: #94a3b8;' }, domain],
+      ],
+      ...(image ? [
+        [
+          'div',
+          { class: 'w-full md:w-36 aspect-[4/3] md:aspect-square bg-slate-100 rounded-2xl overflow-hidden shrink-0 border border-slate-200/50' },
+          ['img', { src: image, class: 'w-full h-full object-cover', alt: 'Preview Thumbnail' }],
+        ]
+      ] : []),
+    ];
+  },
+});
+
 interface NewPostClientProps {
   categories: Record<string, any>[];
   tags: Record<string, any>[];
-  post?: Record<string, any>; // For editing
+  post?: Record<string, any>;
 }
 
 export default function NewPostClient({ categories, tags, post }: NewPostClientProps) {
   const router = useRouter();
-  const { showToast, hideToast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: post?.title || '',
@@ -48,6 +126,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
     meta_title: post?.meta_title || '',
     meta_description: post?.meta_description || '',
     og_image_url: post?.og_image_url || '',
+    published_at: post?.published_at ? formatDatetimeLocal(post.published_at) : '',
   });
 
   const [selectedTags, setSelectedTags] = useState<string[]>(
@@ -90,6 +169,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
       TiptapTextStyle,
       TiptapColor,
       BubbleMenuExtension,
+      LinkPreviewExtension,
     ],
     content: post?.content || '',
     immediatelyRender: false,
@@ -136,7 +216,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
 
   // Auto-save logic (5 minutes)
   useEffect(() => {
-    if (!currentPostId || formData.is_draft === false) return; // Only auto-save drafts
+    if (!currentPostId || formData.is_draft === false) return;
 
     const timer = setInterval(async () => {
       if (!formData.title || !editor) return;
@@ -154,7 +234,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
         setLastSaved(new Date());
         showToast('Draft auto-saved', 'success');
       }
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000);
 
     return () => clearInterval(timer);
   }, [currentPostId, formData, editor, selectedTags]);
@@ -162,7 +242,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
   // Close dropdown on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (saveOptionsRef.current && !saveOptionsRef.current.contains(event.target as Node)) {
+      if (saveOptionsRef.current && !saveOptionsRef.current.contains(event.target as globalThis.Node)) {
         setShowSaveOptions(false);
       }
     }
@@ -171,17 +251,12 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
   }, []);
 
   const handleSaveAction = async (action: 'draft' | 'publish' | 'delete') => {
-    if (!formData.title) {
-      showToast('A title is required to save.', 'error');
-      return;
-    }
-
     if (action === 'delete') {
       if (!currentPostId) {
         setFormData({
           title: '', slug: '', excerpt: '', category_id: '',
           cover_image_url: '', is_draft: true, meta_title: '',
-          meta_description: '', og_image_url: '',
+          meta_description: '', og_image_url: '', published_at: '',
         });
         editor?.commands.setContent('');
         setSelectedTags([]);
@@ -198,6 +273,16 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
         showToast(res.error || 'Delete failed', 'error');
       }
       setIsLoading(false);
+      return;
+    }
+
+    if (!formData.title || !formData.title.trim()) {
+      showToast('A title is required to save.', 'error');
+      return;
+    }
+
+    if (!formData.excerpt || !formData.excerpt.trim()) {
+      showToast('An excerpt is required to save.', 'error');
       return;
     }
 
@@ -258,6 +343,39 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
     !selectedTags.includes(tag.id)
   );
 
+  const insertLinkPreview = async () => {
+    const url = window.prompt('Enter the link URL for the preview:');
+    if (!url) return;
+
+    let formattedUrl = url;
+    if (!/^https?:\/\//i.test(url)) {
+      formattedUrl = 'https://' + url;
+    }
+
+    showToast('Fetching link preview...', 'success');
+
+    try {
+      const res = await fetch(`/api/link-preview?url=${encodeURIComponent(formattedUrl)}`);
+      const data = await res.json();
+
+      editor?.chain().focus().insertContent({
+        type: 'linkPreview',
+        attrs: {
+          url: formattedUrl,
+          title: data.title || data.domain,
+          description: data.description || '',
+          image: data.image || '',
+          domain: data.domain,
+        },
+      }).run();
+      
+      showToast('Link preview card inserted', 'success');
+    } catch (error) {
+      showToast('Failed to fetch link preview, inserting regular link', 'error');
+      editor?.chain().focus().insertContent(`<p><a href="${formattedUrl}" target="_blank">${url}</a></p>`).run();
+    }
+  };
+
   const MenuBar = () => {
     if (!editor) return null;
 
@@ -311,18 +429,6 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
           >
             <Heading4 className="w-3.5 h-3.5" />
           </button>
-          <button
-            onClick={() => editor.chain().focus().toggleHeading({ level: 5 }).run()}
-            className={`p-2 rounded-lg transition-all ${editor.isActive('heading', { level: 5 }) ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
-          >
-            <Heading5 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleHeading({ level: 6 }).run()}
-            className={`p-2 rounded-lg transition-all ${editor.isActive('heading', { level: 6 }) ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
-          >
-            <Heading6 className="w-3.5 h-3.5" />
-          </button>
         </div>
 
         <div className="w-px h-4 bg-gray-200 mx-2"></div>
@@ -374,15 +480,26 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
               if (url) editor.chain().focus().setLink({ href: url }).run();
             }}
             className={`p-2 rounded-lg transition-all ${editor.isActive('link') ? 'bg-black text-white shadow-sm' : 'hover:bg-white text-gray-400 hover:text-black'}`}
+            title="Insert Link"
           >
             <LinkIcon className="w-3.5 h-3.5" />
           </button>
+          
+          <button
+            onClick={insertLinkPreview}
+            className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-black transition-all"
+            title="Insert Link Preview Card"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+          </button>
+
           <button
             onClick={() => {
               setGalleryUsage('editor');
               setIsGalleryOpen(true);
             }}
             className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-black transition-all"
+            title="Select Image from Gallery"
           >
             <ImageIcon className="w-3.5 h-3.5" />
           </button>
@@ -408,7 +525,6 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
 
   return (
     <div className="min-h-screen bg-gray-50/30 pb-48 animate-in fade-in duration-1000">
-      {/* 1. Full Width Sticky ActionBar - Fixed to stick truly flush to the top bar */}
       <div 
         className="sticky z-[100] w-[calc(100%+4rem)] -mx-8 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm"
         style={{ top: '-32px' }}
@@ -482,10 +598,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
       </div>
 
       <div className="max-w-4xl mx-auto px-6 pt-12">
-
-          {/* The Unified Canvas */}
         <div className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden flex flex-col transition-all">
-          {/* Content Segment */}
           <div className="p-8 sm:p-12 space-y-12">
              <div className="space-y-8">
                 <div className="space-y-2 group">
@@ -493,7 +606,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                    <textarea 
                       rows={1}
                       placeholder="The Title of Your Story..." 
-                      className="w-full bg-transparent border-none p-0 textxl sm:text-3xl font-black text-black placeholder:text-gray-200 focus:ring-0 leading-tight transition-all resize-none min-h-[1em] overflow-hidden"
+                      className="w-full bg-transparent border-none p-0 text-xl sm:text-3xl font-black text-black placeholder:text-gray-200 focus:ring-0 leading-tight transition-all resize-none min-h-[1em] overflow-hidden"
                       value={formData.title}
                       onChange={(e) => {
                         setFormData({ ...formData, title: e.target.value });
@@ -528,7 +641,9 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
              </div>
 
              <div className="space-y-2">
-                <label className="text-[10px] font-black text-black uppercase tracking-widest ml-1">Excerpt</label>
+                <label className="text-[10px] font-black text-black uppercase tracking-widest ml-1">
+                  Excerpt <span className="text-[#b50a0a] ml-0.5">*</span>
+                </label>
                 <textarea 
                    rows={3} 
                    placeholder="Short summary for the index page..."
@@ -551,21 +666,34 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                       editor={editor} 
                       shouldShow={({ editor }) => editor.isActive('image')}
                     >
-                      <div className="flex bg-white shadow-2xl border border-gray-100 rounded-2xl p-1.5 gap-1 animate-in zoom-in-95 duration-200">
+                      <div className="flex items-center bg-white shadow-2xl border border-gray-100 rounded-2xl p-1.5 gap-1.5 animate-in zoom-in-95 duration-200">
                         <button 
                           onClick={() => {
                             setGalleryUsage('editor');
                             setIsGalleryOpen(true);
                           }}
-                          className="px-3 py-2 hover:bg-gray-50 rounded-xl text-black flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all"
+                          className="px-3 py-2 hover:bg-gray-50 rounded-xl text-black flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all shrink-0"
                         >
                           <ImageIcon className="w-3.5 h-3.5 text-[#b50a0a]" />
                           Replace
                         </button>
-                        <div className="w-px h-4 bg-gray-100 self-center mx-1"></div>
+                        <div className="w-px h-4 bg-gray-100 self-center shrink-0"></div>
+                        <input
+                          type="text"
+                          placeholder="Image Caption..."
+                          className="px-3 py-1.5 bg-gray-50 rounded-xl text-[10px] font-bold text-black border border-gray-100 focus:ring-0 focus:border-[#b50a0a]/30 w-44"
+                          value={editor?.getAttributes('image').alt || ''}
+                          onChange={(e) => {
+                            editor?.chain().focus().updateAttributes('image', {
+                              alt: e.target.value,
+                              title: e.target.value
+                            }).run();
+                          }}
+                        />
+                        <div className="w-px h-4 bg-gray-100 self-center shrink-0"></div>
                         <button 
                           onClick={() => editor?.chain().focus().deleteSelection().run()}
-                          className="px-3 py-2 hover:bg-red-50 rounded-xl text-red-600 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all"
+                          className="px-3 py-2 hover:bg-red-50 rounded-xl text-red-600 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all shrink-0"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           Delete
@@ -578,7 +706,6 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
              </div>
           </div>
 
-          {/* Footer Segment: Settings Dashboard */}
           <div className="bg-gray-50/30 border-t border-gray-100 p-8 sm:p-12">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
               <div className="space-y-10">
@@ -609,6 +736,18 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                     </div>
                  </div>
 
+                 {/* Backdating Published Date Selection */}
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black text-black uppercase tracking-widest ml-1">Published Date (Backdate)</label>
+                    <input 
+                       type="datetime-local" 
+                       className="w-full bg-white border border-gray-100 rounded-2xl p-4 text-[10px] font-black uppercase tracking-widest text-black focus:ring-4 focus:ring-black/5 transition-all shadow-sm"
+                       value={formData.published_at}
+                       onChange={(e) => setFormData({ ...formData, published_at: e.target.value })}
+                    />
+                    <p className="text-[8px] font-bold text-gray-400 pl-1 uppercase tracking-wider">Leave blank to use current time on publish, or select a date/time to backdate.</p>
+                 </div>
+
                  <div className="space-y-6">
                     <div className="flex items-center justify-between ml-1">
                        <label className="text-[10px] font-black text-black uppercase tracking-widest">Tags</label>
@@ -617,21 +756,21 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                     
                     <div className="flex flex-wrap gap-2.5 min-h-[60px] p-5 bg-white rounded-2xl border border-gray-100 shadow-sm relative group focus-within:border-[#b50a0a]/20 transition-all">
                        {selectedTags.map(tagId => {
-                         const tag = availableTags.find(t => t.id === tagId || t.name === tagId);
-                         if (!tag) return null;
-                         return (
-                           <button 
-                             key={tag.id || tag.name}
-                             onClick={() => setSelectedTags(selectedTags.filter(id => id !== (tag.id || tag.name)))}
-                             className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 text-[10px] font-black text-black hover:bg-black hover:text-white transition-all flex items-center gap-2 group/tag shadow-sm uppercase tracking-tighter"
-                           >
-                             {tag.name}
-                             <X className="w-3 h-3 text-gray-300 group-hover/tag:text-white transition-colors" />
-                           </button>
-                         );
+                          const tag = availableTags.find(t => t.id === tagId || t.name === tagId);
+                          if (!tag) return null;
+                          return (
+                            <button 
+                              key={tag.id || tag.name}
+                              onClick={() => setSelectedTags(selectedTags.filter(id => id !== (tag.id || tag.name)))}
+                              className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 text-[10px] font-black text-black hover:bg-black hover:text-white transition-all flex items-center gap-2 group/tag shadow-sm uppercase tracking-tighter"
+                            >
+                              {tag.name}
+                              <X className="w-3 h-3 text-gray-300 group-hover/tag:text-white transition-colors" />
+                            </button>
+                          );
                        })}
                        {selectedTags.length === 0 && (
-                         <span className="text-[10px] font-black text-gray-200 uppercase tracking-widest w-full text-center py-2 italic font-serif">Connect keywords...</span>
+                          <span className="text-[10px] font-black text-gray-200 uppercase tracking-widest w-full text-center py-2 italic font-serif">Connect keywords...</span>
                        )}
                     </div>
                     
@@ -666,7 +805,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                                    setShowTagDropdown(false);
                                  }}
                                  className="w-full text-left px-4 py-3 hover:bg-[#b50a0a] rounded-xl flex items-center justify-between group transition-all"
-                               >
+                                >
                                  <span className="text-[10px] font-black uppercase text-black group-hover:text-white tracking-widest">{tag.name}</span>
                                  <Plus className="w-4 h-4 text-gray-100 opacity-0 group-hover:opacity-100 transition-opacity" />
                                </button>
@@ -703,7 +842,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                      setGalleryUsage('cover');
                      setIsGalleryOpen(true);
                    }}
-                   className="aspect-[16/9] bg-white rounded-3xl border border-gray-100 flex flex-col items-center justify-center p-8 text-center group cursor-pointer hover:border-black/20 hover:shadow-lg transition-all overflow-hidden relative shadow-sm ring-4 ring-black/0 focus-within:ring-black/5"
+                   className="aspect-[16/9] bg-white rounded-3xl border border-gray-100 flex flex-col items-center justify-center p-8 text-center group cursor-pointer hover:border-black/20 hover:shadow-lg transition-all overflow-hidden relative shadow-sm"
                  >
                     {formData.cover_image_url ? (
                        <>
@@ -767,7 +906,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                          onChange={(e) => {
                            setFormData({ ...formData, meta_description: e.target.value });
                            e.target.style.height = "auto";
-                           e.target.style.height = e.target.scrollHeight + "px";
+                           e.target.style.height = e.target.scrollHeight + 'px';
                          }}
                       />
                    </div>

@@ -18,7 +18,7 @@ export async function uploadSiteAsset(formData: FormData) {
     .eq('id', user.id)
     .single();
 
-  if (!['superadmin', 'admin'].includes(userRecord?.role)) {
+  if (userRecord?.role !== 'superadmin') {
     throw new Error('Unauthorized');
   }
 
@@ -65,8 +65,8 @@ export async function updateSystemSettings(settings: any) {
     .eq('id', user.id)
     .single();
 
-  if (!['superadmin', 'admin'].includes(userRecord?.role)) {
-    throw new Error('Permission denied: Administrator role required');
+  if (userRecord?.role !== 'superadmin') {
+    throw new Error('Permission denied: Superadmin role required');
   }
 
   const { error } = await supabase
@@ -104,7 +104,7 @@ export async function sendTestEmail(apiKey: string, fromEmail: string, targetEma
     .eq('id', user.id)
     .single();
 
-  if (!['superadmin', 'admin'].includes(userRecord?.role)) {
+  if (userRecord?.role !== 'superadmin') {
     throw new Error('Unauthorized');
   }
 
@@ -139,6 +139,16 @@ export async function clearSystemCache() {
 
   if (!user) throw new Error('Unauthorized');
 
+  const { data: userRecord } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (userRecord?.role !== 'superadmin') {
+    throw new Error('Unauthorized');
+  }
+
   // Logic to clear application cache or triggering revalidation
   revalidatePath('/', 'layout');
   
@@ -148,8 +158,28 @@ export async function clearSystemCache() {
 import { COUNTRIES } from '@/lib/constants/countries';
 import { getFlagCode } from '@/lib/utils/flags';
 
+/**
+ * Verify role for data management page actions: superadmin, admin, operations
+ */
+async function verifyDataManagementAccess() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+
+  const { data: userRecord } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (!userRecord || !['superadmin', 'admin', 'operations'].includes(userRecord.role)) {
+    throw new Error('Forbidden: Insufficient permissions');
+  }
+}
+
 // Football Constants Management
 export async function getCountries() {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('countries')
@@ -161,17 +191,19 @@ export async function getCountries() {
 }
 
 export async function addCountry(data: any) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { error } = await supabase
     .from('countries')
     .insert([data]);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }
 
 export async function updateCountry(id: string, data: any) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { error } = await supabase
     .from('countries')
@@ -179,11 +211,12 @@ export async function updateCountry(id: string, data: any) {
     .eq('id', id);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }
 
 export async function deleteCountry(id: string) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { error } = await supabase
     .from('countries')
@@ -191,11 +224,12 @@ export async function deleteCountry(id: string) {
     .eq('id', id);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }
 
 export async function getLeagues() {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('leagues')
@@ -207,17 +241,19 @@ export async function getLeagues() {
 }
 
 export async function addLeague(data: any) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { error } = await supabase
     .from('leagues')
     .insert([data]);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }
 
 export async function updateLeague(id: string, data: any) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { error } = await supabase
     .from('leagues')
@@ -225,11 +261,12 @@ export async function updateLeague(id: string, data: any) {
     .eq('id', id);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }
 
 export async function deleteLeague(id: string) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { error } = await supabase
     .from('leagues')
@@ -237,11 +274,12 @@ export async function deleteLeague(id: string) {
     .eq('id', id);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }
 
 export async function getClubs(leagueId?: string) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   let query = supabase.from('clubs').select('*, leagues(name)');
   
@@ -256,17 +294,19 @@ export async function getClubs(leagueId?: string) {
 }
 
 export async function addClub(data: any) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { error } = await supabase
     .from('clubs')
     .insert([data]);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }
 
 export async function updateClub(id: string, data: any) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { error } = await supabase
     .from('clubs')
@@ -274,11 +314,12 @@ export async function updateClub(id: string, data: any) {
     .eq('id', id);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }
 
 export async function deleteClub(id: string) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { error } = await supabase
     .from('clubs')
@@ -286,11 +327,12 @@ export async function deleteClub(id: string) {
     .eq('id', id);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }
 
 export async function getSeasons() {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('seasons')
@@ -302,17 +344,19 @@ export async function getSeasons() {
 }
 
 export async function addSeason(data: any) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { error } = await supabase
     .from('seasons')
     .insert([data]);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }
 
 export async function updateSeason(id: string, data: any) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { error } = await supabase
     .from('seasons')
@@ -320,11 +364,12 @@ export async function updateSeason(id: string, data: any) {
     .eq('id', id);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }
 
 export async function deleteSeason(id: string) {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   const { error } = await supabase
     .from('seasons')
@@ -332,13 +377,14 @@ export async function deleteSeason(id: string) {
     .eq('id', id);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }
 
 import { FOOTBALL_DATA } from '@/lib/constants/football_data';
 
 export async function seedFootballData() {
+  await verifyDataManagementAccess();
   const supabase = await createClient();
   
   // 1. Seed Countries
@@ -393,6 +439,6 @@ export async function seedFootballData() {
       }, { onConflict: 'name' });
   }
 
-  revalidatePath('/admin/settings/football-data');
+  revalidatePath('/admin/data-management');
   return { success: true };
 }

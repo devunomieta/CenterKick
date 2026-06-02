@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation';
 import { SignOutButton } from '@/components/dashboard/SignOutButton';
 import { NotificationBell } from '@/components/admin/NotificationBell';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { AdminMobileNav } from '@/components/admin/AdminMobileNav';
 import { headers } from 'next/headers';
 
 export default async function AdminLayout({
@@ -34,16 +35,16 @@ export default async function AdminLayout({
     redirect('/login');
   }
 
-    const { data: userRecord } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+  const { data: userRecord } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
 
-    const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
-    if (!userRecord || !adminRoles.includes(userRecord.role)) {
-      redirect('/dashboard');
-    }
+  const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
+  if (!userRecord || !adminRoles.includes(userRecord.role)) {
+    redirect('/dashboard');
+  }
 
   // Fetch Notifications
   const { data: notifications } = await supabase
@@ -74,8 +75,8 @@ export default async function AdminLayout({
 
   return (
     <div className="flex h-screen bg-[#f8f9fa] overflow-hidden">
-      {/* Admin Sidebar */}
-      <aside className="w-72 bg-gray-900 flex flex-col text-gray-300">
+      {/* Admin Sidebar - Desktop Only */}
+      <aside className="hidden lg:flex w-72 bg-gray-900 flex-col text-gray-300 shrink-0">
         <div className="h-20 flex items-center px-8 border-b border-gray-800 bg-black/20">
           <Link href="/admin" className="flex items-center gap-3">
             {adminLogoUrl ? (
@@ -109,20 +110,24 @@ export default async function AdminLayout({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Admin Top Header */}
-        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm relative z-10">
-          <div className="flex items-center gap-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
-            <Shield className="w-4 h-4 text-[#b50a0a]" />
-            <span>Secure Admin Session Active</span>
+        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-6 sm:px-8 shadow-sm relative z-10 shrink-0">
+          <div className="flex items-center gap-4">
+            <AdminMobileNav role={userRecord?.role || 'player'} adminLogoUrl={adminLogoUrl} />
+            
+            <div className="hidden sm:flex items-center gap-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
+              <Shield className="w-4 h-4 text-[#b50a0a]" />
+              <span>Secure Admin Session Active</span>
+            </div>
           </div>
           
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 sm:gap-6">
             <NotificationBell initialNotifications={notifications || []} />
-            <div className="flex items-center gap-3 pl-6 border-l border-gray-100">
-               <div className="text-right">
+            <div className="flex items-center gap-3 pl-4 sm:pl-6 border-l border-gray-100">
+               <div className="text-right hidden md:block">
                   <p className="text-[10px] font-black uppercase text-gray-900">{user?.email}</p>
                   <p className="text-[8px] font-bold text-[#b50a0a] uppercase tracking-[0.2em]">{userRecord?.role || 'Admin'}</p>
                </div>
-               <div className="w-10 h-10 rounded-xl bg-gray-900 border-2 border-gray-800 flex items-center justify-center font-black text-white shadow-lg">
+               <div className="w-10 h-10 rounded-xl bg-gray-900 border-2 border-gray-800 flex items-center justify-center font-black text-white shadow-lg shrink-0">
                   {user?.email?.[0].toUpperCase()}
                </div>
             </div>
@@ -130,7 +135,7 @@ export default async function AdminLayout({
         </header>
 
         {/* Dynamic Page Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-8">
            <div className="max-w-[1400px] mx-auto animate-in fade-in duration-500">
               {children}
            </div>

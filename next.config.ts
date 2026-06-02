@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-// Force reboot dev server for redis config
+// Force reboot dev server to clear Turbopack compile cache
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
@@ -48,3 +48,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+// Cache-bust reboot trigger v3
