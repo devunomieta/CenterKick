@@ -20,9 +20,10 @@ import { useRouter } from 'next/navigation';
 
 interface OrgDetailsClientProps {
   profile: any;
+  members?: any[];
 }
 
-export default function OrgDetailsClient({ profile }: OrgDetailsClientProps) {
+export default function OrgDetailsClient({ profile, members = [] }: OrgDetailsClientProps) {
    const [activeTab, setActiveTab] = useState("Profile");
    const router = useRouter();
 
@@ -83,7 +84,7 @@ export default function OrgDetailsClient({ profile }: OrgDetailsClientProps) {
             <div className="bg-white border-b border-gray-100 shadow-sm sticky top-32 z-40">
                <div className="max-w-[1000px] mx-auto flex items-center justify-between px-4 lg:px-0">
                   <div className="flex overflow-x-auto no-scrollbar py-1">
-                     {["Profile", "Bio", "Achievements"].map((tab) => (
+                     {["Profile", "Members", "Bio", "Achievements"].map((tab) => (
                         <button
                            key={tab}
                            onClick={() => setActiveTab(tab)}
@@ -201,6 +202,48 @@ export default function OrgDetailsClient({ profile }: OrgDetailsClientProps) {
                      </div>
                   </div>
                )}
+
+                {activeTab === "Members" && (
+                   <div className="max-w-[1000px]">
+                      <h2 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-6 pb-2 border-b border-gray-100">
+                         Registered Members & Staff
+                      </h2>
+                      {members.length > 0 ? (
+                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {members.map((member: any) => (
+                               <Link href={`/${member.role === 'player' ? 'athletes' : member.role === 'coach' ? 'coaches' : 'agents'}/${member.slug}`} key={member.id}>
+                                  <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100 hover:border-[#a20000] hover:shadow-xl transition-all group cursor-pointer">
+                                     <div className="flex items-center gap-4">
+                                        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-gray-200">
+                                           {member.avatar_url ? (
+                                              <img src={member.avatar_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                                           ) : (
+                                              <div className="w-full h-full bg-white flex items-center justify-center">
+                                                 <Users2 className="w-6 h-6 text-gray-300" />
+                                              </div>
+                                           )}
+                                        </div>
+                                        <div>
+                                           <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight line-clamp-1 group-hover:text-[#a20000] transition-colors">
+                                              {member.first_name} {member.last_name}
+                                           </h3>
+                                           <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">
+                                              {member.role} • {member.position || member.country || 'Global'}
+                                           </p>
+                                        </div>
+                                     </div>
+                                  </div>
+                               </Link>
+                            ))}
+                         </div>
+                      ) : (
+                         <div className="py-16 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                            <Users2 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">No members linked to this organization yet.</p>
+                         </div>
+                      )}
+                   </div>
+                )}
 
                {activeTab === "Bio" && (
                   <div className="max-w-[700px]">

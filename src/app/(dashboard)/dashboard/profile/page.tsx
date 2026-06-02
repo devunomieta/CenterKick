@@ -28,6 +28,7 @@ export default function ProfileEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState<{type: 'success'|'error', msg: string}|null>(null);
   const [achievements, setAchievements] = useState<any[]>([]);
+  const [portfolioMembers, setPortfolioMembers] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -50,6 +51,14 @@ export default function ProfileEditor() {
         setRole(userRecord?.role || 'player');
         setProfile(profileRecord || {});
         setAchievements(profileRecord?.achievements || []);
+
+        if (userRecord?.role === 'agent' || userRecord?.role === 'organization') {
+          const { data: members } = await supabase
+             .from('profiles')
+             .select('id, first_name, last_name, role, market_value, avatar_url, position, email, user_id')
+             .eq('agent_id', user.id);
+          setPortfolioMembers(members || []);
+        }
       }
       setIsLoading(false);
     }
@@ -92,7 +101,7 @@ export default function ProfileEditor() {
       jersey_number: formData.get('jersey_number') || null,
       height_cm: formData.get('height_cm') || null,
       weight_kg: formData.get('weight_kg') || null,
-      market_value: formData.get('market_value'),
+      ...( ['superadmin', 'admin', 'operations'].includes(role) ? { market_value: formData.get('market_value') } : {} ),
       formation: formData.get('formation'),
       license: formData.get('license'),
       agency_name: formData.get('agency_name'),
@@ -123,6 +132,109 @@ export default function ProfileEditor() {
     
     setIsSaving(false);
   };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsSaving(true);
+    setStatus({ type: 'success', msg: 'Uploading photo...' });
+    
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const fileName = `avatar_${user?.id}_${Date.now()}.webp`;
+    const { data, error } = await supabase.storage.from('site-assets').upload(`avatars/${fileName}`, file, { upsert: true });
+    
+    if (error) {
+      setStatus({ type: 'error', msg: `Upload failed: ${error.message}` });
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from('site-assets').getPublicUrl(`avatars/${fileName}`);
+      setProfile({ ...profile, avatar_url: publicUrl });
+      setStatus({ type: 'success', msg: 'Photo uploaded! Click Save Changes.' });
+    }
+    setIsSaving(false);
+  };
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsSaving(true);
+    setStatus({ type: 'success', msg: 'Uploading video...' });
+    
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const fileName = `video_${user?.id}_${Date.now()}.mp4`;
+    const { data, error } = await supabase.storage.from('site-assets').upload(`videos/${fileName}`, file, { upsert: true });
+    
+    if (error) {
+      setStatus({ type: 'error', msg: `Upload failed: ${error.message}` });
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from('site-assets').getPublicUrl(`videos/${fileName}`);
+      setProfile({ ...profile, highlight_reel_url: publicUrl });
+      setStatus({ type: 'success', msg: 'Video uploaded! Click Save Changes.' });
+    }
+    setIsSaving(false);
+  };
+
+  const handleAddMember = async () => {
+    const email = prompt("Enter the player or coach's exact email address to link them:");
+    if (!email) return;
+
+    setIsSaving(true);
+    setStatus({ type: 'success', msg: 'Linking member...' });
+
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data: targetProfile, error: searchError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('email', email.trim())
+      .single();
+
+    if (searchError || !targetProfile) {
+      setStatus({ type: 'error', msg: 'Could not find a profile with that email.' });
+      setIsSaving(false);
+      return;
+    }
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ agent_id: user?.id })
+      .eq('id', targetProfile.id);
+
+    if (updateError) {
+      setStatus({ type: 'error', msg: `Failed to link: ${updateError.message}` });
+    } else {
+      setStatus({ type: 'success', msg: 'Member successfully linked to your portfolio!' });
+      setPortfolioMembers([...portfolioMembers, targetProfile]);
+    }
+    setIsSaving(false);
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (!confirm("Are you sure you want to unlink this member from your portfolio?")) return;
+    setIsSaving(true);
+    
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('profiles')
+      .update({ agent_id: null })
+      .eq('id', memberId);
+
+    if (error) {
+      setStatus({ type: 'error', msg: `Failed to unlink: ${error.message}` });
+    } else {
+      setStatus({ type: 'success', msg: 'Member successfully unlinked.' });
+      setPortfolioMembers(portfolioMembers.filter((m: any) => m.id !== memberId));
+    }
+    setIsSaving(false);
+  };
+
+  const isAdminOrOps = ['superadmin', 'admin', 'operations'].includes(role);
 
   if (isLoading) return <div className="pt-20 text-center font-black uppercase tracking-widest animate-pulse">Loading Editor...</div>;
 
@@ -179,7 +291,11 @@ export default function ProfileEditor() {
             {activeTab === 'Basic Info' && (
               <div className="space-y-10 animate-in fade-in duration-500">
                 <div className="flex flex-col items-center justify-center md:items-start md:justify-start">
-                   <div className="relative group cursor-pointer">
+                   <input type="file" id="avatar_upload" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
+                   <div 
+                      onClick={() => document.getElementById('avatar_upload')?.click()}
+                      className="relative group cursor-pointer"
+                   >
                       <div className="w-24 h-24 rounded-3xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-900 group-hover:border-[#b50a0a] group-hover:bg-red-50 transition-all overflow-hidden">
                         {profile?.avatar_url ? (
                           <img src={profile.avatar_url} className="w-full h-full object-cover" />
@@ -323,7 +439,15 @@ export default function ProfileEditor() {
                     </div>
                     <div className="space-y-4">
                       <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest ml-1">Market Value ($)</label>
-                      <input name="market_value" type="text" defaultValue={profile?.market_value} placeholder="12,000,000" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none font-mono text-black placeholder:text-gray-900" />
+                      <input 
+                        name="market_value" 
+                        type="text" 
+                        defaultValue={profile?.market_value} 
+                        disabled={!isAdminOrOps}
+                        placeholder="12,000,000" 
+                        className={`w-full ${isAdminOrOps ? 'bg-gray-50' : 'bg-gray-100 cursor-not-allowed opacity-80'} border-none rounded-2xl px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all outline-none font-mono text-black placeholder:text-gray-500`} 
+                      />
+                      {!isAdminOrOps && <p className="text-[9px] text-[#b50a0a] mt-1 font-bold ml-1">Only administrators can update market values.</p>}
                     </div>
                   </div>
                 ) : role === 'coach' ? (
@@ -482,23 +606,33 @@ export default function ProfileEditor() {
                     <textarea name="bio" rows={8} defaultValue={profile?.bio} placeholder="Describe your professional journey, skills, and ambitions..." className="w-full bg-gray-50 border-none rounded-3xl px-8 py-6 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none leading-relaxed text-black placeholder:text-gray-900" />
                   </div>
 
-                  {role === 'agent' && (
+                  {(role === 'agent' || role === 'organization') && (
                     <div className="pt-8 border-t border-gray-50">
                        <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-6">Represented Talent Portfolio</h4>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {[1, 2, 3].map((_, i) => (
-                            <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                               <div className="w-10 h-10 rounded-full bg-gray-200"></div>
-                               <div className="flex-1">
-                                  <p className="text-[11px] font-black uppercase text-gray-900">Player Name {i + 1}</p>
-                                  <p className="text-[9px] font-bold text-gray-900">Position • Market Value</p>
+                          {portfolioMembers.map((member) => (
+                            <div key={member.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                               <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                                  {member.avatar_url && <img src={member.avatar_url} className="w-full h-full object-cover" />}
                                </div>
-                               <button className="text-gray-300 hover:text-[#b50a0a]">
+                               <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] font-black uppercase text-gray-900 truncate">{member.first_name} {member.last_name}</p>
+                                  <p className="text-[9px] font-bold text-gray-900 truncate">{member.position || member.role} {member.market_value ? `• $${member.market_value}` : ''}</p>
+                               </div>
+                               <button 
+                                 type="button" 
+                                 onClick={() => handleRemoveMember(member.id)}
+                                 className="text-gray-300 hover:text-[#b50a0a]"
+                               >
                                   <Trash2 className="w-4 h-4" />
                                </button>
                             </div>
                           ))}
-                          <button className="p-4 border-2 border-dashed border-gray-100 rounded-2xl flex items-center justify-center gap-2 text-gray-300 hover:text-[#b50a0a] transition-all">
+                          <button 
+                            type="button" 
+                            onClick={handleAddMember}
+                            className="p-4 border-2 border-dashed border-gray-100 rounded-2xl flex items-center justify-center gap-2 text-gray-300 hover:text-[#b50a0a] transition-all min-h-[74px]"
+                          >
                              <Plus className="w-4 h-4" />
                           </button>
                        </div>
@@ -514,12 +648,28 @@ export default function ProfileEditor() {
                        <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Video Highlights</h4>
                        <span className="text-[9px] font-bold bg-gray-900 text-white px-2 py-1 rounded">MP4 • max 50MB</span>
                     </div>
-                    <div className="h-64 border-2 border-dashed border-gray-200 rounded-[40px] flex flex-col items-center justify-center text-center p-12 hover:bg-gray-50 hover:border-[#b50a0a] transition-all cursor-pointer group">
-                       <div className="w-16 h-16 rounded-full bg-red-50 text-[#b50a0a] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                          <Camera className="w-8 h-8" />
-                       </div>
-                       <p className="text-xs font-black uppercase tracking-widest text-gray-900 mb-2">Upload Highlight Reel</p>
-                       <p className="text-[10px] font-medium text-gray-900 leading-relaxed max-w-[250px]">Drag and drop your best match clips here or click to browse files.</p>
+                    <input type="file" id="video_upload" className="hidden" accept="video/mp4,video/x-m4v,video/*" onChange={handleVideoUpload} />
+                    <div 
+                      onClick={() => document.getElementById('video_upload')?.click()}
+                      className="h-64 border-2 border-dashed border-gray-200 rounded-[40px] flex flex-col items-center justify-center text-center p-12 hover:bg-gray-50 hover:border-[#b50a0a] transition-all cursor-pointer group relative overflow-hidden"
+                    >
+                       {profile?.highlight_reel_url ? (
+                         <div className="absolute inset-0 w-full h-full">
+                           <video src={profile.highlight_reel_url} className="w-full h-full object-cover" muted loop playsInline onMouseEnter={e => e.currentTarget.play()} onMouseLeave={e => e.currentTarget.pause()} />
+                           <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                             <Camera className="w-8 h-8 text-white mb-2" />
+                             <span className="text-white text-[10px] font-black uppercase tracking-widest">Change Video</span>
+                           </div>
+                         </div>
+                       ) : (
+                         <>
+                           <div className="w-16 h-16 rounded-full bg-red-50 text-[#b50a0a] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                              <Camera className="w-8 h-8" />
+                           </div>
+                           <p className="text-xs font-black uppercase tracking-widest text-gray-900 mb-2">Upload Highlight Reel</p>
+                           <p className="text-[10px] font-medium text-gray-900 leading-relaxed max-w-[250px]">Click to select or drag and drop your best match clips here.</p>
+                         </>
+                       )}
                     </div>
                   </div>
 
