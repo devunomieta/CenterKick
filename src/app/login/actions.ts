@@ -3,7 +3,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { redis } from '@/lib/redis';
 import { sendOtpEmail } from '@/lib/resend';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -77,12 +76,16 @@ export async function signup(formData: FormData) {
   // Generate 6-digit OTP code
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // Save registration data to Redis with a 10-minute expiry
-  const redisKey = `signup:otp:${email}`;
-  try {
-    await redis.set(redisKey, JSON.stringify({ password, otp }), { ex: 600 });
-  } catch (redisError) {
-    console.error('[Redis Error] Failed to save OTP registration data:', redisError);
+  // Save registration data to Database with a 10-minute expiry
+  const adminClient = createAdminClient();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+  const { error: dbError } = await adminClient
+    .from('otp_verifications')
+    .upsert({ email, otp, password, expires_at: expiresAt });
+
+  if (dbError) {
+    console.error('[DB Error] Failed to save OTP registration data:', dbError);
     return { error: 'Temporary storage error. Please try again.' };
   }
 
@@ -100,12 +103,17 @@ export async function signup(formData: FormData) {
 export async function verifyOtp(email: string, token: string) {
   const supabase = await createClient();
 
-  const redisKey = `signup:otp:${email}`;
-  let pendingData: any = null;
-  try {
-    pendingData = await redis.get(redisKey);
-  } catch (redisError) {
-    console.error('[Redis Error] Failed to get OTP registration data:', redisError);
+  const adminClient = createAdminClient();
+
+  const { data: pendingData, error: dbError } = await adminClient
+    .from('otp_verifications')
+    .select('*')
+    .eq('email', email)
+    .gt('expires_at', new Date().toISOString())
+    .maybeSingle();
+
+  if (dbError) {
+    console.error('[DB Error] Failed to get OTP registration data:', dbError);
     return { error: 'Verification system error. Please try again.' };
   }
 
@@ -113,22 +121,11 @@ export async function verifyOtp(email: string, token: string) {
     return { error: 'Verification code has expired or was not requested. Please sign up again.' };
   }
 
-  // Parse if string, otherwise use directly if already parsed by Upstash client
-  if (typeof pendingData === 'string') {
-    try {
-      pendingData = JSON.parse(pendingData);
-    } catch (parseError) {
-      console.error('[JSON Parse Error] Failed to parse pending registration data:', parseError);
-      return { error: 'Verification system error. Please try again.' };
-    }
-  }
-
   if (pendingData.otp !== token.trim()) {
     return { error: 'Invalid verification code.' };
   }
 
   // OTP verified successfully! Let's register and confirm the user in Supabase Auth.
-  const adminClient = createAdminClient();
   let authUser;
 
   const { data: authData, error: createError } = await adminClient.auth.admin.createUser({
@@ -178,12 +175,8 @@ export async function verifyOtp(email: string, token: string) {
     return { error: 'Failed to sign in. Please try logging in manually.' };
   }
 
-  // Clean up Redis key
-  try {
-    await redis.del(redisKey);
-  } catch (redisError) {
-    console.error('[Redis Error] Failed to delete OTP key:', redisError);
-  }
+  // Clean up OTP key
+  await adminClient.from('otp_verifications').delete().eq('email', email);
 
   // After verification, ensure the user is logged in and redirect to onboarding
   revalidatePath('/', 'layout');
@@ -198,34 +191,36 @@ export async function signout() {
 }
 
 export async function resendOtp(email: string) {
-  const cooldownKey = `signup:cooldown:${email}`;
-  const redisKey = `signup:otp:${email}`;
+  const adminClient = createAdminClient();
 
   try {
-    // 1. Rate limiting check (60s cooldown)
-    const cooldownExists = await redis.get(cooldownKey);
-    if (cooldownExists) {
-      return { error: 'Please wait at least 60 seconds before requesting a new code.' };
-    }
+    const { data: pendingData, error: dbError } = await adminClient
+      .from('otp_verifications')
+      .select('*')
+      .eq('email', email)
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle();
 
-    // 2. Fetch original password to preserve during reset
-    let pendingData: any = await redis.get(redisKey);
-    if (!pendingData) {
+    if (dbError || !pendingData) {
       return { error: 'Your signup session has expired. Please sign up again.' };
     }
 
-    if (typeof pendingData === 'string') {
-      pendingData = JSON.parse(pendingData);
+    // 1. Rate limiting check (60s cooldown)
+    const createdTime = new Date(pendingData.created_at).getTime();
+    const nowTime = Date.now();
+    if (nowTime - createdTime < 60000) {
+      return { error: 'Please wait at least 60 seconds before requesting a new code.' };
     }
 
     // 3. Generate new 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-    // 4. Save with fresh 10-minute expiry
-    await redis.set(redisKey, JSON.stringify({ password: pendingData.password, otp }), { ex: 600 });
-
-    // 5. Apply rate limit cooldown key for 60 seconds
-    await redis.set(cooldownKey, '1', { ex: 60 });
+    // 4. Save with fresh 10-minute expiry and update created_at for rate limiting
+    await adminClient
+      .from('otp_verifications')
+      .update({ otp, expires_at: expiresAt, created_at: new Date().toISOString() })
+      .eq('email', email);
 
     // 6. Resend email
     await sendOtpEmail(email, otp);

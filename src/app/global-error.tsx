@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 export const dynamic = "force-dynamic";
 
 export default function GlobalError({
@@ -9,6 +11,18 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    // Log the error to our internal error logging API
+    fetch('/api/logs/error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        error: { message: error.message, stack: error.stack },
+        pageUrl: window.location.href,
+        activityContext: 'Global Error Boundary (Root)',
+      }),
+    }).catch(err => console.error('Failed to log error to backend:', err));
+  }, [error]);
   return (
     <html lang="en">
       <body style={{
