@@ -26,13 +26,13 @@ export default async function Home() {
             .eq('page', '/');
          return data || [];
       }, 1800),
-      getCachedData('home_latest_news_10', async () => {
+      getCachedData('home_latest_news_16', async () => {
          const { data } = await supabase
             .from('cms_posts')
-            .select('*')
+            .select('*, author:users(email), category:blog_categories(name)')
             .eq('is_draft', false)
             .order('published_at', { ascending: false })
-            .limit(10);
+            .limit(16);
          return data || [];
       }, 300),
       getCachedData('home_players_list', async () => {
@@ -93,17 +93,11 @@ export default async function Home() {
             .order('published_at', { ascending: false })
             .limit(5);
 
-         if (error || !data || data.length === 0) {
-            // Fallback to recent posts if no highlights tag found or matches
-            const { data: fallback } = await supabase
-               .from('cms_posts')
-               .select('*')
-               .eq('is_draft', false)
-               .order('published_at', { ascending: false })
-               .limit(5);
-            return fallback || [];
+         if (error) {
+            console.error('Highlights query error:', error);
+            return [];
          }
-         return data;
+         return data || [];
       }, 300)
    ]);
 

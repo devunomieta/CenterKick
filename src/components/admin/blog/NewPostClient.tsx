@@ -144,6 +144,11 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
   const saveOptionsRef = useRef<HTMLDivElement>(null);
   const [currentPostId, setCurrentPostId] = useState<string | null>(post?.id || null);
 
+  const isHighlight = selectedTags.some(tagId => {
+    const tag = availableTags.find(t => t.id === tagId || t.name === tagId);
+    return tag && tag.name.toLowerCase() === 'highlights';
+  });
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -642,11 +647,11 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
 
              <div className="space-y-2">
                 <label className="text-[10px] font-black text-black uppercase tracking-widest ml-1">
-                  Excerpt <span className="text-[#b50a0a] ml-0.5">*</span>
+                  {isHighlight ? 'External Link (YouTube, etc.)' : 'Excerpt'} <span className="text-[#b50a0a] ml-0.5">*</span>
                 </label>
                 <textarea 
-                   rows={3} 
-                   placeholder="Short summary for the index page..."
+                   rows={isHighlight ? 1 : 3} 
+                   placeholder={isHighlight ? "https://www.youtube.com/watch?v=..." : "Short summary for the index page..."}
                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 text-[11px] font-bold focus:ring-4 focus:ring-black/5 transition-all text-black placeholder:text-gray-300 resize-none shadow-sm"
                    value={formData.excerpt}
                    onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
@@ -655,11 +660,12 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
 
              <div className="w-full h-px bg-gray-100/50"></div>
 
-             <div className="space-y-8">
-                <div className="flex items-center justify-between ml-1 leading-none">
-                   <label className="text-[10px] font-black text-black uppercase tracking-widest">Body Content</label>
-                </div>
-                <MenuBar />
+             {!isHighlight && (
+               <div className="space-y-8">
+                  <div className="flex items-center justify-between ml-1 leading-none">
+                     <label className="text-[10px] font-black text-black uppercase tracking-widest">Body Content</label>
+                  </div>
+                  <MenuBar />
                 <div className="relative editor-content-area">
                   {editor && (
                     <BubbleMenu 
@@ -704,6 +710,7 @@ export default function NewPostClient({ categories, tags, post }: NewPostClientP
                   <EditorContent editor={editor} />
                 </div>
              </div>
+             )}
           </div>
 
           <div className="bg-gray-50/30 border-t border-gray-100 p-8 sm:p-12">

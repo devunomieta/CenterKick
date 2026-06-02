@@ -75,13 +75,13 @@ function DesktopCarousel({ items, renderItem }: ProfileCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(baseItems.length);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
-  const [itemsPerView, setItemsPerView] = useState(4.25);
+  const [itemsPerView, setItemsPerView] = useState(3.8);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
-        setItemsPerView(4.25);
+        setItemsPerView(3.8);
       } else if (window.innerWidth >= 640) {
         setItemsPerView(2.5);
       } else {
@@ -170,17 +170,17 @@ export function HomeClient({
 
   // News components separation
   const mainNews = latestNews[0] || null;
-  const stackedNews = latestNews.slice(1, 3);
-  const carouselNews = latestNews.slice(3, 10);
+  const stackedNews = latestNews.slice(1, 6);
+  const carouselNews = latestNews.slice(6, 16);
 
   return (
     <div className="min-h-screen bg-[#fafafa] font-sans text-gray-900 selection:bg-[#b50a0a]/10 selection:text-[#b50a0a]">
       <Navbar content={navContent} settings={siteSettings} />
 
-      <main className="pt-48 sm:pt-56 lg:pt-64 pb-24 overflow-hidden">
+      <main className="pt-24 sm:pt-28 lg:pt-32 pb-24 overflow-hidden">
         
         {/* ==================== A. HERO GRID SECTION ==================== */}
-        <section className="max-w-[1200px] mx-auto px-4 lg:px-0 mb-20">
+        <section className="max-w-[1200px] mx-auto px-4 lg:px-0 mb-12">
           <div className="flex items-center gap-3 mb-6">
             <span className="w-8 h-[2px] bg-[#b50a0a]"></span>
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#b50a0a]">Global Updates</span>
@@ -190,94 +190,75 @@ export function HomeClient({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
               
               {/* Row 1 Col 1: Main News Card (60%) */}
-              <div className="lg:col-span-7">
+              <div className="lg:col-span-7 h-[400px] lg:h-[500px]">
                 <Link 
                   href={`/news/${mainNews.slug}`} 
-                  className="group block w-full rounded-[2.5rem] overflow-hidden shadow-xl border border-gray-100 bg-white hover:shadow-2xl transition-all duration-500"
+                  className="group block relative w-full h-full rounded-[2.5rem] overflow-hidden shadow-2xl"
                 >
-                  <div className="flex flex-col h-full">
-                    {/* Image Area */}
-                    <div className="relative w-full h-[250px] sm:h-[350px] md:h-[400px] lg:h-[480px] overflow-hidden bg-black">
-                      <Image 
-                        src={mainNews.cover_image_url || IMG_HERO_DEFAULT} 
-                        alt={mainNews.title} 
-                        fill
-                        priority
-                        sizes="(max-width:1024px) 100vw, 60vw"
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      <div className="absolute top-6 right-6 z-20">
-                        <span className="bg-[#b50a0a] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
-                          Featured News
-                        </span>
-                      </div>
+                  <img 
+                    src={mainNews.cover_image_url || IMG_HERO_DEFAULT} 
+                    alt={mainNews.title} 
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90 group-hover:opacity-100 transition-opacity" />
+                  
+                  <div className="absolute top-6 left-6 z-20 flex gap-2">
+                    <span className="bg-[#b50a0a] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+                      Featured News
+                    </span>
+                    {mainNews.category && (
+                      <span className="bg-white/20 backdrop-blur-md border border-white/30 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+                        {(mainNews.category as any)?.name || 'Update'}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="absolute bottom-0 left-0 w-full p-8 lg:p-10 z-20 flex flex-col justify-end">
+                    <div className="flex items-center gap-3 mb-3">
+                      <DateDisplay date={mainNews.published_at} className="text-[#ff4d4d] text-[10px] font-black uppercase tracking-widest" />
+                      <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest">•</span>
+                      <span className="text-white/80 text-[10px] font-black uppercase tracking-widest">
+                        {(mainNews.author as any)?.email ? (mainNews.author as any).email.split('@')[0] : 'CenterKick Editor'}
+                      </span>
                     </div>
-                    {/* Text Area */}
-                    <div className="p-6 sm:p-8 lg:p-10 flex flex-col justify-between bg-white text-left flex-1">
-                      <div className="flex flex-col">
-                        <DateDisplay date={mainNews.published_at} className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-3 block" />
-                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 leading-tight mb-4 tracking-tighter uppercase italic group-hover:text-[#b50a0a] transition-colors">
-                          {mainNews.title}
-                        </h2>
-                        <p className="text-gray-600 text-sm font-medium leading-relaxed line-clamp-4 lg:line-clamp-6">
-                          {mainNews.excerpt}
-                        </p>
-                      </div>
-                      <div className="mt-6 flex items-center gap-2 text-xs font-black text-[#b50a0a] uppercase tracking-widest group-hover:translate-x-2 transition-transform duration-300">
-                        Read Full Story <ArrowRight className="w-4 h-4" />
-                      </div>
-                    </div>
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-[1.1] mb-4 tracking-tighter uppercase italic group-hover:text-[#ff4d4d] transition-colors line-clamp-3">
+                      {mainNews.title}
+                    </h2>
+                    <p className="text-white/80 text-sm font-medium leading-relaxed line-clamp-2 max-w-2xl">
+                      {mainNews.excerpt}
+                    </p>
                   </div>
                 </Link>
               </div>
 
-              {/* Row 1 Col 2: Stacked news cards (40%) */}
-              <div className="lg:col-span-5 flex flex-col justify-between gap-6">
-                {stackedNews.map((news) => (
-                  <Link 
-                    key={news.id} 
-                    href={`/news/${news.slug}`} 
-                    className="group flex flex-col bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100/80 hover:shadow-md hover:border-gray-200 transition-all duration-300 flex-1"
-                  >
-                    {/* Image Area */}
-                    <div className="relative w-full h-[200px] sm:h-[280px] lg:h-[200px] overflow-hidden bg-black shrink-0">
-                      <Image 
-                        src={news.cover_image_url || IMG_NEWS_DEFAULT} 
-                        alt={news.title} 
-                        fill
-                        sizes="(max-width:1024px) 100vw, 20vw"
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      <div className="absolute top-4 right-4 z-20">
-                        <span className="bg-[#b50a0a] text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full shadow-md">
-                          Hot Story
-                        </span>
-                      </div>
-                    </div>
-                    {/* Text Area */}
-                    <div className="p-6 flex-1 flex flex-col justify-between text-left">
-                      <div>
-                        <DateDisplay date={news.published_at} className="text-gray-400 text-[8px] font-bold uppercase tracking-widest mb-2 block" />
-                        <h3 className="text-sm sm:text-base font-black text-gray-900 leading-snug tracking-tight uppercase line-clamp-3 group-hover:text-[#b50a0a] transition-colors">
-                          {news.title}
-                        </h3>
-                        {news.excerpt && (
-                          <p className="text-gray-500 text-xs mt-2 line-clamp-2 font-medium">
-                            {news.excerpt}
-                          </p>
-                        )}
-                      </div>
-                      <div className="mt-4 flex items-center gap-1.5 text-[9px] font-black text-[#b50a0a] uppercase tracking-widest group-hover:translate-x-1.5 transition-transform duration-300">
-                        Read Story <ArrowRight className="w-3.5 h-3.5" />
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-                {stackedNews.length === 0 && (
-                  <div className="h-full flex items-center justify-center bg-gray-50 border border-dashed border-gray-200 rounded-[2rem] p-8 text-center">
-                    <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">No extra stacked stories available.</p>
+              {/* Row 1 Col 2: Stacked news lists (40%) */}
+              <div className="lg:col-span-5 h-[400px] lg:h-[500px]">
+                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl p-8 flex flex-col h-full justify-between">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-[#b50a0a] flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-[#b50a0a]" /> Trending Stories
+                    </h3>
                   </div>
-                )}
+                  
+                  <div className="flex flex-col flex-1 justify-center gap-4 lg:gap-6">
+                    {stackedNews.map((news) => (
+                      <Link 
+                        key={news.id} 
+                        href={`/news/${news.slug}`} 
+                        className="group block pl-5 py-2 border-l border-[#b50a0a] hover:pl-6 transition-all duration-300"
+                      >
+                        <h4 className="text-sm lg:text-base font-black text-gray-900 leading-snug tracking-tight uppercase group-hover:text-[#b50a0a] transition-colors line-clamp-2">
+                          {news.title}
+                        </h4>
+                      </Link>
+                    ))}
+                    {stackedNews.length === 0 && (
+                      <div className="py-10 text-center">
+                        <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">No stories available.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
             </div>
@@ -289,22 +270,26 @@ export function HomeClient({
             </div>
           )}
 
-          {/* Row 2: More stories (carousel on desktop/tablet, vertical stack on mobile) */}
-          {carouselNews.length > 0 && (
-            <div className="mt-16">
-              <h4 className="text-xs font-black tracking-widest uppercase text-gray-400 mb-6 text-left">More Recent Stories</h4>
-              
-              {/* Desktop/Tablet Carousel */}
-              <div className="hidden sm:block">
-                <ProfileCarousel 
-                  items={carouselNews}
+        </section>
+
+        {/* Row 2: More stories (carousel on desktop/tablet, vertical stack on mobile) */}
+        {carouselNews.length > 0 && (
+          <section className="mt-12 mb-20 w-full overflow-hidden">
+            <div className="max-w-[1200px] mx-auto px-4 lg:px-0 mb-6">
+              <h4 className="text-xs font-black tracking-widest uppercase text-gray-400 text-left">More Recent Stories</h4>
+            </div>
+            
+            {/* Desktop/Tablet Carousel */}
+            <div className="hidden md:block px-4">
+              <ProfileCarousel 
+                items={carouselNews}
                   renderItem={(news) => (
                     <Link 
                       href={`/news/${news.slug}`} 
                       className="group flex flex-col bg-white rounded-[1.8rem] overflow-hidden border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300 h-full"
                     >
                       {/* Image Area */}
-                      <div className="relative w-full h-44 overflow-hidden bg-black shrink-0">
+                      <div className="relative w-full aspect-[16/9] overflow-hidden bg-black shrink-0">
                         <Image 
                           src={news.cover_image_url || IMG_NEWS_DEFAULT} 
                           alt={news.title} 
@@ -326,7 +311,7 @@ export function HomeClient({
               </div>
 
               {/* Mobile Vertical Stack */}
-              <div className="flex flex-col gap-6 sm:hidden">
+              <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-[1200px] mx-auto px-4 lg:px-0">
                 {carouselNews.map((news) => (
                   <Link 
                     key={news.id}
@@ -334,7 +319,7 @@ export function HomeClient({
                     className="group flex flex-col bg-white rounded-[1.8rem] overflow-hidden border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300"
                   >
                     {/* Image Area */}
-                    <div className="relative w-full h-48 overflow-hidden bg-black shrink-0">
+                    <div className="relative w-full aspect-[16/9] overflow-hidden bg-black shrink-0">
                       <Image 
                         src={news.cover_image_url || IMG_NEWS_DEFAULT} 
                         alt={news.title} 
@@ -353,9 +338,8 @@ export function HomeClient({
                   </Link>
                 ))}
               </div>
-            </div>
-          )}
-        </section>
+          </section>
+        )}
 
 
         {/* ==================== B. PLAYER PROFILES SECTION ==================== */}
@@ -701,7 +685,9 @@ export function HomeClient({
               Featured <span className="text-[#b50a0a]">Highlights</span>
             </h2>
             <Link 
-              href="/news" 
+              href="https://www.youtube.com/@CenterKick" 
+              target="_blank"
+              rel="noopener noreferrer"
               className="group/link inline-flex items-center gap-2 text-xs font-black text-[#b50a0a] uppercase tracking-widest hover:text-black transition-colors"
             >
               Browse All Reels <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1.5 transition-transform" />
@@ -711,7 +697,9 @@ export function HomeClient({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {highlights.map((post) => (
               <Link 
-                href={`/news/${post.slug}`} 
+                href={post.excerpt || '#'} 
+                target="_blank"
+                rel="noopener noreferrer"
                 key={post.id} 
                 className="group relative rounded-2xl overflow-hidden aspect-video sm:aspect-[4/5] bg-black border border-gray-100 shadow-md block"
               >
