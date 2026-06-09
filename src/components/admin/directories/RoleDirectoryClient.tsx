@@ -130,7 +130,7 @@ export function RoleDirectoryClient({
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2 text-gray-900">
                       <MapPin className="w-3.5 h-3.5 text-[#b50a0a]" />
-                      <span className="text-[11px] font-black uppercase tracking-tight">{item.nationality || 'Unspecified'}</span>
+                      <span className="text-[11px] font-black uppercase tracking-tight">{item.country || item.nationality || 'Unspecified'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-400">
                       <Building2 className="w-3.5 h-3.5" />

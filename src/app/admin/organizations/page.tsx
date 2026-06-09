@@ -9,7 +9,7 @@ export default async function AdminOrganizationsPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const supabase = await createClient();
-  const resolvedParams = await searchParams;
+  const resolvedParams = (await searchParams) || {};
 
   const tab = (resolvedParams.tab as string) || 'all';
   const page = parseInt((resolvedParams.page as string) || '1');
@@ -40,7 +40,7 @@ export default async function AdminOrganizationsPage({
 
   if (tab === 'pending') query = query.eq('status', 'pending');
   if (tab === 'active') query = query.eq('status', 'active');
-  if (q) query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%,agency.ilike.%${q}%`);
+  if (q) query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%,agency_name.ilike.%${q}%`);
 
   const { data: orgs, count: filteredTotal } = await query;
 

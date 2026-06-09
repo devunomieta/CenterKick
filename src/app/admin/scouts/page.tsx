@@ -9,7 +9,7 @@ export default async function AdminScoutsPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const supabase = await createClient();
-  const resolvedParams = await searchParams;
+  const resolvedParams = (await searchParams) || {};
 
   const tab = (resolvedParams.tab as string) || 'all';
   const page = parseInt((resolvedParams.page as string) || '1');

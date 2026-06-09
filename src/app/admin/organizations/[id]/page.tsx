@@ -55,7 +55,7 @@ export default async function OrganizationPage({ params }: OrganizationPageProps
                 </span>
                 <span className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest">
                   <MapPin className="w-3.5 h-3.5" />
-                  {org.nationality || 'Unspecified Location'}
+                  {org.country || org.nationality || 'Unspecified Location'}
                 </span>
                 <span className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest">
                   <Calendar className="w-3.5 h-3.5" />
