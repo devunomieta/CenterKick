@@ -122,7 +122,7 @@ export default async function AdminLayout({
                   <p className="text-[8px] font-bold text-[#b50a0a] uppercase tracking-[0.2em]">{userRecord?.role || 'Admin'}</p>
                </div>
                <div className="w-10 h-10 rounded-xl bg-gray-900 border-2 border-gray-800 flex items-center justify-center font-black text-white shadow-lg shrink-0">
-                  {user?.email?.[0].toUpperCase()}
+                  {user?.email?.[0]?.toUpperCase() || 'U'}
                </div>
             </div>
           </div>

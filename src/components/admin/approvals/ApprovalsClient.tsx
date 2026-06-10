@@ -384,7 +384,7 @@ export function ApprovalsClient({
                     <div key={reg.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50/50 transition-colors">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-gray-900 flex items-center justify-center font-black text-white text-sm shrink-0">
-                          {reg.first_name[0].toUpperCase()}
+                          {((reg.first_name && reg.first_name[0]) || 'R').toUpperCase()}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
@@ -524,7 +524,7 @@ export function ApprovalsClient({
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-black text-gray-600 text-xs shrink-0 border border-gray-200">
-                          {edit.profiles?.first_name[0].toUpperCase()}
+                          {((edit.profiles?.first_name && edit.profiles.first_name[0]) || 'E').toUpperCase()}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
@@ -623,7 +623,7 @@ export function ApprovalsClient({
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-2xl bg-gray-900 flex items-center justify-center font-black text-white text-sm shrink-0 shadow-lg shadow-gray-200/50">
-                            {(prospect.first_name || 'U')[0].toUpperCase()}
+                            {((prospect.first_name && prospect.first_name[0]) || 'U').toUpperCase()}
                           </div>
                           <div>
                             <div className="flex items-center gap-2 mb-0.5">
@@ -883,7 +883,7 @@ export function ApprovalsClient({
                   {inspectRegistration.avatar_url ? (
                     <img src={inspectRegistration.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    inspectRegistration.first_name[0].toUpperCase()
+                    ((inspectRegistration.first_name && inspectRegistration.first_name[0]) || 'R').toUpperCase()
                   )}
                 </div>
                 <div>
@@ -1203,7 +1203,7 @@ export function ApprovalsClient({
             <div className="p-10 pb-6">
               <div className="flex items-center gap-6 mb-10">
                 <div className="w-20 h-20 rounded-3xl bg-[#0f172a] flex items-center justify-center font-black text-white text-2xl shadow-xl">
-                  {selectedProspect.first_name[0].toUpperCase()}
+                  {((selectedProspect.first_name && selectedProspect.first_name[0]) || 'P').toUpperCase()}
                 </div>
                 <div>
                   <h2 className="text-3xl font-black italic uppercase tracking-tighter leading-none mb-2">{selectedProspect.first_name} {selectedProspect.last_name}</h2>

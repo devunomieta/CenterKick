@@ -210,7 +210,7 @@ export function AgentsClient({
                     <td className="px-6 py-4">
                        <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-gray-900 flex items-center justify-center font-black text-white text-xs shrink-0">
-                             {agent.email?.[0].toUpperCase()}
+                             {agent.email?.[0]?.toUpperCase() || 'A'}
                           </div>
                           <div className="min-w-0">
                              <p className="font-black text-gray-900 leading-none truncate text-[11px] mb-1">{agent.first_name} {agent.last_name}</p>

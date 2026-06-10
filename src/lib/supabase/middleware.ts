@@ -74,17 +74,21 @@ export async function updateSession(request: NextRequest) {
     let profileStatus: string | null = null;
     let isActive = true;
 
-    const { data: userRecord } = await supabase
-      .from('users')
-      .select('is_active')
-      .eq('id', user.id)
-      .single();
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('status, verification_requested')
-      .eq('user_id', user.id)
-      .single();
+    const [
+      { data: userRecord },
+      { data: profile }
+    ] = await Promise.all([
+      supabase
+        .from('users')
+        .select('is_active')
+        .eq('id', user.id)
+        .single(),
+      supabase
+        .from('profiles')
+        .select('status, verification_requested')
+        .eq('user_id', user.id)
+        .single()
+    ]);
 
     isActive = userRecord?.is_active ?? true;
     profileStatus = profile?.status ?? null;

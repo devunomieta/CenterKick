@@ -193,7 +193,7 @@ export function RolesClient({
                       <div key={user.id} className="bg-white p-6 rounded-3xl shadow-sm border border-red-100/50 flex items-center justify-between group hover:shadow-md transition-all">
                          <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center font-black text-gray-400 text-sm border border-gray-100 italic">
-                               {user.email?.[0].toUpperCase()}
+                               {user.email?.[0]?.toUpperCase() || 'U'}
                             </div>
                             <div>
                                <p className="font-bold text-gray-900 text-xs">{user.profiles?.first_name} {user.profiles?.last_name}</p>
@@ -246,7 +246,7 @@ export function RolesClient({
                        <td className="px-4 py-4">
                           <div className="flex items-center gap-4">
                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-sm shadow-xl transition-transform group-hover:scale-105 ${admin.is_active ? 'bg-gray-900' : 'bg-gray-300'}`}>
-                                {admin.email?.[0].toUpperCase()}
+                                {admin.email?.[0]?.toUpperCase() || 'A'}
                              </div>
                              <div>
                                 <p className={`font-black text-sm uppercase tracking-tight ${admin.is_active ? 'text-gray-900' : 'text-gray-400 line-through'}`}>
@@ -476,7 +476,7 @@ export function RolesClient({
 
               <div className="flex flex-col items-center mb-10">
                  <div className="w-24 h-24 rounded-[2rem] bg-gray-900 flex items-center justify-center text-white text-3xl font-black mb-6 shadow-2xl italic tracking-tighter">
-                    {selectedUser.email?.[0].toUpperCase()}
+                    {selectedUser.email?.[0]?.toUpperCase() || 'U'}
                  </div>
                  <h3 className="text-3xl font-black text-gray-900 uppercase tracking-tighter italic">
                     {selectedUser.profiles?.first_name} <span className="text-[#b50a0a]">{selectedUser.profiles?.last_name}</span>

@@ -37,7 +37,7 @@ export function DashboardHeader({ role, email, sidebarLogoUrl, brandName }: Dash
               <p className="text-[10px] font-bold text-[#b50a0a] uppercase tracking-widest">{role}</p>
             </div>
             <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center font-bold text-white shadow-lg text-xs">
-              {email?.[0].toUpperCase() || 'U'}
+              {email?.[0]?.toUpperCase() || 'U'}
             </div>
           </div>
         </div>
