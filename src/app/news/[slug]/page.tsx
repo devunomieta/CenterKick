@@ -5,9 +5,8 @@ import { Calendar as CalendarIcon, User, Tag, Share2, ArrowLeft, ChevronRight, N
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Metadata, ResolvingMetadata } from 'next';
-import parse, { Element, HTMLReactParserOptions } from 'html-react-parser';
-import { Tweet } from 'react-tweet';
-import { InstagramEmbed, YouTubeEmbed, TikTokEmbed, FacebookEmbed } from 'react-social-media-embed';
+import { NewsContentClient } from './NewsContentClient';
+
 interface Props {
    params: Promise<{ slug: string }>;
 }
@@ -156,43 +155,7 @@ export default async function PostPage({ params }: Props) {
                )}
 
                {/* Article Content */}
-               <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:italic prose-headings:tracking-tighter prose-a:text-[#b50a0a] prose-strong:text-gray-900 prose-img:rounded-3xl prose-blockquote:border-[#b50a0a] prose-blockquote:bg-red-50/50 prose-blockquote:p-8 prose-blockquote:rounded-3xl prose-blockquote:italic">
-                  {parse(renderContentWithCaptions(post.content), {
-                     replace: (domNode) => {
-                        if (domNode instanceof Element && domNode.name === 'a' && domNode.attribs && domNode.attribs.href) {
-                           const url = domNode.attribs.href;
-                           
-                           // If the anchor text is exactly the URL, it's likely a raw embed link
-                           const isRawLink = domNode.children && domNode.children.length === 1 && domNode.children[0].type === 'text' && domNode.children[0].data === url;
-
-                           if (isRawLink || domNode.attribs['data-link-preview']) {
-                              if (url.includes('twitter.com') || url.includes('x.com')) {
-                                 const match = url.match(/(?:twitter\.com|x\.com)\/(?:#!\/)?(\w+)\/status(es)?\/(\d+)/);
-                                 if (match && match[3]) {
-                                    return <div className="my-10 flex justify-center w-full max-w-2xl mx-auto"><Tweet id={match[3]} /></div>;
-                                 }
-                              }
-                              
-                              if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                                 return <div className="my-10 flex justify-center w-full max-w-3xl mx-auto overflow-hidden rounded-3xl"><YouTubeEmbed url={url} width="100%" /></div>;
-                              }
-                              
-                              if (url.includes('instagram.com')) {
-                                 return <div className="my-10 flex justify-center w-full max-w-md mx-auto"><InstagramEmbed url={url} width="100%" /></div>;
-                              }
-                              
-                              if (url.includes('tiktok.com')) {
-                                 return <div className="my-10 flex justify-center w-full max-w-sm mx-auto"><TikTokEmbed url={url} width="100%" /></div>;
-                              }
-                              
-                              if (url.includes('facebook.com')) {
-                                 return <div className="my-10 flex justify-center w-full max-w-lg mx-auto"><FacebookEmbed url={url} width="100%" /></div>;
-                              }
-                           }
-                        }
-                     }
-                  })}
-               </div>
+               <NewsContentClient content={post.content} />
 
                {/* Tags */}
                {post.post_tags && post.post_tags.length > 0 && (
@@ -243,21 +206,4 @@ export default async function PostPage({ params }: Props) {
          <Footer />
       </div>
    );
-}
-
-function renderContentWithCaptions(content: string): string {
-  if (!content) return '';
-  return content.replace(/<img([^>]+)>/g, (match, attributes) => {
-    const altMatch = attributes.match(/alt="([^"]*)"/) || attributes.match(/alt='([^']*)'/);
-    const titleMatch = attributes.match(/title="([^"]*)"/) || attributes.match(/title='([^']*)'/);
-    const caption = (altMatch && altMatch[1]) || (titleMatch && titleMatch[1]);
-    
-    if (caption && caption.trim() !== '') {
-      return `<figure class="blog-figure my-8 flex flex-col items-center">
-        <img ${attributes}>
-        <figcaption class="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest mt-3 italic font-sans bg-gray-50 px-4 py-1.5 rounded-full border border-gray-100/50">${caption}</figcaption>
-      </figure>`;
-    }
-    return match;
-  });
 }
