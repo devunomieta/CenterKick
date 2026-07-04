@@ -5,21 +5,21 @@ import Link from 'next/link';
 import { useState, useMemo } from 'react';
 
 interface PlayersClientProps {
-   athletes: any[];
+   players: any[];
 }
 
-export default function PlayersClient({ athletes }: PlayersClientProps) {
+export default function PlayersClient({ players }: PlayersClientProps) {
    const [searchQuery, setSearchQuery] = useState('');
    const [selectedCountry, setSelectedCountry] = useState('');
 
    const availableCountries = useMemo(() => {
       const set = new Set<string>();
-      athletes.forEach(a => { if (a.country) set.add(a.country.trim()); });
+      players.forEach(a => { if (a.country) set.add(a.country.trim()); });
       return Array.from(set).sort();
-   }, [athletes]);
+   }, [players]);
 
    const filtered = useMemo(() => {
-      return athletes.filter(a => {
+      return players.filter(a => {
          if (searchQuery) {
             const q = searchQuery.toLowerCase();
             const name = `${a.first_name||''} ${a.last_name||''} ${a.full_name||''}`.toLowerCase();
@@ -28,7 +28,7 @@ export default function PlayersClient({ athletes }: PlayersClientProps) {
          if (selectedCountry && a.country !== selectedCountry) return false;
          return true;
       });
-   }, [athletes, searchQuery, selectedCountry]);
+   }, [players, searchQuery, selectedCountry]);
 
    return (
       <div className="max-w-[1200px] mx-auto px-4 lg:px-0 py-10 sm:py-16">
