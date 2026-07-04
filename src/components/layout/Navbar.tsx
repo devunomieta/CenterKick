@@ -149,7 +149,7 @@ export function Navbar({ content, settings }: { content?: Record<string, unknown
 
   return (
     <>
-      <nav className={`fixed z-50 left-0 right-0 mx-auto transition-all duration-500 ease-out backdrop-blur-xl ${
+      <nav suppressHydrationWarning className={`fixed z-50 left-0 right-0 mx-auto transition-all duration-500 ease-out backdrop-blur-xl ${
         isScrolled 
           ? 'top-3 lg:top-4 w-[calc(100%-1.5rem)] lg:w-[calc(100%-2rem)] max-w-[1300px] bg-white/95 border border-gray-200/50 shadow-2xl py-1.5 lg:py-2 rounded-full' 
           : 'top-0 w-full bg-white lg:bg-white/95 border-b border-gray-100 shadow-sm py-3 lg:py-3.5 rounded-none'

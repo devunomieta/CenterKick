@@ -2,12 +2,12 @@
 
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { 
-   Briefcase, 
-   Lightbulb, 
-   ShieldCheck, 
-   Eye, 
-   Star, 
+import {
+   Briefcase,
+   Lightbulb,
+   ShieldCheck,
+   Eye,
+   Star,
    UserCircle,
    ArrowRight
 } from "lucide-react";
@@ -34,10 +34,10 @@ const services = [
 ];
 
 interface AboutClientProps {
-  layout: string[];
-  content: Record<string, any>;
-  navContent?: any;
-  footerContent?: any;
+   layout: string[];
+   content: Record<string, any>;
+   navContent?: any;
+   footerContent?: any;
 }
 
 export function AboutClient({ layout, content, navContent, footerContent }: AboutClientProps) {
@@ -46,77 +46,92 @@ export function AboutClient({ layout, content, navContent, footerContent }: Abou
          case 'hero':
             const hero = content.hero || { subtitle: "Who We Are", title: "About Us", description: "A modern football media platform." };
             return (
-               <div key={key} className="relative w-full h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
+               <div key={key} className="relative w-full h-[450px] lg:h-[500px] flex items-center justify-center overflow-hidden">
                   <div className="absolute inset-0 z-0 bg-[#050505]">
-                     <img src={heroImage} className="w-full h-full object-cover scale-105 opacity-60" alt="Stadium" />
-                     <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/90 via-[#050505]/60 to-white mix-blend-multiply"></div>
+                     <img src={heroImage} className="w-full h-full object-cover opacity-60" alt="Stadium" />
+                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
                   </div>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center z-0 overflow-hidden pointer-events-none">
-                     <h1 className="text-[15vw] font-black uppercase tracking-tighter text-transparent stroke-text opacity-10 leading-none">CENTERKICK</h1>
+                     <h1 className="text-[15vw] font-black uppercase tracking-tighter text-transparent stroke-text opacity-10 leading-none">ABOUT US</h1>
                   </div>
-                  <div className="relative z-10 max-w-[1200px] mx-auto px-4 lg:px-0 text-center mt-20">
-                     <div className="inline-flex items-center gap-3 bg-white/5 backdrop-blur-md border border-white/20 rounded-full px-5 py-2 mb-8 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
-                        <span className="w-2 h-2 rounded-full bg-[#ff3333] animate-pulse"></span>
-                        <span className="text-white font-bold text-xs uppercase tracking-widest">{hero.subtitle}</span>
+                  <div className="relative z-10 w-full max-w-[1000px] mx-auto px-6 text-center flex flex-col justify-center h-full">
+                     <div className="flex justify-center mb-8">
+                        <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-5 py-2 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+                           <span className="w-2 h-2 rounded-full bg-[#ff3333] animate-pulse"></span>
+                           <span className="text-white font-bold text-xs uppercase tracking-widest">{hero.subtitle}</span>
+                        </div>
                      </div>
-                     <h2 className="text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-8 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                     <h2 className="text-6xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-8 drop-shadow-xl">
                         {hero.title?.split(' ').map((word: string, i: number) => (
                            <span key={i} className={word === 'Us' ? 'text-[#ff4d4d]' : ''}>{word} </span>
                         ))}
                      </h2>
-                     <p className="text-gray-200 text-lg md:text-xl leading-relaxed max-w-[700px] mx-auto font-medium drop-shadow-md">{hero.description}</p>
-                  </div>
-                  <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-white via-white/80 to-transparent z-10"></div>
-               </div>
-            );
-         case 'mission':
-            const mission = content.mission || { title: "Empowering Talent", description: "To empower footballers at all levels." };
-            return (
-               <div key={key} className="max-w-[1200px] mx-auto px-4 lg:px-0 py-16 border-t border-gray-100">
-                  <div className="flex flex-col lg:flex-row items-center gap-16">
-                     <div className="w-full lg:w-1/2">
-                        <div className="relative rounded-[2rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] aspect-[4/3] group">
-                           <div className="absolute inset-0 bg-[#b50a0a]/10 mix-blend-overlay z-10 transition-opacity duration-500"></div>
-                           <img src={missionImage} alt="Our Mission" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                        </div>
-                     </div>
-                     <div className="w-full lg:w-1/2">
-                        <div className="inline-flex items-center gap-3 mb-6">
-                           <span className="w-10 h-1 bg-[#b50a0a]"></span>
-                           <h3 className="text-sm font-black text-[#b50a0a] tracking-[0.2em] uppercase">Our Mission</h3>
-                        </div>
-                        <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight mb-8">{mission.title}</h2>
-                        <p className="text-gray-600 text-xl leading-relaxed font-medium">{mission.description}</p>
-                     </div>
+                     <p className="text-gray-200 text-lg md:text-xl lg:text-2xl leading-relaxed max-w-[800px] mx-auto font-medium drop-shadow-md text-justify sm:text-center text-center-last">
+                        {hero.description}
+                     </p>
                   </div>
                </div>
             );
-         case 'vision':
-            const vision = content.vision || { title: "Leading Agency", description: "To become the leading Sports Marketing Agency." };
+         case 'intro':
+            const intro = content.intro || { description: "CenterKick is a football media, sports marketing, and player visibility platform dedicated to helping football talent gain recognition, exposure, and opportunities. We combine football storytelling, digital media, player profiling, scouting visibility, and transfer-focused content to connect players, clubs, scouts, agents, coaches, and football stakeholders across Africa and beyond. Our platform serves as a bridge between talent and opportunity, creating an ecosystem where players can showcase their abilities, build their football identity, and increase their chances of being discovered." };
             return (
-               <div key={key} className="max-w-[1200px] mx-auto px-4 lg:px-0 py-16">
-                  <div className="flex flex-col lg:flex-row-reverse items-center gap-16">
-                     <div className="w-full lg:w-1/2">
-                        <div className="relative rounded-[2rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.08)] aspect-[4/3] group">
-                           <div className="absolute inset-0 bg-[#16a34a]/10 mix-blend-overlay z-10 transition-opacity duration-500"></div>
-                           <img src={visionImage} alt="Our Vision" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+               <div key={key} className="w-full bg-white py-16 md:py-24 px-4 sm:px-6 relative">
+                  <div className="max-w-[1100px] mx-auto bg-white rounded-[3rem] p-10 md:p-16 lg:p-20 border border-gray-100 shadow-2xl shadow-gray-200/50 relative overflow-hidden">
+                     <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#b50a0a]/5 to-transparent rounded-bl-full pointer-events-none"></div>
+                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-[#b50a0a]/5 to-transparent rounded-tr-full pointer-events-none"></div>
+                     
+                     <div className="relative z-10 flex flex-col items-center text-center">
+                        <div className="w-16 h-1.5 bg-[#b50a0a] mb-8 rounded-full"></div>
+                        <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-gray-900 leading-tight md:leading-snug tracking-tight mb-8">
+                           {intro.description.split('. ')[0]}.
+                        </h3>
+                        <p className="text-lg md:text-xl leading-relaxed text-gray-600 font-medium max-w-[800px]">
+                           {intro.description.substring(intro.description.indexOf('.') + 1).trim()}
+                        </p>
+                     </div>
+                  </div>
+               </div>
+            );
+         case 'mission-vision':
+            const missionTitle = content.mission?.title || "Empowering Talent Through Visibility";
+            const missionDesc = content.mission?.description || "To empower footballers at all levels by providing the tools, media exposure, and opportunities needed to showcase their talent and advance their careers. We believe that talent deserves visibility, and visibility creates opportunities.";
+            const visionTitle = content.vision?.title || "Building Africa's Leading Football Visibility Ecosystem";
+            const visionDesc = content.vision?.description || "To become Africa's leading football media, sports marketing, player visibility, and talent promotion platform by connecting football stakeholders through innovation, storytelling, and technology.";
+            return (
+               <div key={key} className="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                     {/* Mission */}
+                     <div className="group rounded-[2.5rem] p-8 md:p-12 bg-white border border-gray-100 shadow-xl shadow-gray-200/40 hover:shadow-2xl hover:shadow-[#b50a0a]/10 hover:border-[#b50a0a]/20 transition-all duration-500 relative overflow-hidden flex flex-col justify-center">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#b50a0a]/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+                        <div className="relative z-10">
+                           <div className="inline-flex items-center gap-3 mb-6 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+                              <span className="w-2 h-2 rounded-full bg-[#b50a0a] animate-pulse"></span>
+                              <h3 className="text-xs font-black text-[#b50a0a] tracking-[0.2em] uppercase">Our Mission</h3>
+                           </div>
+                           <h2 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-6 tracking-tight group-hover:text-[#b50a0a] transition-colors duration-300">{missionTitle}</h2>
+                           <p className="text-gray-600 text-lg leading-relaxed font-medium">{missionDesc}</p>
                         </div>
                      </div>
-                     <div className="w-full lg:w-1/2">
-                        <div className="inline-flex items-center gap-3 mb-6">
-                           <span className="w-10 h-1 bg-gray-800"></span>
-                           <h3 className="text-sm font-black text-gray-800 tracking-[0.2em] uppercase">Our Vision</h3>
+                     {/* Vision */}
+                     <div className="group rounded-[2.5rem] p-8 md:p-12 bg-white border border-gray-100 shadow-xl shadow-gray-200/40 hover:shadow-2xl hover:shadow-green-600/10 hover:border-green-600/20 transition-all duration-500 relative overflow-hidden flex flex-col justify-center">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-green-600/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+                        <div className="relative z-10">
+                           <div className="inline-flex items-center gap-3 mb-6 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+                              <span className="w-2 h-2 rounded-full bg-green-600 animate-pulse"></span>
+                              <h3 className="text-xs font-black text-green-600 tracking-[0.2em] uppercase">Our Vision</h3>
+                           </div>
+                           <h2 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-6 tracking-tight group-hover:text-green-600 transition-colors duration-300">{visionTitle}</h2>
+                           <p className="text-gray-600 text-lg leading-relaxed font-medium">{visionDesc}</p>
                         </div>
-                        <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight mb-8">{vision.title}</h2>
-                        <p className="text-gray-600 text-xl leading-relaxed mb-8 font-medium">{vision.description}</p>
                      </div>
                   </div>
                </div>
             );
          case 'philosophy':
             return (
-               <div key={key} className="w-full bg-gray-50 py-32 px-6 border-y border-gray-100">
-                  <div className="max-w-[1200px] mx-auto">
+               <div key={key} className="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+                  <div className="bg-gray-50 rounded-[2.5rem] lg:rounded-[3rem] p-8 md:p-16 border border-gray-100 shadow-sm">
+                     <div className="max-w-[1200px] mx-auto">
                      <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
                         <div>
                            <span className="text-[#b50a0a] font-bold tracking-[0.2em] uppercase mb-4 block text-sm">P.I.I.T.E.P</span>
@@ -133,6 +148,7 @@ export function AboutClient({ layout, content, navContent, footerContent }: Abou
                               <p className="text-gray-500 leading-relaxed font-medium">{item.desc}</p>
                            </div>
                         ))}
+                     </div>
                      </div>
                   </div>
                </div>
@@ -177,11 +193,11 @@ export function AboutClient({ layout, content, navContent, footerContent }: Abou
    return (
       <div className="min-h-screen bg-white flex flex-col font-sans selection:bg-[#b50a0a] selection:text-white">
          <Navbar content={navContent} />
-         <main className="flex-grow pt-32">
+         <main className="flex-grow">
             {layout.map(key => renderSection(key))}
          </main>
          <Footer content={footerContent} />
-         <style dangerouslySetInnerHTML={{__html: `.stroke-text { -webkit-text-stroke: 1px rgba(255,255,255,0.6); }`}} />
+         <style dangerouslySetInnerHTML={{ __html: `.stroke-text { -webkit-text-stroke: 1px rgba(255,255,255,0.6); }` }} />
       </div>
    );
 }

@@ -19,7 +19,7 @@ export default async function AboutUsPage() {
             .select('*')
             .eq('slug', '/about')
             .single();
-         return pageData?.layout || ["hero", "mission", "vision", "philosophy", "services"];
+         return pageData?.layout || ["hero", "intro", "mission-vision", "philosophy", "services"];
       }, 3600),
       getCachedData('about_site_content', async () => {
          const { data: siteContentData } = await supabase
