@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { DateDisplay } from '@/components/common/DateDisplay';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Globe, Mail, Shield, Layers, RefreshCw, 
   Save, Trash2, CheckCircle2, AlertCircle,
@@ -83,7 +83,8 @@ function ImageUpload({ label, value, onUpload, path }: { label: string, value: s
 }
 
 export function SettingsClient({ initialSettings }: { initialSettings: Record<string, any> }) {
-  const [activeSection, setActiveSection] = useState('Global Configuration');
+  const searchParams = useSearchParams();
+  const [activeSection, setActiveSection] = useState(searchParams.get('tab') || 'Global Configuration');
   const [settings, setSettings] = useState<Record<string, any>>(initialSettings || {});
   const [isSaving, setIsSaving] = useState(false);
   const [isClearing, setIsClearing] = useState(false);

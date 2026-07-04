@@ -265,8 +265,8 @@ function SectionEditor({ page, section, initialContent, categories }: { page: st
        </div>
 
        <form onSubmit={handleSave} className="space-y-8">
-          {Object.keys(renderFields(section, content, updateField, categories)).length > 0 ? (
-            renderFields(section, content, updateField, categories)
+          {Object.keys(renderFields(section, content, updateField, categories, page)).length > 0 ? (
+            renderFields(section, content, updateField, categories, page)
           ) : (
             <div className="p-12 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
                <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest">No configurable fields for this section yet.</p>
@@ -287,7 +287,7 @@ function EditIcon({ keyName }: { keyName: string }) {
 /**
  * Dynamic form renderer based on section key
  */
-function renderFields(section: string, content: any, onChange: (f: string, v: any) => void, categories: any[]) {
+function renderFields(section: string, content: any, onChange: (f: string, v: any) => void, categories: any[], pageSlug?: string) {
   // Common text input helper
   const TextInput = ({ label, field, placeholder, multiline = false, itemValue, onItemChange }: any) => {
     const val = itemValue !== undefined ? itemValue : content[field];
@@ -455,6 +455,72 @@ function renderFields(section: string, content: any, onChange: (f: string, v: an
            <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest italic mt-4">Columns and social links are managed via JSON in the database for version 1.</p>
         </div>
       );
+    case 'about':
+      if (pageSlug === 'footer') {
+         return (
+           <div className="space-y-6">
+              <TextInput label="Footer Subtext/Description" field="description" placeholder="CenterKick is a football media platform..." multiline />
+           </div>
+         );
+      }
+      return <p className="text-xs text-gray-400 italic">Configuration for {section} is coming soon.</p>;
+    case 'links':
+      if (pageSlug === 'footer') {
+         return (
+           <div className="space-y-12">
+              <ArrayEditor 
+                 label="Quick Links" 
+                 items={content['quickLinks']}
+                 onChange={(v) => onChange('quickLinks', v)}
+                 itemTemplate={{ title: '', url: '' }}
+                 renderItemForm={(item: any, updateField: any) => (
+                   <div className="grid grid-cols-2 gap-3 pt-4 pr-6">
+                      <TextInput label="Link Title" field="title" itemValue={item.title} onItemChange={(v: any) => updateField('title', v)} placeholder="Home" />
+                      <TextInput label="Link URL" field="url" itemValue={item.url} onItemChange={(v: any) => updateField('url', v)} placeholder="/" />
+                   </div>
+                 )}
+              />
+              <ArrayEditor 
+                 label="Services List" 
+                 items={content['services']}
+                 onChange={(v) => onChange('services', v)}
+                 itemTemplate={{ title: '', url: '' }}
+                 renderItemForm={(item: any, updateField: any) => (
+                   <div className="grid grid-cols-2 gap-3 pt-4 pr-6">
+                      <TextInput label="Service Title" field="title" itemValue={item.title} onItemChange={(v: any) => updateField('title', v)} placeholder="Player E-Profiles" />
+                      <TextInput label="Service URL (optional)" field="url" itemValue={item.url} onItemChange={(v: any) => updateField('url', v)} placeholder="#" />
+                   </div>
+                 )}
+              />
+           </div>
+         );
+      }
+      return <p className="text-xs text-gray-400 italic">Configuration for {section} is coming soon.</p>;
+    case 'social':
+      if (pageSlug === 'footer') {
+         return (
+           <div className="space-y-6 p-6 border border-gray-100 rounded-3xl bg-gray-50/50 text-center">
+              <h3 className="text-[12px] font-black text-gray-900 uppercase tracking-widest mb-2">Social Profiles</h3>
+              <p className="text-[10px] text-gray-500 mb-6 max-w-md mx-auto">
+                 Social media icons in the footer are automatically synchronized with your global site settings.
+              </p>
+              <Link href="/admin/settings?tab=Social%20Links" className="inline-flex items-center gap-2 bg-black text-white px-6 py-3 rounded-full text-[10px] font-black tracking-widest uppercase hover:bg-[#b50a0a] transition-colors">
+                 Manage Social Links
+              </Link>
+           </div>
+         );
+      }
+      return <p className="text-xs text-gray-400 italic">Configuration for {section} is coming soon.</p>;
+    case 'contact':
+      if (pageSlug === 'footer') {
+         return (
+           <div className="space-y-6">
+              <TextInput label="Contact Email" field="email" placeholder="info.centerkick@gmail.com" />
+              <TextInput label="Phone / WhatsApp" field="phone" placeholder="+234 911 260 0300" />
+           </div>
+         );
+      }
+      return <p className="text-xs text-gray-400 italic">Configuration for {section} is coming soon.</p>;
     default:
       return <p className="text-xs text-gray-400 italic">Configuration for {section} is coming soon.</p>;
   }

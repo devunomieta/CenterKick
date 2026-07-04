@@ -3,7 +3,13 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
+import { Facebook, Instagram, Youtube } from 'lucide-react';
+
+const XIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
 
 export function Footer({ content, settings }: { content?: any; settings?: any }) {
    const [siteSettings, setSiteSettings] = useState<{
@@ -15,24 +21,35 @@ export function Footer({ content, settings }: { content?: any; settings?: any })
       twitterUrl?: string;
       youtubeUrl?: string;
    } | null>(settings || null);
+   const [footerContent, setFooterContent] = useState<any>(content || null);
    const supabase = createClient();
 
    useEffect(() => {
-      const getSettings = async () => {
-         if (settings) {
-            setSiteSettings(settings);
-            return;
+      const fetchData = async () => {
+         if (!settings && !content) {
+            const { data } = await supabase
+               .from('site_content')
+               .select('page, section, content')
+               .in('page', ['settings', 'footer']);
+            
+            if (data) {
+               const sysSettings = data.find(d => d.page === 'settings' && d.section === 'system')?.content;
+               if (sysSettings) setSiteSettings(sysSettings);
+               
+               // Combine footer sections
+               const fContent: any = {};
+               data.filter(d => d.page === 'footer').forEach(d => {
+                  fContent[d.section] = d.content;
+               });
+               setFooterContent(fContent);
+            }
+         } else {
+            if (settings) setSiteSettings(settings);
+            if (content) setFooterContent(content);
          }
-         const { data } = await supabase
-            .from('site_content')
-            .select('content')
-            .eq('page', 'settings')
-            .eq('section', 'system')
-            .single();
-         if (data?.content) setSiteSettings(data.content);
       };
-      getSettings();
-   }, [supabase, settings]);
+      fetchData();
+   }, [supabase, settings, content]);
 
    const resolveUrl = (url: string | undefined) => {
       if (!url) return '';
@@ -44,7 +61,26 @@ export function Footer({ content, settings }: { content?: any; settings?: any })
    const footerLogoUrl = resolveUrl(siteSettings?.footerLogoUrl || siteSettings?.logoUrl);
    const brandName = siteSettings?.siteTitle || "CenterKick";
 
-   const desc = "CenterKick is a football media, sports marketing, and player visibility platform dedicated to helping football talent gain recognition, exposure, and opportunities.";
+   const desc = footerContent?.about?.description || "CenterKick is a football media, sports marketing, and player visibility platform dedicated to helping football talent gain recognition, exposure, and opportunities.";
+   
+   const contactEmail = footerContent?.contact?.email || "info.centerkick@gmail.com";
+   const contactPhone = footerContent?.contact?.phone || "+234 911 260 0300";
+
+   const quickLinks = footerContent?.links?.quickLinks || [
+      { title: 'Home', url: '/' },
+      { title: 'About Us', url: '/about' },
+      { title: 'News', url: '/news' },
+      { title: 'Player Profiles', url: '/players' },
+      { title: 'Contact Us', url: '/contact' }
+   ];
+
+   const services = footerContent?.links?.services || [
+      { title: 'Player E-Profiles', url: '#' },
+      { title: 'Scouting & Talent Visibility', url: '#' },
+      { title: 'Media, PR & Football Coverage', url: '#' },
+      { title: 'Transfer Focus', url: '/transfer-focus' },
+      { title: 'Marketing & Career Support', url: '#' }
+   ];
 
    const fbUrl = siteSettings?.facebookUrl || '#';
    const igUrl = siteSettings?.instagramUrl || '#';
@@ -83,7 +119,7 @@ export function Footer({ content, settings }: { content?: any; settings?: any })
                      <Instagram className="w-6 h-6" />
                   </a>
                   <a href={twUrl} target="_blank" rel="noopener noreferrer" className="text-white hover:text-white/70 transition-colors">
-                     <Twitter className="w-6 h-6" />
+                     <XIcon className="w-5 h-5" />
                   </a>
                   <a href={ytUrl} target="_blank" rel="noopener noreferrer" className="text-white hover:text-white/70 transition-colors">
                      <Youtube className="w-6 h-6" />
@@ -97,11 +133,13 @@ export function Footer({ content, settings }: { content?: any; settings?: any })
                <div className="w-full">
                   <h3 className="mb-6 text-[14px] font-bold text-white tracking-wide uppercase">Quick Links</h3>
                   <ul className="text-white/80 space-y-3 text-[12px] font-light">
-                     <li><Link href="/" className="hover:text-white transition-colors uppercase tracking-widest block">Home</Link></li>
-                     <li><Link href="/about" className="hover:text-white transition-colors uppercase tracking-widest block">About Us</Link></li>
-                     <li><Link href="/news" className="hover:text-white transition-colors uppercase tracking-widest block">News</Link></li>
-                     <li><Link href="/players" className="hover:text-white transition-colors uppercase tracking-widest block">Player Profiles</Link></li>
-                     <li><Link href="/contact" className="hover:text-white transition-colors uppercase tracking-widest block">Contact Us</Link></li>
+                     {quickLinks.map((link: any, i: number) => (
+                        <li key={i}>
+                           <Link href={link.url || '#'} className="hover:text-white transition-colors uppercase tracking-widest block">
+                              {link.title}
+                           </Link>
+                        </li>
+                     ))}
                   </ul>
                </div>
 
@@ -109,11 +147,17 @@ export function Footer({ content, settings }: { content?: any; settings?: any })
                <div className="w-full">
                   <h3 className="mb-6 text-[14px] font-bold text-white tracking-wide uppercase">SERVICES</h3>
                   <ul className="text-white/80 space-y-3 text-[12px] font-light">
-                     <li className="uppercase tracking-widest opacity-80">Player E-Profiles</li>
-                     <li className="uppercase tracking-widest opacity-80">Scouting & Talent Visibility</li>
-                     <li className="uppercase tracking-widest opacity-80">Media, PR & Football Coverage</li>
-                     <li><Link href="/transfer-focus" className="hover:text-white transition-colors uppercase tracking-widest block opacity-80 hover:opacity-100">Transfer Focus</Link></li>
-                     <li className="uppercase tracking-widest opacity-80">Marketing & Career Support</li>
+                     {services.map((svc: any, i: number) => (
+                        <li key={i}>
+                           {svc.url && svc.url !== '#' ? (
+                              <Link href={svc.url} className="hover:text-white transition-colors uppercase tracking-widest block opacity-80 hover:opacity-100">
+                                 {svc.title}
+                              </Link>
+                           ) : (
+                              <span className="uppercase tracking-widest opacity-80 block">{svc.title}</span>
+                           )}
+                        </li>
+                     ))}
                   </ul>
                </div>
 
@@ -131,15 +175,15 @@ export function Footer({ content, settings }: { content?: any; settings?: any })
                   <h3 className="mb-6 text-[14px] font-bold text-white tracking-wide uppercase">CONTACT INFORMATION</h3>
                   <ul className="text-white/80 space-y-4 text-[12px] font-light">
                      <li>
-                        <a href="mailto:info.centerkick@gmail.com" className="hover:text-white transition-colors flex flex-col md:items-start items-center gap-1">
+                        <a href={`mailto:${contactEmail}`} className="hover:text-white transition-colors flex flex-col md:items-start items-center gap-1">
                            <span className="uppercase tracking-widest opacity-60 text-[10px]">Email</span>
-                           <span>info.centerkick@gmail.com</span>
+                           <span>{contactEmail}</span>
                         </a>
                      </li>
                      <li>
                         <div className="flex flex-col md:items-start items-center gap-1">
                            <span className="uppercase tracking-widest opacity-60 text-[10px]">Phone / WhatsApp</span>
-                           <span>+234 911 260 0300</span>
+                           <span>{contactPhone}</span>
                         </div>
                      </li>
                   </ul>
