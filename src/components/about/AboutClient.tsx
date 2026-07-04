@@ -17,7 +17,7 @@ const heroImage = "https://images.unsplash.com/photo-1517466787929-bc90951d0974?
 const missionImage = "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?auto=format&fit=crop&w=1200&q=80";
 const visionImage = "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=1200&q=80";
 
-const philosophies = [
+const defaultPhilosophies = [
    { icon: <Briefcase className="w-6 h-6 text-[#ff3333]" />, title: "Professionalism", desc: "Presenting players and football content at the highest standard." },
    { icon: <Lightbulb className="w-6 h-6 text-[#ff3333]" />, title: "Innovation", desc: "Adapting to new trends and technologies in football and media." },
    { icon: <ShieldCheck className="w-6 h-6 text-[#ff3333]" />, title: "Integrity", desc: "Operating with honesty and responsibility." },
@@ -26,7 +26,7 @@ const philosophies = [
    { icon: <UserCircle className="w-6 h-6 text-[#ff3333]" />, title: "Personalization", desc: "Treating every football journey as unique." }
 ];
 
-const services = [
+const defaultServices = [
    { num: "01", title: "Player E-Profile Creation & Management", desc: "Well-structured and easy to navigate portfolios designed to showcase player data, stats, photos, videos, and career history.", image: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=600&q=80" },
    { num: "02", title: "Scouting & Talent Visibility", desc: "Bridging the gap between talent and opportunity by making player profiles discoverable.", image: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?auto=format&fit=crop&w=600&q=80" },
    { num: "03", title: "Media, PR & Football Coverage", desc: "Providing football news, stories, and analysis. Player features, interviews, and media PR.", image: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=600&q=80" },
@@ -45,10 +45,11 @@ export function AboutClient({ layout, content, navContent, footerContent }: Abou
       switch (key) {
          case 'hero':
             const hero = content.hero || { subtitle: "Who We Are", title: "About Us", description: "A modern football media platform." };
+            const heroBg = hero.image || heroImage;
             return (
                <div key={key} className="relative w-full h-[450px] lg:h-[500px] flex items-center justify-center overflow-hidden">
                   <div className="absolute inset-0 z-0 bg-[#050505]">
-                     <img src={heroImage} className="w-full h-full object-cover opacity-60" alt="Stadium" />
+                     <img src={heroBg} className="w-full h-full object-cover opacity-60" alt="Stadium" />
                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
                   </div>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center z-0 overflow-hidden pointer-events-none">
@@ -93,10 +94,18 @@ export function AboutClient({ layout, content, navContent, footerContent }: Abou
                </div>
             );
          case 'mission-vision':
-            const missionTitle = content.mission?.title || "Empowering Talent Through Visibility";
-            const missionDesc = content.mission?.description || "To empower footballers at all levels by providing the tools, media exposure, and opportunities needed to showcase their talent and advance their careers. We believe that talent deserves visibility, and visibility creates opportunities.";
-            const visionTitle = content.vision?.title || "Building Africa's Leading Football Visibility Ecosystem";
-            const visionDesc = content.vision?.description || "To become Africa's leading football media, sports marketing, player visibility, and talent promotion platform by connecting football stakeholders through innovation, storytelling, and technology.";
+            const mvData = content['mission-vision'] || {};
+            const missionData = mvData.mission || content.mission || {};
+            const visionData = mvData.vision || content.vision || {};
+            
+            const missionTitle = missionData.title || "Empowering Talent Through Visibility";
+            const missionDesc = missionData.description || "To empower footballers at all levels by providing the tools, media exposure, and opportunities needed to showcase their talent and advance their careers. We believe that talent deserves visibility, and visibility creates opportunities.";
+            const mImage = missionData.image || missionImage;
+            
+            const visionTitle = visionData.title || "Building Africa's Leading Football Visibility Ecosystem";
+            const visionDesc = visionData.description || "To become Africa's leading football media, sports marketing, player visibility, and talent promotion platform by connecting football stakeholders through innovation, storytelling, and technology.";
+            const vImage = visionData.image || visionImage;
+            
             return (
                <div key={key} className="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
@@ -128,24 +137,29 @@ export function AboutClient({ layout, content, navContent, footerContent }: Abou
                </div>
             );
          case 'philosophy':
+            const philosophyTitle = content.philosophy?.title || "Our Philosophy";
+            const philosophySubtitle = content.philosophy?.subtitle || "P.I.I.T.E.P";
+            const philosophiesList = content.philosophy?.items || defaultPhilosophies;
+            
             return (
                <div key={key} className="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
                   <div className="bg-gray-50 rounded-[2.5rem] lg:rounded-[3rem] p-8 md:p-16 border border-gray-100 shadow-sm">
                      <div className="max-w-[1200px] mx-auto">
                      <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
                         <div>
-                           <span className="text-[#b50a0a] font-bold tracking-[0.2em] uppercase mb-4 block text-sm">P.I.I.T.E.P</span>
-                           <h2 className="text-4xl md:text-5xl font-black text-gray-900 uppercase tracking-tight">Our Philosophy</h2>
+                           <span className="text-[#b50a0a] font-bold tracking-[0.2em] uppercase mb-4 block text-sm">{philosophySubtitle}</span>
+                           <h2 className="text-4xl md:text-5xl font-black text-gray-900 uppercase tracking-tight">{philosophyTitle}</h2>
                         </div>
                      </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                        {philosophies.map((item, idx) => (
+                        {philosophiesList.map((item: any, idx: number) => (
                            <div key={idx} className="bg-white rounded-[2rem] p-8 md:p-10 border border-gray-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-15px_rgba(181,10,10,0.15)] hover:border-[#b50a0a]/20 hover:-translate-y-2 transition-all duration-300 group">
                               <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-8 group-hover:bg-[#b50a0a]/5 group-hover:scale-110 transition-all border border-gray-100 group-hover:border-[#b50a0a]/20">
-                                 {item.icon}
+                                 {/* Fallback to default icons if DB doesn't have an icon, or just render a standard icon */}
+                                 {item.icon ? (typeof item.icon === 'string' ? <Star className="w-6 h-6 text-[#ff3333]" /> : item.icon) : <Star className="w-6 h-6 text-[#ff3333]" />}
                               </div>
                               <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">{item.title}</h3>
-                              <p className="text-gray-500 leading-relaxed font-medium">{item.desc}</p>
+                              <p className="text-gray-500 leading-relaxed font-medium">{item.desc || item.description}</p>
                            </div>
                         ))}
                      </div>
@@ -154,14 +168,17 @@ export function AboutClient({ layout, content, navContent, footerContent }: Abou
                </div>
             );
          case 'services':
+            const servicesTitle = content.services?.title || "WHAT WE DO";
+            const servicesList = content.services?.items || defaultServices;
+            
             return (
                <div key={key} className="w-full bg-white py-32">
                   <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
                      <div className="text-center mb-24 relative">
-                        <h2 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-50 uppercase tracking-tighter w-full pointer-events-none select-none">WHAT WE DO</h2>
+                        <h2 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-50 uppercase tracking-tighter w-full pointer-events-none select-none">{servicesTitle}</h2>
                      </div>
                      <div className="space-y-32">
-                        {services.map((svc, idx) => {
+                        {servicesList.map((svc: any, idx: number) => {
                            const isEven = idx % 2 !== 0;
                            return (
                               <div key={idx} className={`flex flex-col ${isEven ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-12 lg:gap-20 relative`}>

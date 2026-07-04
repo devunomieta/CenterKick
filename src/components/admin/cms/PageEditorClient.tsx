@@ -10,6 +10,78 @@ import { updatePageLayout, updateSectionContent } from '@/app/admin/manage-ui/ac
 import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import MediaGallery from '@/components/admin/blog/MediaGallery';
+
+function ImageSelectField({ label, value, onChange }: { label: string, value: string, onChange: (val: string) => void }) {
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  return (
+    <div className="space-y-2">
+       <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{label}</label>
+       <div className="flex gap-2">
+          <input 
+            className="flex-1 bg-gray-50 border-none rounded-2xl p-4 text-[11px] font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all text-black placeholder:text-gray-300"
+            placeholder="Image URL"
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value)}
+          />
+          <button 
+            type="button" 
+            onClick={() => setGalleryOpen(true)}
+            className="bg-[#b50a0a]/10 text-[#b50a0a] px-4 rounded-2xl flex items-center justify-center hover:bg-[#b50a0a] hover:text-white transition-all"
+          >
+            <ImageIcon className="w-5 h-5" />
+          </button>
+       </div>
+       <MediaGallery 
+         isOpen={galleryOpen}
+         onClose={() => setGalleryOpen(false)}
+         onSelect={(url) => { onChange(url); setGalleryOpen(false); }}
+       />
+    </div>
+  );
+}
+
+function ArrayEditor({ label, items, onChange, itemTemplate, renderItemForm }: { label: string, items: any[], onChange: (val: any[]) => void, itemTemplate: any, renderItemForm: (item: any, updateField: (k: string, v: any) => void) => React.ReactNode }) {
+  const currentItems = items || [];
+  
+  const addItem = () => {
+    onChange([...currentItems, { ...itemTemplate }]);
+  };
+  
+  const removeItem = (index: number) => {
+    const newItems = [...currentItems];
+    newItems.splice(index, 1);
+    onChange(newItems);
+  };
+  
+  const updateItem = (index: number, key: string, value: any) => {
+    const newItems = [...currentItems];
+    newItems[index] = { ...newItems[index], [key]: value };
+    onChange(newItems);
+  };
+  
+  return (
+    <div className="space-y-4 border border-gray-100 rounded-3xl p-6 bg-gray-50/50">
+      <div className="flex items-center justify-between">
+         <label className="text-[11px] font-black text-gray-900 uppercase tracking-widest">{label}</label>
+         <button type="button" onClick={addItem} className="bg-white border border-gray-200 shadow-sm text-gray-900 px-3 py-1.5 rounded-xl text-[9px] font-bold flex items-center gap-2 hover:border-[#b50a0a] hover:text-[#b50a0a] transition-colors">
+           <Plus className="w-3 h-3" /> Add Item
+         </button>
+      </div>
+      <div className="space-y-4">
+        {currentItems.map((item: any, idx: number) => (
+          <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm relative">
+             <button type="button" onClick={() => removeItem(idx)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors z-10">
+                <Trash2 className="w-4 h-4" />
+             </button>
+             {renderItemForm(item, (k: string, v: any) => updateItem(idx, k, v))}
+          </div>
+        ))}
+        {currentItems.length === 0 && <p className="text-[10px] text-gray-400 text-center py-4 italic">No items yet.</p>}
+      </div>
+    </div>
+  );
+}
 
 interface Section {
   key: string;
@@ -217,27 +289,31 @@ function EditIcon({ keyName }: { keyName: string }) {
  */
 function renderFields(section: string, content: any, onChange: (f: string, v: any) => void, categories: any[]) {
   // Common text input helper
-  const TextInput = ({ label, field, placeholder, multiline = false }: any) => (
-    <div className="space-y-2">
-       <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{label}</label>
-       {multiline ? (
-          <textarea 
-            rows={4}
-            className="w-full bg-gray-50 border-none rounded-2xl p-4 text-[11px] font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all text-black placeholder:text-gray-300 resize-none"
-            placeholder={placeholder}
-            value={content[field] || ''}
-            onChange={(e) => onChange(field, e.target.value)}
-          />
-       ) : (
-          <input 
-            className="w-full bg-gray-50 border-none rounded-2xl p-4 text-[11px] font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all text-black placeholder:text-gray-300"
-            placeholder={placeholder}
-            value={content[field] || ''}
-            onChange={(e) => onChange(field, e.target.value)}
-          />
-       )}
-    </div>
-  );
+  const TextInput = ({ label, field, placeholder, multiline = false, itemValue, onItemChange }: any) => {
+    const val = itemValue !== undefined ? itemValue : content[field];
+    const handleChg = onItemChange || ((v: any) => onChange(field, v));
+    return (
+      <div className="space-y-2">
+         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{label}</label>
+         {multiline ? (
+            <textarea 
+              rows={4}
+              className="w-full bg-gray-50 border-none rounded-2xl p-4 text-[11px] font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all text-black placeholder:text-gray-300 resize-none"
+              placeholder={placeholder}
+              value={val || ''}
+              onChange={(e) => handleChg(e.target.value)}
+            />
+         ) : (
+            <input 
+              className="w-full bg-gray-50 border-none rounded-2xl p-4 text-[11px] font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all text-black placeholder:text-gray-300"
+              placeholder={placeholder}
+              value={val || ''}
+              onChange={(e) => handleChg(e.target.value)}
+            />
+         )}
+      </div>
+    );
+  };
 
   // Common category selector helper
   const CategorySelect = ({ label, field }: any) => (
@@ -262,6 +338,9 @@ function renderFields(section: string, content: any, onChange: (f: string, v: an
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
            <TextInput label="Hero Title" field="title" placeholder="Platform Newsroom..." />
            <TextInput label="Hero Subtitle" field="subtitle" placeholder="Exclusive updates..." />
+           <div className="md:col-span-2">
+             <ImageSelectField label="Hero Background Image" value={content['image']} onChange={(v) => onChange('image', v)} />
+           </div>
            <div className="md:col-span-2 shadow-sm">
               <CategorySelect label="Featured Post Category" field="category_id" />
            </div>
@@ -291,6 +370,75 @@ function renderFields(section: string, content: any, onChange: (f: string, v: an
         <div className="space-y-6">
            <TextInput label="Title" field="title" placeholder="Our Mission..." />
            <TextInput label="Description" field="description" placeholder="To empower footballers..." multiline />
+           <ImageSelectField label="Background Image" value={content['image']} onChange={(v) => onChange('image', v)} />
+        </div>
+      );
+    case 'mission-vision':
+      const updateMV = (subField: string, key: string, val: any) => {
+         const current = content[subField] || {};
+         onChange(subField, { ...current, [key]: val });
+      };
+      return (
+        <div className="space-y-12">
+           <div className="space-y-6 border border-gray-100 p-6 rounded-3xl bg-gray-50/50">
+              <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-4">Mission Configuration</h4>
+              <TextInput label="Mission Title" field="title" itemValue={(content.mission || {}).title} onItemChange={(v: any) => updateMV('mission', 'title', v)} placeholder="Our Mission..." />
+              <TextInput label="Mission Description" field="description" itemValue={(content.mission || {}).description} onItemChange={(v: any) => updateMV('mission', 'description', v)} placeholder="To empower footballers..." multiline />
+              <ImageSelectField label="Mission Background Image" value={(content.mission || {}).image} onChange={(v) => updateMV('mission', 'image', v)} />
+           </div>
+           <div className="space-y-6 border border-gray-100 p-6 rounded-3xl bg-gray-50/50">
+              <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-4">Vision Configuration</h4>
+              <TextInput label="Vision Title" field="title" itemValue={(content.vision || {}).title} onItemChange={(v: any) => updateMV('vision', 'title', v)} placeholder="Our Vision..." />
+              <TextInput label="Vision Description" field="description" itemValue={(content.vision || {}).description} onItemChange={(v: any) => updateMV('vision', 'description', v)} placeholder="To become Africa's leading..." multiline />
+              <ImageSelectField label="Vision Background Image" value={(content.vision || {}).image} onChange={(v) => updateMV('vision', 'image', v)} />
+           </div>
+        </div>
+      );
+    case 'intro':
+      return (
+        <div className="space-y-6">
+           <TextInput label="Intro Description (First sentence will be large, rest will be regular)" field="description" placeholder="CenterKick is..." multiline />
+        </div>
+      );
+    case 'philosophy':
+      return (
+        <div className="space-y-6">
+           <TextInput label="Section Title" field="title" placeholder="Our Philosophy" />
+           <TextInput label="Section Subtitle" field="subtitle" placeholder="P.I.I.T.E.P" />
+           <ArrayEditor 
+              label="Philosophy Items" 
+              items={content['items']}
+              onChange={(v) => onChange('items', v)}
+              itemTemplate={{ title: '', desc: '' }}
+              renderItemForm={(item: any, updateField: any) => (
+                <div className="space-y-3 pt-4 pr-6">
+                   <TextInput label="Item Title" field="title" itemValue={item.title} onItemChange={(v: any) => updateField('title', v)} placeholder="Title" />
+                   <TextInput label="Item Description" field="desc" itemValue={item.desc} onItemChange={(v: any) => updateField('desc', v)} placeholder="Description" multiline />
+                </div>
+              )}
+           />
+        </div>
+      );
+    case 'services':
+      return (
+        <div className="space-y-6">
+           <TextInput label="Section Title" field="title" placeholder="WHAT WE DO" />
+           <ArrayEditor 
+              label="Service Items" 
+              items={content['items']}
+              onChange={(v) => onChange('items', v)}
+              itemTemplate={{ num: '', title: '', desc: '', image: '' }}
+              renderItemForm={(item: any, updateField: any) => (
+                <div className="space-y-3 pt-4 pr-6">
+                   <div className="grid grid-cols-2 gap-3">
+                     <TextInput label="Service Number" field="num" itemValue={item.num} onItemChange={(v: any) => updateField('num', v)} placeholder="01" />
+                     <TextInput label="Service Title" field="title" itemValue={item.title} onItemChange={(v: any) => updateField('title', v)} placeholder="Title" />
+                   </div>
+                   <TextInput label="Service Description" field="desc" itemValue={item.desc} onItemChange={(v: any) => updateField('desc', v)} placeholder="Description" multiline />
+                   <ImageSelectField label="Service Image" value={item.image} onChange={(v) => updateField('image', v)} />
+                </div>
+              )}
+           />
         </div>
       );
     case 'navbar':
