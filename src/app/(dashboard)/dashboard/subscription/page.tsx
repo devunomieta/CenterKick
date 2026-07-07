@@ -26,6 +26,9 @@ interface UserProfile {
 
 interface CMSPaymentSettings {
   paymentLink: string;
+  bankName?: string;
+  accountName?: string;
+  accountNumber?: string;
 }
 
 interface UserTransaction {
@@ -198,7 +201,7 @@ export default function SubscriptionPage() {
                         {plan.status === 'Unverified' && (
                            <div className="pt-6 space-y-6">
                               <p className="text-[10px] font-bold text-gray-500 tracking-wide leading-relaxed">To activate your professional badge and unlock all features, please complete payment using the secure link below.</p>
-                              <a 
+                               <a 
                                  href={paymentSettings?.paymentLink || '#'} 
                                  target="_blank" 
                                  rel="noopener noreferrer"
@@ -206,6 +209,28 @@ export default function SubscriptionPage() {
                               >
                                  Subscribe Now <ChevronRight className="w-5 h-5" />
                               </a>
+                           </div>
+                        )}
+
+                        {plan.status === 'Unverified' && paymentSettings?.bankName && (
+                           <div className="pt-8 border-t border-gray-50 mt-8 space-y-4">
+                               <p className="text-[9px] font-black tracking-wide text-gray-400">OR PAY VIA DIRECT BANK TRANSFER</p>
+                               <div className="bg-gray-50 p-6 rounded-[24px] border border-gray-100">
+                                   <div className="grid grid-cols-2 gap-4">
+                                       <div>
+                                           <p className="text-[8px] font-black text-gray-400 tracking-wide uppercase">Bank Name</p>
+                                           <p className="text-[12px] font-bold text-gray-900">{paymentSettings.bankName}</p>
+                                       </div>
+                                       <div>
+                                           <p className="text-[8px] font-black text-gray-400 tracking-wide uppercase">Account Name</p>
+                                           <p className="text-[12px] font-bold text-gray-900">{paymentSettings.accountName}</p>
+                                       </div>
+                                       <div className="col-span-2">
+                                           <p className="text-[8px] font-black text-gray-400 tracking-wide uppercase">Account Number</p>
+                                           <p className="text-[18px] font-black tracking-widest text-[#b50a0a]">{paymentSettings.accountNumber}</p>
+                                       </div>
+                                   </div>
+                               </div>
                            </div>
                         )}
                      </div>
@@ -237,6 +262,12 @@ export default function SubscriptionPage() {
                                  placeholder="Transaction Ref/ID" 
                                  required
                                  className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] outline-none transition-all"
+                              />
+                              <input 
+                                 name="payment_receipt"
+                                 type="file" 
+                                 accept="image/*,.pdf"
+                                 className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2 text-[10px] font-bold text-gray-500 focus:ring-2 focus:ring-[#b50a0a] outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:font-bold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
                               />
                               <button 
                                  disabled={isSubmitting}

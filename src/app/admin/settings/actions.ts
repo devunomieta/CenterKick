@@ -90,6 +90,42 @@ export async function updateSystemSettings(settings: any) {
   return { success: true };
 }
 
+export async function updatePaymentSettings(settings: any) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('Unauthorized');
+
+  const { data: userRecord } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (userRecord?.role !== 'superadmin') {
+    throw new Error('Permission denied: Superadmin role required');
+  }
+
+  const { error } = await supabase
+    .from('site_content')
+    .upsert({
+      page: 'settings',
+      section: 'payment',
+      content: settings,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'page,section'
+    });
+
+  if (error) {
+    console.error('Database Error (site_content):', error);
+    throw new Error(`Failed to update payment settings: ${error.message}`);
+  }
+
+  revalidatePath('/admin/settings');
+  return { success: true };
+}
+
 import { Resend } from 'resend';
 
 export async function sendTestEmail(apiKey: string, fromEmail: string, targetEmail: string) {

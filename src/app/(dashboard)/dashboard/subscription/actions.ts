@@ -13,6 +13,7 @@ export async function requestVerification(formData: FormData) {
   }
 
   const paymentReference = formData.get('payment_reference') as string;
+  const paymentReceipt = formData.get('payment_receipt') as File | null;
 
   if (!paymentReference) {
     return { error: 'Payment reference is required' };
@@ -21,7 +22,7 @@ export async function requestVerification(formData: FormData) {
   // Fetch the profile id and role to create the transaction
   const { data: profile, error: profileFetchError } = await supabase
     .from('profiles')
-    .select('id, role')
+    .select('id, role, first_name, last_name, email')
     .eq('user_id', user.id)
     .single();
 
@@ -39,6 +40,34 @@ export async function requestVerification(formData: FormData) {
 
   const amount = plan ? Number(plan.amount) : 15000;
 
+  const adminClient = createAdminClient();
+  let proofFileUrl = '';
+  let proofFileName = '';
+
+  if (paymentReceipt && paymentReceipt.size > 0) {
+    const fileExt = paymentReceipt.name.split('.').pop() || 'png';
+    const fileName = `receipt-${user.id}-${Date.now()}.${fileExt}`;
+    
+    // Ensure bucket exists
+    const { data: buckets } = await adminClient.storage.listBuckets();
+    if (!buckets?.find(b => b.id === 'receipts')) {
+      await adminClient.storage.createBucket('receipts', {
+        public: true,
+        fileSizeLimit: 5242880 // 5MB
+      });
+    }
+
+    const { error: uploadError } = await adminClient.storage
+      .from('receipts')
+      .upload(fileName, paymentReceipt);
+      
+    if (!uploadError) {
+       const { data: { publicUrl } } = adminClient.storage.from('receipts').getPublicUrl(fileName);
+       proofFileUrl = publicUrl;
+       proofFileName = paymentReceipt.name;
+    }
+  }
+
   const { error } = await supabase
     .from('profiles')
     .update({
@@ -54,7 +83,6 @@ export async function requestVerification(formData: FormData) {
   }
 
   // Log the payment reference in transactions as well
-  const adminClient = createAdminClient();
   const { error: transError } = await adminClient
      .from('transactions')
      .insert({
@@ -66,7 +94,11 @@ export async function requestVerification(formData: FormData) {
         method: 'direct_transfer',
         metadata: {
            type: 'subscription',
-           description: `Billing Claim: Onboarding subscription for ${profile.role}`
+           description: `Billing Claim: Onboarding subscription for ${profile.role}`,
+           proofFileUrl,
+           proofFileName,
+           proofName: `${profile.first_name} ${profile.last_name}`,
+           proofEmail: profile.email
         }
      });
 

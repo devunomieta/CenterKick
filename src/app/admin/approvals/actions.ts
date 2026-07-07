@@ -117,6 +117,13 @@ export async function rejectPaymentTransaction(transactionId: string, reason: st
 
   if (error) return { success: false, error: error.message };
 
+  if (tx.user_id) {
+    await admin.from('profiles').update({ 
+      verification_requested: false,
+      payment_reference: null
+    }).eq('id', tx.user_id);
+  }
+
   // Send Email Notification
   const email = tx.profiles?.email || tx.profiles?.users?.email;
   if (email) {
