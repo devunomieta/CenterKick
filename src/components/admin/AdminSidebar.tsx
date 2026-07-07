@@ -24,8 +24,8 @@ export function AdminSidebar({ role }: { role: string }) {
         { label: 'Overview', href: '/admin', icon: LayoutDashboard },
         ...(['superadmin', 'admin', 'operations', 'finance'].includes(role) 
           ? [
-              { label: 'Approvals Hub', href: '/admin/approvals', icon: ShieldCheck },
-              { label: 'Profile Edits', href: '/admin/approvals/edits', icon: PenTool }
+              { label: 'Requests Hub', href: '/admin/approvals', icon: ShieldCheck },
+              { label: 'Profile Edits', href: '/admin/approvals?tab=edits', icon: PenTool }
             ] 
           : [])
       ]

@@ -28,25 +28,16 @@ export default async function AdminApprovalsPage({
   }
 
   const resolvedParams = await searchParams;
-  const currentTab = (resolvedParams.tab as string) || 'registrations';
+  const currentTab = (resolvedParams.tab as string) || 'staff';
 
   // Fetch all queues in parallel
   const [
-    { data: pendingRegistrations },
     { data: pendingStaff },
     { data: pendingEdits },
     { data: prospects },
     { data: pendingPayments }
   ] = await Promise.all([
-    // 1. Fetch Registrations awaiting verification/approval (status = 'pending' and user_id is not null)
-    adminClient
-      .from('profiles')
-      .select('*')
-      .eq('status', 'pending')
-      .not('user_id', 'is', null)
-      .order('created_at', { ascending: false }),
-
-    // Fetch staff unassigned verification queue
+    // 1. Fetch staff unassigned verification queue
     adminClient
       .from('users')
       .select('*, profiles(first_name, last_name, email, country)')
@@ -81,7 +72,6 @@ export default async function AdminApprovalsPage({
   return (
     <div className="space-y-6">
       <ApprovalsClient 
-        pendingRegistrations={pendingRegistrations || []}
         pendingStaff={pendingStaff || []}
         pendingEdits={pendingEdits || []}
         prospects={prospects || []}

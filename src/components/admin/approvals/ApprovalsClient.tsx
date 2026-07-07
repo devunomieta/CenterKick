@@ -21,8 +21,6 @@ import {
   rejectPaymentTransaction, 
   approveProfileEdit, 
   rejectProfileEdit, 
-  approveNewRegistration, 
-  rejectNewRegistration, 
   approveStaffVerification, 
   rejectStaffVerification 
 } from '@/app/admin/approvals/actions';
@@ -120,15 +118,13 @@ interface PaymentTransaction {
 }
 
 export function ApprovalsClient({
-  pendingRegistrations,
   pendingStaff,
   pendingEdits,
   prospects,
   pendingPayments,
-  activeTab = 'registrations',
+  activeTab = 'staff',
   currentUserRole = 'admin'
 }: {
-  pendingRegistrations: Registration[];
   pendingStaff: StaffRequest[];
   pendingEdits: ProfileEdit[];
   prospects: Prospect[];
@@ -155,7 +151,7 @@ export function ApprovalsClient({
   // Decision & Reason confirmation modal
   const [decisionAction, setDecisionAction] = useState<{
     id: string;
-    type: 'approve_reg' | 'reject_reg' | 'approve_staff' | 'reject_staff' | 'approve_edit' | 'reject_edit' | 'approve_pay' | 'reject_pay';
+    type: 'approve_staff' | 'reject_staff' | 'approve_edit' | 'reject_edit' | 'approve_pay' | 'reject_pay';
     title: string;
     subtitle: string;
     targetName: string;
@@ -182,16 +178,10 @@ export function ApprovalsClient({
     const query = searchQuery.toLowerCase().trim();
     
     switch (tab) {
-      case 'registrations': {
-        const filteredSports = pendingRegistrations.filter(r => 
-          (roleFilter === 'all' || r.role === roleFilter) &&
-          (`${r.first_name} ${r.last_name}`.toLowerCase().includes(query) || r.email?.toLowerCase().includes(query))
-        );
-        const filteredStaff = pendingStaff.filter(s => 
-          (roleFilter === 'all' || roleFilter === 'staff') &&
+      case 'staff': {
+        return pendingStaff.filter(s => 
           (`${s.profiles?.first_name} ${s.profiles?.last_name}`.toLowerCase().includes(query) || s.email?.toLowerCase().includes(query))
         );
-        return { sports: filteredSports, staff: filteredStaff };
       }
       case 'edits':
         return pendingEdits.filter(e => 
@@ -216,7 +206,7 @@ export function ApprovalsClient({
   const filtered = getFilteredData();
   
   // Total pending counts for badges
-  const totalRegistrations = pendingRegistrations.length + pendingStaff.length;
+  const totalStaff = pendingStaff.length;
   const totalEdits = pendingEdits.length;
   const totalProspects = prospects.length;
   const totalPayments = pendingPayments.length;
@@ -285,7 +275,7 @@ export function ApprovalsClient({
       {/* 4 Cards Stats System */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { id: 'registrations', label: 'Registrations', count: totalRegistrations, color: 'text-blue-600', bg: 'bg-blue-50/50', border: 'border-blue-100', icon: UserCheck },
+          { id: 'staff', label: 'Staff Requests', count: totalStaff, color: 'text-blue-600', bg: 'bg-blue-50/50', border: 'border-blue-100', icon: Shield },
           { id: 'edits', label: 'Profile Edits', count: totalEdits, color: 'text-orange-600', bg: 'bg-orange-50/50', border: 'border-orange-100', icon: FileText },
           { id: 'prospects', label: 'Prospects & Invites', count: totalProspects, color: 'text-purple-600', bg: 'bg-purple-50/50', border: 'border-purple-100', icon: Mail },
           { id: 'payments', label: 'Bank Transfers', count: totalPayments, color: 'text-green-600', bg: 'bg-green-50/50', border: 'border-green-100', icon: CreditCard }
@@ -362,7 +352,7 @@ export function ApprovalsClient({
                 <option value="player">PLAYERS</option>
                 <option value="coach">COACHES</option>
                 <option value="agent">AGENTS</option>
-                {tab === 'registrations' && <option value="staff">STAFF REQUESTS</option>}
+                {tab === 'staff' && <option value="staff">STAFF REQUESTS</option>}
               </select>
             </div>
           </div>
@@ -370,92 +360,17 @@ export function ApprovalsClient({
 
         {/* Tab content rendering */}
         <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
-          {tab === 'registrations' && (
+          {tab === 'staff' && (
             <div className="divide-y divide-gray-50">
-              {((filtered as any).sports.length === 0 && (filtered as any).staff.length === 0) ? (
+              {(filtered.length === 0) ? (
                 <div className="px-6 py-20 text-center">
                   <ShieldCheck className="w-12 h-12 text-gray-100 mx-auto mb-4" />
-                  <p className="text-[10px] font-black tracking-wide text-gray-400">No new registration requests waiting for approval.</p>
+                  <p className="text-[10px] font-black tracking-wide text-gray-400">No new staff requests waiting for approval.</p>
                 </div>
               ) : (
                 <>
-                  {/* Sports accounts */}
-                  {(filtered as any).sports.map((reg: Registration) => (
-                    <div key={reg.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50/50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-gray-900 flex items-center justify-center font-black text-white text-base shrink-0">
-                          {((reg.first_name && reg.first_name[0]) || 'R').toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            {reg.user_id ? (
-                              <Link 
-                                href={`/admin/users/${reg.user_id}`} 
-                                className="font-black text-gray-900 text-base hover:text-[#b50a0a] transition-colors flex items-center gap-1.5 group"
-                              >
-                                {reg.first_name} {reg.last_name}
-                                <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                              </Link>
-                            ) : (
-                              <p className="font-black text-gray-900 text-base">{reg.first_name} {reg.last_name}</p>
-                            )}
-                            <FlagIcon country={reg.country} className="w-3.5 h-2" />
-                          </div>
-                          <p className="text-[9px] font-bold text-gray-400 tracking-wide mt-0.5">{reg.email}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 rounded text-[8px] font-black tracking-wide text-gray-700 border border-gray-200/50">
-                              {getRoleIcon(reg.role)}
-                              {reg.role}
-                            </span>
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-600 rounded text-[8px] font-black tracking-wide border border-amber-100">
-                              Awaiting Verification
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => setInspectRegistration(reg)}
-                          className="p-2.5 text-gray-400 hover:text-black transition-colors rounded-xl hover:bg-gray-100 border border-transparent"
-                          title="Inspect Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          disabled={actionLoadingId !== null}
-                          onClick={() => setDecisionAction({
-                            id: reg.id,
-                            type: 'approve_reg',
-                            title: 'Approve Registration',
-                            subtitle: 'Confirm verification and unlock sports member account',
-                            targetName: `${reg.first_name} ${reg.last_name}`,
-                            targetEmail: reg.email || 'N/A'
-                          })}
-                          className="flex items-center gap-1.5 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[9px] font-black tracking-wide shadow-lg shadow-green-900/10 transition-all disabled:opacity-50"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          Approve Profile
-                        </button>
-                        <button
-                          disabled={actionLoadingId !== null}
-                          onClick={() => setDecisionAction({
-                            id: reg.id,
-                            type: 'reject_reg',
-                            title: 'Decline Registration',
-                            subtitle: 'Reject registration verification request',
-                            targetName: `${reg.first_name} ${reg.last_name}`,
-                            targetEmail: reg.email || 'N/A'
-                          })}
-                          className="px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-xl text-[9px] font-black tracking-wide transition-all disabled:opacity-50"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
                   {/* Staff accounts */}
-                  {(filtered as any).staff.map((staff: StaffRequest) => (
+                  {(filtered as StaffRequest[]).map((staff: StaffRequest) => (
                     <div key={staff.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50/50 transition-colors">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-red-950 flex items-center justify-center font-black text-white text-base shrink-0">
@@ -838,8 +753,7 @@ export function ApprovalsClient({
 
                     await runApprovalAction(actId, () => {
                       switch (actType) {
-                        case 'approve_reg': return approveNewRegistration(actId, r);
-                        case 'reject_reg': return rejectNewRegistration(actId, r);
+
                         case 'approve_staff': return approveStaffVerification(actId, staffR!, r);
                         case 'reject_staff': return rejectStaffVerification(actId, r);
                         case 'approve_edit': return approveProfileEdit(actId, r);

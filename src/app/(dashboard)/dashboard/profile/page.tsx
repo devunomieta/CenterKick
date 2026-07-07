@@ -56,7 +56,7 @@ export default function ProfileEditor() {
           .single();
         
         const { data: { identities } } = await supabase.auth.getUserIdentities();
-        const googleId = identities?.find(id => id.provider === 'google');
+        const googleId = identities?.find((id: any) => id.provider === 'google');
         setGoogleIdentity(googleId || null);
 
         setRole(userRecord?.role || 'player');
