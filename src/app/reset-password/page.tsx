@@ -9,6 +9,17 @@ import { PasswordField } from '@/components/common/PasswordField';
 export default function ResetPasswordPage() {
    const [isLoading, setIsLoading] = useState(false);
    const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+   const [password, setPassword] = useState('');
+   const [confirmPassword, setConfirmPassword] = useState('');
+
+   const validatePassword = (pass: string) => {
+      return (
+         pass.length >= 8 &&
+         /[A-Z]/.test(pass) &&
+         /[0-9]/.test(pass) &&
+         /[!@#$%^&*(),.?":{}|<>]/.test(pass)
+      );
+   };
 
    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -16,6 +27,18 @@ export default function ResetPasswordPage() {
       setStatus(null);
 
       const formData = new FormData(e.currentTarget);
+
+      if (!validatePassword(password)) {
+         setStatus({ type: 'error', message: 'Password does not meet the requirements.' });
+         setIsLoading(false);
+         return;
+      }
+
+      if (password !== confirmPassword) {
+         setStatus({ type: 'error', message: 'Passwords do not match.' });
+         setIsLoading(false);
+         return;
+      }
 
       try {
          const result = await updatePassword(formData);
@@ -66,15 +89,21 @@ export default function ResetPasswordPage() {
             )}
 
             {status?.type !== 'success' && (
-               <form onSubmit={handleSubmit} className="space-y-8">
+               <form onSubmit={handleSubmit} className="space-y-4">
                   <PasswordField
                      name="password"
                      label="New Password"
+                     value={password}
+                     onChange={(e) => setPassword(e.target.value)}
+                     showRequirements={true}
                   />
 
                   <PasswordField
                      name="confirmPassword"
                      label="Confirm New Password"
+                     value={confirmPassword}
+                     onChange={(e) => setConfirmPassword(e.target.value)}
+                     confirmFor={password}
                   />
 
                   <button

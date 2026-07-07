@@ -35,6 +35,7 @@ export default function ProfileEditor() {
   const [videoLinks, setVideoLinks] = useState<string[]>([]);
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [editingMember, setEditingMember] = useState<any>(null);
+  const [googleIdentity, setGoogleIdentity] = useState<any>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -54,6 +55,10 @@ export default function ProfileEditor() {
           .eq('user_id', user.id)
           .single();
         
+        const { data: { identities } } = await supabase.auth.getUserIdentities();
+        const googleId = identities?.find(id => id.provider === 'google');
+        setGoogleIdentity(googleId || null);
+
         setRole(userRecord?.role || 'player');
         setProfile(profileRecord || {});
         setAchievements(profileRecord?.achievements || []);
@@ -282,6 +287,37 @@ export default function ProfileEditor() {
 
   const isAdminOrOps = ['superadmin', 'admin', 'operations'].includes(role);
 
+  const handleLinkGoogle = async () => {
+    setIsSaving(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.linkIdentity({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/profile`
+      }
+    });
+    if (error) {
+      setStatus({ type: 'error', msg: `Failed to link: ${error.message}` });
+      setIsSaving(false);
+    }
+  };
+
+  const handleUnlinkGoogle = async () => {
+    if (!googleIdentity) return;
+    if (!confirm("Are you sure you want to unlink your Google account? You will need to use your password to log in.")) return;
+    
+    setIsSaving(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.unlinkIdentity(googleIdentity);
+    if (error) {
+      setStatus({ type: 'error', msg: `Failed to unlink: ${error.message}` });
+    } else {
+      setStatus({ type: 'success', msg: 'Google account unlinked successfully.' });
+      setGoogleIdentity(null);
+    }
+    setIsSaving(false);
+  };
+
   const handleRequestEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingMember) return;
@@ -460,6 +496,27 @@ export default function ProfileEditor() {
                     )}
                   </div>
                 </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8 pt-8 border-t border-gray-50">
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-gray-900 tracking-wide ml-1">Authentication Methods</label>
+                      <div className="p-5 bg-gray-50 border-none rounded-2xl flex items-center justify-between">
+                         <div>
+                            <p className="text-sm font-bold text-gray-900">Google Fast Login</p>
+                            <p className="text-[9px] font-bold text-gray-500 mt-1">Sign in instantly without a password</p>
+                         </div>
+                         {googleIdentity ? (
+                            <button type="button" onClick={handleUnlinkGoogle} className="px-4 py-2 bg-red-100 text-red-700 rounded-xl text-[10px] font-black tracking-wide hover:bg-red-200 transition-colors">
+                               Unlink
+                            </button>
+                         ) : (
+                            <button type="button" onClick={handleLinkGoogle} className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black tracking-wide hover:bg-black transition-colors">
+                               Link Account
+                            </button>
+                         )}
+                      </div>
+                    </div>
+                  </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8 pt-8 border-t border-gray-50">
                   <div className="space-y-4">

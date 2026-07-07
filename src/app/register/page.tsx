@@ -13,11 +13,33 @@ export default function RegisterPage() {
    const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
    const [showOtp, setShowOtp] = useState(false);
    const [email, setEmail] = useState('');
+   const [emailIsValid, setEmailIsValid] = useState<boolean | null>(null);
+   const [password, setPassword] = useState('');
+   const [confirmPassword, setConfirmPassword] = useState('');
    const [role, setRole] = useState('player');
    const [otp, setOtp] = useState('');
    const [timeLeft, setTimeLeft] = useState(600);
    const [resendCooldown, setResendCooldown] = useState(60);
    const [isResending, setIsResending] = useState(false);
+
+   const validatePassword = (pass: string) => {
+      return (
+         pass.length >= 8 &&
+         /[A-Z]/.test(pass) &&
+         /[0-9]/.test(pass) &&
+         /[!@#$%^&*(),.?":{}|<>]/.test(pass)
+      );
+   };
+
+   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      setEmail(val);
+      if (val.length === 0) {
+         setEmailIsValid(null);
+      } else {
+         setEmailIsValid(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val));
+      }
+   };
 
    useEffect(() => {
       if (!showOtp) return;
@@ -68,8 +90,18 @@ export default function RegisterPage() {
 
       const formData = new FormData(e.currentTarget);
       const emailInput = formData.get('email') as string;
-      const password = formData.get('password') as string;
-      const confirmPassword = formData.get('confirmPassword') as string;
+
+      if (!emailIsValid) {
+         setStatus({ type: 'error', message: 'Please enter a valid email address.' });
+         setIsLoading(false);
+         return;
+      }
+
+      if (!validatePassword(password)) {
+         setStatus({ type: 'error', message: 'Password does not meet the requirements.' });
+         setIsLoading(false);
+         return;
+      }
 
       if (password !== confirmPassword) {
          setStatus({ type: 'error', message: 'Passwords do not match.' });
@@ -115,7 +147,7 @@ export default function RegisterPage() {
    };
 
    return (
-      <div className="min-h-screen relative flex items-center justify-center bg-gray-900 py-12">
+      <div className="min-h-screen relative flex items-center justify-center bg-gray-900 py-20 sm:py-12 px-4 sm:px-0">
          {/* Background Image with Overlay */}
          <div className="absolute inset-0 z-0">
             <div className="absolute inset-0 bg-black/70 z-10"></div>
@@ -127,14 +159,14 @@ export default function RegisterPage() {
          </div>
 
          {/* Navigation */}
-         <div className="absolute top-8 left-8 z-20">
+         <div className="absolute top-4 left-4 sm:top-8 sm:left-8 z-20">
             <Link href="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors text-[10px] font-black tracking-wide bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
                <ArrowLeft className="w-4 h-4" /> Back to Home
             </Link>
          </div>
 
-         <div className="relative z-10 max-w-md w-full px-6 py-12 bg-white/95 backdrop-blur-md rounded-[40px] shadow-2xl border border-white/20 animate-in fade-in zoom-in duration-700">
-            <div className="text-center mb-10">
+         <div className="relative z-10 max-w-md w-full px-5 py-8 sm:px-6 sm:py-12 bg-white/95 backdrop-blur-md rounded-[32px] sm:rounded-[40px] shadow-2xl border border-white/20 animate-in fade-in zoom-in duration-700 my-auto">
+            <div className="text-center mb-8 sm:mb-10">
                <h1 className="text-3xl font-black text-gray-900 tracking-tighter leading-none mb-3">
                   Create <span className="text-[#a20000]">Account</span>
                </h1>
@@ -150,32 +182,14 @@ export default function RegisterPage() {
             <div className="space-y-6">
                {!showOtp ? (
                   <>
-                     <button
-                        type="button"
-                        onClick={async () => {
-                           setIsLoading(true);
-                           const { createClient } = await import('@/lib/supabase/client');
-                           const supabase = createClient();
-                           await supabase.auth.signInWithOAuth({
-                              provider: 'google',
-                              options: {
-                                 redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`
-                              }
-                           });
-                        }}
-                        className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-all text-[10px] font-black tracking-wide text-gray-600 shadow-sm"
-                     >
-                        <Chrome className="w-4 h-4 text-red-600" /> Continue with Google
-                     </button>
-
-                     <form onSubmit={handleSubmit} className="space-y-6">
+                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                           <label className="text-[10px] font-black text-gray-400 tracking-wide ml-1">Account Type</label>
+                           <label className="text-xs font-black text-gray-500 tracking-wide ml-1">Account Type</label>
                            <div className="relative">
                               <select
                                  name="role"
                                  required
-                                 className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 appearance-none"
+                                 className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 appearance-none"
                               >
                                  <option value="player">Player</option>
                                  <option value="coach">Coach</option>
@@ -187,33 +201,48 @@ export default function RegisterPage() {
                         </div>
 
                         <div className="space-y-2">
-                           <label className="text-[10px] font-black text-gray-400 tracking-wide ml-1">Professional Email</label>
+                           <label className="text-xs font-black text-gray-500 tracking-wide ml-1">Professional Email</label>
                            <div className="relative">
                               <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                               <input
                                  name="email"
                                  type="email"
                                  required
+                                 value={email}
+                                 onChange={handleEmailChange}
                                  placeholder="name@agency.com"
-                                 className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl pl-12 pr-6 py-4 text-base font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 placeholder:text-gray-300"
+                                 className={`w-full bg-gray-50/50 border rounded-2xl pl-12 pr-6 py-3 text-sm font-bold focus:ring-2 focus:bg-white transition-all outline-none text-gray-900 placeholder:text-gray-300 ${
+                                    emailIsValid === false ? 'border-red-500 focus:ring-red-500' : 'border-gray-100 focus:ring-[#a20000]'
+                                 }`}
                               />
                            </div>
+                           {email.length > 0 && (
+                              <p className={`text-[10px] font-bold tracking-wide ml-2 ${emailIsValid ? 'text-green-600' : 'text-red-500'}`}>
+                                 {emailIsValid ? 'Valid email format' : 'Invalid format. Use name@domain.com'}
+                              </p>
+                           )}
                         </div>
 
                         <PasswordField
                            name="password"
                            label="Create Password"
+                           value={password}
+                           onChange={(e) => setPassword(e.target.value)}
+                           showRequirements={true}
                         />
 
                         <PasswordField
                            name="confirmPassword"
                            label="Confirm Password"
+                           value={confirmPassword}
+                           onChange={(e) => setConfirmPassword(e.target.value)}
+                           confirmFor={password}
                         />
 
                         <button
                            type="submit"
                            disabled={isLoading}
-                           className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black tracking-[0.2em] text-sm hover:bg-[#a20000] transition-all flex items-center justify-center gap-3 shadow-xl transform active:scale-95 disabled:opacity-50"
+                           className="w-full bg-gray-900 text-white py-4 rounded-2xl font-black tracking-[0.2em] text-sm hover:bg-[#a20000] transition-all flex items-center justify-center gap-3 shadow-xl transform active:scale-95 disabled:opacity-50"
                         >
                            {isLoading ? (
                               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -224,16 +253,16 @@ export default function RegisterPage() {
                      </form>
                   </>
                ) : (
-                  <form onSubmit={handleVerifyOtp} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                     <form onSubmit={handleVerifyOtp} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 tracking-wide ml-1">Verification Code</label>
+                        <label className="text-xs font-black text-gray-500 tracking-wide ml-1">Verification Code</label>
                         <input
                            type="text"
                            required
                            value={otp}
                            onChange={(e) => setOtp(e.target.value)}
                            placeholder="000000"
-                           className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-6 py-5 text-2xl font-black tracking-[0.5em] text-center focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 placeholder:text-gray-200"
+                           className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-6 py-4 text-xl font-black tracking-[0.5em] text-center focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 placeholder:text-gray-200"
                            maxLength={6}
                         />
                         <div className="flex flex-col items-center gap-2 mt-4">
@@ -255,7 +284,7 @@ export default function RegisterPage() {
                      <button
                         type="submit"
                         disabled={isLoading || timeLeft === 0}
-                        className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black tracking-[0.2em] text-sm hover:bg-[#a20000] transition-all flex items-center justify-center gap-3 shadow-xl transform active:scale-95 disabled:opacity-50"
+                        className="w-full bg-gray-900 text-white py-4 rounded-2xl font-black tracking-[0.2em] text-sm hover:bg-[#a20000] transition-all flex items-center justify-center gap-3 shadow-xl transform active:scale-95 disabled:opacity-50"
                      >
                         {isLoading ? (
                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -292,8 +321,8 @@ export default function RegisterPage() {
                )}
             </div>
 
-            <div className="mt-12 text-center">
-               <p className="text-[10px] font-black text-gray-400 tracking-wide">
+            <div className="mt-8 text-center">
+               <p className="text-xs font-black text-gray-500 tracking-wide">
                   Already have an account?
                   <Link href="/login" className="text-[#a20000] ml-2 hover:underline font-black">Login Now</Link>
                </p>

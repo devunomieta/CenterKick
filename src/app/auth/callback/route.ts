@@ -38,6 +38,24 @@ export async function GET(request: Request) {
 
       // AUTO-CREATE OR SYNC USER RECORD
       if (!userRecord) {
+        // Intercept new Google sign-ups and reject them
+        if (user.app_metadata?.providers?.includes('google')) {
+          const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+          
+          const adminSupabase = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+          )
+          
+          // Delete the newly orphaned user to free up the email address
+          await adminSupabase.auth.admin.deleteUser(user.id)
+          
+          // Sign out the local session
+          await supabase.auth.signOut()
+          
+          return NextResponse.redirect(`${origin}/auth/unlinked-account`)
+        }
+
         let assignedRole = 'player'
         // Auto-promote specific developer/admin emails
         const adminEmails = ['centerkickdev@gmail.com', 'admin@centerkick.com']
@@ -77,15 +95,8 @@ export async function GET(request: Request) {
 
       if (role && adminRoles.includes(role)) {
         finalNext = '/admin'
-      } else if (userRecord && profile) {
-        if (profile.status === 'active') {
-          finalNext = '/dashboard'
-        } else {
-          finalNext = '/onboarding'
-        }
       } else {
-        // NEW USER or INCOMPLETE PROFILE
-        finalNext = '/onboarding'
+        finalNext = '/dashboard'
       }
     }
 

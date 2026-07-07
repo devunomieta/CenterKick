@@ -33,3 +33,26 @@ body {
     display: none !important;
   }
 }
+
+/* Global Select and Option Styling for Compact Dropdowns */
+select option {
+  padding: 4px 12px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.2;
+  background-color: white;
+  color: #171717;
+}
+
+select:hover, select:focus {
+  border-color: #a20000;
+  box-shadow: 0 0 8px rgba(162, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+select {
+  /* Some browsers need this to apply option styling correctly */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}

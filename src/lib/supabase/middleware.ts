@@ -62,7 +62,6 @@ export async function updateSession(request: NextRequest) {
 
     const isDashboardPath = request.nextUrl.pathname.startsWith('/dashboard');
     const isAdminPath = request.nextUrl.pathname.startsWith('/admin');
-    const isOnboardingPath = request.nextUrl.pathname === '/onboarding';
 
     // 3. Staff bypass — any role-recognized staff member passes immediately.
     //    This is purely role-based, not email-based. Changing an email never breaks access.
@@ -94,14 +93,9 @@ export async function updateSession(request: NextRequest) {
     profileStatus = profile?.status ?? null;
     const verificationRequested = profile?.verification_requested ?? false;
 
-    // 5. Mandatory Onboarding for participants without an active profile
-    if (!isOnboardingPath && !isPublicAdminPath && (isDashboardPath || isAdminPath)) {
+    // 5. Mandatory subscription check for participants without an active profile
+    if (!isPublicAdminPath && (isDashboardPath || isAdminPath)) {
       const isPendingButSubmitted = profileStatus === 'pending' && verificationRequested;
-      if (profileStatus !== 'active' && !isPendingButSubmitted) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/onboarding';
-        return NextResponse.redirect(url);
-      }
 
       // Enforce subscription verification check for pending participants in the dashboard
       if (profileStatus !== 'active' && isDashboardPath && request.nextUrl.pathname !== '/dashboard/subscription') {
@@ -113,7 +107,7 @@ export async function updateSession(request: NextRequest) {
 
     // 6. Block deactivated/banned participants (allow new accounts awaiting approval)
     const isPendingNewAccount = !profileStatus || profileStatus === 'pending';
-    if (!isActive && !isPendingNewAccount && !isPublicAdminPath && !isOnboardingPath && (isDashboardPath || isAdminPath)) {
+    if (!isActive && !isPendingNewAccount && !isPublicAdminPath && (isDashboardPath || isAdminPath)) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       url.searchParams.set('error', 'Your account has been restricted.');

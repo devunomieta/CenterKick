@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, ReactNode } from 'react';
-import { Lock, Eye, EyeOff } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle2, XCircle } from 'lucide-react';
 
 interface PasswordFieldProps {
   name: string;
@@ -10,6 +10,10 @@ interface PasswordFieldProps {
   required?: boolean;
   rightElement?: ReactNode;
   defaultValue?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  showRequirements?: boolean;
+  confirmFor?: string;
 }
 
 export function PasswordField({ 
@@ -18,14 +22,39 @@ export function PasswordField({
   placeholder = "••••••••", 
   required = true, 
   rightElement,
-  defaultValue
+  defaultValue,
+  value,
+  onChange,
+  showRequirements = false,
+  confirmFor
 }: PasswordFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [internalValue, setInternalValue] = useState(defaultValue || "");
+
+  const currentValue = value !== undefined ? value : internalValue;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (value === undefined) {
+      setInternalValue(e.target.value);
+    }
+    if (onChange) {
+      onChange(e);
+    }
+  };
+
+  const requirements = [
+    { label: "Minimum 8 characters", met: currentValue.length >= 8 },
+    { label: "Uppercase letter", met: /[A-Z]/.test(currentValue) },
+    { label: "Number", met: /[0-9]/.test(currentValue) },
+    { label: "Special character", met: /[!@#$%^&*(),.?":{}|<>]/.test(currentValue) },
+  ];
+
+  const passwordsMatch = confirmFor !== undefined && currentValue === confirmFor;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="flex justify-between items-center px-1">
-        <label className="text-[10px] font-black text-gray-900 tracking-wide ml-1">{label}</label>
+        <label className="text-xs font-black text-gray-900 tracking-wide ml-1">{label}</label>
         {rightElement}
       </div>
       <div className="relative">
@@ -35,8 +64,10 @@ export function PasswordField({
           type={showPassword ? "text" : "password"} 
           required={required}
           placeholder={placeholder} 
-          defaultValue={defaultValue}
-          className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-14 py-5 text-base font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
+          value={value}
+          defaultValue={value === undefined ? defaultValue : undefined}
+          onChange={handleChange}
+          className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-14 py-3 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
         />
         <button
           type="button"
@@ -46,6 +77,24 @@ export function PasswordField({
           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         </button>
       </div>
+      
+      {showRequirements && (
+        <div className="grid grid-cols-2 gap-2 mt-2 px-2">
+          {requirements.map((req, i) => (
+            <div key={i} className={`flex items-center gap-1.5 text-[10px] font-bold tracking-wide transition-colors ${req.met ? 'text-green-600' : 'text-gray-400'}`}>
+              {req.met ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+              {req.label}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {confirmFor !== undefined && currentValue.length > 0 && (
+        <div className={`mt-2 px-2 flex items-center gap-1.5 text-[10px] font-bold tracking-wide transition-colors ${passwordsMatch ? 'text-green-600' : 'text-red-500'}`}>
+          {passwordsMatch ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+          {passwordsMatch ? "Passwords match" : "Passwords do not match"}
+        </div>
+      )}
     </div>
   );
 }

@@ -9,12 +9,25 @@ export async function updatePassword(formData: FormData) {
   const password = formData.get('password') as string;
   const confirmPassword = formData.get('confirmPassword') as string;
 
+  const validatePassword = (pass: string) => {
+    return (
+       pass.length >= 8 &&
+       /[A-Z]/.test(pass) &&
+       /[0-9]/.test(pass) &&
+       /[!@#$%^&*(),.?":{}|<>]/.test(pass)
+    );
+  };
+
   if (!password) {
     return { error: 'Password is required' };
   }
 
   if (password !== confirmPassword) {
     return { error: 'Passwords do not match' };
+  }
+
+  if (!validatePassword(password)) {
+    return { error: 'Password does not meet complexity requirements.' };
   }
 
   const { error } = await supabase.auth.updateUser({

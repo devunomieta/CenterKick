@@ -63,6 +63,19 @@ export async function signup(formData: FormData) {
   const password = formData.get('password') as string;
   const role = formData.get('role') as string || 'player';
 
+  const validatePassword = (pass: string) => {
+    return (
+       pass.length >= 8 &&
+       /[A-Z]/.test(pass) &&
+       /[0-9]/.test(pass) &&
+       /[!@#$%^&*(),.?":{}|<>]/.test(pass)
+    );
+  };
+
+  if (!validatePassword(password)) {
+    return { error: 'Password does not meet complexity requirements.' };
+  }
+
   // Check if account already exists in public.users
   const { data: existingUser } = await supabase
     .from('users')
@@ -183,10 +196,10 @@ export async function verifyOtp(email: string, token: string) {
        finalSlug = `${baseSlug}-${generateRandomSuffix()}`;
     }
 
-    // Update profile with role, slug, and set status to active (payment unlocks dashboard, this just creates the base profile)
     await adminClient.from('profiles').update({ 
       role, 
-      slug: finalSlug 
+      slug: finalSlug,
+      status: 'active'
     }).eq('user_id', authUser.id);
   }
 
