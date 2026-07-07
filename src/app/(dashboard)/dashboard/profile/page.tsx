@@ -16,9 +16,12 @@ import {
   Globe,
   Award,
   BarChart3,
-  Search
+  Search,
+  Edit,
+  X
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { requestProfileEdit } from './actions';
 
 export default function ProfileEditor() {
   const [activeTab, setActiveTab] = useState('Basic Info');
@@ -29,6 +32,9 @@ export default function ProfileEditor() {
   const [status, setStatus] = useState<{type: 'success'|'error', msg: string}|null>(null);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [portfolioMembers, setPortfolioMembers] = useState<any[]>([]);
+  const [videoLinks, setVideoLinks] = useState<string[]>([]);
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const [editingMember, setEditingMember] = useState<any>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -51,6 +57,8 @@ export default function ProfileEditor() {
         setRole(userRecord?.role || 'player');
         setProfile(profileRecord || {});
         setAchievements(profileRecord?.achievements || []);
+        setVideoLinks(profileRecord?.video_links || []);
+        setGalleryUrls(profileRecord?.gallery_urls || []);
 
         if (userRecord?.role === 'agent' || userRecord?.role === 'organization') {
           const { data: members } = await supabase
@@ -115,6 +123,8 @@ export default function ProfileEditor() {
         linkedin: formData.get('social_linkedin'),
       },
       achievements: achievements,
+      video_links: videoLinks,
+      gallery_urls: galleryUrls,
       updated_at: new Date().toISOString()
     };
 
@@ -156,27 +166,63 @@ export default function ProfileEditor() {
     setIsSaving(false);
   };
 
-  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
     setIsSaving(true);
-    setStatus({ type: 'success', msg: 'Uploading video...' });
+    setStatus({ type: 'success', msg: 'Uploading cover photo...' });
     
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
-    const fileName = `video_${user?.id}_${Date.now()}.mp4`;
-    const { data, error } = await supabase.storage.from('site-assets').upload(`videos/${fileName}`, file, { upsert: true });
+    const fileName = `cover_${user?.id}_${Date.now()}.webp`;
+    const { data, error } = await supabase.storage.from('site-assets').upload(`covers/${fileName}`, file, { upsert: true });
     
     if (error) {
       setStatus({ type: 'error', msg: `Upload failed: ${error.message}` });
     } else {
-      const { data: { publicUrl } } = supabase.storage.from('site-assets').getPublicUrl(`videos/${fileName}`);
-      setProfile({ ...profile, highlight_reel_url: publicUrl });
-      setStatus({ type: 'success', msg: 'Video uploaded! Click Save Changes.' });
+      const { data: { publicUrl } } = supabase.storage.from('site-assets').getPublicUrl(`covers/${fileName}`);
+      setProfile({ ...profile, cover_url: publicUrl });
+      setStatus({ type: 'success', msg: 'Cover photo uploaded! Click Save Changes.' });
     }
     setIsSaving(false);
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    setIsSaving(true);
+    setStatus({ type: 'success', msg: 'Uploading gallery images...' });
+    
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const newUrls: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileName = `gallery_${user?.id}_${Date.now()}_${i}.webp`;
+      const { data, error } = await supabase.storage.from('site-assets').upload(`gallery/${fileName}`, file, { upsert: true });
+      if (!error) {
+        const { data: { publicUrl } } = supabase.storage.from('site-assets').getPublicUrl(`gallery/${fileName}`);
+        newUrls.push(publicUrl);
+      }
+    }
+    
+    if (newUrls.length > 0) {
+      setGalleryUrls([...galleryUrls, ...newUrls]);
+      setStatus({ type: 'success', msg: 'Gallery updated! Click Save Changes.' });
+    } else {
+      setStatus({ type: 'error', msg: 'Failed to upload images.' });
+    }
+    setIsSaving(false);
+  };
+
+  const extractYoutubeId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
   };
 
   const handleAddMember = async () => {
@@ -235,6 +281,44 @@ export default function ProfileEditor() {
   };
 
   const isAdminOrOps = ['superadmin', 'admin', 'operations'].includes(role);
+
+  const handleRequestEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMember) return;
+    
+    setIsSaving(true);
+    setStatus(null);
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    
+    const changes: Record<string, { old: any; new: any }> = {};
+    const fields = ['first_name', 'last_name', 'bio', 'position', 'market_value', 'height_cm', 'weight_kg', 'foot', 'jersey_number'];
+    
+    fields.forEach(f => {
+      const newVal = formData.get(f);
+      const oldVal = editingMember[f];
+      if (newVal !== null && newVal !== undefined && String(newVal) !== String(oldVal || '')) {
+         changes[f] = { old: oldVal, new: newVal };
+      }
+    });
+
+    if (Object.keys(changes).length === 0) {
+       setStatus({ type: 'success', msg: 'No changes detected.' });
+       setEditingMember(null);
+       setIsSaving(false);
+       return;
+    }
+
+    const res = await requestProfileEdit(editingMember.id, changes);
+    if (res.error) {
+       setStatus({ type: 'error', msg: res.error });
+    } else {
+       setStatus({ type: 'success', msg: 'Edits submitted to Admin for approval.' });
+       setEditingMember(null);
+    }
+    setIsSaving(false);
+  };
 
   if (isLoading) return <div className="pt-20 text-center font-black tracking-wide animate-pulse">Loading Editor...</div>;
 
@@ -621,6 +705,13 @@ export default function ProfileEditor() {
                                </div>
                                <button 
                                  type="button" 
+                                 onClick={() => setEditingMember(member)}
+                                 className="text-gray-300 hover:text-blue-500"
+                               >
+                                  <Edit className="w-4 h-4" />
+                               </button>
+                               <button 
+                                 type="button" 
                                  onClick={() => handleRemoveMember(member.id)}
                                  className="text-gray-300 hover:text-[#b50a0a]"
                                >
@@ -643,49 +734,115 @@ export default function ProfileEditor() {
 
             {activeTab === 'Media Center' && (
                <div className="space-y-10 animate-in fade-in duration-500">
+                  {/* Cover Photo */}
                   <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                       <h4 className="text-[10px] font-black text-gray-900 tracking-wide">Video Highlights</h4>
-                       <span className="text-[9px] font-bold bg-gray-900 text-white px-2 py-1 rounded">MP4 • max 50MB</span>
-                    </div>
-                    <input type="file" id="video_upload" className="hidden" accept="video/mp4,video/x-m4v,video/*" onChange={handleVideoUpload} />
+                    <h4 className="text-[10px] font-black text-gray-900 tracking-wide">Cover Photo</h4>
+                    <input type="file" id="cover_upload" className="hidden" accept="image/*" onChange={handleCoverUpload} />
                     <div 
-                      onClick={() => document.getElementById('video_upload')?.click()}
-                      className="h-64 border-2 border-dashed border-gray-200 rounded-[40px] flex flex-col items-center justify-center text-center p-12 hover:bg-gray-50 hover:border-[#b50a0a] transition-all cursor-pointer group relative overflow-hidden"
+                      onClick={() => document.getElementById('cover_upload')?.click()}
+                      className="h-48 border-2 border-dashed border-gray-200 rounded-[30px] flex flex-col items-center justify-center text-center hover:bg-gray-50 hover:border-[#b50a0a] transition-all cursor-pointer group relative overflow-hidden"
                     >
-                       {profile?.highlight_reel_url ? (
+                       {profile?.cover_url ? (
                          <div className="absolute inset-0 w-full h-full">
-                           <video src={profile.highlight_reel_url} className="w-full h-full object-cover" muted loop playsInline onMouseEnter={e => e.currentTarget.play()} onMouseLeave={e => e.currentTarget.pause()} />
+                           <img src={profile.cover_url} className="w-full h-full object-cover" />
                            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                              <Camera className="w-8 h-8 text-white mb-2" />
-                             <span className="text-white text-[10px] font-black tracking-wide">Change Video</span>
+                             <span className="text-white text-[10px] font-black tracking-wide">Change Cover</span>
                            </div>
                          </div>
                        ) : (
                          <>
-                           <div className="w-16 h-16 rounded-full bg-red-50 text-[#b50a0a] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                              <Camera className="w-8 h-8" />
-                           </div>
-                           <p className="text-sm font-black tracking-wide text-gray-900 mb-2">Upload Highlight Reel</p>
-                           <p className="text-[10px] font-medium text-gray-900 leading-relaxed max-w-full max-w-[250px]">Click to select or drag and drop your best match clips here.</p>
+                           <Camera className="w-8 h-8 text-gray-400 mb-2 group-hover:text-[#b50a0a]" />
+                           <p className="text-sm font-black tracking-wide text-gray-900 mb-2">Upload Cover Image</p>
+                           <p className="text-[10px] font-medium text-gray-500">Ideal aspect ratio 3:1 (e.g. 1200x400)</p>
                          </>
                        )}
                     </div>
                   </div>
 
+                  {/* Embedded Videos */}
                   <div className="space-y-6 pt-10 border-t border-gray-50">
-                    <h4 className="text-[10px] font-black text-gray-900 tracking-wide">Action Photos</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                       {[1, 2, 3].map((_, i) => (
-                         <div key={i} className="aspect-square bg-gray-100 rounded-2xl relative group overflow-hidden">
+                    <div className="flex items-center justify-between">
+                       <h4 className="text-[10px] font-black text-gray-900 tracking-wide">Video Highlights</h4>
+                       <span className="text-[9px] font-bold bg-gray-900 text-white px-2 py-1 rounded">YouTube / Vimeo</span>
+                    </div>
+                    
+                    <div className="space-y-4">
+                       {videoLinks.map((url, i) => {
+                          const ytId = extractYoutubeId(url);
+                          return (
+                            <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 group">
+                               {ytId ? (
+                                  <img src={`https://img.youtube.com/vi/${ytId}/default.jpg`} className="w-16 h-12 object-cover rounded" />
+                               ) : (
+                                  <div className="w-16 h-12 bg-gray-200 flex items-center justify-center rounded"><Camera className="w-4 h-4 text-gray-400" /></div>
+                               )}
+                               <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] font-bold text-gray-900 truncate">{url}</p>
+                               </div>
+                               <button 
+                                 type="button"
+                                 onClick={() => setVideoLinks(videoLinks.filter((_, idx) => idx !== i))}
+                                 className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                               >
+                                  <Trash2 className="w-4 h-4" />
+                               </button>
+                            </div>
+                          );
+                       })}
+                       <div className="flex gap-2">
+                         <input 
+                           id="new_video_url" 
+                           type="url" 
+                           placeholder="https://youtube.com/watch?v=..." 
+                           className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] outline-none"
+                         />
+                         <button 
+                           type="button"
+                           onClick={() => {
+                             const el = document.getElementById('new_video_url') as HTMLInputElement;
+                             if (el && el.value) {
+                               setVideoLinks([...videoLinks, el.value]);
+                               el.value = '';
+                             }
+                           }}
+                           className="bg-gray-900 text-white px-6 py-3 rounded-xl text-[10px] font-black hover:bg-black transition-all whitespace-nowrap"
+                         >
+                           Add Link
+                         </button>
+                       </div>
+                    </div>
+                  </div>
+
+                  {/* Action Photos (Gallery) */}
+                  <div className="space-y-6 pt-10 border-t border-gray-50">
+                    <div className="flex items-center justify-between">
+                       <h4 className="text-[10px] font-black text-gray-900 tracking-wide">Action Photos</h4>
+                       <span className="text-[9px] font-bold bg-gray-900 text-white px-2 py-1 rounded">Multiple Allowed</span>
+                    </div>
+                    <input type="file" id="gallery_upload" multiple className="hidden" accept="image/*" onChange={handleGalleryUpload} />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                       {galleryUrls.map((url, i) => (
+                         <div key={i} className="aspect-square bg-gray-100 rounded-2xl relative group overflow-hidden border border-gray-100">
+                            <img src={url} className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                               <button className="p-2 bg-white rounded-lg text-red-500 shadow-xl transform scale-50 group-hover:scale-100 transition-transform"><Trash2 className="w-4 h-4" /></button>
+                               <button 
+                                 type="button"
+                                 onClick={() => setGalleryUrls(galleryUrls.filter((_, idx) => idx !== i))}
+                                 className="p-2 bg-white rounded-lg text-red-500 shadow-xl transform scale-50 group-hover:scale-100 transition-transform"
+                               >
+                                 <Trash2 className="w-4 h-4" />
+                               </button>
                             </div>
                          </div>
                        ))}
-                       <button className="aspect-square border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-900 hover:border-[#b50a0a] hover:text-[#b50a0a] transition-all">
+                       <button 
+                         type="button"
+                         onClick={() => document.getElementById('gallery_upload')?.click()}
+                         className="aspect-square border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-900 hover:border-[#b50a0a] hover:text-[#b50a0a] hover:bg-gray-50 transition-all"
+                       >
                           <Plus className="w-6 h-6 mb-2" />
-                          <span className="text-[8px] font-black tracking-[0.2em]">Add Photo</span>
+                          <span className="text-[8px] font-black tracking-[0.2em]">Add Photos</span>
                        </button>
                     </div>
                   </div>
@@ -719,9 +876,68 @@ export default function ProfileEditor() {
                </div>
             )}
 
-          </form>
+           </form>
         </div>
       </div>
+
+      {/* Editing Member Modal */}
+      {editingMember && (
+         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-[40px] max-w-2xl w-full p-8 md:p-12 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+               <button type="button" onClick={() => setEditingMember(null)} className="absolute top-8 right-8 text-gray-400 hover:text-black">
+                  <X className="w-6 h-6" />
+               </button>
+               <h2 className="text-2xl font-black text-gray-900 mb-2">Request Profile Edits</h2>
+               <p className="text-[10px] font-bold tracking-wide text-gray-500 mb-8">Editing {editingMember.first_name} {editingMember.last_name}. Changes will be reviewed by administrators.</p>
+               
+               <form onSubmit={handleRequestEdit} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                     <div>
+                        <label className="text-[10px] font-black tracking-wide ml-1">First Name</label>
+                        <input name="first_name" defaultValue={editingMember.first_name} className="w-full bg-gray-50 rounded-2xl px-4 py-3 font-bold" />
+                     </div>
+                     <div>
+                        <label className="text-[10px] font-black tracking-wide ml-1">Last Name</label>
+                        <input name="last_name" defaultValue={editingMember.last_name} className="w-full bg-gray-50 rounded-2xl px-4 py-3 font-bold" />
+                     </div>
+                  </div>
+                  <div>
+                     <label className="text-[10px] font-black tracking-wide ml-1">Bio</label>
+                     <textarea name="bio" defaultValue={editingMember.bio} rows={3} className="w-full bg-gray-50 rounded-2xl px-4 py-3 font-bold" />
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                     <div>
+                        <label className="text-[10px] font-black tracking-wide ml-1">Position</label>
+                        <input name="position" defaultValue={editingMember.position} className="w-full bg-gray-50 rounded-2xl px-4 py-3 font-bold" />
+                     </div>
+                     <div>
+                        <label className="text-[10px] font-black tracking-wide ml-1">Foot</label>
+                        <input name="foot" defaultValue={editingMember.foot} className="w-full bg-gray-50 rounded-2xl px-4 py-3 font-bold" />
+                     </div>
+                     <div>
+                        <label className="text-[10px] font-black tracking-wide ml-1">Jersey #</label>
+                        <input name="jersey_number" type="number" defaultValue={editingMember.jersey_number} className="w-full bg-gray-50 rounded-2xl px-4 py-3 font-bold" />
+                     </div>
+                     <div>
+                        <label className="text-[10px] font-black tracking-wide ml-1">Height (cm)</label>
+                        <input name="height_cm" type="number" defaultValue={editingMember.height_cm} className="w-full bg-gray-50 rounded-2xl px-4 py-3 font-bold" />
+                     </div>
+                     <div>
+                        <label className="text-[10px] font-black tracking-wide ml-1">Weight (kg)</label>
+                        <input name="weight_kg" type="number" defaultValue={editingMember.weight_kg} className="w-full bg-gray-50 rounded-2xl px-4 py-3 font-bold" />
+                     </div>
+                     <div>
+                        <label className="text-[10px] font-black tracking-wide ml-1">Market Value</label>
+                        <input name="market_value" defaultValue={editingMember.market_value} className="w-full bg-gray-50 rounded-2xl px-4 py-3 font-bold" />
+                     </div>
+                  </div>
+                  <button type="submit" disabled={isSaving} className="w-full bg-gray-900 text-white rounded-xl py-4 font-black tracking-wide hover:bg-black mt-8">
+                     {isSaving ? 'Submitting...' : 'Submit Edits for Review'}
+                  </button>
+               </form>
+            </div>
+         </div>
+      )}
     </div>
   );
 }

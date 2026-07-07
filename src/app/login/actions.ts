@@ -61,6 +61,7 @@ export async function signup(formData: FormData) {
 
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
+  const role = formData.get('role') as string || 'player';
 
   // Check if account already exists in public.users
   const { data: existingUser } = await supabase
@@ -76,13 +77,13 @@ export async function signup(formData: FormData) {
   // Generate 6-digit OTP code
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // Save registration data to Database with a 10-minute expiry
+  // Save registration data to Database with a 5-minute expiry for code (link is 60m but we only send code here)
   const adminClient = createAdminClient();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
   const { error: dbError } = await adminClient
     .from('otp_verifications')
-    .upsert({ email, otp, password, expires_at: expiresAt });
+    .upsert({ email, otp, password, role, expires_at: expiresAt });
 
   if (dbError) {
     console.error('[DB Error] Failed to save OTP registration data:', dbError);
@@ -164,6 +165,31 @@ export async function verifyOtp(email: string, token: string) {
     authUser = authData.user;
   }
 
+  // Update user role and profile slug instantly
+  if (authUser) {
+    const role = pendingData.role || 'player';
+    
+    // Update user role
+    await adminClient.from('users').update({ role }).eq('id', authUser.id);
+    
+    // Generate slug (first/last names are empty initially, so it uses role-emailprefix)
+    const { generateBaseSlug, generateRandomSuffix } = await import('@/lib/utils/slug');
+    const emailPrefix = email.split('@')[0];
+    const baseSlug = generateBaseSlug(role, emailPrefix, '');
+    
+    let finalSlug = baseSlug;
+    const { data: existing } = await adminClient.from('profiles').select('slug').eq('slug', baseSlug).maybeSingle();
+    if (existing) {
+       finalSlug = `${baseSlug}-${generateRandomSuffix()}`;
+    }
+
+    // Update profile with role, slug, and set status to active (payment unlocks dashboard, this just creates the base profile)
+    await adminClient.from('profiles').update({ 
+      role, 
+      slug: finalSlug 
+    }).eq('user_id', authUser.id);
+  }
+
   // Now sign the user in to establish their session cookie
   const { error: signInError } = await supabase.auth.signInWithPassword({
     email,
@@ -214,9 +240,9 @@ export async function resendOtp(email: string) {
 
     // 3. Generate new 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
-    // 4. Save with fresh 10-minute expiry and update created_at for rate limiting
+    // 4. Save with fresh 5-minute expiry and update created_at for rate limiting
     await adminClient
       .from('otp_verifications')
       .update({ otp, expires_at: expiresAt, created_at: new Date().toISOString() })

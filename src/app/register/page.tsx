@@ -13,6 +13,7 @@ export default function RegisterPage() {
    const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
    const [showOtp, setShowOtp] = useState(false);
    const [email, setEmail] = useState('');
+   const [role, setRole] = useState('player');
    const [otp, setOtp] = useState('');
    const [timeLeft, setTimeLeft] = useState(600);
    const [resendCooldown, setResendCooldown] = useState(60);
@@ -78,6 +79,7 @@ export default function RegisterPage() {
       
       try {
          setEmail(emailInput);
+         setRole(formData.get('role') as string);
          const result = await signup(formData);
 
          if (result.error) {
@@ -103,7 +105,7 @@ export default function RegisterPage() {
          if (result.error) {
             setStatus({ type: 'error', message: result.error });
          } else if (result.success) {
-            router.push('/onboarding');
+            router.push('/dashboard');
          }
       } catch (err) {
          setStatus({ type: 'error', message: 'Failed to verify code.' });
@@ -157,7 +159,7 @@ export default function RegisterPage() {
                            await supabase.auth.signInWithOAuth({
                               provider: 'google',
                               options: {
-                                 redirectTo: `${window.location.origin}/auth/callback?next=/onboarding`
+                                 redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`
                               }
                            });
                         }}
@@ -167,6 +169,23 @@ export default function RegisterPage() {
                      </button>
 
                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-gray-400 tracking-wide ml-1">Account Type</label>
+                           <div className="relative">
+                              <select
+                                 name="role"
+                                 required
+                                 className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 appearance-none"
+                              >
+                                 <option value="player">Player</option>
+                                 <option value="coach">Coach</option>
+                                 <option value="agent">Agent</option>
+                                 <option value="scout">Scout</option>
+                                 <option value="organization">Organization</option>
+                              </select>
+                           </div>
+                        </div>
+
                         <div className="space-y-2">
                            <label className="text-[10px] font-black text-gray-400 tracking-wide ml-1">Professional Email</label>
                            <div className="relative">

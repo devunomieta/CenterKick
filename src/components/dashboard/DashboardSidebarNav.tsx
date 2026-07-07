@@ -2,14 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, BarChart2, Settings, Shield, Search } from 'lucide-react';
+import { Home, Users, Shield, Settings } from 'lucide-react';
 import { SignOutButton } from '@/components/dashboard/SignOutButton';
 
 interface DashboardSidebarNavProps {
   role: string;
+  isSubscribed?: boolean;
 }
 
-export function DashboardSidebarNav({ role }: DashboardSidebarNavProps) {
+export function DashboardSidebarNav({ role, isSubscribed = false }: DashboardSidebarNavProps) {
   const pathname = usePathname();
 
   const getLinkClasses = (href: string) => {
@@ -29,6 +30,8 @@ export function DashboardSidebarNav({ role }: DashboardSidebarNavProps) {
     return isActive ? 'w-5 h-5 text-[#b50a0a]' : 'w-5 h-5 text-gray-400 group-hover:text-white';
   };
 
+  const showManagedAccounts = isSubscribed && ['agent', 'organization'].includes(role);
+
   return (
     <nav className="flex-1 p-6 space-y-2 overflow-y-auto">
       <Link href="/dashboard" className={`${getLinkClasses('/dashboard')} group`}>
@@ -41,37 +44,26 @@ export function DashboardSidebarNav({ role }: DashboardSidebarNavProps) {
         <span className="text-base tracking-wide">My Profile</span>
       </Link>
 
-      {(role === 'player' || role === 'athlete' || role === 'coach') && (
-        <Link href="/dashboard/stats" className={`${getLinkClasses('/dashboard/stats')} group`}>
-          <BarChart2 className={getIconClasses('/dashboard/stats')} />
-          <span className="text-base tracking-wide">Stats & Media</span>
-        </Link>
-      )}
-
-      {(role === 'agent' || role === 'scout' || role === 'organization') && (
-        <Link href="/dashboard/scout" className={`${getLinkClasses('/dashboard/scout')} group`}>
-          <Search className={getIconClasses('/dashboard/scout')} />
-          <span className="text-base tracking-wide">Discovery</span>
-        </Link>
-      )}
-
-      {role === 'agent' && (
-        <Link href="/dashboard/portfolio" className={`${getLinkClasses('/dashboard/portfolio')} group`}>
-          <Users className={getIconClasses('/dashboard/portfolio')} />
-          <span className="text-base tracking-wide">Portfolio</span>
+      {showManagedAccounts && (
+        <Link href="/dashboard/managed" className={`${getLinkClasses('/dashboard/managed')} group`}>
+          <Users className={getIconClasses('/dashboard/managed')} />
+          <span className="text-base tracking-wide">Managed Accounts</span>
         </Link>
       )}
 
       <div className="pt-8 mt-8 border-t border-gray-800">
         <span className="px-4 text-[10px] font-black text-gray-500 tracking-[0.2em]">Management</span>
+        
         <Link href="/dashboard/subscription" className={`${getLinkClasses('/dashboard/subscription')} group mt-4`}>
           <Shield className={getIconClasses('/dashboard/subscription')} />
           <span className="text-base tracking-wide">Subscription</span>
         </Link>
+        
         <Link href="/dashboard/settings" className={`${getLinkClasses('/dashboard/settings')} group`}>
           <Settings className={getIconClasses('/dashboard/settings')} />
           <span className="text-base tracking-wide">Settings</span>
         </Link>
+        
         <div className="scale-95 origin-left mt-2">
           <SignOutButton />
         </div>

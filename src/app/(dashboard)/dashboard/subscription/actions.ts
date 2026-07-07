@@ -29,16 +29,15 @@ export async function requestVerification(formData: FormData) {
     return { error: 'Profile not found' };
   }
 
-  // Fetch dynamic amount from settings
-  const { data: settings } = await supabase
-    .from('site_content')
-    .select('content')
-    .eq('page', 'settings')
-    .eq('section', 'payment')
+  // Fetch dynamic amount from pricing_plans
+  const { data: plan } = await supabase
+    .from('pricing_plans')
+    .select('amount')
+    .eq('role', profile.role)
+    .eq('is_active', true)
     .single();
 
-  const plans = settings?.content?.plans || {};
-  const amount = Number(plans[profile.role]?.amount || 15000);
+  const amount = plan ? Number(plan.amount) : 15000;
 
   const { error } = await supabase
     .from('profiles')
@@ -110,4 +109,17 @@ export async function getUserTransactions() {
   }
 
   return { transactions: transactions || [] };
+}
+
+export async function getPricingPlan(role: string) {
+  const supabase = await createClient();
+  const { data: plan, error } = await supabase
+    .from('pricing_plans')
+    .select('*')
+    .eq('role', role)
+    .eq('is_active', true)
+    .single();
+
+  if (error || !plan) return null;
+  return plan;
 }

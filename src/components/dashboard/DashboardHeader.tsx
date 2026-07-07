@@ -2,18 +2,20 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, Bell } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { DashboardSidebarNav } from './DashboardSidebarNav';
 import { SignOutButton } from './SignOutButton';
+import { DashboardNotificationBell } from './DashboardNotificationBell';
 
 interface DashboardHeaderProps {
   role: string;
   email?: string;
   sidebarLogoUrl?: string;
   brandName: string;
+  notifications: any[];
 }
 
-export function DashboardHeader({ role, email, sidebarLogoUrl, brandName }: DashboardHeaderProps) {
+export function DashboardHeader({ role, email, sidebarLogoUrl, brandName, notifications }: DashboardHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -27,10 +29,7 @@ export function DashboardHeader({ role, email, sidebarLogoUrl, brandName }: Dash
         </button>
         
         <div className="flex items-center gap-6 ml-auto">
-          <button className="p-2 text-gray-400 hover:text-primary transition-colors relative">
-            <Bell className="w-6 h-6" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-[#b50a0a] rounded-full border-2 border-white"></span>
-          </button>
+          <DashboardNotificationBell initialNotifications={notifications} />
           <div className="flex items-center gap-3 pl-6 border-l border-gray-100">
             <div className="text-right hidden sm:block">
               <span className="text-gray-900 font-bold text-sm truncate max-w-full max-w-[150px]">{email}</span>

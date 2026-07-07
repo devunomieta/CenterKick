@@ -219,7 +219,68 @@ export function PlayerDetailsClient({ athlete }: PlayerDetailsClientProps) {
                   </div>
                )}
 
-               {activeTab !== "Profile" && (
+               {activeTab === "Gallery" && (
+                  <div className="animate-in fade-in duration-500">
+                     <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-8 tracking-tighter">Media <span className="text-[#b50a0a]">Gallery</span></h2>
+                     
+                     {/* Videos Section */}
+                     {athlete.video_links && athlete.video_links.length > 0 && (
+                        <div className="mb-12">
+                           <h3 className="text-sm font-black text-gray-500 tracking-[0.2em] mb-6 uppercase">Featured Videos</h3>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {athlete.video_links.map((url: string, i: number) => {
+                                 let embedUrl = url;
+                                 if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                                    const ytIdMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+                                    if (ytIdMatch && ytIdMatch[1]) {
+                                       embedUrl = `https://www.youtube.com/embed/${ytIdMatch[1]}`;
+                                    }
+                                 } else if (url.includes('vimeo.com')) {
+                                    const vimIdMatch = url.match(/vimeo\.com\/(?:.*#|.*\/videos\/)?([0-9]+)/);
+                                    if (vimIdMatch && vimIdMatch[1]) {
+                                       embedUrl = `https://player.vimeo.com/video/${vimIdMatch[1]}`;
+                                    }
+                                 }
+
+                                 return (
+                                    <div key={i} className="aspect-video bg-black rounded-3xl overflow-hidden shadow-lg border border-gray-100">
+                                       <iframe 
+                                          src={embedUrl}
+                                          className="w-full h-full"
+                                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                          allowFullScreen
+                                          loading="lazy"
+                                       />
+                                    </div>
+                                 );
+                              })}
+                           </div>
+                        </div>
+                     )}
+
+                     {/* Photos Section */}
+                     {athlete.gallery_urls && athlete.gallery_urls.length > 0 && (
+                        <div>
+                           <h3 className="text-sm font-black text-gray-500 tracking-[0.2em] mb-6 uppercase">Action Shots</h3>
+                           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                              {athlete.gallery_urls.map((url: string, i: number) => (
+                                 <div key={i} className="aspect-square bg-gray-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 group cursor-pointer">
+                                    <img src={url} alt="Action shot" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+                     )}
+
+                     {(!athlete.video_links || athlete.video_links.length === 0) && (!athlete.gallery_urls || athlete.gallery_urls.length === 0) && (
+                        <div className="py-20 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                           <p className="text-gray-400 text-sm font-bold tracking-wide">No media available yet.</p>
+                        </div>
+                     )}
+                  </div>
+               )}
+
+               {activeTab !== "Profile" && activeTab !== "Gallery" && (
                   <div className="py-20 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
                      <p className="text-gray-400 text-sm font-bold tracking-wide">{activeTab} — Coming Soon</p>
                   </div>

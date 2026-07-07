@@ -7,13 +7,26 @@ export default async function ScoutsPage() {
    const supabase = await createClient();
    const { data: scouts, error } = await supabase
       .from('profiles')
-      .select('id, slug, first_name, last_name, avatar_url, agency_name, country, status, role, users:users!profiles_user_id_fkey(role)')
+      .select('id, slug, first_name, last_name, avatar_url, cover_url, gallery_urls, video_links, agency_name, country, status, role, users:users!profiles_user_id_fkey(role, subscriptions(status))')
       .eq('role', 'scout')
       .order('created_at', { ascending: false });
 
    const filteredScouts = (scouts || []).filter(scout => {
-      const userRole = (scout.users as any)?.role;
-      return userRole !== 'admin' && userRole !== 'superadmin';
+      const userObj = scout.users as any;
+      const userRole = userObj?.role;
+      if (userRole === 'admin' || userRole === 'superadmin') return false;
+
+      const isComplete = Boolean(
+         scout.avatar_url &&
+         scout.cover_url &&
+         scout.gallery_urls?.length >= 2 &&
+         scout.video_links?.length >= 1 &&
+         scout.first_name &&
+         scout.last_name
+      );
+
+      const isSubscribed = userObj?.subscriptions?.some((s: any) => s.status === 'active');
+      return isComplete && isSubscribed;
    });
 
    if (error) console.error('[ScoutsPage] fetch error:', error.message);

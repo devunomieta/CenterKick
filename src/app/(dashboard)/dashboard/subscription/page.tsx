@@ -57,6 +57,7 @@ export default function SubscriptionPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [msg, setMsg] = useState<{type: 'success'|'error', text: string}|null>(null);
+  const [pricingPlan, setPricingPlan] = useState<any>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -83,11 +84,14 @@ export default function SubscriptionPage() {
         setPaymentSettings(settings?.content || { paymentLink: 'https://paystack.com/pay/centerkick-pro' });
 
         // Fetch user transaction history securely
-        const { getUserTransactions } = await import('./actions');
+        const { getUserTransactions, getPricingPlan } = await import('./actions');
         const txRes = await getUserTransactions();
         if (txRes && txRes.transactions) {
           setTransactions(txRes.transactions);
         }
+
+        const planData = await getPricingPlan(profData?.role || 'player');
+        setPricingPlan(planData);
       }
       setIsLoading(false);
     }
@@ -113,22 +117,17 @@ export default function SubscriptionPage() {
     setIsSubmitting(false);
   };
 
-  const rolePrices: Record<string, number> = {
-    player: 15000,
-    coach: 20000,
-    agent: 30000,
-    scout: 25000,
-    organization: 50000
-  };
   const userRole = profile?.role || 'player';
-  const basePrice = rolePrices[userRole] || 15000;
+  const basePrice = pricingPlan?.amount || 15000;
+  const durationMonths = pricingPlan?.duration_months || 12;
+  const planName = pricingPlan?.plan_name || `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} Pro`;
   const usdPrice = basePrice / 1500;
 
   const plan = {
-    name: `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} Pro`,
+    name: planName,
     price: `₦${basePrice.toLocaleString()}`,
     usdEquivalent: `$${usdPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    period: "Per Quarter",
+    period: `Per ${durationMonths === 1 ? 'Month' : durationMonths === 3 ? 'Quarter' : durationMonths === 6 ? 'Half-Year' : durationMonths === 12 ? 'Year' : durationMonths + ' Months'}`,
     status: profile?.status === 'active' ? 'Active' : (profile?.verification_requested ? 'Pending Approval' : 'Unverified'),
     features: [
       "Verified Professional Badge",

@@ -7,13 +7,26 @@ export default async function CoachesPage() {
    const supabase = await createClient();
    const { data: coaches, error } = await supabase
       .from('profiles')
-      .select('id, slug, first_name, last_name, avatar_url, position, country, status, role, users:users!profiles_user_id_fkey(role)')
+      .select('id, slug, first_name, last_name, avatar_url, cover_url, gallery_urls, video_links, position, country, status, role, users:users!profiles_user_id_fkey(role, subscriptions(status))')
       .eq('role', 'coach')
       .order('created_at', { ascending: false });
 
    const filteredCoaches = (coaches || []).filter(coach => {
-      const userRole = (coach.users as any)?.role;
-      return userRole !== 'admin' && userRole !== 'superadmin';
+      const userObj = coach.users as any;
+      const userRole = userObj?.role;
+      if (userRole === 'admin' || userRole === 'superadmin') return false;
+
+      const isComplete = Boolean(
+         coach.avatar_url &&
+         coach.cover_url &&
+         coach.gallery_urls?.length >= 2 &&
+         coach.video_links?.length >= 1 &&
+         coach.first_name &&
+         coach.last_name
+      );
+
+      const isSubscribed = userObj?.subscriptions?.some((s: any) => s.status === 'active');
+      return isComplete && isSubscribed;
    });
 
    if (error) console.error('[CoachesPage] fetch error:', error.message);

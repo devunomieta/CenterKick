@@ -23,7 +23,10 @@ export function AdminSidebar({ role }: { role: string }) {
       items: [
         { label: 'Overview', href: '/admin', icon: LayoutDashboard },
         ...(['superadmin', 'admin', 'operations', 'finance'].includes(role) 
-          ? [{ label: 'Approvals Hub', href: '/admin/approvals', icon: ShieldCheck }] 
+          ? [
+              { label: 'Approvals Hub', href: '/admin/approvals', icon: ShieldCheck },
+              { label: 'Profile Edits', href: '/admin/approvals/edits', icon: PenTool }
+            ] 
           : [])
       ]
     },
@@ -58,7 +61,8 @@ export function AdminSidebar({ role }: { role: string }) {
         ...(['superadmin', 'admin', 'operations'].includes(role) ? [{ label: 'Data Management', href: '/admin/data-management', icon: Database }] : []),
         ...(isFinance || isSuperOrAdmin ? [
           { label: 'Transactions', href: '/admin/payments/transactions', icon: CreditCard },
-          { label: 'Subscriptions', href: '/admin/payments/subscriptions', icon: Settings }
+          { label: 'Subscriptions', href: '/admin/payments/subscriptions', icon: Settings },
+          { label: 'Pricing Plans', href: '/admin/pricing', icon: CreditCard }
         ] : []),
         ...(role === 'superadmin' ? [
           { label: 'System Settings', href: '/admin/settings', icon: Settings },

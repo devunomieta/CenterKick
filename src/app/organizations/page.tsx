@@ -7,13 +7,26 @@ export default async function OrganizationsPage() {
    const supabase = await createClient();
    const { data: organizations, error } = await supabase
       .from('profiles')
-      .select('id, slug, first_name, last_name, avatar_url, agency_name, country, bio, status, role, users:users!profiles_user_id_fkey(role)')
+      .select('id, slug, first_name, last_name, avatar_url, cover_url, gallery_urls, video_links, agency_name, country, bio, status, role, users:users!profiles_user_id_fkey(role, subscriptions(status))')
       .eq('role', 'organization')
       .order('created_at', { ascending: false });
 
    const filteredOrganizations = (organizations || []).filter(org => {
-      const userRole = (org.users as any)?.role;
-      return userRole !== 'admin' && userRole !== 'superadmin';
+      const userObj = org.users as any;
+      const userRole = userObj?.role;
+      if (userRole === 'admin' || userRole === 'superadmin') return false;
+
+      const isComplete = Boolean(
+         org.avatar_url &&
+         org.cover_url &&
+         org.gallery_urls?.length >= 2 &&
+         org.video_links?.length >= 1 &&
+         org.first_name &&
+         org.last_name
+      );
+
+      const isSubscribed = userObj?.subscriptions?.some((s: any) => s.status === 'active');
+      return isComplete && isSubscribed;
    });
 
    if (error) console.error('[OrganizationsPage] fetch error:', error.message);

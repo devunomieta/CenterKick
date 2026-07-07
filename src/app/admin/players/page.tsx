@@ -29,7 +29,7 @@ export default async function AdminPlayersPage({
   const [
     { count: allPlayersCount },
     { count: subscribedCount },
-    { count: prospectsCount },
+    { count: unsubscribedCount },
     { count: pendingEditsCount },
     { count: pendingTransactionsCount }
   ] = await Promise.all([
@@ -37,8 +37,8 @@ export default async function AdminPlayersPage({
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'player').not('email', 'is', null),
     // Current subscribed players
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'player').eq('is_subscribed', true).not('email', 'is', null),
-    // Players in prospects (unlinked profiles)
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'player').is('user_id', null).not('email', 'is', null),
+    // Unsubscribed players
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'player').eq('is_subscribed', false).not('email', 'is', null),
     // Pending profile edits
     supabase.from('profile_edits').select('id, profiles!inner(role)', { count: 'exact', head: true }).eq('status', 'pending').eq('profiles.role', 'player'),
     // Pending direct transfer payments
@@ -56,9 +56,11 @@ export default async function AdminPlayersPage({
     .order('created_at', { ascending: false })
     .range(offset, offset + pageSize - 1);
 
-  // If not on 'pending' tab, default to subscribed only
-  if (tab !== 'pending') {
+  // If not on 'pending' tab, handle subscribed/unsubscribed/all
+  if (tab === 'subscribed') {
     query = query.eq('is_subscribed', true);
+  } else if (tab === 'unsubscribed') {
+    query = query.eq('is_subscribed', false);
   }
 
   if (tab === 'pending') {
@@ -122,7 +124,7 @@ export default async function AdminPlayersPage({
   const stats = [
     { label: 'All Players', value: allPlayersCount || 0, tab: 'all', color: 'text-gray-900', bg: 'bg-gray-100', icon: Users },
     { label: 'Subscribed', value: subscribedCount || 0, tab: 'subscribed', color: 'text-green-600', bg: 'bg-green-50', icon: CreditCard },
-    { label: 'Prospects', value: prospectsCount || 0, tab: 'prospects', color: 'text-gray-400', bg: 'bg-gray-50', icon: Users },
+    { label: 'Unsubscribed', value: unsubscribedCount || 0, tab: 'unsubscribed', color: 'text-gray-400', bg: 'bg-gray-50', icon: Users },
     { label: 'Pending Requests', value: totalPendingRequests, tab: 'pending', color: 'text-[#b50a0a]', bg: 'bg-red-50', icon: Clock },
   ];
 
@@ -146,7 +148,7 @@ export default async function AdminPlayersPage({
         {stats.map((stat, i) => (
           <Link
             key={i}
-            href={stat.tab === 'prospects' ? `/admin/approvals?tab=prospects&role=player` : `/admin/players?tab=${stat.tab === 'subscribed' ? 'all' : stat.tab}&page=1`}
+            href={`/admin/players?tab=${stat.tab}&page=1`}
             className={`bg-white p-5 rounded-[1.5rem] border-2 transition-all duration-300 relative overflow-hidden group active:scale-95 ${tab === stat.tab ? 'border-[#b50a0a] shadow-xl shadow-red-900/10' : 'border-gray-100 shadow-sm hover:border-gray-200 hover:shadow-md'}`}
           >
             <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>

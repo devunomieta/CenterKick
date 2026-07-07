@@ -7,13 +7,26 @@ export default async function PlayersPage() {
    const supabase = await createClient();
    const { data: players, error } = await supabase
       .from('profiles')
-      .select('id, slug, first_name, last_name, avatar_url, position, country, status, role, users:users!profiles_user_id_fkey(role)')
+      .select('id, slug, first_name, last_name, avatar_url, cover_url, gallery_urls, video_links, position, country, status, role, users:users!profiles_user_id_fkey(role, subscriptions(status))')
       .eq('role', 'player')
       .order('created_at', { ascending: false });
 
    const filteredPlayers = (players || []).filter(athlete => {
-      const userRole = (athlete.users as any)?.role;
-      return userRole !== 'admin' && userRole !== 'superadmin';
+      const userObj = athlete.users as any;
+      const userRole = userObj?.role;
+      if (userRole === 'admin' || userRole === 'superadmin') return false;
+
+      const isComplete = Boolean(
+         athlete.avatar_url &&
+         athlete.cover_url &&
+         athlete.gallery_urls?.length >= 2 &&
+         athlete.video_links?.length >= 1 &&
+         athlete.first_name &&
+         athlete.last_name
+      );
+
+      const isSubscribed = userObj?.subscriptions?.some((s: any) => s.status === 'active');
+      return isComplete && isSubscribed;
    });
 
    if (error) console.error('[PlayersPage] fetch error:', error.message);

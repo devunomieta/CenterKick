@@ -45,13 +45,36 @@ export default async function DashboardLayout({
     getCachedSettings().then(res => res || {})
   ]);
 
-  // 1. Enforce Profile Onboarding
-  if (!userRecord || !profile) {
-    redirect('/onboarding');
-  }
+  // Fetch user subscriptions
+  const { data: subscriptions } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('status', 'active');
+  
+  const isSubscribed = subscriptions && subscriptions.length > 0;
 
   const role = (userRecord as any)?.role || 'player';
   const status = (profile as any)?.status || 'pending';
+
+  // Fetch notifications
+  const { data: notifications } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  // Compute profile completeness
+  const p = profile as any;
+  const isProfileComplete = Boolean(
+    p.avatar_url &&
+    p.cover_url &&
+    p.gallery_urls?.length >= 2 &&
+    p.video_links?.length >= 1 &&
+    p.first_name &&
+    p.last_name
+  );
 
   // Forced Redirect for Administrative roles to the unified Admin Portal
   const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
@@ -90,13 +113,13 @@ export default async function DashboardLayout({
               )}
             </Link>
           </div>
-          <DashboardSidebarNav role={role} />
+          <DashboardSidebarNav role={role} isSubscribed={isSubscribed} />
         </aside>
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Banner Bar (Notices) */}
-          <BannerManager status={status} />
+          <BannerManager isSubscribed={isSubscribed} isProfileComplete={isProfileComplete} />
 
           {/* Top Header */}
           <DashboardHeader 
@@ -104,6 +127,7 @@ export default async function DashboardLayout({
             email={user?.email}
             sidebarLogoUrl={sidebarLogoUrl}
             brandName={brandName}
+            notifications={notifications || []}
           />
 
           {/* Page Content */}

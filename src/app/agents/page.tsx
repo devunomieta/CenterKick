@@ -7,13 +7,26 @@ export default async function AgentsPage() {
    const supabase = await createClient();
    const { data: agents, error } = await supabase
       .from('profiles')
-      .select('id, slug, first_name, last_name, avatar_url, agency_name, country, bio, status, role, users:users!profiles_user_id_fkey(role)')
+      .select('id, slug, first_name, last_name, avatar_url, cover_url, gallery_urls, video_links, agency_name, bio, country, status, role, users:users!profiles_user_id_fkey(role, subscriptions(status))')
       .eq('role', 'agent')
       .order('created_at', { ascending: false });
 
    const filteredAgents = (agents || []).filter(agent => {
-      const userRole = (agent.users as any)?.role;
-      return userRole !== 'admin' && userRole !== 'superadmin';
+      const userObj = agent.users as any;
+      const userRole = userObj?.role;
+      if (userRole === 'admin' || userRole === 'superadmin') return false;
+
+      const isComplete = Boolean(
+         agent.avatar_url &&
+         agent.cover_url &&
+         agent.gallery_urls?.length >= 2 &&
+         agent.video_links?.length >= 1 &&
+         agent.first_name &&
+         agent.last_name
+      );
+
+      const isSubscribed = userObj?.subscriptions?.some((s: any) => s.status === 'active');
+      return isComplete && isSubscribed;
    });
 
    if (error) console.error('[AgentsPage] fetch error:', error.message);
