@@ -113,13 +113,13 @@ export default async function DashboardLayout({
               )}
             </Link>
           </div>
-          <DashboardSidebarNav role={role} isSubscribed={isSubscribed} />
+          <DashboardSidebarNav role={role} isSubscribed={isSubscribed ?? false} />
         </aside>
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Banner Bar (Notices) */}
-          <BannerManager isSubscribed={isSubscribed} isProfileComplete={isProfileComplete} />
+          <BannerManager isSubscribed={isSubscribed ?? false} isProfileComplete={isProfileComplete} />
 
           {/* Top Header */}
           <DashboardHeader 

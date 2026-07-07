@@ -1,5 +1,5 @@
 import { getPendingEdits, approveEdit, rejectEdit } from './actions';
-import { AdminHeader } from '@/components/admin/AdminHeader';
+
 import { Check, X, Clock } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
 
@@ -8,10 +8,14 @@ export default async function AdminEditsApprovalsPage() {
 
   return (
     <div className="space-y-6">
-      <AdminHeader 
-        title="Profile Edit Approvals" 
-        description="Review and manage profile edit requests from managed accounts."
-      />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tighter leading-none">Profile <span className="text-[#b50a0a]">Edit Approvals</span></h1>
+          <p className="text-gray-400 text-[10px] font-black tracking-[0.2em] mt-2 flex items-center gap-2">
+            <Clock className="w-3 h-3 text-[#b50a0a]" /> Review and manage profile edit requests from managed accounts.
+          </p>
+        </div>
+      </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {pendingEdits.length === 0 ? (

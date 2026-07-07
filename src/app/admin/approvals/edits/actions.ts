@@ -4,6 +4,22 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { sendEmail } from '@/lib/email';
 
+export async function getPendingEdits() {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('profile_edits')
+    .select('*, profile:profiles(user_id, first_name, last_name, role)')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching pending edits:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
 export async function approveEdit(editId: string) {
   const supabase = createAdminClient();
   
