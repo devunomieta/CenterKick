@@ -4,12 +4,11 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  Search, Mail, User, Globe, Calendar, MapPin, 
-  CheckCircle, Clock, AlertCircle, RefreshCcw, 
+  Search, CheckCircle, Clock, AlertCircle, RefreshCcw, 
   Eye, X, Filter, Target, Footprints, UserCheck, 
   ChevronLeft, ChevronRight, ShieldAlert, ShieldCheck, 
-  FileText, CreditCard, Users, ArrowRight, Ban, Check, Trash2, Shield,
-  Activity, DollarSign, Phone, ExternalLink
+  FileText, Users, User, ArrowRight, Ban, Check, Trash2, Shield,
+  Activity, CreditCard, Phone, ExternalLink
 } from 'lucide-react';
 import { DateDisplay } from '@/components/common/DateDisplay';
 import { FlagIcon } from '@/components/common/FlagIcon';
@@ -100,35 +99,15 @@ interface ProfileEdit {
   } | null;
 }
 
-interface PaymentTransaction {
-  id: string;
-  user_id?: string | null;
-  reference: string;
-  amount: number;
-  currency: string;
-  status: string;
-  method: string;
-  created_at: string;
-  profiles: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    role: string;
-  } | null;
-}
 
 export function ApprovalsClient({
   pendingStaff,
   pendingEdits,
-  prospects,
-  pendingPayments,
   activeTab = 'staff',
   currentUserRole = 'admin'
 }: {
   pendingStaff: StaffRequest[];
   pendingEdits: ProfileEdit[];
-  prospects: Prospect[];
-  pendingPayments: PaymentTransaction[];
   activeTab?: string;
   currentUserRole: string;
 }) {
@@ -161,8 +140,6 @@ export function ApprovalsClient({
   const [decisionReason, setDecisionReason] = useState('');
 
   // Inspect modals
-  const [inspectPayment, setInspectPayment] = useState<PaymentTransaction | null>(null);
-  const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
   const [selectedStaff, setSelectedStaff] = useState<StaffRequest | null>(null);
 
   const [targetStaffRole, setTargetStaffRole] = useState('blogger');
@@ -187,16 +164,6 @@ export function ApprovalsClient({
           (roleFilter === 'all' || e.profiles?.role === roleFilter) &&
           (`${e.profiles?.first_name} ${e.profiles?.last_name}`.toLowerCase().includes(query) || e.profiles?.email?.toLowerCase().includes(query) || e.field_name.toLowerCase().includes(query))
         );
-      case 'prospects':
-        return prospects.filter(p => 
-          (roleFilter === 'all' || p.role === roleFilter) &&
-          (`${p.first_name} ${p.last_name}`.toLowerCase().includes(query) || p.email?.toLowerCase().includes(query))
-        );
-      case 'payments':
-        return pendingPayments.filter(p => 
-          (roleFilter === 'all' || p.profiles?.role === roleFilter) &&
-          (`${p.profiles?.first_name} ${p.profiles?.last_name}`.toLowerCase().includes(query) || p.profiles?.email?.toLowerCase().includes(query) || p.reference.toLowerCase().includes(query))
-        );
       default:
         return [];
     }
@@ -207,8 +174,6 @@ export function ApprovalsClient({
   // Total pending counts for badges
   const totalStaff = pendingStaff.length;
   const totalEdits = pendingEdits.length;
-  const totalProspects = prospects.length;
-  const totalPayments = pendingPayments.length;
 
   const handleTabChange = (newTab: string) => {
     setTab(newTab);
@@ -271,13 +236,11 @@ export function ApprovalsClient({
   return (
     <div className="space-y-6">
       
-      {/* 4 Cards Stats System */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Cards Stats System */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[
           { id: 'staff', label: 'Staff Requests', count: totalStaff, color: 'text-blue-600', bg: 'bg-blue-50/50', border: 'border-blue-100', icon: Shield },
-          { id: 'edits', label: 'Profile Edits', count: totalEdits, color: 'text-orange-600', bg: 'bg-orange-50/50', border: 'border-orange-100', icon: FileText },
-          { id: 'prospects', label: 'Prospects & Invites', count: totalProspects, color: 'text-purple-600', bg: 'bg-purple-50/50', border: 'border-purple-100', icon: Mail },
-          { id: 'payments', label: 'Bank Transfers', count: totalPayments, color: 'text-green-600', bg: 'bg-green-50/50', border: 'border-green-100', icon: CreditCard }
+          { id: 'edits', label: 'Profile Edits', count: totalEdits, color: 'text-orange-600', bg: 'bg-orange-50/50', border: 'border-orange-100', icon: FileText }
         ].map((c) => {
           const isActive = tab === c.id;
           return (
@@ -513,167 +476,7 @@ export function ApprovalsClient({
             </div>
           )}
 
-          {tab === 'prospects' && (
-            <table className="w-full text-left text-base text-gray-600 whitespace-nowrap">
-              <thead className="bg-[#f8f9fa] border-b border-gray-100">
-                <tr>
-                  <th className="px-6 py-5 text-[10px] font-black tracking-wide text-[#b50a0a]">Prospect Identity</th>
-                  <th className="px-6 py-5 text-[10px] font-black tracking-wide text-[#b50a0a]">Role Type</th>
-                  <th className="px-6 py-5 text-[10px] font-black tracking-wide text-[#b50a0a]">Status</th>
-                  <th className="px-6 py-5 text-[10px] font-black tracking-wide text-[#b50a0a] text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {(filtered as Prospect[]).length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-20 text-center">
-                      <Mail className="w-12 h-12 text-gray-100 mx-auto mb-4" />
-                      <p className="text-[10px] font-black tracking-wide text-gray-400">No prospects matching your filters.</p>
-                    </td>
-                  </tr>
-                ) : (
-                  (filtered as Prospect[]).map((prospect) => (
-                    <tr key={prospect.id} className="hover:bg-gray-50/50 transition-colors group">
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-2xl bg-gray-900 flex items-center justify-center font-black text-white text-base shrink-0 shadow-lg shadow-gray-200/50">
-                            {((prospect.first_name && prospect.first_name[0]) || 'U').toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <p className="font-black text-gray-900 leading-none truncate max-w-full max-w-[150px]">{prospect.first_name} {prospect.last_name}</p>
-                              <FlagIcon country={prospect.country} className="w-3 h-2" />
-                            </div>
-                            <p className="text-[9px] font-bold text-gray-400 tracking-wide truncate max-w-full max-w-[200px]">{prospect.email || 'No email'}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-lg text-[8px] font-black tracking-wide text-gray-950 border border-gray-200/50">
-                          {getRoleIcon(prospect.role)}
-                          {prospect.role}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-1.5 h-1.5 rounded-full ${prospect.status === 'new' ? 'bg-blue-500' : 'bg-orange-500'}`}></div>
-                            <span className={`text-[8px] font-black tracking-wide ${prospect.status === 'new' ? 'text-blue-600' : 'text-orange-600'}`}>
-                              {prospect.status === 'new' ? 'NEW / PENDING PAY' : 'EXPIRED / RENEW'}
-                            </span>
-                          </div>
-                          <span className="text-[8px] font-bold text-gray-400 tracking-wide">
-                            Since <DateDisplay date={prospect.created_at} />
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button 
-                            onClick={() => setSelectedProspect(prospect)}
-                            className="p-2 text-gray-300 hover:text-black transition-colors rounded-xl hover:bg-white border border-transparent hover:border-gray-100"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button 
-                            disabled={actionLoadingId === prospect.email}
-                            onClick={() => handleResendInv(prospect.email!, prospect.last_name, prospect.role)}
-                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-xl text-[9px] font-black tracking-wide text-gray-900 hover:bg-black hover:text-white hover:border-black transition-all shadow-sm"
-                          >
-                            {actionLoadingId === prospect.email ? <RefreshCcw className="w-3.5 h-3.5 animate-spin" /> : <RefreshCcw className="w-3.5 h-3.5" />}
-                            {prospect.status === 'expired' ? 'Send Reminder' : 'Resend Invitation'}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
 
-          {tab === 'payments' && (
-            <div className="divide-y divide-gray-50">
-              {(filtered as PaymentTransaction[]).length === 0 ? (
-                <div className="px-6 py-20 text-center">
-                  <CreditCard className="w-12 h-12 text-gray-100 mx-auto mb-4" />
-                  <p className="text-[10px] font-black tracking-wide text-gray-400">No manual bank transfer payments currently awaiting verification.</p>
-                </div>
-              ) : (
-                (filtered as PaymentTransaction[]).map((pay: PaymentTransaction) => (
-                  <div key={pay.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50/50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center font-black text-base shrink-0 border border-green-100">
-                        <DollarSign className="w-6 h-6 animate-pulse" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          {pay.user_id ? (
-                            <Link 
-                              href={`/admin/users/${pay.user_id}`} 
-                              className="font-black text-gray-900 text-base hover:text-[#b50a0a] transition-colors flex items-center gap-1.5 group"
-                            >
-                              {pay.profiles?.first_name} {pay.profiles?.last_name}
-                              <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </Link>
-                          ) : (
-                            <p className="font-black text-gray-900 text-base">{pay.profiles?.first_name} {pay.profiles?.last_name}</p>
-                          )}
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded text-[7px] font-black text-gray-600">
-                            {pay.profiles?.role}
-                          </span>
-                        </div>
-                        <p className="text-[8px] font-black text-[#b50a0a] tracking-wide mt-1">REF: {pay.reference}</p>
-                        <div className="flex items-baseline gap-2 mt-1">
-                          <span className="text-base font-black text-gray-900">${pay.amount.toLocaleString()} {pay.currency}</span>
-                          <span className="text-[8px] font-bold text-gray-400">Awaiting Settlement Confirmation</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => setInspectPayment(pay)}
-                        className="p-2.5 text-gray-400 hover:text-black transition-colors rounded-xl hover:bg-gray-100 border border-transparent"
-                        title="Inspect Bank Receipt"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        disabled={actionLoadingId !== null}
-                        onClick={() => setDecisionAction({
-                          id: pay.id,
-                          type: 'approve_pay',
-                          title: 'Approve Payment',
-                          subtitle: 'Confirm manual bank transfer and activate subscription privileges',
-                          targetName: `${pay.profiles?.first_name} ${pay.profiles?.last_name}`,
-                          targetEmail: pay.profiles?.email || 'N/A'
-                        })}
-                        className="flex items-center gap-1.5 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[9px] font-black tracking-wide shadow-lg shadow-green-900/10 transition-all disabled:opacity-50"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        Approve Payment
-                      </button>
-                      <button
-                        disabled={actionLoadingId !== null}
-                        onClick={() => setDecisionAction({
-                          id: pay.id,
-                          type: 'reject_pay',
-                          title: 'Reject Payment',
-                          subtitle: 'Decline payment receipt and mark subscription transfer as failed',
-                          targetName: `${pay.profiles?.first_name} ${pay.profiles?.last_name}`,
-                          targetEmail: pay.profiles?.email || 'N/A'
-                        })}
-                        className="px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-xl text-[9px] font-black tracking-wide transition-all disabled:opacity-50"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
         </div>
 
         {/* Footer info/alert */}
@@ -785,158 +588,7 @@ export function ApprovalsClient({
 
 
 
-      {/* 3. Payment Details Inspector Modal */}
-      {inspectPayment && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setInspectPayment(null)}>
-          <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setInspectPayment(null)} className="absolute top-4 md:p-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10">
-              <X className="w-5 h-5 text-gray-400" />
-            </button>
-            <div className="p-10 pb-6">
-              <div className="flex items-center gap-6 mb-10">
-                <div className="w-16 h-16 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center border border-green-100 font-black text-2xl shrink-0">
-                  $
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black tracking-tighter leading-none mb-2">Direct Bank Settlement</h2>
-                  <p className="text-[10px] font-black text-[#b50a0a] tracking-[0.2em]">Transaction Ref: {inspectPayment.reference}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-10 mb-10">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 tracking-wide"><User className="w-3.5 h-3.5" /> Payer Name</div>
-                  <p className="text-[14px] font-black text-gray-900 truncate pr-4">
-                    {inspectPayment.profiles?.first_name} {inspectPayment.profiles?.last_name}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 tracking-wide"><Mail className="w-3.5 h-3.5" /> Email Address</div>
-                  <p className="text-[14px] font-black text-gray-900 truncate pr-4">{inspectPayment.profiles?.email || 'N/A'}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 tracking-wide"><CreditCard className="w-3.5 h-3.5" /> Subscription Amount</div>
-                  <p className="text-[14px] font-black text-green-600 font-black">${inspectPayment.amount.toLocaleString()} {inspectPayment.currency}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 tracking-wide"><Calendar className="w-3.5 h-3.5" /> Transfer Initiated</div>
-                  <p className="text-[14px] font-black text-gray-900"><DateDisplay date={inspectPayment.created_at} /></p>
-                </div>
-              </div>
 
-              <div className="bg-gray-50 rounded-[2.5rem] p-6 mb-10 border border-gray-100 flex items-center justify-between">
-                <div>
-                  <p className="text-[9px] font-black text-gray-900 tracking-wide">Verify Settlement Funds</p>
-                  <p className="text-gray-400 text-[10px] leading-relaxed mt-1">Please confirm that funds matching reference <strong>{inspectPayment.reference}</strong> are fully cleared in the corporate bank account.</p>
-                </div>
-                {inspectPayment.user_id && (
-                  <Link
-                    href={`/admin/users/${inspectPayment.user_id}`}
-                    className="flex items-center gap-1.5 px-4 py-2.5 bg-white border border-gray-100 text-gray-900 rounded-xl text-[9px] font-black tracking-wide hover:bg-black hover:text-white transition-all shadow-sm shrink-0"
-                  >
-                    View Full Profile
-                  </Link>
-                )}
-              </div>
-
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => {
-                    setInspectPayment(null);
-                    setDecisionAction({
-                      id: inspectPayment.id,
-                      type: 'approve_pay',
-                      title: 'Approve Payment',
-                      subtitle: 'Confirm bank settlement receipt & activate subscription',
-                      targetName: `${inspectPayment.profiles?.first_name} ${inspectPayment.profiles?.last_name}`,
-                      targetEmail: inspectPayment.profiles?.email || 'N/A'
-                    });
-                  }}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-5 rounded-[2rem] font-black tracking-[0.2em] text-[11px] transition-all text-center flex items-center justify-center gap-2 shadow-lg shadow-green-900/10"
-                >
-                  <CheckCircle className="w-4 h-4" /> Confirm & Activate
-                </button>
-                <button 
-                  onClick={() => {
-                    setInspectPayment(null);
-                    setDecisionAction({
-                      id: inspectPayment.id,
-                      type: 'reject_pay',
-                      title: 'Reject Payment',
-                      subtitle: 'Decline transfer proof & mark transaction as failed',
-                      targetName: `${inspectPayment.profiles?.first_name} ${inspectPayment.profiles?.last_name}`,
-                      targetEmail: inspectPayment.profiles?.email || 'N/A'
-                    });
-                  }}
-                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 py-5 rounded-[2rem] font-black tracking-[0.2em] text-[11px] transition-all text-center flex items-center justify-center gap-2"
-                >
-                  <X className="w-4 h-4" /> Reject Payment
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 4. Prospect Details Modal */}
-      {selectedProspect && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setSelectedProspect(null)}>
-          <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setSelectedProspect(null)} className="absolute top-4 md:p-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10">
-              <X className="w-5 h-5 text-gray-400" />
-            </button>
-            <div className="p-10 pb-6">
-              <div className="flex items-center gap-6 mb-10">
-                <div className="w-20 h-20 rounded-3xl bg-[#0f172a] flex items-center justify-center font-black text-white text-2xl shadow-xl">
-                  {((selectedProspect.first_name && selectedProspect.first_name[0]) || 'P').toUpperCase()}
-                </div>
-                <div>
-                  <h2 className="text-3xl font-black tracking-tighter leading-none mb-2">{selectedProspect.first_name} {selectedProspect.last_name}</h2>
-                  <p className="text-[10px] font-black text-[#b50a0a] tracking-[0.2em]">{selectedProspect.role} Prospect</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-10 mb-10">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 tracking-wide"><Mail className="w-3.5 h-3.5" /> Email Address</div>
-                  <p className="text-[14px] font-black text-gray-900 truncate pr-4">{selectedProspect.email || 'No email'}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 tracking-wide"><Globe className="w-3.5 h-3.5" /> Location</div>
-                  <p className="text-[14px] font-black text-gray-900 flex items-center gap-2 tracking-wide">
-                    <FlagIcon country={selectedProspect.country} className="w-4 h-2.5" /> {selectedProspect.country || 'N/A'}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 tracking-wide"><Calendar className="w-3.5 h-3.5" /> Enrolled On</div>
-                  <p className="text-[14px] font-black text-gray-900"><DateDisplay date={selectedProspect.created_at} /></p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 tracking-wide"><Clock className="w-3.5 h-3.5" /> Status</div>
-                  <p className="text-[14px] font-black text-gray-900">{selectedProspect.status === 'new' ? 'New invite' : 'Expired subscription'}</p>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-[2.5rem] p-6 mb-10 border border-gray-100">
-                <p className="text-[9px] font-black text-gray-900 tracking-wide">Onboarding Status</p>
-                <p className="text-gray-400 text-[11px] leading-relaxed mt-4">
-                  This sports directory profile was created by an administrator. You can invite the participant to renew or claim their profile by clicking the button below.
-                </p>
-              </div>
-
-              <button 
-                onClick={() => {
-                  handleResendInv(selectedProspect.email!, selectedProspect.last_name, selectedProspect.role);
-                  setSelectedProspect(null);
-                }}
-                className="w-full bg-black hover:bg-[#b50a0a] text-white py-5 rounded-[2rem] font-black tracking-[0.25em] text-[11px] transition-all shadow-md"
-              >
-                {selectedProspect.status === 'expired' ? 'Send Renewal Link' : 'Send Invitation Link'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 5. Staff Access Modal */}
       {selectedStaff && (

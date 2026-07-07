@@ -33,9 +33,7 @@ export default async function AdminApprovalsPage({
   // Fetch all queues in parallel
   const [
     { data: pendingStaff },
-    { data: pendingEdits },
-    { data: prospects },
-    { data: pendingPayments }
+    { data: pendingEdits }
   ] = await Promise.all([
     // 1. Fetch staff unassigned verification queue
     adminClient
@@ -50,22 +48,6 @@ export default async function AdminApprovalsPage({
       .from('profile_edits')
       .select('*, profiles(first_name, last_name, email, role, country)')
       .eq('status', 'pending')
-      .order('created_at', { ascending: false }),
-
-    // 3. Fetch Prospects (Unlinked profiles with user_id = null)
-    adminClient
-      .from('profiles')
-      .select('*, transactions(status)')
-      .is('user_id', null)
-      .not('email', 'is', null)
-      .order('created_at', { ascending: false }),
-
-    // 4. Fetch Pending Payments (Direct transfers awaiting confirmation)
-    adminClient
-      .from('transactions')
-      .select('*, profiles(first_name, last_name, email, role)')
-      .eq('status', 'pending')
-      .eq('method', 'direct_transfer')
       .order('created_at', { ascending: false })
   ]);
 
@@ -74,8 +56,6 @@ export default async function AdminApprovalsPage({
       <ApprovalsClient 
         pendingStaff={pendingStaff || []}
         pendingEdits={pendingEdits || []}
-        prospects={prospects || []}
-        pendingPayments={pendingPayments || []}
         activeTab={currentTab}
         currentUserRole={userRecord?.role || 'admin'}
       />

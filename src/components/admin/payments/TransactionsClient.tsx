@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { 
   Search, ChevronLeft, ChevronRight, 
   CreditCard, DollarSign, Clock, TrendingUp,
@@ -93,6 +93,24 @@ export function TransactionsClient({
   } | null>(null);
   const [decisionReason, setDecisionReason] = useState('');
   const [inspectPayment, setInspectPayment] = useState<Transaction | null>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (inspectPayment?.metadata?.proofFileUrl) {
+      fetch(inspectPayment.metadata.proofFileUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          setBlobUrl(url);
+        })
+        .catch(err => console.error('Failed to create blob from receipt:', err));
+    } else {
+      setBlobUrl(null);
+    }
+    return () => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [inspectPayment?.id]);
 
   const runApprovalAction = async (id: string, actionFn: () => Promise<{ success: boolean; error?: string }>) => {
     setActionLoadingId(id);
@@ -541,42 +559,42 @@ export function TransactionsClient({
       {/* Transaction Details Inspector Modal */}
       {inspectPayment && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setInspectPayment(null)}>
-          <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setInspectPayment(null)} className="absolute top-4 md:p-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10 cursor-pointer">
+          <div className="bg-white w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-[2rem] shadow-2xl relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setInspectPayment(null)} className="absolute top-4 right-4 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10 cursor-pointer">
               <X className="w-5 h-5 text-gray-400" />
             </button>
-            <div className="p-10 pb-6">
-              <div className="flex items-center gap-6 mb-10">
-                <div className="w-16 h-16 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center border border-green-100 font-black text-2xl shrink-0">
-                  $
+            <div className="p-6 md:p-8">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-14 h-14 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center border border-green-100 font-black text-2xl shrink-0">
+                  ₦
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black tracking-tighter leading-none mb-2">Transaction Details</h2>
+                  <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tighter leading-none mb-1">Transaction Details</h2>
                   <p className="text-[10px] font-black text-[#b50a0a] tracking-[0.2em]">Reference: {inspectPayment.reference}</p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-10 mb-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 mb-8">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-300 tracking-wide font-black"><UserCheck className="w-3.5 h-3.5" /> Payer Name</div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 tracking-wide font-black"><UserCheck className="w-3.5 h-3.5" /> Payer Name</div>
                   <p className="text-[14px] font-black text-gray-900 truncate pr-4">
                     {inspectPayment.profiles ? `${inspectPayment.profiles.first_name} ${inspectPayment.profiles.last_name}` : 'N/A'}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-300 tracking-wide font-black"><Globe className="w-3.5 h-3.5" /> Email Address</div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 tracking-wide font-black"><Globe className="w-3.5 h-3.5" /> Email Address</div>
                   <p className="text-[14px] font-black text-gray-900 truncate pr-4">{inspectPayment.profiles?.email || 'N/A'}</p>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-300 tracking-wide font-black"><CreditCard className="w-3.5 h-3.5" /> Transaction Amount</div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 tracking-wide font-black"><CreditCard className="w-3.5 h-3.5" /> Transaction Amount</div>
                   <p className="text-[14px] font-black text-green-600 font-black">{formatVal(Number(inspectPayment.amount))} {inspectPayment.currency}</p>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-300 tracking-wide font-black"><Clock className="w-3.5 h-3.5" /> Payment Method / Gateway</div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 tracking-wide font-black"><Clock className="w-3.5 h-3.5" /> Payment Method / Gateway</div>
                   <p className="text-[14px] font-black text-gray-900 font-bold">{getMethodLabel(inspectPayment.method)}</p>
                 </div>
                 <div className="space-y-2 col-span-2">
-                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-300 tracking-wide font-black"><Activity className="w-3.5 h-3.5" /> Transaction Status</div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 tracking-wide font-black"><Activity className="w-3.5 h-3.5" /> Transaction Status</div>
                   <div className="flex items-center gap-1.5 mt-1">
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[9px] font-bold tracking-wide ${getStatusColor(inspectPayment.status)}`}>
                       {inspectPayment.status}
@@ -586,7 +604,7 @@ export function TransactionsClient({
               </div>
 
               {inspectPayment.method === 'direct_transfer' && (
-                <div className="bg-slate-50 rounded-[2rem] p-6 mb-8 border border-slate-100 space-y-4 text-left">
+                <div className="bg-slate-50 rounded-[1.5rem] p-5 mb-8 border border-slate-100 space-y-4 text-left">
                   <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
                     <h4 className="text-[10px] font-black text-slate-900 tracking-wide flex items-center gap-2">
                       <Building className="w-4 h-4 text-amber-600" /> Direct Transfer Details
@@ -607,7 +625,7 @@ export function TransactionsClient({
                       <p className="text-[8px] font-black text-slate-400 tracking-wide">Uploaded Proof Receipt</p>
                       {inspectPayment.metadata.proofFileUrl.toLowerCase().endsWith('.pdf') ? (
                         <a
-                          href={inspectPayment.metadata.proofFileUrl}
+                          href={blobUrl || inspectPayment.metadata.proofFileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold text-[#b50a0a] hover:bg-slate-50 transition-all shadow-sm"
@@ -616,13 +634,17 @@ export function TransactionsClient({
                         </a>
                       ) : (
                         <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-white max-h-56 flex items-center justify-center shadow-inner group">
-                          <img
-                            src={inspectPayment.metadata.proofFileUrl}
-                            alt="Payment Receipt"
-                            className="max-h-56 w-full object-contain p-2"
-                          />
+                          {blobUrl ? (
+                            <img
+                              src={blobUrl}
+                              alt="Payment Receipt"
+                              className="max-h-56 w-full object-contain p-2"
+                            />
+                          ) : (
+                            <div className="p-4 text-xs font-bold text-gray-400 animate-pulse">Loading receipt image securely...</div>
+                          )}
                           <a
-                            href={inspectPayment.metadata.proofFileUrl}
+                            href={blobUrl || inspectPayment.metadata.proofFileUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="absolute bottom-3 right-3 bg-slate-900/80 hover:bg-slate-900 text-white px-3.5 py-2 rounded-xl text-[9px] font-black tracking-wide backdrop-blur-sm transition-all shadow-lg"
@@ -642,21 +664,21 @@ export function TransactionsClient({
               )}
 
               {inspectPayment.status === 'failed' && (inspectPayment.metadata?.rejection_reason || inspectPayment.metadata?.reason) && (
-                <div className="bg-red-50 rounded-[2rem] p-6 mb-8 border border-red-100 space-y-2 text-left">
+                <div className="bg-red-50 rounded-[1.5rem] p-5 mb-6 border border-red-100 space-y-2 text-left">
                   <p className="text-[9px] font-black text-red-700 tracking-wide">Rejection Reason</p>
                   <p className="text-red-900 text-sm font-bold leading-relaxed">{inspectPayment.metadata.rejection_reason || inspectPayment.metadata.reason}</p>
                 </div>
               )}
 
               {inspectPayment.status === 'confirmed' && (inspectPayment.metadata?.approval_comment || inspectPayment.metadata?.comment) && (
-                <div className="bg-green-50 rounded-[2rem] p-6 mb-8 border border-green-100 space-y-2 text-left">
+                <div className="bg-green-50 rounded-[1.5rem] p-5 mb-6 border border-green-100 space-y-2 text-left">
                   <p className="text-[9px] font-black text-green-700 tracking-wide">Approval Comment</p>
                   <p className="text-green-900 text-sm font-bold leading-relaxed">{inspectPayment.metadata.approval_comment || inspectPayment.metadata.comment}</p>
                 </div>
               )}
 
               {inspectPayment.status === 'pending' && inspectPayment.method === 'direct_transfer' ? (
-                <div className="bg-gray-50 rounded-[2.5rem] p-6 mb-10 border border-gray-100 flex items-center justify-between animate-pulse">
+                <div className="bg-gray-50 rounded-[1.5rem] p-5 mb-6 border border-gray-100 flex items-center justify-between animate-pulse">
                   <div>
                     <p className="text-[9px] font-black text-gray-900 tracking-wide">Verify Settlement Funds</p>
                     <p className="text-gray-400 text-[10px] leading-relaxed mt-1">Please confirm that funds matching reference <strong>{inspectPayment.reference}</strong> are fully cleared in the corporate bank account.</p>
@@ -715,38 +737,38 @@ export function TransactionsClient({
       {/* Generic Reason Decision Modal */}
       {decisionAction && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => { setDecisionAction(null); setDecisionReason(''); }}>
-          <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => { setDecisionAction(null); setDecisionReason(''); }} className="absolute top-4 md:p-8 right-8 w-11 h-11 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10 cursor-pointer">
-              <X className="w-5 h-5 text-gray-400" />
+          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => { setDecisionAction(null); setDecisionReason(''); }} className="absolute top-4 right-4 w-9 h-9 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 hover:bg-gray-100 transition-all z-10 cursor-pointer">
+              <X className="w-4 h-4 text-gray-400" />
             </button>
-            <div className="p-10 pb-8">
-              <div className="flex items-center gap-4 mb-8">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white ${decisionAction.type.startsWith('approve') ? 'bg-green-600' : 'bg-red-600'}`}>
+            <div className="p-6 md:p-8 pb-6">
+              <div className="flex items-center gap-4 mb-6">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0 ${decisionAction.type.startsWith('approve') ? 'bg-green-600' : 'bg-red-600'}`}>
                   {decisionAction.type.startsWith('approve') ? <ShieldCheck className="w-6 h-6" /> : <Ban className="w-6 h-6" />}
                 </div>
                 <div>
-                  <h3 className="text-xl font-black tracking-tight text-gray-955">{decisionAction.title}</h3>
-                  <p className="text-[9px] font-black text-gray-400 tracking-wide mt-1">{decisionAction.subtitle}</p>
+                  <h3 className="text-xl font-black tracking-tight text-gray-900 leading-none mb-1">{decisionAction.title}</h3>
+                  <p className="text-[9px] font-black text-gray-400 tracking-wide">{decisionAction.subtitle}</p>
                 </div>
               </div>
               
-              <div className="bg-gray-50 border border-gray-100 rounded-[2.5rem] p-6 mb-6 space-y-3">
+              <div className="bg-gray-50 border border-gray-100 rounded-[1.5rem] p-5 mb-5 space-y-3">
                 <div className="flex justify-between text-[10px] font-bold">
                   <span className="text-gray-400">Target Name</span>
-                  <span className="text-gray-950 font-black">{decisionAction.targetName}</span>
+                  <span className="text-gray-900 font-black">{decisionAction.targetName}</span>
                 </div>
                 <div className="flex justify-between text-[10px] font-bold">
                   <span className="text-gray-400">Email Address</span>
-                  <span className="text-gray-955 font-black">{decisionAction.targetEmail}</span>
+                  <span className="text-gray-900 font-black truncate max-w-[180px] text-right">{decisionAction.targetEmail}</span>
                 </div>
               </div>
 
               <div className="space-y-2 mb-6">
-                <label className="text-[10px] font-black text-gray-955 tracking-wide block ml-1">
+                <label className="text-[10px] font-black text-gray-900 tracking-wide block ml-1">
                   Reason / Email Note (Optional)
                 </label>
                 <textarea
-                  rows={4}
+                  rows={3}
                   placeholder={
                     decisionAction.type.startsWith('approve')
                       ? "Add welcoming remarks or verification details..."
