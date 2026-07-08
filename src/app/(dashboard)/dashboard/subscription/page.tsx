@@ -366,35 +366,7 @@ export default function SubscriptionPage() {
                   </div>
                </div>
 
-               {/* Why Go Pro Section */}
-               <div className="bg-[#0a0a0b] rounded-[40px] p-4 md:p-8 md:p-12 text-white relative overflow-hidden">
-                  <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                     <div>
-                        <h3 className="text-2xl font-bold tracking-tighter leading-none mb-4">Maximum <br /><span className="text-[#b50a0a]">Market Visibility</span></h3>
-                        <p className="text-xs font-medium text-gray-400 leading-relaxed mb-8">Our proprietary algorithm prioritizes verified profiles in scout searches, ensuring you&apos;re seen by the decision-makers that matter most.</p>
-                        <div className="flex items-center gap-4">
-                           <div className="flex -space-x-3">
-                              {[1, 2, 3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-[#0a0a0b] bg-gray-700"></div>)}
-                           </div>
-                           <span className="text-xs font-bold tracking-wide text-gray-500">Join 1,200+ Professionals</span>
-                        </div>
-                     </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[
-                           { icon: Zap, label: 'Instant', sub: 'Verification' },
-                           { icon: Globe, label: 'Global', sub: 'Reach' },
-                           { icon: ShieldCheck, label: 'Official', sub: 'Status' },
-                           { icon: Calendar, label: 'Flexible', sub: 'Billing' },
-                        ].map((item, i) => (
-                           <div key={i} className="bg-white/5 border border-white/10 p-4 rounded-2xl">
-                              <item.icon className="w-5 h-5 text-[#b50a0a] mb-2" />
-                              <p className="text-xs font-bold text-white">{item.label}</p>
-                              <p className="text-xs font-bold text-gray-500 tracking-wide">{item.sub}</p>
-                           </div>
-                        ))}
-                     </div>
-                  </div>
-               </div>
+
             </div>
           )}
 

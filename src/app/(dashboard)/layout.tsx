@@ -52,10 +52,10 @@ export default async function DashboardLayout({
     .eq('user_id', user.id)
     .eq('status', 'active');
   
-  const isSubscribed = subscriptions && subscriptions.length > 0;
-
   const role = (userRecord as any)?.role || 'player';
   const status = (profile as any)?.status || 'pending';
+
+  const isSubscribed = (subscriptions && subscriptions.length > 0) || status === 'active';
 
   // Fetch notifications
   const { data: notifications } = await supabase
