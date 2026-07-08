@@ -135,7 +135,7 @@ export function TransactionsClient({
   // Dynamic currency and formatting helper
   const formatVal = (val: number, decimals = 2) => {
     if (currency === 'NGN') {
-      return `â‚¦${val.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
+      return `₦${val.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
     }
     return `$${(val / exchangeRate).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
   };
@@ -241,7 +241,7 @@ export function TransactionsClient({
                          onClick={() => setCurrency(curr as 'USD' | 'NGN')}
                          className={`px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all ${currency === curr ? 'bg-[#b50a0a] text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                        >
-                         {curr === 'USD' ? '$ USD' : 'â‚¦ NGN'}
+                         {curr === 'USD' ? '$ USD' : '₦ NGN'}
                        </button>
                      ))}
                   </div>
@@ -566,7 +566,7 @@ export function TransactionsClient({
             <div className="p-6 md:p-8">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-14 h-14 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center border border-green-100 font-bold text-2xl shrink-0">
-                  â‚¦
+                  ₦
                 </div>
                 <div>
                   <h2 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tighter leading-none mb-1">Transaction Details</h2>

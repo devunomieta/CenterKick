@@ -289,7 +289,7 @@ export default async function DashboardPage() {
                 <TrendingUp className="w-12 h-12 text-gray-200 mb-4" />
                 <p className="text-sm font-bold tracking-wide text-gray-400 mb-2">Detailed Analytics Locked</p>
                 <p className="text-xs font-medium text-gray-400 max-w-full max-w-[200px] leading-relaxed">Upgrade to a Professional Plan to see your performance metrics and heatmaps.</p>
-                <Link href="/dashboard/subscription" className="mt-4 text-xs font-bold text-[#b50a0a] tracking-wide hover:underline">Activate Selection â‚¦15,000</Link>
+                <Link href="/dashboard/subscription" className="mt-4 text-xs font-bold text-[#b50a0a] tracking-wide hover:underline">Activate Selection ₦15,000</Link>
               </div>
             </div>
           </div>

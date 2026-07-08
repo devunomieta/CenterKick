@@ -2497,7 +2497,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-base font-bold shadow-sm ${
  tx.status === 'confirmed' || tx.status === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
  }`}>
-                                  {tx.currency === 'USD' ? '$' : tx.currency === 'NGN' ? 'â‚¦' : tx.currency}
+                                  {tx.currency === 'USD' ? '$' : tx.currency === 'NGN' ? '₦' : tx.currency}
                                 </div>
                                 <div>
                                   <p className="text-xs font-bold text-slate-900 leading-none mb-1.5 tracking-tight">
@@ -2516,7 +2516,7 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                               </div>
                               <div className="text-right">
                                 <p className="text-lg font-bold text-slate-900 tracking-tighter">
-                                  {tx.currency === 'USD' ? '$' : tx.currency === 'NGN' ? 'â‚¦' : ''}{(tx.amount / 100).toLocaleString()}
+                                  {tx.currency === 'USD' ? '$' : tx.currency === 'NGN' ? '₦' : ''}{(tx.amount / 100).toLocaleString()}
                                 </p>
                                 <span className={`text-xs font-bold tracking-[0.2em] px-2.5 py-1 rounded-lg ${
  tx.status === 'confirmed' || tx.status === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'

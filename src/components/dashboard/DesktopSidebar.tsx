@@ -29,7 +29,7 @@ export function DesktopSidebar({ role, isSubscribed, sidebarLogoUrl, brandName }
       </button>
 
       <div className={`h-20 flex items-center ${isCollapsed ? 'justify-center px-2' : 'px-4 lg:px-8'} border-b border-gray-800 shrink-0 overflow-hidden`}>
-        <Link href="/" className="flex items-center gap-3 w-full justify-center">
+        <Link href="/" className={`flex items-center gap-3 w-full ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
           {sidebarLogoUrl && !isCollapsed ? (
              <div className="relative h-7 w-auto max-w-full flex items-center justify-start overflow-hidden">
                 <img src={sidebarLogoUrl} alt={brandName} className="h-full w-auto object-contain" />

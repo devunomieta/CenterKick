@@ -129,7 +129,7 @@ export default function SubscriptionPage() {
 
   const plan = {
     name: planName,
-    price: `â‚¦${basePrice.toLocaleString()}`,
+    price: `₦${basePrice.toLocaleString()}`,
     usdEquivalent: `$${usdPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     period: `Per ${durationMonths === 1 ? 'Month' : durationMonths === 3 ? 'Quarter' : durationMonths === 6 ? 'Half-Year' : durationMonths === 12 ? 'Year' : durationMonths + ' Months'}`,
     status: profile?.status === 'active' ? 'Active' : (profile?.verification_requested ? 'Pending Approval' : 'Unverified'),
@@ -443,7 +443,7 @@ export default function SubscriptionPage() {
                             <div className="flex items-center gap-4 text-right justify-between md:justify-end">
                                <div>
                                   <p className="text-lg font-bold text-gray-900">
-                                     {tx.currency === 'USD' ? '$' : 'â‚¦'}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                     {tx.currency === 'USD' ? '$' : '₦'}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                   </p>
                                   {(tx.metadata?.rejection_reason || tx.metadata?.reason) && (
                                      <p className="text-xs font-bold text-red-500 tracking-wide mt-1 max-w-xs md:ml-auto">
@@ -479,7 +479,7 @@ export default function SubscriptionPage() {
              <div className="p-10 pb-10">
                <div className="flex items-center gap-6 mb-10">
                  <div className="w-16 h-16 rounded-2xl bg-slate-900 text-[#b50a0a] flex items-center justify-center font-bold text-2xl shrink-0">
-                   {inspectTransaction.currency === 'USD' ? '$' : 'â‚¦'}
+                   {inspectTransaction.currency === 'USD' ? '$' : '₦'}
                  </div>
                  <div>
                    <h2 className="text-2xl font-bold tracking-tighter leading-none mb-2">Transaction Details</h2>
@@ -491,7 +491,7 @@ export default function SubscriptionPage() {
                  <div className="space-y-1">
                    <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 tracking-wide"><CreditCard className="w-3.5 h-3.5" /> Amount</div>
                    <p className="text-base font-bold text-slate-900">
-                      {inspectTransaction.currency === 'USD' ? '$' : 'â‚¦'}{Number(inspectTransaction.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} {inspectTransaction.currency}
+                      {inspectTransaction.currency === 'USD' ? '$' : '₦'}{Number(inspectTransaction.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} {inspectTransaction.currency}
                    </p>
                  </div>
                  <div className="space-y-1">
