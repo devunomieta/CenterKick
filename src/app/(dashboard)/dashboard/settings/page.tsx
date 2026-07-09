@@ -10,6 +10,7 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState<{type: 'success' | 'error', msg: string} | null>(null);
   const [userEmail, setUserEmail] = useState('');
+  const [googleIdentity, setGoogleIdentity] = useState<any>(null);
   const [formData, setFormData] = useState({
     notificationsEnabled: true,
     weeklyDigest: false,
@@ -23,11 +24,45 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserEmail(user.email || '');
+        const identities = user.identities || [];
+        const googleId = identities.find(id => id.provider === 'google');
+        setGoogleIdentity(googleId);
       }
       setIsLoading(false);
     }
     loadUser();
   }, []);
+
+  const handleLinkGoogle = async () => {
+    setIsSaving(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.linkIdentity({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/settings`
+      }
+    });
+    if (error) {
+      setStatus({ type: 'error', msg: `Failed to link: ${error.message}` });
+      setIsSaving(false);
+    }
+  };
+
+  const handleUnlinkGoogle = async () => {
+    if (!googleIdentity) return;
+    if (!confirm("Are you sure you want to unlink your Google account? You will need to use your password to log in.")) return;
+
+    setIsSaving(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.unlinkIdentity(googleIdentity);
+    if (error) {
+      setStatus({ type: 'error', msg: `Failed to unlink: ${error.message}` });
+    } else {
+      setStatus({ type: 'success', msg: 'Google account unlinked successfully.' });
+      setGoogleIdentity(null);
+    }
+    setIsSaving(false);
+  };
 
   const handlePasswordUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
