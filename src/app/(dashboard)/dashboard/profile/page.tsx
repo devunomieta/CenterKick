@@ -406,10 +406,10 @@ export default function ProfileEditor() {
 
         {/* Editor Main Content */}
         <div className="flex-1">
-          <form id="profile-form" className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden p-4 md:p-8 md:p-12 space-y-12">
+          <form id="profile-form" className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden p-4 md:p-8 md:p-6 space-y-8">
             
             {activeTab === 'Basic Info' && (
-              <div className="space-y-10 animate-in fade-in duration-500">
+              <div className="space-y-6 animate-in fade-in duration-500">
                 <div className="flex flex-col items-center justify-center md:items-start md:justify-start">
                    <input type="file" id="avatar_upload" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
                    <div 
@@ -432,30 +432,30 @@ export default function ProfileEditor() {
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
-                  <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:p-2">
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">First Name</label>
-                    <input name="first_name" type="text" defaultValue={profile?.first_name} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
+                    <input name="first_name" type="text" defaultValue={profile?.first_name} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Last Name</label>
-                    <input name="last_name" type="text" defaultValue={profile?.last_name} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
+                    <input name="last_name" type="text" defaultValue={profile?.last_name} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
-                  <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:p-2">
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Date of Birth</label>
                     <div className="relative">
                       <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
-                      <input name="date_of_birth" type="date" defaultValue={profile?.date_of_birth} className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
+                      <input name="date_of_birth" type="date" defaultValue={profile?.date_of_birth} className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                     </div>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Country</label>
                     <div className="relative">
                       <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
-                      <input name="country" type="text" defaultValue={profile?.country} className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
+                      <input name="country" type="text" defaultValue={profile?.country} className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                     </div>
                   </div>
                 </div>
@@ -497,8 +497,8 @@ export default function ProfileEditor() {
                   </div>
                 </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8 pt-8 border-t border-gray-50">
-                    <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:p-2 pt-8 border-t border-gray-50">
+                    <div className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Authentication Methods</label>
                       <div className="p-5 bg-gray-50 border-none rounded-2xl flex items-center justify-between">
                          <div>
@@ -518,19 +518,19 @@ export default function ProfileEditor() {
                     </div>
                   </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8 pt-8 border-t border-gray-50">
-                  <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:p-2 pt-8 border-t border-gray-50">
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Public Contact Email</label>
                     <div className="relative">
                        <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
-                       <input name="contact_email" type="email" defaultValue={profile?.contact_email} placeholder="public@agency.com" className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" />
+                       <input name="contact_email" type="email" defaultValue={profile?.contact_email} placeholder="public@agency.com" className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" />
                     </div>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Public Phone</label>
                     <div className="relative">
                        <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
-                       <input name="phone_number" type="tel" defaultValue={profile?.phone_number} placeholder="+234..." className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" />
+                       <input name="phone_number" type="tel" defaultValue={profile?.phone_number} placeholder="+234..." className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" />
                     </div>
                   </div>
                 </div>
@@ -538,7 +538,7 @@ export default function ProfileEditor() {
             )}
 
             {activeTab === 'Career Data' && (
-              <div className="space-y-10 animate-in fade-in duration-500">
+              <div className="space-y-6 animate-in fade-in duration-500">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-2 h-10 bg-[#b50a0a] rounded-full"></div>
                   <div>
@@ -549,36 +549,36 @@ export default function ProfileEditor() {
 
                 {role === 'athlete' || role === 'player' ? (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-4">
+                    <div className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Primary Position</label>
-                      <select name="position" defaultValue={profile?.position} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
+                      <select name="position" defaultValue={profile?.position} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
                         <option value="Striker" className="text-black">Striker</option>
                         <option value="Midfielder" className="text-black">Midfielder</option>
                         <option value="Defender" className="text-black">Defender</option>
                         <option value="Goalkeeper" className="text-black">Goalkeeper</option>
                       </select>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Main Foot</label>
-                      <select name="foot" defaultValue={profile?.foot} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
+                      <select name="foot" defaultValue={profile?.foot} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
                         <option value="Right" className="text-black">Right</option>
                         <option value="Left" className="text-black">Left</option>
                         <option value="Both" className="text-black">Both</option>
                       </select>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Jersey #</label>
-                      <input name="jersey_number" type="number" defaultValue={profile?.jersey_number} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
+                      <input name="jersey_number" type="number" defaultValue={profile?.jersey_number} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Height (cm)</label>
-                      <input name="height_cm" type="number" defaultValue={profile?.height_cm} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
+                      <input name="height_cm" type="number" defaultValue={profile?.height_cm} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Weight (kg)</label>
-                      <input name="weight_kg" type="number" defaultValue={profile?.weight_kg} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
+                      <input name="weight_kg" type="number" defaultValue={profile?.weight_kg} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black" />
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Market Value ($)</label>
                       <input 
                         name="market_value" 
@@ -586,26 +586,26 @@ export default function ProfileEditor() {
                         defaultValue={profile?.market_value} 
                         disabled={!isAdminOrOps}
                         placeholder="12,000,000" 
-                        className={`w-full ${isAdminOrOps ? 'bg-gray-50' : 'bg-gray-100 cursor-not-allowed opacity-80'} border-none rounded-2xl px-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all outline-none font-mono text-black placeholder:text-gray-500`} 
+                        className={`w-full ${isAdminOrOps ? 'bg-gray-50' : 'bg-gray-100 cursor-not-allowed opacity-80'} border-none rounded-2xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all outline-none font-mono text-black placeholder:text-gray-500`} 
                       />
                       {!isAdminOrOps && <p className="text-xs text-[#b50a0a] mt-1 font-bold ml-1">Only administrators can update market values.</p>}
                     </div>
                   </div>
                 ) : role === 'coach' ? (
                   <div className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
-                      <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:p-2">
+                      <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Preferred Formation</label>
-                        <select name="formation" defaultValue={profile?.formation} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
+                        <select name="formation" defaultValue={profile?.formation} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
                           <option value="4-3-3" className="text-black">4-3-3 Offensive</option>
                           <option value="4-4-2" className="text-black">4-4-2 Classic</option>
                           <option value="3-5-2" className="text-black">3-5-2 Wingbacks</option>
                           <option value="4-2-3-1" className="text-black">4-2-3-1 Modern</option>
                         </select>
                       </div>
-                      <div className="space-y-4">
+                      <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Technical License</label>
-                        <select name="license" defaultValue={profile?.license} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
+                        <select name="license" defaultValue={profile?.license} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black">
                           <option value="UEFA Pro" className="text-black">UEFA Pro</option>
                           <option value="UEFA A" className="text-black">UEFA A</option>
                           <option value="UEFA B" className="text-black">UEFA B</option>
@@ -653,14 +653,14 @@ export default function ProfileEditor() {
                   </div>
                 ) : (
                   <div className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
-                      <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:p-2">
+                      <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Agency Name</label>
-                        <input name="agency_name" type="text" defaultValue={profile?.agency_name} placeholder="Global Talent Management" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" />
+                        <input name="agency_name" type="text" defaultValue={profile?.agency_name} placeholder="Global Talent Management" className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" />
                       </div>
-                      <div className="space-y-4">
+                      <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">FIFA License Code</label>
-                        <input name="license_code" type="text" defaultValue={profile?.license_code} placeholder="FL-XXXXXXXX" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none font-mono text-black placeholder:text-gray-900" />
+                        <input name="license_code" type="text" defaultValue={profile?.license_code} placeholder="FL-XXXXXXXX" className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none font-mono text-black placeholder:text-gray-900" />
                       </div>
                     </div>
 
@@ -705,7 +705,7 @@ export default function ProfileEditor() {
 
                 <div className="pt-8 border-t border-gray-50">
                    <h4 className="text-xs font-bold text-gray-900 tracking-wide mb-6">Social Proof & Recognition</h4>
-                   <div className="space-y-4">
+                   <div className="space-y-1.5">
                       {achievements.map((item, i) => (
                         <div key={i} className="flex items-center gap-6 p-6 bg-gray-50 rounded-2xl border border-gray-100 group transition-all hover:bg-white hover:shadow-xl hover:border-white">
                            <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
@@ -741,8 +741,8 @@ export default function ProfileEditor() {
             )}
 
             {activeTab === 'Bio & Portfolio' && (
-               <div className="space-y-10 animate-in fade-in duration-500">
-                  <div className="space-y-4">
+               <div className="space-y-6 animate-in fade-in duration-500">
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Professional Bio</label>
                     <textarea name="bio" rows={8} defaultValue={profile?.bio} placeholder="Describe your professional journey, skills, and ambitions..." className="w-full bg-gray-50 border-none rounded-3xl px-4 md:px-8 py-6 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none leading-relaxed text-black placeholder:text-gray-900" />
                   </div>
@@ -750,7 +750,7 @@ export default function ProfileEditor() {
                   {(role === 'agent' || role === 'organization') && (
                     <div className="pt-8 border-t border-gray-50">
                        <h4 className="text-xs font-bold text-gray-900 tracking-wide mb-6">Represented Talent Portfolio</h4>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                           {portfolioMembers.map((member) => (
                             <div key={member.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
@@ -790,7 +790,7 @@ export default function ProfileEditor() {
             )}
 
             {activeTab === 'Media Center' && (
-               <div className="space-y-10 animate-in fade-in duration-500">
+               <div className="space-y-6 animate-in fade-in duration-500">
                   {/* Cover Photo */}
                   <div className="space-y-6">
                     <h4 className="text-xs font-bold text-gray-900 tracking-wide">Cover Photo</h4>
@@ -824,7 +824,7 @@ export default function ProfileEditor() {
                        <span className="text-xs font-bold bg-gray-900 text-white px-2 py-1 rounded">YouTube / Vimeo</span>
                     </div>
                     
-                    <div className="space-y-4">
+                    <div className="space-y-1.5">
                        {videoLinks.map((url, i) => {
                           const ytId = extractYoutubeId(url);
                           return (
@@ -907,7 +907,7 @@ export default function ProfileEditor() {
             )}
 
             {activeTab === 'Social Links' && (
-               <div className="space-y-10 animate-in fade-in duration-500">
+               <div className="space-y-6 animate-in fade-in duration-500">
                   <div className="space-y-8">
                      {[
                         { name: 'Instagram', id: 'social_instagram', icon: Globe, placeholder: 'instagram.com/handle', value: profile?.social_links?.instagram },
@@ -915,7 +915,7 @@ export default function ProfileEditor() {
                         { name: 'Twitter / X', id: 'social_twitter', icon: Globe, placeholder: 'twitter.com/profile', value: profile?.social_links?.twitter },
                         { name: 'LinkedIn', id: 'social_linkedin', icon: Globe, placeholder: 'linkedin.com/in/name', value: profile?.social_links?.linkedin },
                      ].map((social, i) => (
-                       <div key={i} className="space-y-4">
+                       <div key={i} className="space-y-1.5">
                           <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">{social.name}</label>
                           <div className="relative">
                              <social.icon className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
@@ -924,7 +924,7 @@ export default function ProfileEditor() {
                                type="text" 
                                defaultValue={social.value}
                                placeholder={social.placeholder} 
-                               className="w-full bg-gray-50 border-none rounded-2xl pl-14 pr-6 py-5 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
+                               className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-900" 
                              />
                           </div>
                        </div>
@@ -940,7 +940,7 @@ export default function ProfileEditor() {
       {/* Editing Member Modal */}
       {editingMember && (
          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-[40px] max-w-2xl w-full p-8 md:p-12 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-[40px] max-w-2xl w-full p-8 md:p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
                <button type="button" onClick={() => setEditingMember(null)} className="absolute top-8 right-8 text-gray-400 hover:text-black">
                   <X className="w-6 h-6" />
                </button>

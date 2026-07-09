@@ -62,6 +62,8 @@ export async function signup(formData: FormData) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   const role = formData.get('role') as string || 'player';
+  const firstName = formData.get('firstName') as string || '';
+  const lastName = formData.get('lastName') as string || '';
 
   const validatePassword = (pass: string) => {
     return (
@@ -96,7 +98,7 @@ export async function signup(formData: FormData) {
 
   const { error: dbError } = await adminClient
     .from('otp_verifications')
-    .upsert({ email, otp, password, role, expires_at: expiresAt });
+    .upsert({ email, otp, password, role, first_name: firstName, last_name: lastName, expires_at: expiresAt });
 
   if (dbError) {
     console.error('[DB Error] Failed to save OTP registration data:', dbError);
@@ -181,14 +183,15 @@ export async function verifyOtp(email: string, token: string) {
   // Update user role and profile slug instantly
   if (authUser) {
     const role = pendingData.role || 'player';
+    const firstName = pendingData.first_name || '';
+    const lastName = pendingData.last_name || '';
     
     // Update user role
     await adminClient.from('users').update({ role }).eq('id', authUser.id);
     
-    // Generate slug (first/last names are empty initially, so it uses role-emailprefix)
+    // Generate slug using the actual first and last name
     const { generateBaseSlug, generateRandomSuffix } = await import('@/lib/utils/slug');
-    const emailPrefix = email.split('@')[0];
-    const baseSlug = generateBaseSlug(role, emailPrefix, '');
+    const baseSlug = generateBaseSlug(role, firstName || email.split('@')[0], lastName);
     
     let finalSlug = baseSlug;
     const { data: existing } = await adminClient.from('profiles').select('slug').eq('slug', baseSlug).maybeSingle();
@@ -199,6 +202,8 @@ export async function verifyOtp(email: string, token: string) {
     await adminClient.from('profiles').update({ 
       role, 
       slug: finalSlug,
+      first_name: firstName,
+      last_name: lastName,
       status: 'active'
     }).eq('user_id', authUser.id);
   }

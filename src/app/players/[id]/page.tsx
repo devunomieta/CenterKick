@@ -1,6 +1,7 @@
 import { PlayerDetailsClient } from '@/components/players/PlayerDetailsClient';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
+import { trackProfileView } from '@/app/actions/tracking';
 
 interface AthletePageProps {
   params: Promise<{ id: string }>;
@@ -32,6 +33,9 @@ export default async function AthleteDetailsPage({ params }: AthletePageProps) {
    if (athlete.status === 'suspended' || athlete.status === 'rejected') {
       return notFound();
    }
+
+   // Track profile view asynchronously without blocking page load
+   trackProfileView(athlete.id);
 
    return <PlayerDetailsClient athlete={athlete} />;
 }

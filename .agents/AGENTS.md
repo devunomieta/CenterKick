@@ -21,3 +21,6 @@ To maintain a premium, cohesive design, we strictly enforce a typography scale b
 - `font-semibold`: Small card titles, important emphasized text.
 - `font-bold`: Standard headings (H1-H6).
 - `font-black`: **Restricted Use:** Only for massive display text (e.g., `text-5xl` and above) or brand logos where extreme visual weight is required. Do NOT use for standard UI text.
+
+## Migration Files Naming
+Whenever generating a new Supabase migration file, always ensure to include a title comment at the very top of the file using the format: `-- title: [Your Title Here]` so that it is properly named in the Supabase Studio SQL Editor.

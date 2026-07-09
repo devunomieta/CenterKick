@@ -200,6 +200,33 @@ export default function RegisterPage() {
                            </div>
                         </div>
 
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="space-y-2">
+                              <label className="text-xs font-bold text-gray-500 tracking-wide ml-1">First Name</label>
+                              <div className="relative">
+                                 <input
+                                    name="firstName"
+                                    type="text"
+                                    required
+                                    placeholder="John"
+                                    className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 placeholder:text-gray-300"
+                                 />
+                              </div>
+                           </div>
+                           <div className="space-y-2">
+                              <label className="text-xs font-bold text-gray-500 tracking-wide ml-1">Last Name</label>
+                              <div className="relative">
+                                 <input
+                                    name="lastName"
+                                    type="text"
+                                    required
+                                    placeholder="Doe"
+                                    className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 placeholder:text-gray-300"
+                                 />
+                              </div>
+                           </div>
+                        </div>
+
                         <div className="space-y-2">
                            <label className="text-xs font-bold text-gray-500 tracking-wide ml-1">Professional Email</label>
                            <div className="relative">
