@@ -25,7 +25,7 @@ export default function SettingsPage() {
       if (user) {
         setUserEmail(user.email || '');
         const identities = user.identities || [];
-        const googleId = identities.find(id => id.provider === 'google');
+        const googleId = identities.find((id: any) => id.provider === 'google');
         setGoogleIdentity(googleId);
       }
       setIsLoading(false);
