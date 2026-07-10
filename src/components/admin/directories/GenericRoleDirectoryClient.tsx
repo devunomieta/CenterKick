@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { DirectoryTable } from '../shared/DirectoryTable';
 
-interface RoleDirectoryClientProps {
+interface GenericRoleDirectoryClientProps {
   initialData: any[];
   totalCount: number;
   currentPage: number;
@@ -20,7 +20,7 @@ interface RoleDirectoryClientProps {
   iconName: string;
 }
 
-export function RoleDirectoryClient({ 
+export function GenericRoleDirectoryClient({ 
   initialData, 
   totalCount, 
   currentPage, 
@@ -28,7 +28,7 @@ export function RoleDirectoryClient({
   roleLabel, 
   roleSlug,
   iconName
-}: RoleDirectoryClientProps) {
+}: GenericRoleDirectoryClientProps) {
   const IconComponent = () => {
     switch(iconName) {
       case 'Trophy': return <Trophy className="w-3 h-3 text-white" />;
@@ -53,9 +53,9 @@ export function RoleDirectoryClient({
   };
 
   return (
-    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
       {/* Search & Filters */}
-      <div className="p-4 md:p-8 border-b border-gray-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-gray-50/30">
+      <div className="p-6 border-b border-gray-50 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-gray-50/50">
         <div className="relative flex-1 max-w-xl">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input

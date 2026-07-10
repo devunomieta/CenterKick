@@ -150,6 +150,21 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
     }
   };
 
+  const getProfileLink = (user: any) => {
+    const role = user.role?.toLowerCase();
+    const slug = user.profile?.slug;
+    const id = user.profile?.id;
+    
+    if (role === 'player' && slug) return `/admin/players/${slug}`;
+    if (role === 'coach' && id) return `/admin/coaches/${id}`;
+    if (role === 'agent' && id) return `/admin/agents/${id}`;
+    if (role === 'scout' && id) return `/admin/scouts/${id}`;
+    if (role === 'organization' && id) return `/admin/organizations/${id}`;
+    
+    // Fallback if no specific profile or unsupported role
+    return `/admin/users/${user.id}`;
+  };
+
   return (
     <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
 
@@ -218,8 +233,12 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
           const isParticipant = PARTICIPANT_ROLES.includes(user.role);
 
           return (
-            <tr key={user.id} className={`hover:bg-gray-50/50 transition-colors group ${isSelected ? 'bg-red-50/30' : ''}`}>
-              <td className="px-4 md:px-6 py-6 border-b border-gray-50">
+            <tr 
+              key={user.id} 
+              onClick={() => router.push(getProfileLink(user))}
+              className={`hover:bg-gray-50/50 transition-colors group cursor-pointer ${isSelected ? 'bg-red-50/30' : ''}`}
+            >
+              <td className="px-4 md:px-6 py-6 border-b border-gray-50" onClick={(e) => e.stopPropagation()}>
                 <input 
                   type="checkbox" 
                   className="w-4 h-4 rounded border-gray-300 text-[#b50a0a] focus:ring-[#b50a0a]"
@@ -277,10 +296,10 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
                     </div>
                   </td>
 
-                  <td className="px-4 md:px-8 py-6 text-right whitespace-nowrap">
+                  <td className="px-4 md:px-8 py-6 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-2">
                       <Link
-                        href={`/admin/users/${user.id}`}
+                        href={getProfileLink(user)}
                         className="p-2.5 bg-white border border-gray-100 rounded-xl hover:bg-gray-900 hover:text-white hover:border-gray-900 transition-all shadow-sm"
                         title="View full profile"
                       >

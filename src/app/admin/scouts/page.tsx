@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { Search, Shield, Globe, Clock, UserPlus, Filter } from 'lucide-react';
 import Link from 'next/link';
-import { RoleDirectoryClient } from '@/components/admin/directories/RoleDirectoryClient';
+import { GenericRoleDirectoryClient } from '@/components/admin/directories/GenericRoleDirectoryClient';
 
 export default async function AdminScoutsPage({
   searchParams
@@ -82,7 +82,7 @@ export default async function AdminScoutsPage({
         ))}
       </div>
 
-      <RoleDirectoryClient 
+      <GenericRoleDirectoryClient 
         initialData={scouts || []}
         totalCount={filteredTotal || 0}
         currentPage={page}

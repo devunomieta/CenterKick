@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { Trophy, Shield, Globe, Clock, UserPlus, Building2 } from 'lucide-react';
 import Link from 'next/link';
-import { RoleDirectoryClient } from '@/components/admin/directories/RoleDirectoryClient';
+import { GenericRoleDirectoryClient } from '@/components/admin/directories/GenericRoleDirectoryClient';
 
 export default async function AdminOrganizationsPage({
   searchParams
@@ -82,7 +82,7 @@ export default async function AdminOrganizationsPage({
         ))}
       </div>
 
-      <RoleDirectoryClient 
+      <GenericRoleDirectoryClient 
         initialData={orgs || []}
         totalCount={filteredTotal || 0}
         currentPage={page}
