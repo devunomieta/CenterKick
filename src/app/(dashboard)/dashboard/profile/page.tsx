@@ -28,6 +28,7 @@ import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useRouter } from 'next/navigation';
 import { invalidateProfileCache } from './actions';
+import { CopyableProfileLink } from '@/components/dashboard/CopyableProfileLink';
 
 
 const calculateAge = (dob: string) => {
@@ -482,6 +483,16 @@ export default function ProfileEditor() {
 
   if (isLoading) return <div className="pt-20 text-center font-bold tracking-wide animate-pulse">Loading Editor...</div>;
 
+  const checks = [
+    Boolean(profile?.avatar_url),
+    Boolean(profile?.cover_url),
+    Boolean(profile?.gallery_urls?.length >= 2),
+    Boolean(profile?.video_links?.length >= 1),
+    Boolean(profile?.first_name),
+    Boolean(profile?.last_name)
+  ];
+  const isProfileComplete = checks.filter(Boolean).length === checks.length;
+
   return (
     <div className="max-w-full max-w-[1000px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <ProfileCompletenessWidget 
@@ -494,14 +505,20 @@ export default function ProfileEditor() {
           video_links: videoLinks
         }} 
       />
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8"><div><h1 className="text-3xl font-bold text-gray-900 tracking-tighter">My <span className="text-[#b50a0a]">Profile</span></h1><p className="text-gray-900 text-xs font-bold tracking-wide mt-1">Manage your professional data & public appearance.</p></div></div>
-
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tighter">My <span className="text-[#b50a0a]">Profile</span></h1>
+          <p className="text-gray-900 text-xs font-bold tracking-wide mt-1">Manage your professional data & public appearance.</p>
+        </div>
+        {(profile?.slug || profile?.id) && (
+          <CopyableProfileLink slugOrId={profile.slug || profile.id} role={role} />
+        )}
+      </div>
       
-
-      <div className="flex flex-col lg:flex-row gap-12">
-        {/* Editor Sidebar Tabs */}
-        <aside className="lg:w-1/4">
-          <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0">
+      <div className="flex flex-col lg:flex-row gap-8 items-start relative">
+        {/* Sticky Sidebar Navigation */}
+        <aside className="w-full lg:w-64 shrink-0 lg:sticky lg:top-24 space-y-2">
+          <nav className="flex lg:flex-col gap-2 overflow-x-auto pb-4 lg:pb-0 scrollbar-hide">
             {[
               { id: 'Basic Info', icon: User },
               { id: 'Career Data', icon: BarChart3 },
@@ -522,18 +539,20 @@ export default function ProfileEditor() {
         </aside>
 
         {/* Editor Main Content */}
-        <div className="flex-1">
-          <div className="flex justify-between items-center mb-6">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4 mb-6">
             <h2 className="text-xl font-bold tracking-tight text-gray-900">{activeTab}</h2>
-            <button
-              type="button"
-              onClick={async () => { setIsEditing(!isEditing); if (isEditing) setIsDirty(false);
-      await invalidateProfileCache();
-      router.refresh(); }}
-              className={`px-6 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all ${isEditing ? 'bg-red-100 text-red-700' : 'bg-gray-900 text-white hover:bg-black'}`}
-            >
-              {isEditing ? 'Close Editor' : 'Edit Profile'}
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={async () => { setIsEditing(!isEditing); if (isEditing) setIsDirty(false);
+        await invalidateProfileCache();
+        router.refresh(); }}
+                className={`px-6 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all ${isEditing ? 'bg-red-100 text-red-700' : 'bg-gray-900 text-white hover:bg-black'}`}
+              >
+                {isEditing ? 'Close Editor' : 'Edit Profile'}
+              </button>
+            </div>
           </div>
           <div className={`bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden p-4 md:p-8 md:p-6 space-y-8 ${!isEditing && 'opacity-90 pointer-events-none'}`} onClickCapture={(e) => { if (!isEditing) { e.preventDefault(); e.stopPropagation(); showToast('Click "Edit Profile" to make changes.', 'error'); } }}>
 

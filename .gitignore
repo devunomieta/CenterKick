@@ -95,9 +95,9 @@ build_output.log
 build_attempt.log
 build_error.log
 build_error_*.log
+# tmp directories and diagnostic
 /tmp/
-
-# debug directories
+/artifacts/
 /src/app/test-agents/
 /src/app/debug-schema/
 

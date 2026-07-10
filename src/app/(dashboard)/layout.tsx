@@ -51,11 +51,22 @@ export default async function DashboardLayout({
     .select('*')
     .eq('user_id', user.id)
     .eq('status', 'active');
+    
+  // Fetch confirmed transactions as fallback
+  const { data: confirmedTxs } = await supabase
+    .from('transactions')
+    .select('id')
+    .eq('user_id', profile?.id)
+    .eq('status', 'confirmed')
+    .limit(1);
   
   const role = (userRecord as any)?.role || 'player';
   const status = (profile as any)?.status || 'pending';
 
-  const isSubscribed = (subscriptions && subscriptions.length > 0);
+  const isSubscribed = 
+    (subscriptions && subscriptions.length > 0) || 
+    ((profile as any)?.is_subscribed === true) ||
+    (confirmedTxs && confirmedTxs.length > 0);
 
   // Fetch notifications
   const { data: notifications } = await supabase
@@ -118,6 +129,7 @@ export default async function DashboardLayout({
             sidebarLogoUrl={sidebarLogoUrl}
             brandName={brandName}
             notifications={notifications || []}
+            avatarUrl={resolveUrl(profile?.avatar_url)}
           />
 
           {/* Page Content */}

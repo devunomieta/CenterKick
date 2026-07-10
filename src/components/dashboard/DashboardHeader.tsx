@@ -13,9 +13,10 @@ interface DashboardHeaderProps {
   sidebarLogoUrl?: string;
   brandName: string;
   notifications: any[];
+  avatarUrl?: string;
 }
 
-export function DashboardHeader({ role, email, sidebarLogoUrl, brandName, notifications }: DashboardHeaderProps) {
+export function DashboardHeader({ role, email, sidebarLogoUrl, brandName, notifications, avatarUrl }: DashboardHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -35,9 +36,17 @@ export function DashboardHeader({ role, email, sidebarLogoUrl, brandName, notifi
               <span className="text-gray-900 font-bold text-sm truncate max-w-full max-w-[150px]">{email}</span>
               <p className="text-xs font-bold text-[#b50a0a] tracking-wide">{role}</p>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center font-bold text-white shadow-lg text-sm">
-              {email?.[0]?.toUpperCase() || 'U'}
-            </div>
+            {avatarUrl ? (
+              <img 
+                src={avatarUrl} 
+                alt="Avatar" 
+                className="w-8 h-8 rounded-lg object-cover shadow-lg"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center font-bold text-white shadow-lg text-sm">
+                {email?.[0]?.toUpperCase() || 'U'}
+              </div>
+            )}
           </div>
         </div>
       </header>

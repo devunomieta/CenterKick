@@ -7,6 +7,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { FlagIcon } from '@/components/common/FlagIcon';
+import { CopyableProfileLink } from '@/components/dashboard/CopyableProfileLink';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -46,6 +47,16 @@ export default async function DashboardPage() {
   }
 
   const role = userRecord?.role || 'player';
+
+  const checks = [
+    Boolean(profile?.avatar_url),
+    Boolean(profile?.cover_url),
+    Boolean(profile?.gallery_urls?.length >= 2),
+    Boolean(profile?.video_links?.length >= 1),
+    Boolean(profile?.first_name),
+    Boolean(profile?.last_name)
+  ];
+  const isProfileComplete = checks.filter(Boolean).length === checks.length;
 
   const roleLabels: Record<string, string> = {
     player: 'Athlete / Player',
@@ -95,6 +106,9 @@ export default async function DashboardPage() {
           </div>
         </div>
         <div className="flex gap-3">
+          {(profile?.slug || profile?.id) && (
+            <CopyableProfileLink slugOrId={profile.slug || profile.id} role={role} />
+          )}
           {(profile?.slug || profile?.id) && (
             <Link href={`/${role === 'player' ? 'players' : role + 's'}/${profile?.slug || profile?.id}`} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-bold tracking-wide hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm">
                View Public Profile <ExternalLink className="w-3 h-3" />
