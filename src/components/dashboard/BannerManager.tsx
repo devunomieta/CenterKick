@@ -6,9 +6,10 @@ import Link from 'next/link';
 interface BannerManagerProps {
   isSubscribed?: boolean;
   isProfileComplete?: boolean;
+  profileCompletionPercentage?: number;
 }
 
-export function BannerManager({ isSubscribed = false, isProfileComplete = false }: BannerManagerProps) {
+export function BannerManager({ isSubscribed = false, isProfileComplete = false, profileCompletionPercentage = 0 }: BannerManagerProps) {
   return (
     <div className="flex flex-col">
       {/* Subscription Notice */}
@@ -36,8 +37,14 @@ export function BannerManager({ isSubscribed = false, isProfileComplete = false 
       {isSubscribed && !isProfileComplete && (
         <div className="bg-amber-500 text-white px-4 md:px-8 py-3 flex flex-col md:flex-row items-start md:items-center justify-between shadow-lg relative overflow-hidden gap-3">
           <div className="flex items-center gap-4 relative z-10">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-              <Info className="w-4 h-4 text-white" />
+            <div className="relative w-10 h-10 shrink-0 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="rgba(255,255,255,0.2)" strokeWidth="3"></circle>
+                <circle cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="white" strokeWidth="3" strokeDasharray={`${profileCompletionPercentage}, 100`} strokeLinecap="round" className="transition-all duration-1000 ease-out"></circle>
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Info className="w-4 h-4 text-white" />
+              </div>
             </div>
             <div>
               <p className="text-sm font-bold tracking-wide leading-none mb-1">Profile Incomplete</p>

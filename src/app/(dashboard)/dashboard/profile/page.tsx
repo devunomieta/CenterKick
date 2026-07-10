@@ -20,6 +20,7 @@ import {
   Edit,
   X
 } from 'lucide-react';
+import { ProfileCompletenessWidget } from '@/components/dashboard/ProfileCompletenessWidget';
 import { createClient } from '@/lib/supabase/client';
 import { requestProfileEdit } from './actions';
 import PhoneInput from 'react-phone-number-input';
@@ -367,6 +368,16 @@ export default function ProfileEditor() {
 
   return (
     <div className="max-w-full max-w-[1000px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+      <ProfileCompletenessWidget 
+        formData={{
+          avatar_url: profile?.avatar_url,
+          cover_url: profile?.cover_url,
+          first_name: profile?.first_name,
+          last_name: profile?.last_name,
+          gallery_urls: galleryUrls,
+          video_links: videoLinks
+        }} 
+      />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tighter">My <span className="text-[#b50a0a]">Profile</span></h1>

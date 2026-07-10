@@ -66,15 +66,18 @@ export default async function DashboardLayout({
     .limit(20);
 
   // Compute profile completeness
-  const p = profile as any;
-  const isProfileComplete = Boolean(
-    p.avatar_url &&
-    p.cover_url &&
-    p.gallery_urls?.length >= 2 &&
-    p.video_links?.length >= 1 &&
-    p.first_name &&
-    p.last_name
-  );
+  const p = (profile || {}) as any;
+  const checks = [
+    Boolean(p.avatar_url),
+    Boolean(p.cover_url),
+    Boolean(p.gallery_urls?.length >= 2),
+    Boolean(p.video_links?.length >= 1),
+    Boolean(p.first_name),
+    Boolean(p.last_name)
+  ];
+  const completedCount = checks.filter(Boolean).length;
+  const profileCompletionPercentage = Math.round((completedCount / checks.length) * 100);
+  const isProfileComplete = completedCount === checks.length;
 
   // Forced Redirect for Administrative roles to the unified Admin Portal
   const adminRoles = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
@@ -106,7 +109,7 @@ export default async function DashboardLayout({
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Banner Bar (Notices) */}
-          <BannerManager isSubscribed={isSubscribed ?? false} isProfileComplete={isProfileComplete} />
+          <BannerManager isSubscribed={isSubscribed ?? false} isProfileComplete={isProfileComplete} profileCompletionPercentage={profileCompletionPercentage} />
 
           {/* Top Header */}
           <DashboardHeader 

@@ -20,19 +20,24 @@ export default function SettingsPage() {
 
   useEffect(() => {
     async function loadUser() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserEmail(user.email || '');
-        const { data: profile } = await supabase.from('profiles').select('visibility').eq('user_id', user.id).single();
-        if (profile && profile.visibility) {
-          setFormData(prev => ({...prev, profileVisibility: profile.visibility}));
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setUserEmail(user.email || '');
+          const { data: profile } = await supabase.from('profiles').select('visibility').eq('user_id', user.id).single();
+          if (profile && profile.visibility) {
+            setFormData(prev => ({...prev, profileVisibility: profile.visibility}));
+          }
+          const identities = user.identities || [];
+          const googleId = identities.find((id: any) => id.provider === 'google');
+          setGoogleIdentity(googleId);
         }
-        const identities = user.identities || [];
-        const googleId = identities.find((id: any) => id.provider === 'google');
-        setGoogleIdentity(googleId);
+      } catch (err) {
+        console.error("Failed to load user settings:", err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
     loadUser();
   }, []);
