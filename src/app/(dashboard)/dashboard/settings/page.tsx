@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Shield, Bell, Key, Save, CheckCircle2 } from 'lucide-react';
+import { Settings, Shield, Bell, Key, Save, CheckCircle2, Link2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function SettingsPage() {
@@ -24,6 +24,10 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserEmail(user.email || '');
+        const { data: profile } = await supabase.from('profiles').select('visibility').eq('user_id', user.id).single();
+        if (profile && profile.visibility) {
+          setFormData(prev => ({...prev, profileVisibility: profile.visibility}));
+        }
         const identities = user.identities || [];
         const googleId = identities.find((id: any) => id.provider === 'google');
         setGoogleIdentity(googleId);
@@ -91,13 +95,34 @@ export default function SettingsPage() {
     setIsSaving(false);
   };
 
-  const handlePreferencesSave = (e: React.FormEvent) => {
+  const handlePreferencesSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    setTimeout(() => {
-      setStatus({ type: 'success', msg: 'Preferences updated successfully!' });
-      setIsSaving(false);
-    }, 800);
+    
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      // Update profile visibility
+      await supabase.from('profiles').update({ visibility: formData.profileVisibility }).eq('user_id', user.id);
+      
+      // Update email if changed
+      if (userEmail !== user.email) {
+        const { error } = await supabase.auth.updateUser({ email: userEmail });
+        if (error) {
+          setStatus({ type: 'error', msg: `Email update failed: ${error.message}` });
+          setIsSaving(false);
+          return;
+        } else {
+          setStatus({ type: 'success', msg: 'Preferences updated! A confirmation link has been sent to both your old and new email addresses to verify the change.' });
+          setIsSaving(false);
+          return;
+        }
+      }
+    }
+    
+    setStatus({ type: 'success', msg: 'Preferences updated successfully!' });
+    setIsSaving(false);
   };
 
   if (isLoading) return <div className="pt-20 text-center font-bold tracking-wide animate-pulse">Loading Settings...</div>;
@@ -120,13 +145,14 @@ export default function SettingsPage() {
           <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0">
             {[
               { id: 'Account', icon: Settings },
+              { id: 'Connections', icon: Link2 },
               { id: 'Security', icon: Key },
               { id: 'Notifications', icon: Bell },
             ].map((section) => (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
-                className={`flex items-center gap-3 px-6 py-4 rounded-2xl text-xs font-bold tracking-wide transition-all whitespace-nowrap lg:w-full ${activeSection === section.id ? 'bg-[#b50a0a] text-white shadow-lg' : 'text-gray-900 hover:bg-gray-100'}`}
+                className={`flex items-center gap-3 px-6 py-4 rounded-2xl text-sm font-bold tracking-wide transition-all whitespace-nowrap lg:w-full ${activeSection === section.id ? 'bg-[#b50a0a] text-white shadow-lg' : 'text-gray-900 hover:bg-gray-100'}`}
               >
                 <section.icon className="w-4 h-4" />
                 {section.id}
@@ -141,7 +167,7 @@ export default function SettingsPage() {
               <h2 className="text-base font-bold tracking-wide text-gray-900">Profile & Visibility</h2>
               <div className="space-y-4">
                 <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Email Address (Registered)</label>
-                <input type="text" disabled defaultValue={userEmail} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold text-gray-400 cursor-not-allowed" />
+                <input type="text" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl px-6 py-3 text-base font-bold text-black outline-none focus:ring-2 focus:ring-[#b50a0a]" />
               </div>
 
               <form onSubmit={handlePreferencesSave} className="space-y-6 pt-6 border-t border-gray-50">
@@ -150,10 +176,10 @@ export default function SettingsPage() {
                   <select 
                     value={formData.profileVisibility} 
                     onChange={(e) => setFormData({...formData, profileVisibility: e.target.value})}
-                    className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold text-black appearance-none outline-none focus:ring-2 focus:ring-[#b50a0a]"
+                    className="w-full bg-gray-50 border-none rounded-2xl px-6 py-3 text-base font-bold text-black appearance-none outline-none focus:ring-2 focus:ring-[#b50a0a]"
                   >
-                    <option value="public">Public (Visible to Scouts & Agents)</option>
-                    <option value="private">Private (Only visible to verified partners)</option>
+                    <option value="public">Public (Visible for general view)</option>
+                    <option value="private">Private (Visible only to admin, linked agent/organization, or yourself)</option>
                   </select>
                 </div>
 
@@ -167,14 +193,14 @@ export default function SettingsPage() {
           {activeSection === 'Security' && (
             <form onSubmit={handlePasswordUpdate} className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-4 md:p-8 md:p-12 space-y-8 animate-in fade-in duration-500">
               <h2 className="text-base font-bold tracking-wide text-gray-900">Update Password</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-4">
                   <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">New Password</label>
-                  <input name="password" required type="password" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold text-black outline-none focus:ring-2 focus:ring-[#b50a0a]" />
+                  <input name="password" required type="password" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-3 text-base font-bold text-black outline-none focus:ring-2 focus:ring-[#b50a0a]" />
                 </div>
                 <div className="space-y-4">
                   <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Confirm Password</label>
-                  <input name="confirm_password" required type="password" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-5 text-base font-bold text-black outline-none focus:ring-2 focus:ring-[#b50a0a]" />
+                  <input name="confirm_password" required type="password" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-3 text-base font-bold text-black outline-none focus:ring-2 focus:ring-[#b50a0a]" />
                 </div>
               </div>
 
@@ -182,57 +208,51 @@ export default function SettingsPage() {
                 {isSaving ? 'Updating...' : 'Update Password'}
               </button>
 
-              <div className="pt-8 border-t border-gray-50 mt-8 space-y-4">
-                <h2 className="text-base font-bold tracking-wide text-gray-900">Authentication Methods</h2>
-                <div className="p-5 bg-gray-50 border-none rounded-2xl flex items-center justify-between">
-                   <div>
-                      <p className="text-sm font-bold text-gray-900">Google Fast Login</p>
-                      <p className="text-xs font-bold text-gray-500 mt-1">Sign in instantly without a password</p>
-                   </div>
-                   {/* Placeholder logic for google identity, needs real implementation from profile */}
-                   <button type="button" onClick={() => setStatus({type: 'error', msg: 'Google linking not yet initialized here.'})} className="px-4 py-2 bg-gray-900 text-white rounded-xl text-xs font-bold tracking-wide hover:bg-black transition-colors">
-                      Link Account
-                   </button>
-                </div>
-              </div>
             </form>
           )}
 
-          {activeSection === 'Notifications' && (
-            <form onSubmit={handlePreferencesSave} className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-4 md:p-8 md:p-12 space-y-8 animate-in fade-in duration-500">
-              <h2 className="text-base font-bold tracking-wide text-gray-900">Email Notifications</h2>
-              <div className="space-y-6">
-                <label className="flex items-center gap-4 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={formData.notificationsEnabled} 
-                    onChange={(e) => setFormData({...formData, notificationsEnabled: e.target.checked})}
-                    className="w-5 h-5 rounded border-gray-300 text-[#b50a0a] focus:ring-[#b50a0a]" 
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold tracking-wide text-gray-900">In-App Activity Notifications</span>
-                    <span className="text-xs text-gray-500 font-bold mt-0.5">Receive alerts when scouting views your profile</span>
-                  </div>
-                </label>
-
-                <label className="flex items-center gap-4 cursor-pointer pt-4 border-t border-gray-50">
-                  <input 
-                    type="checkbox" 
-                    checked={formData.weeklyDigest} 
-                    onChange={(e) => setFormData({...formData, weeklyDigest: e.target.checked})}
-                    className="w-5 h-5 rounded border-gray-300 text-[#b50a0a] focus:ring-[#b50a0a]" 
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold tracking-wide text-gray-900">Weekly Performance Digest</span>
-                    <span className="text-xs text-gray-500 font-bold mt-0.5">Receive profile view and transfer statistics once a week</span>
-                  </div>
-                </label>
+          {activeSection === 'Connections' && (
+            <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-4 md:p-8 md:p-12 space-y-8 animate-in fade-in duration-500">
+              <h2 className="text-base font-bold tracking-wide text-gray-900">Connected Accounts</h2>
+              
+              <div className="space-y-4">
+                <div className="p-5 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-between transition-all hover:shadow-sm">
+                   <div className="flex flex-col">
+                      <p className="text-sm font-bold text-gray-900 tracking-wide">Google Account</p>
+                      <p className="text-xs font-bold text-gray-500 mt-1">Sign in instantly without a password</p>
+                   </div>
+                   <button 
+                     type="button" 
+                     onClick={googleIdentity ? handleUnlinkGoogle : handleLinkGoogle} 
+                     disabled={isSaving}
+                     className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition-colors ${googleIdentity ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200' : 'bg-gray-900 text-white hover:bg-black'}`}
+                   >
+                      {googleIdentity ? 'Unlink Account' : 'Link Account'}
+                   </button>
+                </div>
+                
+                {/* Future placeholders for other providers */}
+                <div className="p-5 bg-gray-50/50 border border-transparent rounded-2xl flex items-center justify-between opacity-50 cursor-not-allowed">
+                   <div className="flex flex-col">
+                      <p className="text-sm font-bold text-gray-900 tracking-wide">Apple ID</p>
+                      <p className="text-xs font-bold text-gray-500 mt-1">Coming soon</p>
+                   </div>
+                   <button disabled className="px-4 py-2 bg-gray-200 text-gray-500 rounded-xl text-xs font-bold tracking-wide cursor-not-allowed">
+                      Unavailable
+                   </button>
+                </div>
               </div>
+            </div>
+          )}
 
-              <button type="submit" disabled={isSaving} className="w-full sm:w-auto px-4 md:px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-xs font-bold tracking-wide rounded-xl transition-all shadow-md">
-                Save Preferences
-              </button>
-            </form>
+          {activeSection === 'Notifications' && (
+            <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-4 md:p-8 md:p-12 space-y-8 animate-in fade-in duration-500 flex flex-col items-center justify-center min-h-[300px]">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Bell className="w-8 h-8 text-gray-400" />
+              </div>
+              <h2 className="text-xl font-bold tracking-wide text-gray-900">Coming Soon</h2>
+              <p className="text-sm font-bold text-gray-500 text-center max-w-md">We're working hard on bringing you granular notification controls. Stay tuned!</p>
+            </div>
           )}
         </div>
       </div>
