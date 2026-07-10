@@ -124,7 +124,7 @@ export async function getUserTransactions() {
     .eq('user_id', user.id)
     .single();
 
-  if (profileError || !profile) {
+  if (profileError || !profile || !profile.id) {
     return { transactions: [] };
   }
 

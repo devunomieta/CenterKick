@@ -24,6 +24,12 @@ export default async function DashboardPage() {
     .eq('user_id', user?.id)
     .single();
 
+  const { data: subscriptions } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('user_id', user?.id)
+    .eq('status', 'active');
+
   let publicViews = 0;
   let scoutingViews = 0;
 
@@ -83,15 +89,17 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold text-gray-900 tracking-tighter flex flex-col">
               Welcome back,
-              <span className="text-[#b50a0a]">{profile?.first_name || user?.email?.split('@')[0]}</span>
+              <span className="text-[#b50a0a]">{profile?.first_name || user?.user_metadata?.first_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}</span>
             </h1>
             {profile?.country && <FlagIcon country={profile.country} className="w-5 h-3 rounded-sm shadow-sm shrink-0" />}
           </div>
         </div>
         <div className="flex gap-3">
-          <Link href={`/${role === 'player' ? 'players' : role + 's'}/${profile?.slug || profile?.id}`} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-bold tracking-wide hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm">
-             View Public Profile <ExternalLink className="w-3 h-3" />
-          </Link>
+          {(profile?.slug || profile?.id) && (
+            <Link href={`/${role === 'player' ? 'players' : role + 's'}/${profile?.slug || profile?.id}`} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-bold tracking-wide hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm">
+               View Public Profile <ExternalLink className="w-3 h-3" />
+            </Link>
+          )}
           <Link href="/dashboard/profile" className="px-5 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold tracking-wide hover:bg-black transition-all flex items-center gap-2 shadow-lg hover:-translate-y-0.5">
              Edit Profile <ChevronRight className="w-3 h-3" />
           </Link>

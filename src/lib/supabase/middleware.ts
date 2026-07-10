@@ -75,7 +75,8 @@ export async function updateSession(request: NextRequest) {
 
     const [
       { data: userRecord },
-      { data: profile }
+      { data: profile },
+      { data: subscriptions }
     ] = await Promise.all([
       supabase
         .from('users')
@@ -86,22 +87,28 @@ export async function updateSession(request: NextRequest) {
         .from('profiles')
         .select('status, verification_requested')
         .eq('user_id', user.id)
-        .single()
+        .single(),
+      supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
     ]);
 
     isActive = userRecord?.is_active ?? true;
     profileStatus = profile?.status ?? null;
     const verificationRequested = profile?.verification_requested ?? false;
+    const isSubscribed = subscriptions && subscriptions.length > 0;
 
-    // 5. Mandatory subscription check for participants without an active profile
-    if (!isPublicAdminPath && (isDashboardPath || isAdminPath)) {
-      const isPendingButSubmitted = profileStatus === 'pending' && verificationRequested;
-
-      // Enforce subscription verification check for pending participants in the dashboard
-      if (profileStatus !== 'active' && isDashboardPath && request.nextUrl.pathname !== '/dashboard/subscription') {
-        const url = request.nextUrl.clone();
-        url.pathname = '/dashboard/subscription';
-        return NextResponse.redirect(url);
+    // 5. Mandatory subscription check for participants in the dashboard
+    if (!isPublicAdminPath && isDashboardPath) {
+      if (!isSubscribed) {
+        const allowedPaths = ['/dashboard', '/dashboard/settings', '/dashboard/subscription'];
+        if (!allowedPaths.includes(request.nextUrl.pathname)) {
+          const url = request.nextUrl.clone();
+          url.pathname = '/dashboard/subscription';
+          return NextResponse.redirect(url);
+        }
       }
     }
 

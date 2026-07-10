@@ -62,8 +62,15 @@ export async function signup(formData: FormData) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   const role = formData.get('role') as string || 'player';
-  const firstName = formData.get('firstName') as string || '';
-  const lastName = formData.get('lastName') as string || '';
+  let firstName = formData.get('firstName') as string || '';
+  let lastName = formData.get('lastName') as string || '';
+
+  const fullName = formData.get('fullName') as string;
+  if (fullName && !firstName) {
+    const names = fullName.split(' ');
+    firstName = names[0] || '';
+    lastName = names.slice(1).join(' ') || '';
+  }
 
   const validatePassword = (pass: string) => {
     return (
@@ -148,6 +155,11 @@ export async function verifyOtp(email: string, token: string) {
     email,
     password: pendingData.password,
     email_confirm: true,
+    user_metadata: {
+      first_name: pendingData.first_name || '',
+      last_name: pendingData.last_name || '',
+      full_name: `${pendingData.first_name || ''} ${pendingData.last_name || ''}`.trim() || undefined
+    }
   });
 
   if (createError) {
@@ -164,6 +176,11 @@ export async function verifyOtp(email: string, token: string) {
           email,
           password: pendingData.password,
           email_confirm: true,
+          user_metadata: {
+            first_name: pendingData.first_name || '',
+            last_name: pendingData.last_name || '',
+            full_name: `${pendingData.first_name || ''} ${pendingData.last_name || ''}`.trim() || undefined
+          }
         });
 
         if (retryError) {
