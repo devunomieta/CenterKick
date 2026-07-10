@@ -34,12 +34,41 @@ export default async function AthleteDetailsPage({ params }: AthletePageProps) {
       return notFound();
    }
 
-   // Fetch career stats
-   const { data: careerStats } = await supabaseAdmin
-      .from('career_stats')
-      .select('*')
-      .eq('player_id', athlete.id)
-      .order('season', { ascending: false });
+   // Fetch reference data for enrichment
+   const [{ data: clubs }, { data: leagues }, { data: countries }] = await Promise.all([
+      supabaseAdmin.from('clubs').select('*'),
+      supabaseAdmin.from('leagues').select('*'),
+      supabaseAdmin.from('countries').select('*')
+   ]);
+
+   // Helpers
+   const getClubLogo = (clubName: string) => clubs?.find(c => c.name === clubName)?.logo_url || null;
+   const getLeagueName = (leagueId: string) => leagues?.find(l => l.id === leagueId)?.name || leagueId;
+   const getCountryFlag = (countryName: string) => countries?.find(c => c.name === countryName)?.flag_url || null;
+
+   // Enrich athlete data
+   athlete.league_name = getLeagueName(athlete.league);
+   athlete.current_club_logo = getClubLogo(athlete.current_club);
+   athlete.country_flag = getCountryFlag(athlete.country);
+
+   // Enrich career stats (mapping 'club' to 'club_name' and 'apps' to 'appearances' for backward compatibility)
+   const careerStats = (athlete.career_stats || []).map((stat: any) => ({
+      ...stat,
+      club_name: stat.club || stat.club_name,
+      appearances: stat.apps || stat.appearances,
+      club_flag: getClubLogo(stat.club || stat.club_name),
+      league_name: stat.league ? getLeagueName(stat.league) : null,
+   }));
+
+   // Enrich transfer history
+   if (athlete.transfer_history && Array.isArray(athlete.transfer_history)) {
+      athlete.transfer_history = athlete.transfer_history.map((t: any) => ({
+         ...t,
+         fee: t.transfer_fee || t.fee,
+         from_club_logo: getClubLogo(t.from_club),
+         to_club_logo: getClubLogo(t.to_club),
+      }));
+   }
 
    // Fetch related news (blog posts)
    let news: any[] = [];
@@ -59,5 +88,5 @@ export default async function AthleteDetailsPage({ params }: AthletePageProps) {
    // Track profile view asynchronously without blocking page load
    trackProfileView(athlete.id);
 
-   return <PlayerDetailsClient athlete={athlete} careerStats={careerStats || []} news={news} />;
+   return <PlayerDetailsClient athlete={athlete} careerStats={careerStats} news={news} />;
 }

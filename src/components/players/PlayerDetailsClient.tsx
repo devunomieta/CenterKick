@@ -26,7 +26,7 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
       <div className="min-h-screen bg-white">
          <Navbar />
 
-         <main className="pt-32 sm:pt-40">
+         <main className="pt-20 sm:pt-24">
             {/* Back Button */}
             <div className="bg-white border-b border-gray-100 py-3 sm:py-4">
                <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
@@ -45,7 +45,7 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                {/* Background stadium image */}
                <div className="absolute inset-0 z-0">
                   <img
-                     src={athlete.cover_image_url || "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=60&w=1200&auto=format&fit=crop"}
+                     src={athlete.cover_url || athlete.cover_image_url || "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=60&w=1200&auto=format&fit=crop"}
                      className="w-full h-full object-cover object-center opacity-20"
                      alt=""
                      loading="lazy"
@@ -152,7 +152,7 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
             </div>
 
             {/* Tab Navigation */}
-            <div className="sticky top-20 sm:top-32 z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm">
+            <div className="z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm">
                <div className="max-w-[1000px] mx-auto px-4 lg:px-0">
                   <div className="flex items-center overflow-x-auto [&::-webkit-scrollbar]:hidden gap-1 sm:gap-0">
                      {["Profile", "Career Stat.", "Gallery", "News"].map((tab) => (
@@ -172,41 +172,23 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
             </div>
 
             {/* Content */}
-            <div className="max-w-[1000px] mx-auto px-4 lg:px-0 py-10 sm:py-16">
+            <div className="max-w-[1000px] mx-auto px-4 lg:px-0 py-6 sm:py-10">
                {activeTab === "Profile" && (
                   <div className="flex flex-col">
-                     <div className="mb-12 pb-12 border-b border-gray-100 flex flex-col lg:flex-row gap-10 lg:gap-24">
-                        <div className="w-full lg:w-[60%]">
-                           <h2 className="text-2xl sm:text-3xl font-bold text-gray-600 mb-6">Bio</h2>
-                           <p className="text-base leading-relaxed text-gray-600 font-medium">
-                              {athlete.bio || `Meet ${athlete.first_name || ''} ${athlete.last_name || ''}, one of the talented players on CenterKick.`}
-                           </p>
-                        </div>
-                        <div className="w-full lg:w-[40%]">
-                           <h2 className="text-2xl sm:text-3xl font-bold text-gray-600 mb-6">Honours</h2>
-                           {athlete.achievements && Array.isArray(athlete.achievements) && athlete.achievements.length > 0 ? (
-                              <div className="space-y-3">
-                                 {athlete.achievements.map((item: any, i: number) => (
-                                    <div key={i} className="text-base font-bold text-gray-900 flex items-center gap-2">
-                                       <div className="w-1.5 h-1.5 bg-[#b50a0a] rounded-full shrink-0" />
-                                       {item.title || item}
-                                    </div>
-                                 ))}
-                              </div>
-                           ) : (
-                              <p className="text-gray-500 text-base font-medium">No honours recorded yet.</p>
-                           )}
-                        </div>
-                     </div>
-
-                     <div>
+                     <div className="mb-8 pb-8 border-b border-gray-100">
                         <h2 className="text-2xl sm:text-3xl font-bold text-gray-600 mb-8">Player Data</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                            {[
-                              { label: 'Country', value: athlete.country || 'N/A' },
+                              { label: 'Country', value: athlete.country ? (
+                                 <div className="flex items-center gap-2">
+                                    {athlete.country_flag && <img src={athlete.country_flag} alt="" className="w-5 h-4 object-cover rounded-sm shadow-sm" />}
+                                    <span>{athlete.country}</span>
+                                 </div>
+                              ) : 'N/A' },
                               { label: 'Position', value: athlete.position || 'Attack' },
-                              { label: 'Weight', value: athlete.weight_kg ? `${athlete.weight_kg}kg` : 'N/A' },
+                              { label: 'Main Foot', value: athlete.foot || 'Right' },
                               { label: 'Height', value: athlete.height_cm ? `${athlete.height_cm}cm` : 'N/A' },
+                              { label: 'Weight', value: athlete.weight_kg ? `${athlete.weight_kg}kg` : 'N/A' },
                               { label: 'Jersey #', value: athlete.jersey_number || 'N/A' },
                               { label: 'Market Value', value: athlete.market_value || 'N/A' },
                               { label: 'Managing Agent', value: 'Independent' },
@@ -217,6 +199,29 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                               </div>
                            ))}
                         </div>
+                     </div>
+
+                     <div className="mb-8 pb-8 border-b border-gray-100">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-gray-600 mb-6">Bio</h2>
+                        <p className="text-base leading-relaxed text-gray-600 font-medium">
+                           {athlete.bio || `Meet ${athlete.first_name || ''} ${athlete.last_name || ''}, one of the talented players on CenterKick.`}
+                        </p>
+                     </div>
+
+                     <div>
+                        <h2 className="text-2xl sm:text-3xl font-bold text-gray-600 mb-6">Honours</h2>
+                        {athlete.achievements && Array.isArray(athlete.achievements) && athlete.achievements.length > 0 ? (
+                           <div className="space-y-3">
+                              {athlete.achievements.map((item: any, i: number) => (
+                                 <div key={i} className="text-base font-bold text-gray-900 flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 bg-[#b50a0a] rounded-full shrink-0" />
+                                    {item.title || item}
+                                 </div>
+                              ))}
+                           </div>
+                        ) : (
+                           <p className="text-gray-500 text-base font-medium">No honours recorded yet.</p>
+                        )}
                      </div>
                   </div>
                )}
@@ -286,45 +291,138 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                   <div className="animate-in fade-in duration-500">
                      <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 tracking-tighter">Career <span className="text-[#b50a0a]">Statistics</span></h2>
                      
-                     {careerStats && careerStats.length > 0 ? (
-                        <div className="overflow-x-auto rounded-3xl border border-gray-100 shadow-sm">
-                           <table className="w-full text-left border-collapse whitespace-nowrap">
-                              <thead>
-                                 <tr className="bg-gray-50 border-b border-gray-100">
-                                    <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 uppercase">Season</th>
-                                    <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 uppercase">Club</th>
-                                    <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Apps</th>
-                                    <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Goals</th>
-                                    <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Assists</th>
-                                 </tr>
-                              </thead>
-                              <tbody className="text-sm font-bold text-gray-700 divide-y divide-gray-50 bg-white">
-                                 {careerStats.map((stat, i) => (
-                                    <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                                       <td className="px-6 py-5 align-middle">{stat.season}</td>
-                                       <td className="px-6 py-5 align-middle text-gray-900">
-                                          <div className="flex items-center gap-3">
-                                             {stat.club_flag && (
-                                                <div className="relative w-6 h-6 rounded-md overflow-hidden bg-white p-1 border border-gray-100 shadow-sm">
-                                                   <img src={stat.club_flag} alt="" className="object-contain w-full h-full" />
-                                                </div>
-                                             )}
-                                             <span>{stat.club_name}</span>
-                                          </div>
-                                       </td>
-                                       <td className="px-6 py-5 text-center align-middle">{stat.appearances || 0}</td>
-                                       <td className="px-6 py-5 text-center align-middle">{stat.goals || 0}</td>
-                                       <td className="px-6 py-5 text-center align-middle">{stat.assists || 0}</td>
+                     {/* Current Club / Basic Career Data */}
+                     <div className="mb-8 pb-8 border-b border-gray-100">
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-600 mb-6">Current Club</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                           <div className="flex py-3 border-b border-gray-50">
+                              <span className="w-2/5 text-sm font-bold text-gray-400 tracking-wide">Club</span>
+                              <span className="w-3/5 text-base font-bold text-gray-900">
+                                 {athlete.current_club ? (
+                                    <div className="flex items-center gap-2">
+                                       {athlete.current_club_logo && <img src={athlete.current_club_logo} alt="" className="w-5 h-5 object-contain" />}
+                                       <span>{athlete.current_club}</span>
+                                    </div>
+                                 ) : 'Free Agent'}
+                              </span>
+                           </div>
+                           <div className="flex py-3 border-b border-gray-50">
+                              <span className="w-2/5 text-sm font-bold text-gray-400 tracking-wide">League</span>
+                              <span className="w-3/5 text-base font-bold text-gray-900">{athlete.league_name || 'N/A'}</span>
+                           </div>
+                           <div className="flex py-3 border-b border-gray-50">
+                              <span className="w-2/5 text-sm font-bold text-gray-400 tracking-wide">Contract Expiry</span>
+                              <span className="w-3/5 text-base font-bold text-gray-900">{athlete.contract_expiry ? new Date(athlete.contract_expiry).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : 'N/A'}</span>
+                           </div>
+                           <div className="flex py-3 border-b border-gray-50">
+                              <span className="w-2/5 text-sm font-bold text-gray-400 tracking-wide">Signed</span>
+                              <span className="w-3/5 text-base font-bold text-gray-900">{athlete.is_signed ? 'Yes' : 'No'}</span>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Per Season Statistics */}
+                     <div className="mb-8 pb-8 border-b border-gray-100">
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-600 mb-6">Per Season Statistics</h3>
+                        {careerStats && careerStats.length > 0 ? (
+                           <div className="overflow-x-auto rounded-3xl border border-gray-100 shadow-sm">
+                              <table className="w-full text-left border-collapse whitespace-nowrap">
+                                 <thead>
+                                    <tr className="bg-gray-50 border-b border-gray-100">
+                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 uppercase">Season</th>
+                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 uppercase">League</th>
+                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 uppercase">Club</th>
+                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Apps</th>
+                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Gls</th>
+                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Ast</th>
+                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Yel</th>
+                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Red</th>
                                     </tr>
-                                 ))}
-                              </tbody>
-                           </table>
-                        </div>
-                     ) : (
-                        <div className="py-20 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                           <p className="text-gray-400 text-sm font-bold tracking-wide">No career statistics available.</p>
-                        </div>
-                     )}
+                                 </thead>
+                                 <tbody className="text-sm font-bold text-gray-700 divide-y divide-gray-50 bg-white">
+                                    {careerStats.map((stat, i) => (
+                                       <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                                          <td className="px-6 py-5 align-middle">{stat.season}</td>
+                                          <td className="px-6 py-5 align-middle text-gray-500 font-medium">{stat.league_name || '—'}</td>
+                                          <td className="px-6 py-5 align-middle text-gray-900">
+                                             <div className="flex items-center gap-3">
+                                                {stat.club_flag && (
+                                                   <div className="relative w-6 h-6 rounded-md overflow-hidden bg-white p-1 border border-gray-100 shadow-sm">
+                                                      <img src={stat.club_flag} alt="" className="object-contain w-full h-full" />
+                                                   </div>
+                                                )}
+                                                <span>{stat.club_name}</span>
+                                             </div>
+                                          </td>
+                                          <td className="px-6 py-5 text-center align-middle">{stat.appearances || 0}</td>
+                                          <td className="px-6 py-5 text-center align-middle">{stat.goals || 0}</td>
+                                          <td className="px-6 py-5 text-center align-middle">{stat.assists || 0}</td>
+                                          <td className="px-6 py-5 text-center align-middle">
+                                             <span className="px-2 py-1 bg-yellow-100/50 text-yellow-700 rounded-md border border-yellow-200">{stat.yellow_cards || 0}</span>
+                                          </td>
+                                          <td className="px-6 py-5 text-center align-middle">
+                                             <span className="px-2 py-1 bg-red-100/50 text-red-700 rounded-md border border-red-200">{stat.red_cards || 0}</span>
+                                          </td>
+                                       </tr>
+                                    ))}
+                                 </tbody>
+                              </table>
+                           </div>
+                        ) : (
+                           <p className="text-gray-500 text-base font-medium">No per season statistics available.</p>
+                        )}
+                     </div>
+
+                     {/* Transfer History */}
+                     <div>
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-600 mb-6">Transfer History</h3>
+                        {athlete.transfer_history && Array.isArray(athlete.transfer_history) && athlete.transfer_history.length > 0 ? (
+                           <div className="space-y-4">
+                              {athlete.transfer_history.map((transfer: any, i: number) => (
+                                 <div key={i} className="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                                    <div className="flex-1">
+                                       <div className="flex items-center gap-2 mb-1">
+                                          <span className="text-sm font-bold text-gray-900">
+                                             {transfer.from_club ? (
+                                                <div className="flex items-center gap-1.5">
+                                                   {transfer.from_club_logo && <img src={transfer.from_club_logo} alt="" className="w-4 h-4 object-contain" />}
+                                                   <span>{transfer.from_club}</span>
+                                                </div>
+                                             ) : 'Unknown'}
+                                          </span>
+                                          <span className="text-gray-400 text-xs">→</span>
+                                          <span className="text-sm font-bold text-gray-900">
+                                             {transfer.to_club ? (
+                                                <div className="flex items-center gap-1.5">
+                                                   {transfer.to_club_logo && <img src={transfer.to_club_logo} alt="" className="w-4 h-4 object-contain" />}
+                                                   <span>{transfer.to_club}</span>
+                                                </div>
+                                             ) : 'Unknown'}
+                                          </span>
+                                       </div>
+                                       <div className="flex items-center gap-4 text-xs font-bold text-gray-500 mt-2">
+                                          <span>{transfer.date ? new Date(transfer.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : 'Unknown Date'}</span>
+                                          {transfer.fee && (
+                                             <>
+                                                <span className="w-1 h-1 rounded-full bg-gray-300" />
+                                                <span className="text-[#b50a0a]">Fee: {transfer.fee}</span>
+                                             </>
+                                          )}
+                                          {transfer.market_value && (
+                                             <>
+                                                <span className="w-1 h-1 rounded-full bg-gray-300" />
+                                                <span className="text-gray-600">Market Value: {transfer.market_value}</span>
+                                             </>
+                                          )}
+                                       </div>
+                                    </div>
+                                 </div>
+                              ))}
+                           </div>
+                        ) : (
+                           <p className="text-gray-500 text-base font-medium">No transfer history recorded yet.</p>
+                        )}
+                     </div>
                   </div>
                )}
 
