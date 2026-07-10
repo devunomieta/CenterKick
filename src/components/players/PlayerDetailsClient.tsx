@@ -325,43 +325,45 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                      <div className="mb-8 pb-8 border-b border-gray-100">
                         <h3 className="text-xl sm:text-2xl font-bold text-gray-600 mb-6">Per Season Statistics</h3>
                         {careerStats && careerStats.length > 0 ? (
-                           <div className="overflow-x-auto rounded-3xl border border-gray-100 shadow-sm">
-                              <table className="w-full text-left border-collapse whitespace-nowrap">
+                           <div className="overflow-x-auto rounded-[2rem] border border-gray-100 shadow-sm bg-white">
+                              <table className="w-full text-left border-collapse whitespace-nowrap min-w-max">
                                  <thead>
                                     <tr className="bg-gray-50 border-b border-gray-100">
-                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 uppercase">Season</th>
-                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 uppercase">League</th>
-                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 uppercase">Club</th>
-                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Apps</th>
-                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Gls</th>
-                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Ast</th>
-                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Yel</th>
-                                       <th className="px-6 py-5 text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Red</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 uppercase text-center">S/N</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 uppercase">Season</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 uppercase">League</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 uppercase">Club</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Apps</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Gls</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Ast</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Yel</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 text-center uppercase">Red</th>
                                     </tr>
                                  </thead>
-                                 <tbody className="text-sm font-bold text-gray-700 divide-y divide-gray-50 bg-white">
+                                 <tbody className="text-xs sm:text-sm font-bold text-gray-700 divide-y divide-gray-50">
                                     {careerStats.map((stat, i) => (
                                        <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                                          <td className="px-6 py-5 align-middle">{stat.season}</td>
-                                          <td className="px-6 py-5 align-middle text-gray-500 font-medium">{stat.league_name || '—'}</td>
-                                          <td className="px-6 py-5 align-middle text-gray-900">
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 text-center align-middle text-gray-400">{i + 1}</td>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 align-middle">{stat.season}</td>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 align-middle text-gray-500 font-medium">{stat.league_name || '—'}</td>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 align-middle text-gray-900">
                                              <div className="flex items-center gap-3">
                                                 {stat.club_flag && (
-                                                   <div className="relative w-6 h-6 rounded-md overflow-hidden bg-white p-1 border border-gray-100 shadow-sm">
+                                                   <div className="relative w-5 h-5 sm:w-6 sm:h-6 rounded-md overflow-hidden bg-white p-1 border border-gray-100 shadow-sm shrink-0">
                                                       <img src={stat.club_flag} alt="" className="object-contain w-full h-full" />
                                                    </div>
                                                 )}
                                                 <span>{stat.club_name}</span>
                                              </div>
                                           </td>
-                                          <td className="px-6 py-5 text-center align-middle">{stat.appearances || 0}</td>
-                                          <td className="px-6 py-5 text-center align-middle">{stat.goals || 0}</td>
-                                          <td className="px-6 py-5 text-center align-middle">{stat.assists || 0}</td>
-                                          <td className="px-6 py-5 text-center align-middle">
-                                             <span className="px-2 py-1 bg-yellow-100/50 text-yellow-700 rounded-md border border-yellow-200">{stat.yellow_cards || 0}</span>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 text-center align-middle">{stat.appearances || 0}</td>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 text-center align-middle">{stat.goals || 0}</td>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 text-center align-middle">{stat.assists || 0}</td>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 text-center align-middle">
+                                             <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-yellow-100/50 text-yellow-700 rounded-md border border-yellow-200">{stat.yellow_cards || 0}</span>
                                           </td>
-                                          <td className="px-6 py-5 text-center align-middle">
-                                             <span className="px-2 py-1 bg-red-100/50 text-red-700 rounded-md border border-red-200">{stat.red_cards || 0}</span>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 text-center align-middle">
+                                             <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-100/50 text-red-700 rounded-md border border-red-200">{stat.red_cards || 0}</span>
                                           </td>
                                        </tr>
                                     ))}
@@ -377,47 +379,43 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                      <div>
                         <h3 className="text-xl sm:text-2xl font-bold text-gray-600 mb-6">Transfer History</h3>
                         {athlete.transfer_history && Array.isArray(athlete.transfer_history) && athlete.transfer_history.length > 0 ? (
-                           <div className="space-y-4">
-                              {athlete.transfer_history.map((transfer: any, i: number) => (
-                                 <div key={i} className="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors">
-                                    <div className="flex-1">
-                                       <div className="flex items-center gap-2 mb-1">
-                                          <span className="text-sm font-bold text-gray-900">
-                                             {transfer.from_club ? (
-                                                <div className="flex items-center gap-1.5">
-                                                   {transfer.from_club_logo && <img src={transfer.from_club_logo} alt="" className="w-4 h-4 object-contain" />}
-                                                   <span>{transfer.from_club}</span>
-                                                </div>
-                                             ) : 'Unknown'}
-                                          </span>
-                                          <span className="text-gray-400 text-xs">→</span>
-                                          <span className="text-sm font-bold text-gray-900">
-                                             {transfer.to_club ? (
-                                                <div className="flex items-center gap-1.5">
-                                                   {transfer.to_club_logo && <img src={transfer.to_club_logo} alt="" className="w-4 h-4 object-contain" />}
-                                                   <span>{transfer.to_club}</span>
-                                                </div>
-                                             ) : 'Unknown'}
-                                          </span>
-                                       </div>
-                                       <div className="flex items-center gap-4 text-xs font-bold text-gray-500 mt-2">
-                                          <span>{transfer.date ? new Date(transfer.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : 'Unknown Date'}</span>
-                                          {transfer.fee && (
-                                             <>
-                                                <span className="w-1 h-1 rounded-full bg-gray-300" />
-                                                <span className="text-[#b50a0a]">Fee: {transfer.fee}</span>
-                                             </>
-                                          )}
-                                          {transfer.market_value && (
-                                             <>
-                                                <span className="w-1 h-1 rounded-full bg-gray-300" />
-                                                <span className="text-gray-600">Market Value: {transfer.market_value}</span>
-                                             </>
-                                          )}
-                                       </div>
-                                    </div>
-                                 </div>
-                              ))}
+                           <div className="overflow-x-auto rounded-[2rem] border border-gray-100 shadow-sm bg-white">
+                              <table className="w-full text-left border-collapse whitespace-nowrap min-w-max">
+                                 <thead>
+                                    <tr className="bg-gray-50 border-b border-gray-100">
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 uppercase text-center">S/N</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 uppercase">Date</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 uppercase">From</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 uppercase">To</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 uppercase text-right">Fee</th>
+                                       <th className="px-4 py-4 sm:px-6 sm:py-5 text-[10px] sm:text-xs font-bold tracking-wide text-gray-400 uppercase text-right">Market Value</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody className="text-xs sm:text-sm font-bold text-gray-700 divide-y divide-gray-50">
+                                    {athlete.transfer_history.map((transfer: any, i: number) => (
+                                       <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 text-center align-middle text-gray-400">{i + 1}</td>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 align-middle font-medium text-gray-500">
+                                             {transfer.date ? new Date(transfer.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : 'Unknown'}
+                                          </td>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 align-middle text-gray-900">
+                                             <div className="flex items-center gap-2">
+                                                {transfer.from_club_logo && <img src={transfer.from_club_logo} alt="" className="w-5 h-5 object-contain shrink-0" />}
+                                                <span>{transfer.from_club || 'Unknown'}</span>
+                                             </div>
+                                          </td>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 align-middle text-gray-900">
+                                             <div className="flex items-center gap-2">
+                                                {transfer.to_club_logo && <img src={transfer.to_club_logo} alt="" className="w-5 h-5 object-contain shrink-0" />}
+                                                <span>{transfer.to_club || 'Unknown'}</span>
+                                             </div>
+                                          </td>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 align-middle text-right text-[#b50a0a]">{transfer.fee || '—'}</td>
+                                          <td className="px-4 py-4 sm:px-6 sm:py-5 align-middle text-right text-gray-500 font-medium">{transfer.market_value || '—'}</td>
+                                       </tr>
+                                    ))}
+                                 </tbody>
+                              </table>
                            </div>
                         ) : (
                            <p className="text-gray-500 text-base font-medium">No transfer history recorded yet.</p>

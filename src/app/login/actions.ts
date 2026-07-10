@@ -56,12 +56,30 @@ export async function login(formData: FormData) {
   redirect(redirectPath);
 }
 
+export async function getSignupSettings() {
+  const adminClient = createAdminClient();
+  const { data } = await adminClient
+    .from('site_content')
+    .select('content')
+    .eq('page', 'settings')
+    .eq('section', 'system')
+    .maybeSingle();
+
+  return data?.content || {};
+}
+
 export async function signup(formData: FormData) {
   const supabase = await createClient();
 
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   const role = formData.get('role') as string || 'player';
+  
+  const settings = await getSignupSettings();
+  if (settings.disabledRoles && settings.disabledRoles.includes(role)) {
+    return { error: 'Signup for this account type is currently disabled.' };
+  }
+
   let firstName = formData.get('firstName') as string || '';
   let lastName = formData.get('lastName') as string || '';
 

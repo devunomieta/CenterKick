@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Mail, AlertCircle, CheckCircle2, ArrowRight, Chrome, ArrowLeft } from "lucide-react";
 import Link from 'next/link';
-import { signup, verifyOtp, resendOtp } from '@/app/login/actions';
+import { signup, verifyOtp, resendOtp, getSignupSettings } from '@/app/login/actions';
 import { PasswordField } from '@/components/common/PasswordField';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
@@ -23,6 +23,21 @@ export default function RegisterPage() {
    const [timeLeft, setTimeLeft] = useState(300);
    const [resendCooldown, setResendCooldown] = useState(60);
    const [isResending, setIsResending] = useState(false);
+   const [disabledRoles, setDisabledRoles] = useState<string[]>([]);
+
+   useEffect(() => {
+      const loadSettings = async () => {
+         try {
+            const settings = await getSignupSettings();
+            if (settings.disabledRoles) {
+               setDisabledRoles(settings.disabledRoles);
+            }
+         } catch (error) {
+            console.error('Failed to load signup settings:', error);
+         }
+      };
+      loadSettings();
+   }, []);
 
    const validatePassword = (pass: string) => {
       return (
@@ -193,11 +208,11 @@ export default function RegisterPage() {
                                  required
                                  className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 appearance-none"
                               >
-                                 <option value="player">Player</option>
-                                 <option value="coach">Coach</option>
-                                 <option value="agent">Agent</option>
-                                 <option value="scout">Scout</option>
-                                 <option value="organization">Organization</option>
+                                 {!disabledRoles.includes('player') && <option value="player">Player</option>}
+                                 {!disabledRoles.includes('coach') && <option value="coach">Coach</option>}
+                                 {!disabledRoles.includes('agent') && <option value="agent">Agent</option>}
+                                 {!disabledRoles.includes('scout') && <option value="scout">Scout</option>}
+                                 {!disabledRoles.includes('organization') && <option value="organization">Organization</option>}
                               </select>
                            </div>
                         </div>

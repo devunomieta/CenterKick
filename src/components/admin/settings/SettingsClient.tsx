@@ -161,7 +161,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
 
   const handleResetSection = () => {
     const sectionKeys: Record<string, string[]> = {
-      'Global Configuration': ['siteTitle', 'allowReg', 'publicSearch', 'maintenanceMode'],
+      'Global Configuration': ['siteTitle', 'allowReg', 'publicSearch', 'maintenanceMode', 'disabledRoles'],
       'Mail & SMTP Settings': ['resendKey', 'fromEmail'],
       'Payment Settings': ['paymentLink', 'bankName', 'accountName', 'accountNumber'],
       'Security & Access': ['enable2fa', 'strictPass', 'sessionTimeout'],
@@ -385,6 +385,33 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
                            </button>
                         </div>
                       ))}
+                   </div>
+
+                   <div className="space-y-3 pt-4 border-t border-gray-100 mt-2">
+                      <div className="flex flex-col">
+                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Disabled Account Types</label>
+                         <p className="text-xs text-gray-500 font-bold ml-1 mb-2">Select roles that are currently NOT allowed to sign up.</p>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                         {['player', 'coach', 'agent', 'scout', 'organization'].map(role => {
+                            const disabledRoles = settings.disabledRoles || [];
+                            const isDisabled = disabledRoles.includes(role);
+                            return (
+                               <button
+                                 key={role}
+                                 onClick={() => {
+                                    const newRoles = isDisabled 
+                                       ? disabledRoles.filter((r: string) => r !== role)
+                                       : [...disabledRoles, role];
+                                    updateSetting('disabledRoles', newRoles);
+                                 }}
+                                 className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition-all border ${isDisabled ? 'bg-red-50 text-red-600 border-red-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
+                               >
+                                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                               </button>
+                            );
+                         })}
+                      </div>
                    </div>
                 </div>
 
