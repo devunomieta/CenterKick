@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { Mail, AlertCircle, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import Link from 'next/link';
 import { resetPassword } from './actions';
+import { useToast } from '@/context/ToastContext';
 
 export default function ForgotPasswordPage() {
    const [isLoading, setIsLoading] = useState(false);
+   const { showToast } = useToast();
    const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
    const [email, setEmail] = useState('');
    const [countdown, setCountdown] = useState(0);
@@ -37,13 +39,13 @@ export default function ForgotPasswordPage() {
          const result = await resetPassword(formData);
 
          if (result.error) {
-            setStatus({ type: 'error', message: result.error });
+            showToast(result.error, 'error');
          } else if (result.success) {
-            setStatus({ type: 'success', message: result.message || 'Reset link sent.' });
+            showToast(result.message || 'Reset link sent.', 'success');
             startCountdown();
          }
       } catch (err: any) {
-         setStatus({ type: 'error', message: 'An unexpected error occurred.' });
+         showToast('An unexpected error occurred.', 'error');
       } finally {
          setIsLoading(false);
       }
@@ -61,13 +63,13 @@ export default function ForgotPasswordPage() {
       try {
          const result = await resetPassword(formData);
          if (result.error) {
-            setStatus({ type: 'error', message: result.error });
+            showToast(result.error, 'error');
          } else {
-            setStatus({ type: 'success', message: 'A new link has been sent to your email.' });
+            showToast('A new link has been sent to your email.', 'success');
             startCountdown();
          }
       } catch (err: any) {
-         setStatus({ type: 'error', message: 'Failed to resend link.' });
+         showToast('Failed to resend link.', 'error');
       } finally {
          setIsLoading(false);
       }

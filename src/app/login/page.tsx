@@ -7,22 +7,24 @@ import { login } from './actions';
 import { PasswordField } from '@/components/common/PasswordField';
 import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
+import { useToast } from '@/context/ToastContext';
 
 function LoginContent() {
    const [isLoading, setIsLoading] = useState(false);
+   const { showToast } = useToast();
    const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
    const searchParams = useSearchParams();
 
    useEffect(() => {
       const error = searchParams.get('error');
       if (error) {
-         setStatus({ type: 'error', message: error });
+         showToast(error, 'error');
       }
       const message = searchParams.get('message');
       if (message) {
-         setStatus({ type: 'success', message: message });
+         showToast(message, 'success');
       }
-   }, [searchParams]);
+   }, [searchParams, showToast]);
 
    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -35,10 +37,10 @@ function LoginContent() {
          const result = await login(formData);
 
          if (result && 'error' in result) {
-            setStatus({ type: 'error', message: result.error });
+            showToast(result.error, 'error');
          }
       } catch (err: any) {
-         setStatus({ type: 'error', message: 'An unexpected error occurred.' });
+         showToast('An unexpected error occurred.', 'error');
       } finally {
          setIsLoading(false);
       }

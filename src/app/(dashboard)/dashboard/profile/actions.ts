@@ -64,3 +64,16 @@ export async function requestProfileEdit(profileId: string, changes: Record<stri
 
   return { success: true };
 }
+
+export async function invalidateProfileCache() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    try {
+      const { redis } = await import('@/lib/redis');
+      await redis.del(`user:profile:${user.id}`);
+    } catch (e) {
+      console.error('Failed to invalidate profile cache', e);
+    }
+  }
+}

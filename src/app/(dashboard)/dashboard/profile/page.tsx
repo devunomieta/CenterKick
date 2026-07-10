@@ -23,8 +23,11 @@ import {
 import { ProfileCompletenessWidget } from '@/components/dashboard/ProfileCompletenessWidget';
 import { createClient } from '@/lib/supabase/client';
 import { requestProfileEdit } from './actions';
+import { useToast } from '@/context/ToastContext';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
+import { useRouter } from 'next/navigation';
+import { invalidateProfileCache } from './actions';
 
 
 const calculateAge = (dob: string) => {
@@ -41,7 +44,10 @@ export default function ProfileEditor() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
+  const { showToast } = useToast();
+  const router = useRouter();
   const [achievements, setAchievements] = useState<any[]>([]);
   const [portfolioMembers, setPortfolioMembers] = useState<any[]>([]);
   const [videoLinks, setVideoLinks] = useState<string[]>([]);
@@ -81,14 +87,16 @@ export default function ProfileEditor() {
         setAchievements(profileRecord?.achievements || []);
         setVideoLinks(profileRecord?.video_links || []);
         setGalleryUrls(profileRecord?.gallery_urls || []);
-        setCareerStats(profileRecord?.career_stats || []);
-        setTransferHistory(profileRecord?.transfer_history || []);
+        setCareerStats(profileRecord?.career_stats || []); setIsDirty(true);
+        setTransferHistory(profileRecord?.transfer_history || []); setIsDirty(true);
 
         const { data: countries } = await supabase.from('countries').select('name, code').order('name');
         setCountriesList(countries || []);
 
         const { data: clubs } = await supabase.from('clubs').select('name, league_id').order('name');
         const { data: leagues } = await supabase.from('leagues').select('id, name').order('name');
+        const { data: seasons } = await supabase.from('seasons').select('id, name').order('name');
+        setSeasonsList(seasons || []);
         setLeaguesList(leagues || []);
         setClubsList(clubs || []);
 
@@ -105,92 +113,197 @@ export default function ProfileEditor() {
     loadData();
   }, []);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    setStatus(null);
-
+  
+  const getSupabaseAndUser = async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setStatus({ type: 'error', msg: 'You must be logged in to save changes' });
-      setIsSaving(false);
-      return;
-    }
+    return { supabase, user };
+  };
 
-    const form = document.getElementById('profile-form') as HTMLFormElement;
-    if (!form) {
-      setStatus({ type: 'error', msg: 'Form not found' });
-      setIsSaving(false);
-      return;
-    }
-    const formData = new FormData(form);
-
+  const saveBasicInfo = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const { supabase, user } = await getSupabaseAndUser();
+    if (!user) { showToast('You must be logged in', 'error'); setIsSaving(false); return; }
+    
+    const formData = new FormData(e.target as HTMLFormElement);
     const profileData: any = {
+      id: profile?.id,
       user_id: user.id,
       first_name: formData.get('first_name'),
       last_name: formData.get('last_name'),
       gender: formData.get('gender') || null,
       date_of_birth: formData.get('date_of_birth') || null,
       country: formData.get('country'),
-      bio: formData.get('bio'),
+      // bio handled in saveBioAndPortfolio
       contact_email: formData.get('contact_email'),
       phone_number: formData.get('phone_number'),
-
-      // Basic info moved fields
       position: formData.get('position'),
       foot: formData.get('foot'),
       jersey_number: formData.get('jersey_number') || null,
       height_cm: formData.get('height_cm') || null,
       weight_kg: formData.get('weight_kg') || null,
       ...(['superadmin', 'admin', 'operations'].includes(role) ? { market_value: formData.get('market_value') } : {}),
-
-      // New and existing fields
       is_signed: formData.get('is_signed') === 'true',
       id_number: formData.get('id_number') || null,
       contract_expiry: formData.get('contract_expiry') || null,
-      career_stats: careerStats,
-      transfer_history: transferHistory,
-
       formation: formData.get('formation'),
       license: formData.get('license'),
       agency_name: formData.get('agency_name'),
       license_code: formData.get('license_code'),
-      id_proof_url: profile?.id_proof_url || null,
-      license_proof_url: profile?.license_proof_url || null,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase.from('profiles').update(profileData).eq('id', profile?.id);
+    if (error) {
+      console.error('Save error:', error);
+      showToast(`Error: ${error.message}`, 'error');
+    } else {
+      showToast('Basic Info updated successfully', 'success');
+      setProfile({ ...profile, ...profileData });
+      setIsDirty(false);
+      await invalidateProfileCache();
+      router.refresh();
+    }
+    setIsSaving(false);
+  };
+
+  const saveCareerData = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const { supabase, user } = await getSupabaseAndUser();
+    if (!user) { showToast('You must be logged in', 'error'); setIsSaving(false); return; }
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const profileData: any = {
+      id: profile?.id,
+      user_id: user.id,
+      career_stats: careerStats,
+      transfer_history: transferHistory,
+      achievements: achievements,
+      league: formData.get('league') || profile?.league || null,
+      current_club: formData.get('current_club') || profile?.current_club || null,
+      contract_expiry: formData.get('contract_expiry') || profile?.contract_expiry || null,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase.from('profiles').update(profileData).eq('id', profile?.id);
+    if (error) {
+      console.error('Save error:', error);
+      showToast(`Error: ${error.message}`, 'error');
+    } else {
+      showToast('Career Data updated successfully', 'success');
+      setProfile({ ...profile, ...profileData });
+      setIsDirty(false);
+      await invalidateProfileCache();
+      router.refresh();
+    }
+    setIsSaving(false);
+  };
+
+
+  const saveBioAndPortfolio = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const { supabase, user } = await getSupabaseAndUser();
+    if (!user) { showToast('You must be logged in', 'error'); setIsSaving(false); return; }
+
+    const profileData: any = {
+      bio: profile?.bio,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase.from('profiles').update(profileData).eq('id', profile?.id);
+    if (error) {
+      console.error('Save error:', error);
+      showToast(`Error: ${error.message}`, 'error');
+    } else {
+      showToast('Bio & Portfolio updated successfully', 'success');
+      setIsDirty(false);
+      await invalidateProfileCache();
+      router.refresh();
+    }
+    setIsSaving(false);
+  };
+
+  const saveMediaCenter = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const { supabase, user } = await getSupabaseAndUser();
+    if (!user) { showToast('You must be logged in', 'error'); setIsSaving(false); return; }
+
+    const profileData: any = {
+      video_links: videoLinks,
+      gallery_urls: galleryUrls,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase.from('profiles').update(profileData).eq('id', profile?.id);
+    if (error) {
+      console.error('Save error:', error);
+      showToast(`Error: ${error.message}`, 'error');
+    } else {
+      showToast('Media Center updated successfully', 'success');
+      setIsDirty(false);
+      await invalidateProfileCache();
+      router.refresh();
+    }
+    setIsSaving(false);
+  };
+
+  const saveSocialLinks = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const { supabase, user } = await getSupabaseAndUser();
+    if (!user) { showToast('You must be logged in', 'error'); setIsSaving(false); return; }
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const profileData: any = {
+      id: profile?.id,
+      user_id: user.id,
       social_links: {
         instagram: formData.get('social_instagram'),
         facebook: formData.get('social_facebook'),
         twitter: formData.get('social_twitter'),
         linkedin: formData.get('social_linkedin'),
       },
-      achievements: achievements,
-      video_links: videoLinks,
-      gallery_urls: galleryUrls,
       updated_at: new Date().toISOString()
     };
 
-    const { error } = await supabase
-      .from('profiles')
-      .upsert(profileData);
-
+    const { error } = await supabase.from('profiles').update(profileData).eq('id', profile?.id);
     if (error) {
       console.error('Save error:', error);
-      setStatus({ type: 'error', msg: `Error: ${error.message}` });
+      showToast(`Error: ${error.message}`, 'error');
     } else {
-      setStatus({ type: 'success', msg: 'Profile updated successfully' });
+      showToast('Social Links updated successfully', 'success');
       setProfile({ ...profile, ...profileData });
+      setIsDirty(false);
+      await invalidateProfileCache();
+      router.refresh();
     }
-
     setIsSaving(false);
   };
 
+  // Immediate save helper for media uploads
+  const immediateProfileUpdate = async (updatePayload: any, successMsg: string) => {
+    const { supabase, user } = await getSupabaseAndUser();
+    if (!user) return;
+    const { error } = await supabase.from('profiles').update(updatePayload).eq('id', profile?.id);
+    if (error) {
+       showToast(`Save failed: ${error.message}`, 'error');
+    } else {
+       showToast(successMsg, 'success');
+       setProfile({ ...profile, ...updatePayload });
+       await invalidateProfileCache();
+      router.refresh();
+    }
+  };
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsSaving(true);
-    setStatus({ type: 'success', msg: 'Uploading photo...' });
+    showToast('Uploading photo...', 'success');
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -202,8 +315,7 @@ export default function ProfileEditor() {
       setStatus({ type: 'error', msg: `Upload failed: ${error.message}` });
     } else {
       const { data: { publicUrl } } = supabase.storage.from('site-assets').getPublicUrl(`avatars/${fileName}`);
-      setProfile({ ...profile, avatar_url: publicUrl });
-      setStatus({ type: 'success', msg: 'Photo uploaded! Click Save Changes.' });
+      await immediateProfileUpdate({ avatar_url: publicUrl }, 'Profile photo updated successfully!');
     }
     setIsSaving(false);
   };
@@ -213,7 +325,7 @@ export default function ProfileEditor() {
     if (!file) return;
 
     setIsSaving(true);
-    setStatus({ type: 'success', msg: 'Uploading cover photo...' });
+    showToast('Uploading cover photo...', 'success');
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -225,8 +337,7 @@ export default function ProfileEditor() {
       setStatus({ type: 'error', msg: `Upload failed: ${error.message}` });
     } else {
       const { data: { publicUrl } } = supabase.storage.from('site-assets').getPublicUrl(`covers/${fileName}`);
-      setProfile({ ...profile, cover_url: publicUrl });
-      setStatus({ type: 'success', msg: 'Cover photo uploaded! Click Save Changes.' });
+      await immediateProfileUpdate({ cover_url: publicUrl }, 'Cover photo updated successfully!');
     }
     setIsSaving(false);
   };
@@ -236,7 +347,7 @@ export default function ProfileEditor() {
     if (!files || files.length === 0) return;
 
     setIsSaving(true);
-    setStatus({ type: 'success', msg: 'Uploading gallery images...' });
+    showToast('Uploading gallery images...', 'success');
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -253,11 +364,14 @@ export default function ProfileEditor() {
     }
 
     if (newUrls.length > 0) {
-      setGalleryUrls([...galleryUrls, ...newUrls]);
-      setStatus({ type: 'success', msg: 'Gallery updated! Click Save Changes.' });
+      const updatedGallery = [...galleryUrls, ...newUrls];
+      setGalleryUrls(updatedGallery);
+      await immediateProfileUpdate({ gallery_urls: updatedGallery }, 'Gallery updated automatically!');
     } else {
-      setStatus({ type: 'error', msg: 'Failed to upload images.' });
+      showToast('Failed to upload images.', 'error');
     }
+    
+    e.target.value = ''; // Allow selecting the same file again
     setIsSaving(false);
   };
 
@@ -272,7 +386,7 @@ export default function ProfileEditor() {
     if (!email) return;
 
     setIsSaving(true);
-    setStatus({ type: 'success', msg: 'Linking member...' });
+    showToast('Linking member...', 'success');
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -284,7 +398,7 @@ export default function ProfileEditor() {
       .single();
 
     if (searchError || !targetProfile) {
-      setStatus({ type: 'error', msg: 'Could not find a profile with that email.' });
+      showToast('Could not find a profile with that email.', 'error');
       setIsSaving(false);
       return;
     }
@@ -295,9 +409,10 @@ export default function ProfileEditor() {
       .eq('id', targetProfile.id);
 
     if (updateError) {
-      setStatus({ type: 'error', msg: `Failed to link: ${updateError.message}` });
+      console.error('Link member error:', updateError);
+      showToast(`Failed to link: ${updateError.message}`, 'error');
     } else {
-      setStatus({ type: 'success', msg: 'Member successfully linked to your portfolio!' });
+      showToast('Member successfully linked to your portfolio!', 'success');
       setPortfolioMembers([...portfolioMembers, targetProfile]);
     }
     setIsSaving(false);
@@ -314,9 +429,10 @@ export default function ProfileEditor() {
       .eq('id', memberId);
 
     if (error) {
-      setStatus({ type: 'error', msg: `Failed to unlink: ${error.message}` });
+      console.error('Unlink error:', error);
+      showToast(`Failed to unlink: ${error.message}`, 'error');
     } else {
-      setStatus({ type: 'success', msg: 'Member successfully unlinked.' });
+      showToast('Member successfully unlinked.', 'success');
       setPortfolioMembers(portfolioMembers.filter((m: any) => m.id !== memberId));
     }
     setIsSaving(false);
@@ -348,7 +464,7 @@ export default function ProfileEditor() {
     });
 
     if (Object.keys(changes).length === 0) {
-      setStatus({ type: 'success', msg: 'No changes detected.' });
+      showToast('No changes detected.', 'success');
       setEditingMember(null);
       setIsSaving(false);
       return;
@@ -356,9 +472,9 @@ export default function ProfileEditor() {
 
     const res = await requestProfileEdit(editingMember.id, changes);
     if (res.error) {
-      setStatus({ type: 'error', msg: res.error });
+      showToast(res.error, 'error');
     } else {
-      setStatus({ type: 'success', msg: 'Edits submitted to Admin for approval.' });
+      showToast('Edits submitted to Admin for approval.', 'success');
       setEditingMember(null);
     }
     setIsSaving(false);
@@ -378,26 +494,9 @@ export default function ProfileEditor() {
           video_links: videoLinks
         }} 
       />
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tighter">My <span className="text-[#b50a0a]">Profile</span></h1>
-          <p className="text-gray-900 text-xs font-bold tracking-wide mt-1">Manage your professional data & public appearance.</p>
-        </div>
-        <button
-          onClick={handleSave}
-          disabled={isSaving || !isEditing}
-          className="px-4 md:px-8 py-3.5 bg-gray-900 text-white rounded-xl text-xs font-bold tracking-[0.2em] hover:bg-black transition-all flex items-center justify-center gap-3 shadow-xl disabled:opacity-50"
-        >
-          {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save className="w-4 h-4" />}
-          Save Changes
-        </button>
-      </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8"><div><h1 className="text-3xl font-bold text-gray-900 tracking-tighter">My <span className="text-[#b50a0a]">Profile</span></h1><p className="text-gray-900 text-xs font-bold tracking-wide mt-1">Manage your professional data & public appearance.</p></div></div>
 
-      {status && (
-        <div className={`p-4 rounded-xl text-sm font-bold tracking-wide animate-in fade-in slide-in-from-top-2 duration-500 ${status.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
-          {status.msg}
-        </div>
-      )}
+      
 
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Editor Sidebar Tabs */}
@@ -412,7 +511,7 @@ export default function ProfileEditor() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => { setActiveTab(tab.id); setIsDirty(false); router.refresh(); }}
                 className={`flex items-center gap-3 px-6 py-4 rounded-2xl text-sm font-bold tracking-wide transition-all whitespace-nowrap lg:w-full ${activeTab === tab.id ? 'bg-[#b50a0a] text-white shadow-lg shadow-red-900/20' : 'text-gray-900 hover:bg-gray-100'}`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -428,26 +527,18 @@ export default function ProfileEditor() {
             <h2 className="text-xl font-bold tracking-tight text-gray-900">{activeTab}</h2>
             <button
               type="button"
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={async () => { setIsEditing(!isEditing); if (isEditing) setIsDirty(false);
+      await invalidateProfileCache();
+      router.refresh(); }}
               className={`px-6 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all ${isEditing ? 'bg-red-100 text-red-700' : 'bg-gray-900 text-white hover:bg-black'}`}
             >
-              {isEditing ? 'Cancel Editing' : 'Edit Profile'}
+              {isEditing ? 'Close Editor' : 'Edit Profile'}
             </button>
           </div>
-          <form
-            id="profile-form"
-            className={`bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden p-4 md:p-8 md:p-6 space-y-8 ${!isEditing && 'opacity-90 pointer-events-none'}`}
-            onClickCapture={(e) => {
-              if (!isEditing) {
-                e.preventDefault();
-                e.stopPropagation();
-                setStatus({ type: 'error', msg: 'Click "Edit Profile" to make changes.' });
-              }
-            }}
-          >
+          <div className={`bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden p-4 md:p-8 md:p-6 space-y-8 ${!isEditing && 'opacity-90 pointer-events-none'}`} onClickCapture={(e) => { if (!isEditing) { e.preventDefault(); e.stopPropagation(); showToast('Click "Edit Profile" to make changes.', 'error'); } }}>
 
             {activeTab === 'Basic Info' && (
-              <div className="space-y-6 animate-in fade-in duration-500">
+              <form onSubmit={saveBasicInfo} onChange={() => setIsDirty(true)} className="space-y-6 animate-in fade-in duration-500">
                 <div className="flex flex-col md:flex-row justify-between items-start gap-6 md:p-2 border-b border-gray-50 pb-8 mb-4">
                   <div className="flex flex-col items-center justify-center md:items-start md:justify-start">
                     <input type="file" disabled={!isEditing} id="avatar_upload" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
@@ -562,15 +653,15 @@ export default function ProfileEditor() {
                         const file = e.target.files?.[0];
                         if (file) {
                           if (file.size > 5 * 1024 * 1024) {
-                            setStatus({ type: 'error', msg: 'File exceeds 5MB limit.' });
+                            showToast('File exceeds 5MB limit.', 'error');
                             return;
                           }
                           if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
-                            setStatus({ type: 'error', msg: 'Only images or PDF files are allowed.' });
+                            showToast('Only images or PDF files are allowed.', 'error');
                             return;
                           }
                           setProfile({ ...profile, id_proof_url: URL.createObjectURL(file) });
-                          setStatus({ type: 'success', msg: 'Nationality verification document uploaded! Click Save Changes above to commit.' });
+                          showToast('Nationality verification document uploaded! Click Save Changes above to commit.', 'success');
                         }
                       }}
                     />
@@ -663,15 +754,15 @@ export default function ProfileEditor() {
 
                 {isEditing && (
                   <div className="pt-6 border-t border-gray-50 flex justify-end">
-                    <button type="submit" disabled={isSaving || !isEditing} className="px-8 py-3 bg-[#b50a0a] text-white rounded-xl font-bold tracking-wide shadow-md hover:bg-red-800 transition-colors">
+                    <button type="submit" disabled={isSaving || !isEditing || !isDirty} className="px-8 py-3 bg-[#b50a0a] text-white rounded-xl font-bold tracking-wide shadow-md hover:bg-red-800 transition-colors">
                       {isSaving ? 'Saving...' : 'Save Basic Info'}
                     </button>
                   </div>
                 )}
-              </div>
+              </form>
             )}
             {activeTab === 'Career Data' && (
-              <div className="space-y-8 animate-in fade-in duration-500">
+              <form onSubmit={saveCareerData} onChange={() => setIsDirty(true)} className="space-y-8 animate-in fade-in duration-500">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-2 h-10 bg-[#b50a0a] rounded-full"></div>
                   <div>
@@ -685,9 +776,9 @@ export default function ProfileEditor() {
                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Current League</label>
                     <select
                       disabled={!isEditing}
-                      name="current_league_id"
-                      value={profile?.current_league_id || ''}
-                      onChange={(e) => setProfile({...profile, current_league_id: e.target.value, current_club_id: ''})}
+                      name="league"
+                      value={profile?.league || ''}
+                      onChange={(e) => setProfile({...profile, league: e.target.value, current_club: ''})}
                       className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black disabled:opacity-70 disabled:bg-gray-100"
                     >
                       <option value="">Select League</option>
@@ -699,14 +790,14 @@ export default function ProfileEditor() {
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Current Club</label>
                     <select
-                      disabled={!isEditing || !profile?.current_league_id}
-                      name="current_club_id"
-                      value={profile?.current_club_id || ''}
-                      onChange={(e) => setProfile({...profile, current_club_id: e.target.value})}
+                      disabled={!isEditing || !profile?.league}
+                      name="current_club"
+                      value={profile?.current_club || ''}
+                      onChange={(e) => setProfile({...profile, current_club: e.target.value})}
                       className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black disabled:opacity-70 disabled:bg-gray-100"
                     >
                       <option value="">Select Club</option>
-                      {clubsList.filter(c => c.league_id === profile?.current_league_id).map((c: any) => (
+                      {clubsList.filter(c => c.league_id === profile?.league).map((c: any) => (
                         <option key={c.name} value={c.name}>{c.name}</option>
                       ))}
                     </select>
@@ -746,36 +837,36 @@ export default function ProfileEditor() {
                         )}
                         <div className="flex flex-col space-y-1 flex-1 min-w-[120px]">
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Season</label>
-                          <input disabled={!isEditing} type="text" placeholder="e.g. 23/24" value={stat.season} onChange={(e) => { const newStats = [...careerStats]; newStats[i].season = e.target.value; setCareerStats(newStats); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold disabled:opacity-70 disabled:bg-gray-100" />
+                          <select disabled={!isEditing} value={stat.season} onChange={(e) => { const newStats = [...careerStats]; newStats[i].season = e.target.value; setCareerStats(newStats); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] disabled:opacity-70 disabled:bg-gray-100 outline-none"><option value="">Select Season</option>{seasonsList.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select>
                         </div>
                         <div className="flex flex-col space-y-1 flex-1 min-w-[120px]">
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">League</label>
-                          <select disabled={!isEditing} value={stat.league} onChange={(e) => { const newStats = [...careerStats]; newStats[i].league = e.target.value; newStats[i].club = ''; setCareerStats(newStats); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold disabled:opacity-70 disabled:bg-gray-100"><option value="">Select League</option>{leaguesList.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select>
+                          <select disabled={!isEditing} value={stat.league} onChange={(e) => { const newStats = [...careerStats]; newStats[i].league = e.target.value; newStats[i].club = ''; setCareerStats(newStats); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] disabled:opacity-70 disabled:bg-gray-100"><option value="">Select League</option>{leaguesList.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select>
                         </div>
                         <div className="flex flex-col space-y-1 flex-1 min-w-[120px]">
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Club</label>
-                          <select disabled={!isEditing || !stat.league} value={stat.club} onChange={(e) => { const newStats = [...careerStats]; newStats[i].club = e.target.value; setCareerStats(newStats); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold disabled:opacity-70 disabled:bg-gray-100"><option value="">Select Club</option>{clubsList.filter(c => c.league_id === stat.league).map(c => <option key={c.name} value={c.name}>{c.name}</option>)}</select>
+                          <select disabled={!isEditing || !stat.league} value={stat.club} onChange={(e) => { const newStats = [...careerStats]; newStats[i].club = e.target.value; setCareerStats(newStats); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] disabled:opacity-70 disabled:bg-gray-100"><option value="">Select Club</option>{clubsList.filter(c => c.league_id === stat.league).map(c => <option key={c.name} value={c.name}>{c.name}</option>)}</select>
                         </div>
                         <div className="flex gap-2 w-full sm:w-auto">
                           <div className="flex flex-col space-y-1 w-16">
                             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Apps</label>
-                            <input disabled={!isEditing} type="number" placeholder="0" value={stat.apps} onChange={(e) => { const newStats = [...careerStats]; newStats[i].apps = Number(e.target.value); setCareerStats(newStats); }} className="w-full bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-center disabled:opacity-70 disabled:bg-gray-100" />
+                            <input disabled={!isEditing} type="number" placeholder="0" value={stat.apps} onChange={(e) => { const newStats = [...careerStats]; newStats[i].apps = Number(e.target.value); setCareerStats(newStats); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] text-center outline-none disabled:opacity-70 disabled:bg-gray-100" />
                           </div>
                           <div className="flex flex-col space-y-1 w-16">
                             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Gls</label>
-                            <input disabled={!isEditing} type="number" placeholder="0" value={stat.goals} onChange={(e) => { const newStats = [...careerStats]; newStats[i].goals = Number(e.target.value); setCareerStats(newStats); }} className="w-full bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-center disabled:opacity-70 disabled:bg-gray-100" />
+                            <input disabled={!isEditing} type="number" placeholder="0" value={stat.goals} onChange={(e) => { const newStats = [...careerStats]; newStats[i].goals = Number(e.target.value); setCareerStats(newStats); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] text-center outline-none disabled:opacity-70 disabled:bg-gray-100" />
                           </div>
                           <div className="flex flex-col space-y-1 w-16">
                             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Ast</label>
-                            <input disabled={!isEditing} type="number" placeholder="0" value={stat.assists} onChange={(e) => { const newStats = [...careerStats]; newStats[i].assists = Number(e.target.value); setCareerStats(newStats); }} className="w-full bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-center disabled:opacity-70 disabled:bg-gray-100" />
+                            <input disabled={!isEditing} type="number" placeholder="0" value={stat.assists} onChange={(e) => { const newStats = [...careerStats]; newStats[i].assists = Number(e.target.value); setCareerStats(newStats); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] text-center outline-none disabled:opacity-70 disabled:bg-gray-100" />
                           </div>
                           <div className="flex flex-col space-y-1 w-16">
                             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Yel</label>
-                            <input disabled={!isEditing} type="number" placeholder="0" value={stat.yellow_cards} onChange={(e) => { const newStats = [...careerStats]; newStats[i].yellow_cards = Number(e.target.value); setCareerStats(newStats); }} className="w-full bg-white border border-yellow-200 bg-yellow-50 rounded-xl px-2 py-2 text-xs font-bold text-center disabled:opacity-70 disabled:bg-yellow-100" />
+                            <input disabled={!isEditing} type="number" placeholder="0" value={stat.yellow_cards} onChange={(e) => { const newStats = [...careerStats]; newStats[i].yellow_cards = Number(e.target.value); setCareerStats(newStats); setIsDirty(true); }} className="w-full bg-white border border-yellow-200 bg-yellow-50 rounded-xl px-2 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] text-center outline-none disabled:opacity-70 disabled:bg-yellow-100" />
                           </div>
                           <div className="flex flex-col space-y-1 w-16">
                             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Red</label>
-                            <input disabled={!isEditing} type="number" placeholder="0" value={stat.red_cards} onChange={(e) => { const newStats = [...careerStats]; newStats[i].red_cards = Number(e.target.value); setCareerStats(newStats); }} className="w-full bg-white border border-red-200 bg-red-50 rounded-xl px-2 py-2 text-xs font-bold text-center disabled:opacity-70 disabled:bg-red-100" />
+                            <input disabled={!isEditing} type="number" placeholder="0" value={stat.red_cards} onChange={(e) => { const newStats = [...careerStats]; newStats[i].red_cards = Number(e.target.value); setCareerStats(newStats); setIsDirty(true); }} className="w-full bg-white border border-red-200 bg-red-50 rounded-xl px-2 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] text-center outline-none disabled:opacity-70 disabled:bg-red-100" />
                           </div>
                         </div>
                       </div>
@@ -812,23 +903,23 @@ export default function ProfileEditor() {
                         )}
                         <div className="flex flex-col space-y-1 flex-1 min-w-[120px]">
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Date</label>
-                          <input disabled={!isEditing} type="date" value={transfer.date} onChange={(e) => { const newHistory = [...transferHistory]; newHistory[i].date = e.target.value; setTransferHistory(newHistory); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold disabled:opacity-70 disabled:bg-gray-100" />
+                          <input disabled={!isEditing} type="date" value={transfer.date} onChange={(e) => { const newHistory = [...transferHistory]; newHistory[i].date = e.target.value; setTransferHistory(newHistory); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] disabled:opacity-70 disabled:bg-gray-100" />
                         </div>
                         <div className="flex flex-col space-y-1 flex-1 min-w-[120px]">
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">From Club</label>
-                          <select disabled={!isEditing} value={transfer.from_club} onChange={(e) => { const newHistory = [...transferHistory]; newHistory[i].from_club = e.target.value; setTransferHistory(newHistory); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold disabled:opacity-70 disabled:bg-gray-100"><option value="">Select Club</option>{clubsList.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}</select>
+                          <select disabled={!isEditing} value={transfer.from_club} onChange={(e) => { const newHistory = [...transferHistory]; newHistory[i].from_club = e.target.value; setTransferHistory(newHistory); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] disabled:opacity-70 disabled:bg-gray-100"><option value="">Select Club</option>{clubsList.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}</select>
                         </div>
                         <div className="flex flex-col space-y-1 flex-1 min-w-[120px]">
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">To Club</label>
-                          <select disabled={!isEditing} value={transfer.to_club} onChange={(e) => { const newHistory = [...transferHistory]; newHistory[i].to_club = e.target.value; setTransferHistory(newHistory); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold disabled:opacity-70 disabled:bg-gray-100"><option value="">Select Club</option>{clubsList.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}</select>
+                          <select disabled={!isEditing} value={transfer.to_club} onChange={(e) => { const newHistory = [...transferHistory]; newHistory[i].to_club = e.target.value; setTransferHistory(newHistory); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] disabled:opacity-70 disabled:bg-gray-100"><option value="">Select Club</option>{clubsList.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}</select>
                         </div>
                         <div className="flex flex-col space-y-1 flex-1 min-w-[120px]">
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Fee ($)</label>
-                          <input disabled={!isEditing} type="text" placeholder="e.g. Free, 50k" value={transfer.transfer_fee} onChange={(e) => { const newHistory = [...transferHistory]; newHistory[i].transfer_fee = e.target.value; setTransferHistory(newHistory); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold disabled:opacity-70 disabled:bg-gray-100" />
+                          <input disabled={!isEditing} type="text" placeholder="e.g. Free, 50k" value={transfer.transfer_fee} onChange={(e) => { const newHistory = [...transferHistory]; newHistory[i].transfer_fee = e.target.value; setTransferHistory(newHistory); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] disabled:opacity-70 disabled:bg-gray-100" />
                         </div>
                         <div className="flex flex-col space-y-1 flex-1 min-w-[120px]">
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Market Value ($)</label>
-                          <input disabled={!isEditing} type="text" placeholder="e.g. 100k" value={transfer.market_value} onChange={(e) => { const newHistory = [...transferHistory]; newHistory[i].market_value = e.target.value; setTransferHistory(newHistory); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold disabled:opacity-70 disabled:bg-gray-100" />
+                          <input disabled={!isEditing} type="text" placeholder="e.g. 100k" value={transfer.market_value} onChange={(e) => { const newHistory = [...transferHistory]; newHistory[i].market_value = e.target.value; setTransferHistory(newHistory); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] disabled:opacity-70 disabled:bg-gray-100" />
                         </div>
                       </div>
                     ))}
@@ -838,15 +929,15 @@ export default function ProfileEditor() {
 
                 {isEditing && (
                   <div className="pt-6 border-t border-gray-50 flex justify-end">
-                    <button type="submit" disabled={isSaving || !isEditing} className="px-8 py-3 bg-[#b50a0a] text-white rounded-xl font-bold tracking-wide shadow-md hover:bg-red-800 transition-colors">
+                    <button type="submit" disabled={isSaving || !isEditing || !isDirty} className="px-8 py-3 bg-[#b50a0a] text-white rounded-xl font-bold tracking-wide shadow-md hover:bg-red-800 transition-colors">
                       {isSaving ? 'Saving...' : 'Save Career Data'}
                     </button>
                   </div>
                 )}
-              </div>
+              </form>
             )}
             {activeTab === 'Bio & Portfolio' && (
-              <div className="space-y-6 animate-in fade-in duration-500">
+              <form onSubmit={saveBioAndPortfolio} onChange={() => setIsDirty(true)} className="space-y-6 animate-in fade-in duration-500">
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center ml-1 mb-2">
                     <label className="text-xs font-bold text-gray-900 tracking-wide">Professional Bio</label>
@@ -894,11 +985,18 @@ export default function ProfileEditor() {
                     </div>
                   </div>
                 )}
-              </div>
+                {isEditing && (
+                  <div className="pt-6 border-t border-gray-50 flex justify-end">
+                    <button type="submit" disabled={isSaving || !isEditing || !isDirty} className="px-8 py-3 bg-[#b50a0a] text-white rounded-xl font-bold tracking-wide shadow-md hover:bg-red-800 transition-colors">
+                      {isSaving ? 'Saving...' : 'Save Bio & Portfolio'}
+                    </button>
+                  </div>
+                )}
+              </form>
             )}
 
             {activeTab === 'Media Center' && (
-              <div className="space-y-6 animate-in fade-in duration-500">
+              <form onSubmit={saveMediaCenter} onChange={() => setIsDirty(true)} className="space-y-6 animate-in fade-in duration-500">
                 {/* Cover Photo */}
                 <div className="space-y-6">
                   <h4 className="text-xs font-bold text-gray-900 tracking-wide">Cover Photo</h4>
@@ -965,7 +1063,7 @@ export default function ProfileEditor() {
                           id="new_video_url"
                           type="url"
                           placeholder="https://youtube.com/watch?v=..."
-                          className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] outline-none"
+                          className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none"
                         />
                         <button
                           type="button"
@@ -1009,29 +1107,27 @@ export default function ProfileEditor() {
                         )}
                       </div>
                     ))}
-                    {isEditing && (
                       <button
                         type="button"
                         onClick={() => document.getElementById('gallery_upload')?.click()}
-                        className="aspect-square border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-900 hover:border-[#b50a0a] hover:text-[#b50a0a] hover:bg-gray-50 transition-all"
+                        className={`aspect-square border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-900 hover:border-[#b50a0a] hover:text-[#b50a0a] hover:bg-gray-50 transition-all ${!isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <Plus className="w-6 h-6 mb-2" />
                         <span className="text-xs font-bold tracking-[0.2em]">Add Photos</span>
                       </button>
-                    )}
                   </div>
                 </div>
                 {isEditing && (
                   <div className="pt-6 border-t border-gray-50 flex justify-end">
-                    <button type="submit" disabled={isSaving || !isEditing} className="px-8 py-3 bg-[#b50a0a] text-white rounded-xl font-bold tracking-wide shadow-md hover:bg-red-800 transition-colors">
+                    <button type="submit" disabled={isSaving || !isEditing || !isDirty} className="px-8 py-3 bg-[#b50a0a] text-white rounded-xl font-bold tracking-wide shadow-md hover:bg-red-800 transition-colors">
                       {isSaving ? 'Saving...' : 'Save Media Center'}
                     </button>
                   </div>
                 )}
-              </div>
+              </form>
             )}
             {activeTab === 'Social Links' && (
-              <div className="space-y-6 animate-in fade-in duration-500">
+              <form onSubmit={saveSocialLinks} onChange={() => setIsDirty(true)} className="space-y-6 animate-in fade-in duration-500">
                 <div className="space-y-8">
                   {[
                     { name: 'Instagram', id: 'social_instagram', icon: Globe, placeholder: 'instagram.com/handle', value: profile?.social_links?.instagram },
@@ -1057,16 +1153,16 @@ export default function ProfileEditor() {
                 </div>
                 {isEditing && (
                   <div className="pt-6 border-t border-gray-50 flex justify-end">
-                    <button type="submit" disabled={isSaving || !isEditing} className="px-8 py-3 bg-[#b50a0a] text-white rounded-xl font-bold tracking-wide shadow-md hover:bg-red-800 transition-colors">
+                    <button type="submit" disabled={isSaving || !isEditing || !isDirty} className="px-8 py-3 bg-[#b50a0a] text-white rounded-xl font-bold tracking-wide shadow-md hover:bg-red-800 transition-colors">
                       {isSaving ? 'Saving...' : 'Save Social Links'}
                     </button>
                   </div>
                 )}
-              </div>
+              </form>
             )}
 
 
-    </form>
+    </div>
         </div >
       </div >
 
@@ -1122,7 +1218,7 @@ export default function ProfileEditor() {
                 <input name="market_value" defaultValue={editingMember.market_value} className="w-full bg-gray-50 rounded-2xl px-4 py-3 font-bold" />
               </div>
             </div>
-            <button type="submit" disabled={isSaving || !isEditing} className="w-full bg-gray-900 text-white rounded-xl py-4 font-bold tracking-wide hover:bg-black mt-8">
+            <button type="submit" disabled={isSaving || !isEditing || !isDirty} className="w-full bg-gray-900 text-white rounded-xl py-4 font-bold tracking-wide hover:bg-black mt-8">
               {isSaving ? 'Submitting...' : 'Submit Edits for Review'}
             </button>
           </form>

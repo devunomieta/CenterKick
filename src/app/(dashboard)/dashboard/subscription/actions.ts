@@ -104,6 +104,7 @@ export async function requestVerification(formData: FormData) {
 
   if (transError) {
      console.error('Error logging transaction:', transError);
+     return { error: 'Failed to record transaction: ' + transError.message };
   }
 
   revalidatePath('/dashboard/subscription');

@@ -6,9 +6,11 @@ import Link from 'next/link';
 import { signup, verifyOtp, resendOtp } from '@/app/login/actions';
 import { PasswordField } from '@/components/common/PasswordField';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/context/ToastContext';
 
 export default function RegisterPage() {
    const router = useRouter();
+   const { showToast } = useToast();
    const [isLoading, setIsLoading] = useState(false);
    const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
    const [showOtp, setShowOtp] = useState(false);
@@ -63,21 +65,20 @@ export default function RegisterPage() {
    }, [showOtp]);
 
    const handleResend = async () => {
-      if (resendCooldown > 0 || isResending) return;
+      if (isResending || resendCooldown > 0) return;
       setIsResending(true);
       setStatus(null);
 
       try {
          const result = await resendOtp(email);
          if (result.error) {
-            setStatus({ type: 'error', message: result.error });
+            showToast(result.error, 'error');
          } else if (result.success) {
-            setTimeLeft(300);
+            showToast('New verification code sent to your email.', 'success');
             setResendCooldown(60);
-            setStatus({ type: 'success', message: result.message });
          }
       } catch (err) {
-         setStatus({ type: 'error', message: 'Failed to resend code.' });
+         showToast('Failed to resend code. Please try again.', 'error');
       } finally {
          setIsResending(false);
       }
@@ -98,13 +99,13 @@ export default function RegisterPage() {
       }
 
       if (!validatePassword(password)) {
-         setStatus({ type: 'error', message: 'Password does not meet the requirements.' });
+         showToast('Password does not meet the requirements.', 'error');
          setIsLoading(false);
          return;
       }
 
       if (password !== confirmPassword) {
-         setStatus({ type: 'error', message: 'Passwords do not match.' });
+         showToast('Passwords do not match.', 'error');
          setIsLoading(false);
          return;
       }
@@ -115,13 +116,13 @@ export default function RegisterPage() {
          const result = await signup(formData);
 
          if (result.error) {
-            setStatus({ type: 'error', message: result.error });
+            showToast(result.error, 'error');
          } else if (result.success) {
             setShowOtp(true);
-            setStatus({ type: 'success', message: 'Enter the 6-digit code sent to your email.' });
+            showToast('Enter the 6-digit code sent to your email.', 'success');
          }
       } catch (err: any) {
-         setStatus({ type: 'error', message: 'An unexpected error occurred.' });
+         showToast('An unexpected error occurred.', 'error');
       } finally {
          setIsLoading(false);
       }
@@ -135,12 +136,13 @@ export default function RegisterPage() {
       try {
          const result = await verifyOtp(email, otp);
          if (result.error) {
-            setStatus({ type: 'error', message: result.error });
+            showToast(result.error, 'error');
          } else if (result.success) {
+            showToast('Account verified successfully!', 'success');
             router.push('/dashboard');
          }
       } catch (err) {
-         setStatus({ type: 'error', message: 'Failed to verify code.' });
+         showToast('Failed to verify code.', 'error');
       } finally {
          setIsLoading(false);
       }

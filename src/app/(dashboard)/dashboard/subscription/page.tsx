@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
+import { useToast } from '@/context/ToastContext';
 import { 
   ShieldCheck, 
   History, 
@@ -16,8 +17,10 @@ import {
   Eye, 
   CreditCard,
   Copy,
-  Hand
+  Hand,
+  RefreshCcw
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface UserProfile {
   role?: string;
@@ -60,8 +63,10 @@ export default function SubscriptionPage() {
   const [inspectTransaction, setInspectTransaction] = useState<UserTransaction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showToast } = useToast();
   const [msg, setMsg] = useState<{type: 'success'|'error', text: string}|null>(null);
   const [pricingPlan, setPricingPlan] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
     async function loadData() {
@@ -112,9 +117,9 @@ export default function SubscriptionPage() {
     const res = await requestVerification(formData);
 
     if (res.error) {
-      setMsg({ type: 'error', text: res.error });
+      showToast(res.error, 'error');
     } else {
-      setMsg({ type: 'success', text: 'Verification request submitted! Admin will review your payment shortly.' });
+      showToast('Verification request submitted! Admin will review your payment shortly.', 'success');
       // Update local state
       setProfile({ ...profile, verification_requested: true });
     }
@@ -179,13 +184,22 @@ export default function SubscriptionPage() {
         } border px-6 py-4 rounded-[20px] shadow-sm flex items-center justify-between md:justify-start gap-6 w-full md:w-auto`}>
            <div className="text-left">
               <p className="text-xs font-bold tracking-wide mb-1 text-gray-900">Account Status</p>
-              <p className={`text-xl font-bold tracking-tighter ${
-                 plan.status === 'Active' ? 'text-green-600' : 
-                 plan.status === 'Pending Approval' ? 'text-blue-600' :
-                 'text-[#b50a0a]'
-              }`}>
-                 {plan.status === 'Active' ? 'Paid' : plan.status === 'Unverified' ? 'Unpaid' : plan.status}
-              </p>
+              <div className="flex items-center gap-3">
+                 <p className={`text-xl font-bold tracking-tighter ${
+                    plan.status === 'Active' ? 'text-green-600' : 
+                    plan.status === 'Pending Approval' ? 'text-blue-600' :
+                    'text-[#b50a0a]'
+                 }`}>
+                    {plan.status === 'Active' ? 'Paid' : plan.status === 'Unverified' ? 'Unpaid' : plan.status}
+                 </p>
+                 <button 
+                   onClick={() => router.refresh()} 
+                   className="p-1.5 rounded-lg border border-black/5 bg-white/50 hover:bg-white text-gray-400 hover:text-gray-900 shadow-sm transition-all group"
+                   title="Refresh Status"
+                 >
+                   <RefreshCcw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500" />
+                 </button>
+              </div>
            </div>
            
            <div className={`border-l pl-6 ${
@@ -283,7 +297,7 @@ export default function SubscriptionPage() {
                                                    type="button"
                                                    onClick={() => {
                                                       navigator.clipboard.writeText(paymentSettings.accountNumber || '');
-                                                      setMsg({ type: 'success', text: 'Account number copied!' });
+                                                      showToast('Account number copied!', 'success');
                                                    }}
                                                    className="p-1.5 bg-[#b50a0a]/10 text-[#b50a0a] hover:bg-[#b50a0a] hover:text-white rounded-md transition-colors"
                                                    title="Copy Account Number"
