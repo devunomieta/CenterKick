@@ -408,7 +408,7 @@ export default function SubscriptionPage() {
                                </div>
                                <div className="flex items-center gap-2 text-xs text-gray-400 font-bold tracking-wide">
                                   <span>{tx.method.replace('_', ' ')}</span>
-                                  <span>â€¢</span>
+                                  <span>{'•'}</span>
                                   <span>{new Date(tx.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                                 </div>
                             </div>

@@ -56,6 +56,15 @@ export async function approvePaymentTransaction(transactionId: string, reason: s
       updates.push(
         admin.from('users').update({ is_active: true }).eq('id', tx.profiles.user_id)
       );
+      // Execute the subscription upsert separately to avoid TS type instantiation issues with mixed query builders
+      await admin.from('subscriptions').upsert({
+        user_id: tx.profiles.user_id,
+        plan_name: tx.metadata?.plan || 'Professional',
+        status: 'active',
+        gateway: tx.method,
+        external_id: tx.reference,
+        updated_at: new Date().toISOString()
+      });
     }
   }
 
