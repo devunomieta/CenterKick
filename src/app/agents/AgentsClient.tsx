@@ -1,5 +1,6 @@
 'use client';
 import Image from 'next/image';
+import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { DirectoryFilterBar } from '@/components/common/DirectoryFilterBar';
