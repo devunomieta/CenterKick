@@ -140,22 +140,22 @@ export default function BlogListClient({ initialPosts }: BlogListClientProps) {
         </div>
       ) : (
         <div className="w-full overflow-x-auto">
-          <table className="w-full text-left text-base text-gray-600 table-fixed border-collapse whitespace-nowrap">
+          <table className="w-full text-left text-base text-gray-600 border-collapse">
             <thead className="bg-[#f8f9fa] border-b border-gray-100">
               <tr>
                 <th className="px-4 md:px-8 py-5 text-xs font-bold tracking-wide text-gray-400 text-left">Title &amp; Excerpt</th>
-                <th className="hidden sm:table-cell w-[18%] px-4 md:px-8 py-5 text-xs font-bold tracking-wide text-gray-400 text-left">Category</th>
+                <th className="hidden md:table-cell w-[15%] px-4 md:px-8 py-5 text-xs font-bold tracking-wide text-gray-400 text-left">Category</th>
                 <th className="hidden sm:table-cell w-[15%] px-4 md:px-8 py-5 text-xs font-bold tracking-wide text-gray-400 text-left">Status</th>
-                <th className="w-full max-w-[130px] px-4 md:px-8 py-5 text-xs font-bold tracking-wide text-gray-400 text-right">Actions</th>
+                <th className="w-[120px] px-4 md:px-8 py-5 text-xs font-bold tracking-wide text-gray-400 text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {paginatedPosts.map((post) => (
                 <tr key={post.id} className="hover:bg-gray-50/50 transition-colors group">
-                  <td className="px-4 md:px-8 py-6">
-                    <div className="max-w-full space-y-1.5">
-                      <p className="font-bold text-gray-900 leading-tight group-hover:text-[#b50a0a] transition-colors line-clamp-1 break-words">{post.title}</p>
-                      <p className="text-xs text-gray-400 line-clamp-1 break-words">{post.excerpt || 'No excerpt provided...'}</p>
+                  <td className="px-4 md:px-8 py-6 w-full max-w-[200px] md:max-w-none">
+                    <div className="space-y-1.5">
+                      <p className="font-bold text-gray-900 leading-tight group-hover:text-[#b50a0a] transition-colors line-clamp-2">{post.title}</p>
+                      <p className="text-xs text-gray-400 line-clamp-1">{post.excerpt || 'No excerpt provided...'}</p>
                       <div className="flex flex-wrap items-center gap-2 text-xs font-bold tracking-wide text-gray-400">
                         <span className="text-gray-500 lowercase font-bold normal-case truncate max-w-full max-w-[150px] block" title={post.author?.email}>
                           {post.author?.email || 'System'}
@@ -165,8 +165,8 @@ export default function BlogListClient({ initialPosts }: BlogListClientProps) {
                       </div>
                     </div>
                   </td>
-                  <td className="hidden sm:table-cell px-4 md:px-8 py-6 whitespace-nowrap">
-                    <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold tracking-wide inline-block truncate max-w-full">
+                  <td className="hidden md:table-cell px-4 md:px-8 py-6">
+                    <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold tracking-wide inline-block truncate max-w-[150px]">
                       {post.category?.name || 'Uncategorized'}
                     </span>
                   </td>

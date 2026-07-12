@@ -92,7 +92,7 @@ export default async function Home() {
          });
          return filtered;
       }, 600),
-      getCachedData('home_highlight_posts_v2', async () => {
+      getCachedData('home_highlight_posts_v5', async () => {
          const { data, error } = await supabase
             .from('cms_posts')
             .select('*, category:blog_categories(name), post_tags(tag:blog_tags(name))')
@@ -113,7 +113,7 @@ export default async function Home() {
             return isHighlight && hasVideoLink;
          });
          
-         return filtered.slice(0, 5);
+         return filtered.slice(0, 3);
       }, 300)
    ]);
 

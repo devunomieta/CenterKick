@@ -160,6 +160,8 @@ export function HomeClient({
 
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
 
+  console.log('HIGHLIGHTS COUNT IN UI:', highlights?.length);
+
   const getEmbedUrl = (url: string) => {
     if (!url) return '';
     const videoIdMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
@@ -676,12 +678,12 @@ export function HomeClient({
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {highlights.map((post) => (
               <button
                 onClick={() => setActiveVideoUrl(post.excerpt)}
                 key={post.id}
-                className="group relative rounded-2xl overflow-hidden aspect-video sm:aspect-[4/5] bg-black border border-gray-100 shadow-md block text-left"
+                className="group relative rounded-2xl overflow-hidden aspect-video bg-black border border-gray-100 shadow-md block text-left"
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent z-10" />
                 <Image
@@ -700,9 +702,6 @@ export function HomeClient({
                 </div>
 
                 <div className="absolute bottom-0 left-0 p-5 z-20 w-full">
-                  <span className="text-[#ff4d4d] text-xs font-bold tracking-wide mb-1.5 block flex items-center gap-1.5">
-                    <Video className="w-3.5 h-3.5" /> video clip
-                  </span>
                   <h3 className="text-sm font-bold text-white leading-snug line-clamp-2 drop-shadow-sm group-hover:text-[#ff4d4d] transition-colors">
                     {post.title}
                   </h3>
