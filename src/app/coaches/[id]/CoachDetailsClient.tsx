@@ -12,7 +12,10 @@ import {
    ArrowRight,
    Share2,
    Mail,
-   ChevronLeft
+   ChevronLeft,
+   MapPin,
+   Facebook,
+   Instagram
 } from "lucide-react";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -24,6 +27,26 @@ interface CoachDetailsClientProps {
 export default function CoachDetailsClient({ profile }: CoachDetailsClientProps) {
    const [activeTab, setActiveTab] = useState("Profile");
    const router = useRouter();
+
+   const displayName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Anonymous Coach';
+   const nameParts = displayName.split(' ');
+   const firstName = nameParts[0];
+   const restOfName = nameParts.slice(1).join(' ');
+
+   const calculateAge = (dob: string | undefined | null) => {
+      if (!dob) return "NIL";
+      const birthDate = new Date(dob);
+      if (isNaN(birthDate.getTime())) return "NIL";
+      const diff = Date.now() - birthDate.getTime();
+      const ageDate = new Date(diff);
+      const calculatedAge = Math.abs(ageDate.getUTCFullYear() - 1970);
+      return isNaN(calculatedAge) ? "NIL" : calculatedAge;
+   };
+
+   const profileAge = calculateAge(profile.date_of_birth);
+   const profileExp = profile.years_of_experience ? `${profile.years_of_experience} yrs` : 'NIL';
+   const profileFormation = profile.formation || 'NIL';
+   const profileClub = profile.current_club || 'NIL';
 
    // Mock stats if not in database (for UI completeness as per landing page request)
    const stats = profile.stats || {
@@ -53,28 +76,113 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                   </button>
                </div>
             </div>
-            {/* Hero Section / Banner */}
-            <div className="relative h-[280px] sm:h-[450px] w-full bg-gray-900 overflow-hidden">
-               <img 
-                  src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2000&auto=format&fit=crop" 
-                  className="absolute inset-0 w-full h-full object-cover opacity-40 grayscale" 
-                  alt="Stadium" 
-               />
-               <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/40 to-transparent"></div>
+            {/* Hero — mobile stacked, desktop split */}
+            <div className="relative w-full bg-[#0a0a0b] overflow-hidden">
+               {/* Background stadium image */}
+               <div className="absolute inset-0 z-0">
+                  <img
+                     src={profile.cover_url || profile.cover_image_url || "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=60&w=1200&auto=format&fit=crop"}
+                     className="w-full h-full object-cover object-center opacity-20"
+                     alt=""
+                     loading="lazy"
+                     decoding="async"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-[#0a0a0b]/60 to-transparent" />
+               </div>
 
-               <div className="absolute inset-0 flex flex-col items-center justify-center pt-24">
-                  <div className="w-56 h-56 rounded-full border-8 border-gray-100/10 overflow-hidden relative shadow-2xl z-10">
-                     <img 
-                        src={profile.avatar_url || "https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=800&auto=format&fit=crop"} 
-                        className="w-full h-full object-cover" 
-                        alt={profile.full_name} 
+               {/* Mobile: stacked layout */}
+               <div className="relative z-10 flex flex-col md:hidden items-center pt-10 pb-0 px-6 text-white text-center">
+                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-[#b50a0a] shadow-2xl mb-6 shrink-0">
+                     <img
+                        src={profile.avatar_url || "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=400&auto=format&fit=crop"}
+                        alt={displayName}
+                        className="w-full h-full object-cover object-top"
+                        loading="lazy"
                      />
                   </div>
-                  <div className="mt-8 text-center z-20">
-                     <h1 className="text-3xl sm:text-5xl font-black text-white mb-4 tracking-tighter drop-shadow-xl">
-                        {profile.first_name} <br /> 
-                        <span className="text-[#a20000]">{profile.last_name}</span>
+                  <h1 className="text-4xl font-bold tracking-tight leading-none mb-4 drop-shadow-2xl mt-4">
+                     {firstName} <span className="text-white">{restOfName}</span>
+                  </h1>
+                  <div className="flex flex-wrap gap-3 justify-center mb-6">
+                     <div className="bg-white/10 border border-white/15 px-4 py-2 rounded-xl flex flex-col items-center min-w-[80px]">
+                        <span className="text-xs font-bold text-gray-300 tracking-wide mb-0.5">Age</span>
+                        <span className="text-base font-bold text-white">{profileAge}</span>
+                     </div>
+                     <div className="bg-white/10 border border-white/15 px-4 py-2 rounded-xl flex flex-col items-center min-w-[80px]">
+                        <span className="text-xs font-bold text-gray-300 tracking-wide mb-0.5">EXP</span>
+                        <span className="text-base font-bold text-white">{profileExp}</span>
+                     </div>
+                     <div className="bg-white/10 border border-white/15 px-4 py-2 rounded-xl flex flex-col items-center min-w-[80px]">
+                        <span className="text-xs font-bold text-gray-300 tracking-wide mb-0.5">Formation</span>
+                        <span className="text-base font-bold text-white">{profileFormation}</span>
+                     </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-base font-bold mb-8 text-white/80">
+                     <MapPin className="w-3.5 h-3.5 text-[#b50a0a]" />
+                     <span>{profileClub}</span>
+                     <span className="text-white/30">—</span>
+                     <span>{profile.country || 'NIL'}</span>
+                  </div>
+               </div>
+
+               {/* Desktop: side-by-side layout */}
+               <div className="hidden md:flex max-w-[1200px] mx-auto w-full h-[450px] relative px-4 lg:px-0">
+                  <div className="w-[40%] h-full relative flex items-center justify-center">
+                     <div className="absolute w-[300px] h-[300px] lg:w-[360px] lg:h-[360px] bg-[#b50a0a]/20 blur-[100px] rounded-full" />
+                     <div className="w-[300px] h-[300px] lg:w-[360px] lg:h-[360px] rounded-full border-[6px] border-[#b50a0a] shadow-2xl overflow-hidden relative z-10 shrink-0 aspect-square">
+                        <img
+                           src={profile.avatar_url || "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=600&auto=format&fit=crop"}
+                           alt={displayName}
+                           className="w-full h-full object-cover object-top"
+                           loading="eager"
+                        />
+                     </div>
+                  </div>
+                  <div className="w-[60%] flex flex-col justify-center items-start pl-16 text-white z-20">
+                     <h1 className="flex flex-col leading-none drop-shadow-2xl mb-8 mt-4">
+                        <span className="text-7xl font-black tracking-tight">{firstName}</span>
+                        <span className="text-8xl font-black tracking-tighter text-white">{restOfName}</span>
                      </h1>
+                     <div className="flex gap-4 mb-10 flex-wrap">
+                        {[
+                           { label: 'Age', value: profileAge },
+                           { label: 'EXP', value: profileExp },
+                           { label: 'Formation', value: profileFormation },
+                        ].map((s) => (
+                           <div key={s.label} className="backdrop-blur-xl bg-white/5 border border-white/10 px-6 py-3.5 rounded-2xl flex flex-col min-w-[100px]">
+                              <span className="text-xs font-bold text-gray-200 tracking-[0.2em] mb-1 uppercase">{s.label}</span>
+                              <span className="text-xl font-bold text-white capitalize">{s.value}</span>
+                           </div>
+                        ))}
+                     </div>
+                     <div className="flex items-center gap-6">
+                        <span className="font-bold tracking-wide text-base">{profileClub}</span>
+                        <div className="h-6 w-[1px] bg-white/20" />
+                        <div className="flex items-center gap-4">
+                           {profile.social_links?.facebook && (
+                              <a href={profile.social_links.facebook} target="_blank" rel="noopener noreferrer">
+                                 <Facebook className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
+                              </a>
+                           )}
+                           {profile.social_links?.instagram && (
+                              <a href={profile.social_links.instagram} target="_blank" rel="noopener noreferrer">
+                                 <Instagram className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
+                              </a>
+                           )}
+                           {profile.social_links?.twitter && (
+                              <a href={profile.social_links.twitter} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)">
+                                 <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current hover:text-[#b50a0a] transition-colors"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                              </a>
+                           )}
+                           {!profile.social_links && (
+                              <>
+                                 <Facebook className="w-4 h-4 text-white/20" />
+                                 <Instagram className="w-4 h-4 text-white/20" />
+                                 <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current text-white/20"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                              </>
+                           )}
+                        </div>
+                     </div>
                   </div>
                </div>
             </div>

@@ -13,7 +13,9 @@ import {
    ShieldCheck, 
    Users2, 
    ArrowRight,
-   ChevronLeft
+   ChevronLeft,
+   Facebook,
+   Instagram
 } from "lucide-react";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -28,6 +30,7 @@ export default function OrgDetailsClient({ profile, members = [] }: OrgDetailsCl
    const router = useRouter();
 
    const displayName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Anonymous Organization';
+   const profileEst = profile.established_year || profile.established || 'NIL';
 
    return (
       <div className="min-h-screen bg-white">
@@ -46,35 +49,98 @@ export default function OrgDetailsClient({ profile, members = [] }: OrgDetailsCl
                   </button>
                </div>
             </div>
-            {/* Hero Banner */}
-            <div className="relative h-[280px] sm:h-[400px] w-full bg-gray-900 overflow-hidden">
-               <img 
-                  src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=2000&auto=format&fit=crop" 
-                  className="absolute inset-0 w-full h-full object-cover opacity-35 grayscale" 
-                  alt="Training Ground" 
-               />
-               <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/40 to-transparent"></div>
+            {/* Hero — mobile stacked, desktop split */}
+            <div className="relative w-full bg-[#0a0a0b] overflow-hidden">
+               {/* Background stadium image */}
+               <div className="absolute inset-0 z-0">
+                  <img
+                     src={profile.cover_url || profile.cover_image_url || "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=60&w=1200&auto=format&fit=crop"}
+                     className="w-full h-full object-cover object-center opacity-20"
+                     alt=""
+                     loading="lazy"
+                     decoding="async"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-[#0a0a0b]/60 to-transparent" />
+               </div>
 
-               <div className="absolute inset-0 flex flex-col items-center justify-center pt-20">
-                  <div className="w-48 h-48 rounded-full border-8 border-white/10 overflow-hidden bg-white/5 flex items-center justify-center relative shadow-2xl z-10">
+               {/* Mobile: stacked layout */}
+               <div className="relative z-10 flex flex-col md:hidden items-center pt-10 pb-8 px-6 text-white text-center">
+                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-[#b50a0a] shadow-2xl mb-6 shrink-0 bg-white/5 flex items-center justify-center">
                      {profile.avatar_url ? (
                         <img 
                            src={profile.avatar_url} 
-                           className="w-full h-full object-cover" 
+                           className="w-full h-full object-cover object-top" 
                            alt={displayName} 
+                           loading="lazy"
                         />
                      ) : (
                         <Building2 className="w-20 h-20 text-white/50" />
                      )}
                   </div>
-                  <div className="mt-6 text-center z-20">
-                     <h1 className="text-2xl sm:text-4xl font-bold text-white tracking-tighter drop-shadow-2xl">
-                        {displayName}
+                  <h1 className="text-4xl font-bold tracking-tight leading-none mb-6 drop-shadow-2xl mt-4">
+                     {displayName}
+                  </h1>
+                  <div className="flex flex-wrap gap-3 justify-center mb-6">
+                     <div className="bg-white/10 border border-white/15 px-6 py-2.5 rounded-xl flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-300 tracking-wide">Established:</span>
+                        <span className="text-base font-bold text-white">{profileEst}</span>
+                     </div>
+                  </div>
+               </div>
+
+               {/* Desktop: side-by-side layout */}
+               <div className="hidden md:flex max-w-[1200px] mx-auto w-full h-[450px] relative px-4 lg:px-0">
+                  <div className="w-[40%] h-full relative flex items-center justify-center">
+                     <div className="absolute w-[300px] h-[300px] lg:w-[360px] lg:h-[360px] bg-[#b50a0a]/20 blur-[100px] rounded-full" />
+                     <div className="w-[300px] h-[300px] lg:w-[360px] lg:h-[360px] rounded-full border-[6px] border-[#b50a0a] shadow-2xl overflow-hidden relative z-10 shrink-0 aspect-square bg-white/5 flex items-center justify-center">
+                        {profile.avatar_url ? (
+                           <img 
+                              src={profile.avatar_url} 
+                              className="w-full h-full object-cover object-top" 
+                              alt={displayName} 
+                              loading="eager"
+                           />
+                        ) : (
+                           <Building2 className="w-24 h-24 text-white/50" />
+                        )}
+                     </div>
+                  </div>
+                  <div className="w-[60%] flex flex-col justify-center items-start pl-16 text-white z-20">
+                     <h1 className="flex flex-col leading-none drop-shadow-2xl mb-10 mt-4">
+                        <span className="text-7xl font-black tracking-tight">{displayName}</span>
                      </h1>
-                     <div className="flex items-center justify-center gap-2 mt-2">
-                        <span className="inline-block bg-[#a20000] text-white text-xs font-bold tracking-wide px-3 py-1 rounded-full shadow-md">
-                           {profile.role === 'organization' ? 'Academy Partner' : 'Club Partner'}
-                        </span>
+                     <div className="flex gap-4 mb-12 flex-wrap">
+                        <div className="backdrop-blur-xl bg-white/5 border border-white/10 px-6 py-3.5 rounded-2xl flex items-center gap-3">
+                           <span className="text-xs font-bold text-gray-200 tracking-[0.2em] uppercase">Established:</span>
+                           <span className="text-xl font-bold text-white capitalize">{profileEst}</span>
+                        </div>
+                     </div>
+                     
+                     <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-4">
+                           {profile.social_links?.facebook && (
+                              <a href={profile.social_links.facebook} target="_blank" rel="noopener noreferrer">
+                                 <Facebook className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
+                              </a>
+                           )}
+                           {profile.social_links?.instagram && (
+                              <a href={profile.social_links.instagram} target="_blank" rel="noopener noreferrer">
+                                 <Instagram className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
+                              </a>
+                           )}
+                           {profile.social_links?.twitter && (
+                              <a href={profile.social_links.twitter} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)">
+                                 <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current hover:text-[#b50a0a] transition-colors"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                              </a>
+                           )}
+                           {!profile.social_links && (
+                              <>
+                                 <Facebook className="w-4 h-4 text-white/20" />
+                                 <Instagram className="w-4 h-4 text-white/20" />
+                                 <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current text-white/20"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                              </>
+                           )}
+                        </div>
                      </div>
                   </div>
                </div>

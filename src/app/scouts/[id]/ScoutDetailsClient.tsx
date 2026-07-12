@@ -11,7 +11,9 @@ import {
    Mail,
    CheckCircle2,
    Award,
-   ChevronLeft
+   ChevronLeft,
+   Facebook,
+   Instagram
 } from "lucide-react";
 import Link from 'next/link';
 import Image from 'next/image';
@@ -26,6 +28,9 @@ export default function ScoutDetailsClient({ profile }: ScoutDetailsClientProps)
    const router = useRouter();
 
    const displayName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Anonymous Scout';
+   const nameParts = displayName.split(' ');
+   const firstName = nameParts[0];
+   const restOfName = nameParts.slice(1).join(' ');
 
    return (
       <div className="min-h-screen bg-white">
@@ -45,40 +50,78 @@ export default function ScoutDetailsClient({ profile }: ScoutDetailsClientProps)
                </div>
             </div>
 
-            {/* Header / Hero Section */}
-            <div className="relative h-[320px] sm:h-[500px] w-full bg-[#0a0a0a] overflow-hidden">
-               <div className="absolute inset-0 opacity-10">
-                  <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_30%,#a20000,transparent)]"></div>
+            {/* Hero — mobile stacked, desktop split */}
+            <div className="relative w-full bg-[#0a0a0b] overflow-hidden">
+               {/* Background stadium image */}
+               <div className="absolute inset-0 z-0">
+                  <img
+                     src={profile.cover_url || profile.cover_image_url || "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=60&w=1200&auto=format&fit=crop"}
+                     className="w-full h-full object-cover object-center opacity-20"
+                     alt=""
+                     loading="lazy"
+                     decoding="async"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-[#0a0a0b]/60 to-transparent" />
                </div>
 
-               <div className="max-w-[1200px] mx-auto px-4 lg:px-0 h-full flex flex-col sm:flex-row items-center gap-6 sm:gap-12 relative z-10 py-6 sm:py-0">
-                  <div className="relative group shrink-0">
-                     <div className="w-56 h-56 lg:w-72 lg:h-72 rounded-[48px] overflow-hidden border-4 border-white/5 shadow-2xl transition-all duration-700 group-hover:rounded-[24px]">
-                        <img 
-                           src={profile.avatar_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=800&auto=format&fit=crop"} 
-                           className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" 
-                           alt={displayName} 
+               {/* Mobile: stacked layout */}
+               <div className="relative z-10 flex flex-col md:hidden items-center pt-10 pb-8 px-6 text-white text-center">
+                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-[#b50a0a] shadow-2xl mb-6 shrink-0">
+                     <img
+                        src={profile.avatar_url || "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=400&auto=format&fit=crop"}
+                        alt={displayName}
+                        className="w-full h-full object-cover object-top"
+                        loading="lazy"
+                     />
+                  </div>
+                  <h1 className="text-4xl font-bold tracking-tight leading-none mb-8 drop-shadow-2xl mt-4">
+                     {firstName} <span className="text-white">{restOfName}</span>
+                  </h1>
+               </div>
+
+               {/* Desktop: side-by-side layout */}
+               <div className="hidden md:flex max-w-[1200px] mx-auto w-full h-[450px] relative px-4 lg:px-0">
+                  <div className="w-[40%] h-full relative flex items-center justify-center">
+                     <div className="absolute w-[300px] h-[300px] lg:w-[360px] lg:h-[360px] bg-[#b50a0a]/20 blur-[100px] rounded-full" />
+                     <div className="w-[300px] h-[300px] lg:w-[360px] lg:h-[360px] rounded-full border-[6px] border-[#b50a0a] shadow-2xl overflow-hidden relative z-10 shrink-0 aspect-square">
+                        <img
+                           src={profile.avatar_url || "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=600&auto=format&fit=crop"}
+                           alt={displayName}
+                           className="w-full h-full object-cover object-top"
+                           loading="eager"
                         />
                      </div>
-                     <div className="absolute -bottom-4 -right-4 bg-[#a20000] p-4 rounded-2xl shadow-xl">
-                        <CheckCircle2 className="w-6 h-6 text-white" />
-                     </div>
                   </div>
-
-                  <div className="flex-1 space-y-4 sm:space-y-6">
-                     <span className="text-[#a20000] font-bold text-sm tracking-[0.4em] block">Verified Talent Scout</span>
-                     <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white tracking-tighter leading-none">
-                        {profile.first_name} <br />
-                        <span className="text-[#a20000]">{profile.last_name}</span>
+                  <div className="w-[60%] flex flex-col justify-center items-start pl-16 text-white z-20">
+                     <h1 className="flex flex-col leading-none drop-shadow-2xl mb-12 mt-4">
+                        <span className="text-7xl font-black tracking-tight">{firstName}</span>
+                        <span className="text-8xl font-black tracking-tighter text-white">{restOfName}</span>
                      </h1>
-                     <div className="flex flex-wrap items-center gap-8 text-white/60 pt-4">
-                        <div className="flex items-center gap-2">
-                           <Eye className="w-4 h-4 text-[#a20000]" />
-                           <span className="text-sm font-bold tracking-wide">{profile.agency_name || 'Independent Scout'}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                           <Globe className="w-4 h-4 text-[#a20000]" />
-                           <span className="text-sm font-bold tracking-wide">{profile.country || 'Global Operations'}</span>
+                     
+                     <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-4">
+                           {profile.social_links?.facebook && (
+                              <a href={profile.social_links.facebook} target="_blank" rel="noopener noreferrer">
+                                 <Facebook className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
+                              </a>
+                           )}
+                           {profile.social_links?.instagram && (
+                              <a href={profile.social_links.instagram} target="_blank" rel="noopener noreferrer">
+                                 <Instagram className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
+                              </a>
+                           )}
+                           {profile.social_links?.twitter && (
+                              <a href={profile.social_links.twitter} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)">
+                                 <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current hover:text-[#b50a0a] transition-colors"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                              </a>
+                           )}
+                           {!profile.social_links && (
+                              <>
+                                 <Facebook className="w-4 h-4 text-white/20" />
+                                 <Instagram className="w-4 h-4 text-white/20" />
+                                 <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current text-white/20"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                              </>
+                           )}
                         </div>
                      </div>
                   </div>

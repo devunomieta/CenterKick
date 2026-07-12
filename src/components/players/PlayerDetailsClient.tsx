@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -21,6 +21,22 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
    const nameParts = displayName.split(' ');
    const firstName = nameParts[0];
    const restOfName = nameParts.slice(1).join(' ');
+
+   const calculateAge = (dob: string | undefined | null) => {
+      if (!dob) return "NIL";
+      const birthDate = new Date(dob);
+      if (isNaN(birthDate.getTime())) return "NIL";
+      const diff = Date.now() - birthDate.getTime();
+      const ageDate = new Date(diff);
+      const calculatedAge = Math.abs(ageDate.getUTCFullYear() - 1970);
+      return isNaN(calculatedAge) ? "NIL" : calculatedAge;
+   };
+
+   const profileAge = calculateAge(athlete.date_of_birth);
+   const profileHeight = athlete.height_cm ? `${athlete.height_cm}cm` : 'NIL';
+   const profileFoot = athlete.foot || 'NIL';
+   const profileClub = athlete.current_club || 'NIL';
+   const profilePosition = athlete.position || 'NIL';
 
    return (
       <div className="min-h-screen bg-white">
@@ -56,7 +72,7 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
 
                {/* Mobile: stacked layout */}
                <div className="relative z-10 flex flex-col md:hidden items-center pt-10 pb-0 px-6 text-white text-center">
-                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-[#b50a0a]/40 shadow-2xl mb-6 shrink-0">
+                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-[#b50a0a] shadow-2xl mb-6 shrink-0">
                      <img
                         src={athlete.avatar_url || "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=400&auto=format&fit=crop"}
                         alt={displayName}
@@ -64,63 +80,65 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                         loading="lazy"
                      />
                   </div>
-                  <span className="text-[#ff4d4d] font-bold tracking-[0.3em] mb-2 text-xs">{athlete.position || 'Elite Player'}</span>
+                  <span className="text-[#ff4d4d] font-bold tracking-[0.3em] mb-2 text-xs uppercase">{profilePosition}</span>
                   <h1 className="text-4xl font-bold tracking-tight leading-none mb-4 drop-shadow-2xl">
                      {firstName} <span className="text-white">{restOfName}</span>
                   </h1>
                   <div className="flex flex-wrap gap-3 justify-center mb-6">
-                     <div className="bg-white/10 border border-white/15 px-4 py-2 rounded-xl flex flex-col items-center">
-                        <span className="text-xs font-bold text-gray-300 tracking-wide mb-0.5">Status</span>
-                        <span className="text-base font-bold text-white capitalize">{athlete.status || 'Active'}</span>
+                     <div className="bg-white/10 border border-white/15 px-4 py-2 rounded-xl flex flex-col items-center min-w-[80px]">
+                        <span className="text-xs font-bold text-gray-300 tracking-wide mb-0.5">Age</span>
+                        <span className="text-base font-bold text-white">{profileAge}</span>
                      </div>
-                     <div className="bg-white/10 border border-white/15 px-4 py-2 rounded-xl flex flex-col items-center">
+                     <div className="bg-white/10 border border-white/15 px-4 py-2 rounded-xl flex flex-col items-center min-w-[80px]">
                         <span className="text-xs font-bold text-gray-300 tracking-wide mb-0.5">Height</span>
-                        <span className="text-base font-bold text-white">{athlete.height_cm ? `${athlete.height_cm}cm` : 'N/A'}</span>
+                        <span className="text-base font-bold text-white">{profileHeight}</span>
                      </div>
-                     <div className="bg-white/10 border border-white/15 px-4 py-2 rounded-xl flex flex-col items-center">
+                     <div className="bg-white/10 border border-white/15 px-4 py-2 rounded-xl flex flex-col items-center min-w-[80px]">
                         <span className="text-xs font-bold text-gray-300 tracking-wide mb-0.5">Foot</span>
-                        <span className="text-base font-bold text-white">{athlete.foot || 'Right'}</span>
+                        <span className="text-base font-bold text-white capitalize">{profileFoot}</span>
                      </div>
                   </div>
                   <div className="flex items-center gap-3 text-base font-bold mb-8 text-white/80">
                      <MapPin className="w-3.5 h-3.5 text-[#b50a0a]" />
-                     <span>{athlete.current_club || 'Free Agent'}</span>
+                     <span>{profileClub}</span>
                      <span className="text-white/30">—</span>
-                     <span>{athlete.country || 'Global'}</span>
+                     <span>{athlete.country || 'NIL'}</span>
                   </div>
                </div>
 
                {/* Desktop: side-by-side layout */}
                <div className="hidden md:flex max-w-[1200px] mx-auto w-full h-[450px] relative px-4 lg:px-0">
-                  <div className="w-[40%] h-full relative flex items-end justify-center">
-                     <div className="absolute bottom-0 w-[120%] h-[80%] bg-[#b50a0a]/20 blur-[100px] rounded-full" />
-                     <img
-                        src={athlete.avatar_url || "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=600&auto=format&fit=crop"}
-                        alt={displayName}
-                        className="h-[105%] w-auto object-cover object-top drop-shadow-[0_20px_50px_rgba(181,10,10,0.3)] relative z-10"
-                        loading="eager"
-                     />
+                  <div className="w-[40%] h-full relative flex items-center justify-center">
+                     <div className="absolute w-[300px] h-[300px] lg:w-[360px] lg:h-[360px] bg-[#b50a0a]/20 blur-[100px] rounded-full" />
+                     <div className="w-[300px] h-[300px] lg:w-[360px] lg:h-[360px] rounded-full border-[6px] border-[#b50a0a] shadow-2xl overflow-hidden relative z-10 shrink-0 aspect-square">
+                        <img
+                           src={athlete.avatar_url || "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=600&auto=format&fit=crop"}
+                           alt={displayName}
+                           className="w-full h-full object-cover object-top"
+                           loading="eager"
+                        />
+                     </div>
                   </div>
                   <div className="w-[60%] flex flex-col justify-center items-start pl-16 text-white z-20">
-                     <span className="text-[#ff4d4d] font-bold tracking-[0.4em] mb-3 text-base">{athlete.position || 'Elite Player'}</span>
+                     <span className="text-[#ff4d4d] font-bold tracking-[0.4em] mb-3 text-base uppercase">{profilePosition}</span>
                      <h1 className="flex flex-col leading-none drop-shadow-2xl mb-8">
                         <span className="text-7xl font-black tracking-tight">{firstName}</span>
                         <span className="text-8xl font-black tracking-tighter text-white">{restOfName}</span>
                      </h1>
                      <div className="flex gap-4 mb-10 flex-wrap">
                         {[
-                           { label: 'Status', value: athlete.status || 'Active' },
-                           { label: 'Height', value: athlete.height_cm ? `${athlete.height_cm}cm` : 'N/A' },
-                           { label: 'Main Foot', value: athlete.foot || 'Right' },
+                           { label: 'Age', value: profileAge },
+                           { label: 'Height', value: profileHeight },
+                           { label: 'Main Foot', value: profileFoot },
                         ].map((s) => (
-                           <div key={s.label} className="backdrop-blur-xl bg-white/5 border border-white/10 px-6 py-3.5 rounded-2xl flex flex-col">
-                              <span className="text-xs font-bold text-gray-200 tracking-[0.2em] mb-1">{s.label}</span>
+                           <div key={s.label} className="backdrop-blur-xl bg-white/5 border border-white/10 px-6 py-3.5 rounded-2xl flex flex-col min-w-[100px]">
+                              <span className="text-xs font-bold text-gray-200 tracking-[0.2em] mb-1 uppercase">{s.label}</span>
                               <span className="text-xl font-bold text-white capitalize">{s.value}</span>
                            </div>
                         ))}
                      </div>
                      <div className="flex items-center gap-6">
-                        <span className="font-bold tracking-wide text-base">{athlete.current_club || 'Free Agent'}</span>
+                        <span className="font-bold tracking-wide text-base">{profileClub}</span>
                         <div className="h-6 w-[1px] bg-white/20" />
                         <div className="flex items-center gap-4">
                            {athlete.social_links?.facebook && (
