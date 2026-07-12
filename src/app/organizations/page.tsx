@@ -34,7 +34,7 @@ export default async function OrganizationsPage() {
    return (
       <div className="min-h-screen bg-white">
          <Navbar />
-         <main className="pt-32 sm:pt-40">
+         <main className="pt-[72px] lg:pt-[76px]">
             <div className="bg-gradient-to-br from-gray-900 to-black py-12 sm:py-20 px-4">
                <div className="max-w-[1200px] mx-auto px-4 lg:px-0 text-center sm:text-left">
                   <span className="text-[#a20000] font-bold text-sm tracking-[0.3em] mb-3 block">Clubs &amp; Academies</span>

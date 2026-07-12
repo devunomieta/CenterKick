@@ -26,7 +26,7 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
       <div className="min-h-screen bg-white">
          <Navbar />
 
-         <main className="pt-20 sm:pt-24">
+         <main className="pt-[72px] lg:pt-[76px]">
             {/* Back Button */}
             <div className="bg-white border-b border-gray-100 py-3 sm:py-4">
                <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
