@@ -70,7 +70,7 @@ export default function StatsPage() {
           <div>
             <p className="text-xs text-gray-400 font-bold tracking-wide">Profile Views</p>
             <h3 className="text-3xl font-bold text-gray-900 mt-1">1,420</h3>
-            <p className="text-xs text-green-600 font-bold mt-1">â†‘ 12% this week</p>
+            <p className="text-xs text-green-600 font-bold mt-1">↑ 12% this week</p>
           </div>
         </div>
 
@@ -81,7 +81,7 @@ export default function StatsPage() {
           <div>
             <p className="text-xs text-gray-400 font-bold tracking-wide">Scouting Inquiries</p>
             <h3 className="text-3xl font-bold text-gray-900 mt-1">4</h3>
-            <p className="text-xs text-green-600 font-bold mt-1">â†‘ 2 active chats</p>
+            <p className="text-xs text-green-600 font-bold mt-1">↑ 2 active chats</p>
           </div>
         </div>
 
@@ -145,9 +145,9 @@ export default function StatsPage() {
           <div className="pt-4 border-t border-gray-50 space-y-4">
             <h4 className="text-xs font-bold text-gray-900 tracking-wide">Video Checklist</h4>
             <ul className="space-y-2 text-xs font-bold text-gray-500 tracking-wide">
-              <li className="flex items-center gap-2">âœ“ Match clip uploads</li>
-              <li className="flex items-center gap-2">âœ“ Training highlights</li>
-              <li className="flex items-center gap-2 text-gray-400">â—‹ Technical coach feedback</li>
+              <li className="flex items-center gap-2">✓ Match clip uploads</li>
+              <li className="flex items-center gap-2">✓ Training highlights</li>
+              <li className="flex items-center gap-2 text-gray-400">○ Technical coach feedback</li>
             </ul>
           </div>
         </div>

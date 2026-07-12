@@ -124,7 +124,7 @@ export function ContactClient({ layout, content, navContent, footerContent, site
                   <div className="max-w-[800px] mx-auto">
                      <div className="text-center mb-16">
                         <span className="text-[#b50a0a] font-bold tracking-[0.2em] mb-4 block text-base">Got Questions?</span>
-                        <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">â” FAQs</h2>
+                        <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">FAQs</h2>
                      </div>
                      <div className="space-y-4">
                         {faqs.map((faq: { q: string; a: string }, idx: number) => (
