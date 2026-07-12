@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import PlayersClient from './PlayersClient';
+import { isProfileComplete } from '@/lib/utils/profile';
 
 export default async function PlayersPage() {
    const supabase = await createClient();
@@ -16,17 +17,8 @@ export default async function PlayersPage() {
       const userRole = userObj?.role;
       if (['admin', 'superadmin', 'blogger', 'operations', 'finance'].includes(userRole)) return false;
 
-      const isComplete = Boolean(
-         athlete.avatar_url &&
-         athlete.cover_url &&
-         athlete.gallery_urls?.length >= 2 &&
-         athlete.video_links?.length >= 1 &&
-         athlete.first_name &&
-         athlete.last_name
-      );
-
-      const isSubscribed = userObj?.subscriptions?.some((s: any) => s.status === 'active');
-      return isComplete && isSubscribed;
+      const isComplete = isProfileComplete(athlete);
+      return isComplete;
    });
 
    if (error) console.error('[PlayersPage] fetch error:', error.message);

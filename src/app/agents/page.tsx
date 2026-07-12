@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import AgentsClient from './AgentsClient';
+import { isProfileComplete } from '@/lib/utils/profile';
 
 export default async function AgentsPage() {
    const supabase = await createClient();
@@ -16,17 +17,8 @@ export default async function AgentsPage() {
       const userRole = userObj?.role;
       if (['admin', 'superadmin', 'blogger', 'operations', 'finance'].includes(userRole)) return false;
 
-      const isComplete = Boolean(
-         agent.avatar_url &&
-         agent.cover_url &&
-         agent.gallery_urls?.length >= 2 &&
-         agent.video_links?.length >= 1 &&
-         agent.first_name &&
-         agent.last_name
-      );
-
-      const isSubscribed = userObj?.subscriptions?.some((s: any) => s.status === 'active');
-      return isComplete && isSubscribed;
+      const isComplete = isProfileComplete(agent);
+      return isComplete;
    });
 
    if (error) console.error('[AgentsPage] fetch error:', error.message);

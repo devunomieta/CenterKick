@@ -1,8 +1,8 @@
 'use client';
-import { Search, ChevronDown, ArrowRight, Globe } from "lucide-react";
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
+import { DirectoryFilterBar } from '@/components/common/DirectoryFilterBar';
 
 export default function AgentsClient({ agents }: { agents: any[] }) {
    const [searchQuery, setSearchQuery] = useState('');
@@ -26,23 +26,16 @@ export default function AgentsClient({ agents }: { agents: any[] }) {
 
    return (
       <div className="max-w-[1200px] mx-auto px-4 lg:px-0 py-10 sm:py-16">
-         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 pb-8 border-b border-gray-100">
-            <div className="flex flex-col sm:flex-row gap-3">
-               <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input type="text" placeholder="Search agents..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                     className="pl-11 pr-5 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:outline-none focus:border-[#a20000] w-full sm:w-56 transition-all" />
-               </div>
-               <div className="relative">
-                  <select value={selectedCountry} onChange={e => setSelectedCountry(e.target.value)}
-                     className="appearance-none pl-5 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:outline-none focus:border-[#a20000] w-full sm:w-48 cursor-pointer transition-all">
-                     <option value="">All Countries</option>
-                     {availableCountries.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-               </div>
-            </div>
-         </div>
+         <DirectoryFilterBar 
+            totalCount={agents.length}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedCountry={selectedCountry}
+            setSelectedCountry={setSelectedCountry}
+            availableCountries={availableCountries}
+            searchPlaceholder="Search agents..."
+            profileTypeLabel="Agents"
+         />
          {filtered.length === 0 ? (
             <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
                <p className="text-gray-500 font-bold tracking-wide text-base">No matching agents found.</p>

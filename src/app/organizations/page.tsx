@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import OrganizationsClient from './OrganizationsClient';
+import { isProfileComplete } from '@/lib/utils/profile';
 
 export default async function OrganizationsPage() {
    const supabase = await createClient();
@@ -16,17 +17,8 @@ export default async function OrganizationsPage() {
       const userRole = userObj?.role;
       if (['admin', 'superadmin', 'blogger', 'operations', 'finance'].includes(userRole)) return false;
 
-      const isComplete = Boolean(
-         org.avatar_url &&
-         org.cover_url &&
-         org.gallery_urls?.length >= 2 &&
-         org.video_links?.length >= 1 &&
-         org.first_name &&
-         org.last_name
-      );
-
-      const isSubscribed = userObj?.subscriptions?.some((s: any) => s.status === 'active');
-      return isComplete && isSubscribed;
+      const isComplete = isProfileComplete(org);
+      return isComplete;
    });
 
    if (error) console.error('[OrganizationsPage] fetch error:', error.message);

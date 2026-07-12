@@ -1,8 +1,9 @@
 'use client';
 
-import { Search, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
+import { DirectoryFilterBar } from '@/components/common/DirectoryFilterBar';
 
 interface PlayersClientProps {
    players: any[];
@@ -32,32 +33,16 @@ export default function PlayersClient({ players }: PlayersClientProps) {
 
    return (
       <div className="max-w-[1200px] mx-auto px-4 lg:px-0 py-10 sm:py-16">
-         {/* Filter Bar */}
-         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 pb-8 border-b border-gray-100">
-            <div className="flex flex-col sm:flex-row gap-3">
-               <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                     type="text"
-                     placeholder="Search players..."
-                     value={searchQuery}
-                     onChange={e => setSearchQuery(e.target.value)}
-                     className="pl-11 pr-5 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:outline-none focus:border-[#a20000] w-full sm:w-56 transition-all"
-                  />
-               </div>
-               <div className="relative">
-                  <select
-                     value={selectedCountry}
-                     onChange={e => setSelectedCountry(e.target.value)}
-                     className="appearance-none pl-5 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:outline-none focus:border-[#a20000] w-full sm:w-48 cursor-pointer transition-all"
-                  >
-                     <option value="">All Countries</option>
-                     {availableCountries.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-               </div>
-            </div>
-         </div>
+         <DirectoryFilterBar 
+            totalCount={players.length}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedCountry={selectedCountry}
+            setSelectedCountry={setSelectedCountry}
+            availableCountries={availableCountries}
+            searchPlaceholder="Search players..."
+            profileTypeLabel="Players"
+         />
 
          {/* Grid */}
          {filtered.length === 0 ? (

@@ -5,7 +5,11 @@
 export function isProfileComplete(profile: any): boolean {
   if (!profile) return false;
 
-  const role = profile.role?.toLowerCase() || 'player';
+  let rawRole = profile.role || profile.users?.role || profile.userRole;
+  if (!rawRole && Array.isArray(profile.users) && profile.users.length > 0) {
+    rawRole = profile.users[0]?.role;
+  }
+  const role = (rawRole || 'player').toLowerCase();
 
   // Base checks that apply to ALL roles
   const baseChecks = [

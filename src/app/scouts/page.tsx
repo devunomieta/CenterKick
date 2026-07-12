@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import ScoutsClient from './ScoutsClient';
+import { isProfileComplete } from '@/lib/utils/profile';
 
 export default async function ScoutsPage() {
    const supabase = await createClient();
@@ -16,17 +17,8 @@ export default async function ScoutsPage() {
       const userRole = userObj?.role;
       if (userRole === 'admin' || userRole === 'superadmin') return false;
 
-      const isComplete = Boolean(
-         scout.avatar_url &&
-         scout.cover_url &&
-         scout.gallery_urls?.length >= 2 &&
-         scout.video_links?.length >= 1 &&
-         scout.first_name &&
-         scout.last_name
-      );
-
-      const isSubscribed = userObj?.subscriptions?.some((s: any) => s.status === 'active');
-      return isComplete && isSubscribed;
+      const isComplete = isProfileComplete(scout);
+      return isComplete;
    });
 
    if (error) console.error('[ScoutsPage] fetch error:', error.message);
