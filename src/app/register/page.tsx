@@ -5,11 +5,13 @@ import { Mail, AlertCircle, CheckCircle2, ArrowRight, Chrome, ArrowLeft } from "
 import Link from 'next/link';
 import { signup, verifyOtp, resendOtp, getSignupSettings } from '@/app/login/actions';
 import { PasswordField } from '@/components/common/PasswordField';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
+import { Suspense } from 'react';
 
-export default function RegisterPage() {
+function RegisterForm() {
    const router = useRouter();
+   const searchParams = useSearchParams();
    const { showToast } = useToast();
    const [isLoading, setIsLoading] = useState(false);
    const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -31,13 +33,20 @@ export default function RegisterPage() {
             const settings = await getSignupSettings();
             if (settings.disabledRoles) {
                setDisabledRoles(settings.disabledRoles);
+               const roleParam = searchParams.get('role');
+               if (roleParam && !settings.disabledRoles.includes(roleParam)) {
+                  setRole(roleParam);
+               }
+            } else {
+               const roleParam = searchParams.get('role');
+               if (roleParam) setRole(roleParam);
             }
          } catch (error) {
             console.error('Failed to load signup settings:', error);
          }
       };
       loadSettings();
-   }, []);
+   }, [searchParams]);
 
    const validatePassword = (pass: string) => {
       return (
@@ -206,6 +215,8 @@ export default function RegisterPage() {
                               <select
                                  name="role"
                                  required
+                                 value={role}
+                                 onChange={(e) => setRole(e.target.value)}
                                  className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#a20000] focus:bg-white transition-all outline-none text-gray-900 appearance-none"
                               >
                                  {!disabledRoles.includes('player') && <option value="player">Player</option>}
@@ -373,6 +384,14 @@ export default function RegisterPage() {
             </div>
          </div>
       </div>
+   );
+}
+
+export default function RegisterPage() {
+   return (
+      <Suspense fallback={<div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>}>
+         <RegisterForm />
+      </Suspense>
    );
 }
 

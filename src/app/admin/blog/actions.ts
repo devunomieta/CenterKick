@@ -52,6 +52,14 @@ export async function createPost(formData: FormData) {
     ? null 
     : (customPublishedAt && customPublishedAt.trim() !== '' ? new Date(customPublishedAt).toISOString() : new Date().toISOString());
 
+  let final_cover_image_url = cover_image_url;
+  if (!final_cover_image_url && excerpt) {
+    const videoIdMatch = excerpt.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    if (videoIdMatch && videoIdMatch[1]) {
+      final_cover_image_url = `https://img.youtube.com/vi/${videoIdMatch[1]}/hqdefault.jpg`;
+    }
+  }
+
   const { data: post, error } = await adminClient
     .from('cms_posts')
     .insert({
@@ -61,7 +69,7 @@ export async function createPost(formData: FormData) {
       type: 'news',
       content,
       excerpt,
-      cover_image_url,
+      cover_image_url: final_cover_image_url,
       category_id,
       meta_title,
       meta_description,
@@ -126,6 +134,14 @@ export async function updatePost(postId: string, formData: FormData) {
     ? (customPublishedAt && customPublishedAt.trim() !== '' ? new Date(customPublishedAt).toISOString() : (currentPost?.published_at || new Date().toISOString())) 
     : null;
 
+  let final_cover_image_url = cover_image_url;
+  if (!final_cover_image_url && excerpt) {
+    const videoIdMatch = excerpt.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    if (videoIdMatch && videoIdMatch[1]) {
+      final_cover_image_url = `https://img.youtube.com/vi/${videoIdMatch[1]}/hqdefault.jpg`;
+    }
+  }
+
   const { error } = await adminClient
     .from('cms_posts')
     .update({
@@ -133,7 +149,7 @@ export async function updatePost(postId: string, formData: FormData) {
       slug,
       content,
       excerpt,
-      cover_image_url,
+      cover_image_url: final_cover_image_url,
       category_id,
       meta_title,
       meta_description,

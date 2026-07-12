@@ -29,11 +29,19 @@ export default async function Home() {
       getCachedData('home_latest_news_16', async () => {
          const { data } = await supabase
             .from('cms_posts')
-            .select('*, author:users(email), category:blog_categories(name)')
+            .select('*, author:users(email), category:blog_categories(name), post_tags(tag:blog_tags(name))')
             .eq('is_draft', false)
             .order('published_at', { ascending: false })
-            .limit(16);
-         return data || [];
+            .limit(50);
+            
+         const filtered = (data || []).filter(post => {
+            const catName = (post.category as any)?.name?.toLowerCase() || '';
+            const tags = (post.post_tags as any[])?.map(pt => pt.tag?.name?.toLowerCase()) || [];
+            const isHighlight = catName.includes('highlight') || tags.some((t: string) => t?.includes('highlight'));
+            return !isHighlight;
+         });
+         
+         return filtered.slice(0, 16);
       }, 300),
       getCachedData('home_players_list', async () => {
          const { data } = await supabase
@@ -43,7 +51,7 @@ export default async function Home() {
             .eq('status', 'active');
          const filtered = (data || []).filter(p => {
             const userRole = (p.users as any)?.role;
-            return userRole !== 'admin' && userRole !== 'superadmin';
+            return !['admin', 'superadmin', 'blogger', 'operations', 'finance'].includes(userRole);
          });
          console.log('Fetched players from DB count:', filtered.length);
          return filtered;
@@ -56,7 +64,7 @@ export default async function Home() {
             .eq('status', 'active');
          const filtered = (data || []).filter(p => {
             const userRole = (p.users as any)?.role;
-            return userRole !== 'admin' && userRole !== 'superadmin';
+            return !['admin', 'superadmin', 'blogger', 'operations', 'finance'].includes(userRole);
          });
          return filtered;
       }, 600),
@@ -68,7 +76,7 @@ export default async function Home() {
             .eq('status', 'active');
          const filtered = (data || []).filter(p => {
             const userRole = (p.users as any)?.role;
-            return userRole !== 'admin' && userRole !== 'superadmin';
+            return !['admin', 'superadmin', 'blogger', 'operations', 'finance'].includes(userRole);
          });
          return filtered;
       }, 600),
@@ -80,7 +88,7 @@ export default async function Home() {
             .eq('status', 'active');
          const filtered = (data || []).filter(p => {
             const userRole = (p.users as any)?.role;
-            return userRole !== 'admin' && userRole !== 'superadmin';
+            return !['admin', 'superadmin', 'blogger', 'operations', 'finance'].includes(userRole);
          });
          return filtered;
       }, 600),

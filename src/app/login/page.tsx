@@ -5,7 +5,7 @@ import { Mail, AlertCircle, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-r
 import Link from 'next/link';
 import { login } from './actions';
 import { PasswordField } from '@/components/common/PasswordField';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 
@@ -14,6 +14,7 @@ function LoginContent() {
    const { showToast } = useToast();
    const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
    const searchParams = useSearchParams();
+   const router = useRouter();
 
    useEffect(() => {
       const error = searchParams.get('error');
@@ -37,7 +38,9 @@ function LoginContent() {
          const result = await login(formData);
 
          if (result && 'error' in result) {
-            showToast(result.error, 'error');
+            showToast(result.error as string, 'error');
+         } else if (result && result.success && result.redirectPath) {
+            router.push(result.redirectPath as string);
          }
       } catch (err: any) {
          showToast('An unexpected error occurred.', 'error');

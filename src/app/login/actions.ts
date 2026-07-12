@@ -53,7 +53,7 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath('/', 'layout');
-  redirect(redirectPath);
+  return { success: true, redirectPath };
 }
 
 export async function getSignupSettings() {

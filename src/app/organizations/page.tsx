@@ -14,7 +14,7 @@ export default async function OrganizationsPage() {
    const filteredOrganizations = (organizations || []).filter(org => {
       const userObj = org.users as any;
       const userRole = userObj?.role;
-      if (userRole === 'admin' || userRole === 'superadmin') return false;
+      if (['admin', 'superadmin', 'blogger', 'operations', 'finance'].includes(userRole)) return false;
 
       const isComplete = Boolean(
          org.avatar_url &&

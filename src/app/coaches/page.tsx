@@ -14,7 +14,7 @@ export default async function CoachesPage() {
    const filteredCoaches = (coaches || []).filter(coach => {
       const userObj = coach.users as any;
       const userRole = userObj?.role;
-      if (userRole === 'admin' || userRole === 'superadmin') return false;
+      if (['admin', 'superadmin', 'blogger', 'operations', 'finance'].includes(userRole)) return false;
 
       const isComplete = Boolean(
          coach.avatar_url &&

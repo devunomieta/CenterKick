@@ -33,10 +33,18 @@ export default async function NewsPage() {
       getCachedData('news_all_posts', async () => {
          const { data } = await supabase
             .from('cms_posts')
-            .select('*, category:blog_categories(name), post_tags(tag_id)')
+            .select('*, category:blog_categories(name), post_tags(tag:blog_tags(name))')
             .eq('is_draft', false)
             .order('published_at', { ascending: false });
-         return data || [];
+            
+         const filtered = (data || []).filter(post => {
+            const catName = (post.category as any)?.name?.toLowerCase() || '';
+            const tags = (post.post_tags as any[])?.map(pt => pt.tag?.name?.toLowerCase()) || [];
+            const isHighlight = catName.includes('highlight') || tags.some((t: string) => t?.includes('highlight'));
+            return !isHighlight;
+         });
+         
+         return filtered;
       }, 600),
       getCachedData('blog_categories', async () => {
          const { data } = await supabase

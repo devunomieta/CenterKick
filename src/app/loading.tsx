@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function Loading() {
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#fafafa]">
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#fafafa] animate-in fade-in duration-1000 fill-mode-both" style={{ animationDelay: '300ms' }}>
       <div className="relative flex flex-col items-center">
         {/* Spinner */}
         <div className="w-16 h-16 rounded-full border-4 border-gray-200 border-t-[#b50a0a] animate-spin mb-6"></div>

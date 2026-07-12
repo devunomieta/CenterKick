@@ -14,7 +14,7 @@ export default async function AgentsPage() {
    const filteredAgents = (agents || []).filter(agent => {
       const userObj = agent.users as any;
       const userRole = userObj?.role;
-      if (userRole === 'admin' || userRole === 'superadmin') return false;
+      if (['admin', 'superadmin', 'blogger', 'operations', 'finance'].includes(userRole)) return false;
 
       const isComplete = Boolean(
          agent.avatar_url &&

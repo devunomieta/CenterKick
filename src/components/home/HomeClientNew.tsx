@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -157,6 +157,17 @@ export function HomeClient({
   const mainNews = latestNews[0] || null;
   const stackedNews = latestNews.slice(1, 6);
   const carouselNews = latestNews.slice(6, 10);
+
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+
+  const getEmbedUrl = (url: string) => {
+    if (!url) return '';
+    const videoIdMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    if (videoIdMatch && videoIdMatch[1]) {
+      return `https://www.youtube.com/embed/${videoIdMatch[1]}?autoplay=1`;
+    }
+    return url;
+  };
 
   return (
     <div className="min-h-screen bg-[#fafafa] font-sans text-gray-900 selection:bg-[#b50a0a]/10 selection:text-[#b50a0a]">
@@ -333,10 +344,6 @@ export function HomeClient({
                   className="object-cover transition-all duration-700 grayscale group-hover:grayscale-0 group-hover:scale-105 opacity-85"
                 />
 
-                <div className="absolute top-4 right-4 z-20 bg-black/40 backdrop-blur-md rounded-full px-3 py-1 border border-white/10">
-                  <span className="text-xs font-bold text-white tracking-wide">Active</span>
-                </div>
-
                 <div className="absolute bottom-0 left-0 p-6 z-20 w-full">
                   <span className="text-red-500 text-sm font-bold tracking-[0.2em] block mb-1">
                     {player.position || 'Footballer'}
@@ -369,11 +376,17 @@ export function HomeClient({
                 </p>
               </div>
               <div className="flex flex-wrap gap-4 shrink-0">
-                <Link href="/register">
-                  <button className="bg-[#b50a0a] hover:bg-white text-white hover:text-black font-bold text-xs tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
+                {siteSettings?.disabledRoles?.includes('player') ? (
+                  <button disabled title="Registration for this account type is currently disabled." className="bg-[#b50a0a]/50 text-white/50 font-bold text-xs tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl flex items-center gap-2 cursor-not-allowed">
                     Create Profile <ArrowRight className="w-4 h-4" />
                   </button>
-                </Link>
+                ) : (
+                  <Link href="/register?role=player">
+                    <button className="bg-[#b50a0a] hover:bg-white text-white hover:text-black font-bold text-xs tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
+                      Create Profile <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -413,12 +426,6 @@ export function HomeClient({
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
 
-                <div className="absolute top-4 left-4 z-20">
-                  <span className="bg-white/95 text-gray-900 text-xs font-bold tracking-wide px-3 py-1 rounded-full shadow-md flex items-center gap-1.5">
-                    <ShieldCheck className="w-3 h-3 text-[#b50a0a]" /> Certified
-                  </span>
-                </div>
-
                 <div className="absolute bottom-0 left-0 p-6 z-20 w-full">
                   <span className="text-red-500 text-sm font-bold tracking-[0.2em] block mb-1">
                     {coach.position || 'Professional Coach'}
@@ -451,11 +458,17 @@ export function HomeClient({
                 </p>
               </div>
               <div className="flex flex-wrap gap-4 shrink-0">
-                <Link href="/register">
-                  <button className="bg-white hover:bg-black text-black hover:text-white font-bold text-xs tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
+                {siteSettings?.disabledRoles?.includes('coach') ? (
+                  <button disabled title="Registration for this account type is currently disabled." className="bg-white/50 text-black/50 font-bold text-xs tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl flex items-center gap-2 cursor-not-allowed">
                     Create Profile <ArrowRight className="w-4 h-4" />
                   </button>
-                </Link>
+                ) : (
+                  <Link href="/register?role=coach">
+                    <button className="bg-white hover:bg-black text-black hover:text-white font-bold text-xs tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
+                      Create Profile <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -542,11 +555,17 @@ export function HomeClient({
                 </p>
               </div>
               <div className="flex flex-wrap gap-4 shrink-0">
-                <Link href="/register">
-                  <button className="bg-white hover:bg-[#b50a0a] text-black hover:text-white font-bold text-xs tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
+                {siteSettings?.disabledRoles?.includes('agent') ? (
+                  <button disabled title="Registration for this account type is currently disabled." className="bg-white/50 text-black/50 font-bold text-xs tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl flex items-center gap-2 cursor-not-allowed">
                     Create Profile <ArrowRight className="w-4 h-4" />
                   </button>
-                </Link>
+                ) : (
+                  <Link href="/register?role=agent">
+                    <button className="bg-white hover:bg-[#b50a0a] text-black hover:text-white font-bold text-xs tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
+                      Create Profile <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -620,11 +639,17 @@ export function HomeClient({
                 </p>
               </div>
               <div className="flex flex-wrap gap-4 shrink-0">
-                <Link href="/register">
-                  <button className="bg-gray-900 hover:bg-amber-600 text-white font-bold text-xs tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
+                {siteSettings?.disabledRoles?.includes('organization') ? (
+                  <button disabled title="Registration for this account type is currently disabled." className="bg-gray-900/50 text-white/50 font-bold text-xs tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl flex items-center gap-2 cursor-not-allowed">
                     Create Profile <ArrowRight className="w-4 h-4" />
                   </button>
-                </Link>
+                ) : (
+                  <Link href="/register?role=organization">
+                    <button className="bg-gray-900 hover:bg-amber-600 text-white font-bold text-xs tracking-[0.2em] px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center gap-2 hover:-translate-y-0.5 active:scale-95">
+                      Create Profile <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -653,12 +678,10 @@ export function HomeClient({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {highlights.map((post) => (
-              <Link
-                href={post.excerpt || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => setActiveVideoUrl(post.excerpt)}
                 key={post.id}
-                className="group relative rounded-2xl overflow-hidden aspect-video sm:aspect-[4/5] bg-black border border-gray-100 shadow-md block"
+                className="group relative rounded-2xl overflow-hidden aspect-video sm:aspect-[4/5] bg-black border border-gray-100 shadow-md block text-left"
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent z-10" />
                 <Image
@@ -684,7 +707,7 @@ export function HomeClient({
                     {post.title}
                   </h3>
                 </div>
-              </Link>
+              </button>
             ))}
 
             {highlights.length === 0 && (
@@ -740,6 +763,25 @@ export function HomeClient({
       </main>
 
       <Footer content={footerContent} settings={siteSettings} />
+
+      {activeVideoUrl && (
+        <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+          <button 
+            onClick={() => setActiveVideoUrl(null)}
+            className="absolute top-6 right-6 sm:top-8 sm:right-8 z-[250] w-12 h-12 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-[#b50a0a] transition-all border border-white/20 hover:scale-110 shadow-xl backdrop-blur-md"
+          >
+            <span className="text-xl font-bold">✕</span>
+          </button>
+          <div className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10 animate-in zoom-in duration-300">
+            <iframe
+              src={getEmbedUrl(activeVideoUrl)}
+              className="w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

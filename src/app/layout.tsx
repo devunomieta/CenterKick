@@ -53,6 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 import { ToastProvider } from "@/context/ToastContext";
+import NextTopLoader from 'nextjs-toploader';
 
 export default function RootLayout({
   children,
@@ -62,6 +63,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`} suppressHydrationWarning>
+        <NextTopLoader
+          color="#b50a0a"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #b50a0a,0 0 5px #b50a0a"
+        />
         <ToastProvider>
           {children}
         </ToastProvider>
