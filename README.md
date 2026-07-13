@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CenterKick ⚽
 
-## Getting Started
+CenterKick is a premium digital platform designed to discover, connect, and elevate football talents across Africa and beyond. Built with a modern technology stack, it serves as a comprehensive directory and management system for the entire football ecosystem—bridging the gap between rising stars, elite coaches, agents, scouts, and football organizations.
 
-First, run the development server:
+## 🌟 Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Comprehensive Profiles**: Dedicated and verified profile sections tailored for Players, Coaches, Agents, Scouts, and Organizations.
+- **Managed Accounts**: A powerful managed accounts system allowing Agents and Organizations to effortlessly manage multiple player profiles from a unified dashboard.
+- **Role-Based Access Control**: Secure, robust user roles and permissions backed by Supabase Row-Level Security (RLS) to ensure data privacy and integrity.
+- **Admin Dashboard**: Powerful administrative tools for data management, user approvals, system moderation, and blog management.
+- **Dynamic Portfolios**: High-quality media galleries, video highlight reels, tactical data, and detailed career statistics to showcase talents.
+- **Modern & Responsive UI**: Built with Next.js, Tailwind CSS, and Lucide React for a stunning, fast, and accessible user experience across all devices.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Frontend Framework**: [Next.js](https://nextjs.org/) (App Router) & [React](https://reactjs.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Caching**: [Upstash Redis](https://upstash.com/)
+- **Payments**: Paystack Integration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 👨‍💻 Developer
 
-## Learn More
+**Romeo (@DEVUNOMIETA)**
 
-To learn more about Next.js, take a look at the following resources:
+- 🌐 Website: [devunomieta.xyz](https://devunomieta.xyz)
+- 🐙 GitHub: [devunomieta](https://github.com/devunomieta)
+- 🐦 Socials: **@DEVUNOMIETA** (across all platforms)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📄 License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License.
