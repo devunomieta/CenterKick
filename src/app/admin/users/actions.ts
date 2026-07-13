@@ -111,7 +111,21 @@ export async function deleteUsers(userIds: string[]) {
 
   for (const id of userIds) {
     const { error } = await admin.auth.admin.deleteUser(id);
-    if (error) errors.push(`${id}: ${error.message}`);
+    
+    // If it's a real error (not just 'User not found'), record it. 
+    // We ignore 'User not found' because seeded accounts might not exist in auth.users.
+    if (error && error.message !== 'User not found') {
+      errors.push(`${id}: ${error.message}`);
+      continue;
+    }
+
+    // Clean up stranded data in public tables
+    await admin.from('profiles').delete().eq('user_id', id);
+    const { error: dbError } = await admin.from('users').delete().eq('id', id);
+    
+    if (dbError) {
+      errors.push(`${id}: failed to delete from users table (${dbError.message})`);
+    }
   }
 
   revalidatePath('/admin/users');
