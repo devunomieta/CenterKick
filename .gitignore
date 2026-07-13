@@ -116,3 +116,4 @@ seed_logos.js
 setup_bucket.js
 update_leagues_ui.js
 update_ui.js
+query.js
