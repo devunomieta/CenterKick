@@ -62,7 +62,7 @@ export function OrganizationDetailsForm({ data, onChange }: { data: any, onChang
         <div className="space-y-3">
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Organization Type</label>
           <select 
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:border-[#b50a0a]"
+            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:border-[#b50a0a]"
             value={data.organization_type || ''}
             onChange={(e) => onChange({ ...data, organization_type: e.target.value })}
           >
@@ -74,10 +74,19 @@ export function OrganizationDetailsForm({ data, onChange }: { data: any, onChang
            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Year Established</label>
            <input 
              type="text"
-             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:border-[#b50a0a]"
+             pattern="^[0-9]{4}$"
+             maxLength={4}
+             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:border-[#b50a0a]"
              placeholder="e.g. 1995"
              value={data.year_established || ''}
-             onChange={(e) => onChange({ ...data, year_established: e.target.value })}
+             onChange={(e) => {
+               const val = e.target.value.replace(/\D/g, '');
+               if (val.length === 4) {
+                 const currentYear = new Date().getFullYear();
+                 if (parseInt(val) > currentYear) return;
+               }
+               onChange({ ...data, year_established: val });
+             }}
            />
         </div>
       </div>
@@ -88,31 +97,31 @@ export function OrganizationDetailsForm({ data, onChange }: { data: any, onChang
            <h3 className="text-lg font-black text-gray-900 flex items-center gap-2"><Building className="w-5 h-5 text-[#b50a0a]"/> Facilities & Infrastructure</h3>
            <p className="text-sm text-gray-500 mt-1">Provide details about your training grounds, stadium, and youth academy.</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-5 bg-gray-50 border border-gray-100 rounded-2xl">
-           <div>
-             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Training Ground Details</label>
+        <div className="flex flex-col gap-6">
+           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-3">
+             <label className="text-xs font-bold text-gray-900 tracking-wide block">Training Ground Details</label>
              <textarea 
-               className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:border-[#b50a0a] min-h-[80px]" 
+               className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-sm font-medium text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none min-h-[100px]" 
                placeholder="e.g. State-of-the-art facility with 3 full-size pitches." 
                value={data.facilities_infrastructure?.training_ground || ''} 
                onChange={(e) => updateFacilities('training_ground', e.target.value)} 
              />
            </div>
-           <div>
-             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Stadium Capacity</label>
+           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-3">
+             <label className="text-xs font-bold text-gray-900 tracking-wide block">Stadium Capacity</label>
              <input 
                type="text" 
-               className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:border-[#b50a0a]" 
+               className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-sm font-medium text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none" 
                placeholder="e.g. 5,000" 
                value={data.facilities_infrastructure?.stadium_capacity || ''} 
                onChange={(e) => updateFacilities('stadium_capacity', e.target.value)} 
              />
            </div>
-           <div>
-             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Youth Academy Level</label>
+           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-3">
+             <label className="text-xs font-bold text-gray-900 tracking-wide block">Youth Academy Level</label>
              <input 
                type="text" 
-               className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:border-[#b50a0a]" 
+               className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-sm font-medium text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none" 
                placeholder="e.g. Category 1" 
                value={data.facilities_infrastructure?.academy_level || ''} 
                onChange={(e) => updateFacilities('academy_level', e.target.value)} 
@@ -148,7 +157,7 @@ export function OrganizationDetailsForm({ data, onChange }: { data: any, onChang
                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Role/Title in Organization</label>
                  <input 
                    type="text" 
-                   className="w-full md:w-1/2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:border-[#b50a0a]" 
+                   className="w-full md:w-1/2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:border-[#b50a0a]" 
                    placeholder="e.g. Director of Football" 
                    value={person.role || ''} 
                    onChange={(e) => updatePersonnelRole(index, e.target.value)} 
@@ -188,15 +197,15 @@ export function OrganizationDetailsForm({ data, onChange }: { data: any, onChang
             <div key={index} className="p-4 bg-white border border-gray-200 rounded-2xl relative group shadow-sm flex items-end gap-4">
               <div className="flex-1">
                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Title</label>
-                 <input type="text" className="w-full px-3 py-2 border rounded-lg text-sm" value={record.title} onChange={(e) => updateHonor(index, 'title', e.target.value)} placeholder="e.g. U18 Premier League" />
+                 <input type="text" className="w-full px-3 py-2 border rounded-lg text-sm text-gray-900 focus:border-[#b50a0a] outline-none" value={record.title} onChange={(e) => updateHonor(index, 'title', e.target.value)} placeholder="e.g. U18 Premier League" />
               </div>
               <div className="w-32">
                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Year</label>
-                 <input type="text" className="w-full px-3 py-2 border rounded-lg text-sm" value={record.year} onChange={(e) => updateHonor(index, 'year', e.target.value)} placeholder="e.g. 2023" />
+                 <input type="text" className="w-full px-3 py-2 border rounded-lg text-sm text-gray-900 focus:border-[#b50a0a] outline-none" value={record.year} onChange={(e) => updateHonor(index, 'year', e.target.value)} placeholder="e.g. 2023" />
               </div>
               <div className="w-48">
                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Category</label>
-                 <select className="w-full px-3 py-2 border rounded-lg text-sm" value={record.category} onChange={(e) => updateHonor(index, 'category', e.target.value)}>
+                 <select className="w-full px-3 py-2 border rounded-lg text-sm text-gray-900 focus:border-[#b50a0a] outline-none" value={record.category} onChange={(e) => updateHonor(index, 'category', e.target.value)}>
                    <option value="Trophy">Trophy / Cup</option>
                    <option value="League">League Title</option>
                    <option value="Academy Milestone">Academy Milestone</option>

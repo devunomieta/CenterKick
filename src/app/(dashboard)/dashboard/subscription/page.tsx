@@ -66,6 +66,7 @@ export default function SubscriptionPage() {
   const { showToast } = useToast();
   const [msg, setMsg] = useState<{type: 'success'|'error', text: string}|null>(null);
   const [pricingPlan, setPricingPlan] = useState<any>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -204,11 +205,15 @@ export default function SubscriptionPage() {
                     {plan.status === 'Active' ? 'Paid' : plan.status === 'Unverified' ? 'Unpaid' : plan.status}
                  </p>
                  <button 
-                   onClick={() => router.refresh()} 
+                   onClick={() => {
+                     setIsRefreshing(true);
+                     router.refresh();
+                     setTimeout(() => setIsRefreshing(false), 800);
+                   }} 
                    className="p-1.5 rounded-lg border border-black/5 bg-white/50 hover:bg-white text-gray-400 hover:text-gray-900 shadow-sm transition-all group"
                    title="Refresh Status"
                  >
-                   <RefreshCcw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500" />
+                   <RefreshCcw className={`w-3.5 h-3.5 transition-transform duration-500 ${isRefreshing ? 'animate-spin text-gray-900' : 'group-hover:rotate-180'}`} />
                  </button>
               </div>
            </div>
@@ -321,19 +326,24 @@ export default function SubscriptionPage() {
                                  </div>
 
                                  <div className="mt-auto border-t border-gray-100 pt-6">
-                                    <form onSubmit={handleClaimVerification} className="space-y-3">
-                                       <p className="text-xs font-bold tracking-wide text-gray-900 mb-1">Claim Payment</p>
-                                       <input 
-                                          name="payment_reference"
-                                          type="text" 
-                                          placeholder="Transaction Ref/ID" 
-                                          required
-                                          className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none transition-all"
-                                       />
+                                    <form onSubmit={handleClaimVerification} className="space-y-3">                                        <p className="text-xs font-bold tracking-wide text-gray-900 mb-1">Claim Payment</p>
+                                       <div className="space-y-1">
+                                          <input 
+                                             name="payment_reference"
+                                             type="text" 
+                                             placeholder="Transaction Ref/ID" 
+                                             pattern="[A-Za-z0-9]+"
+                                             maxLength={15}
+                                             required
+                                             className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none transition-all"
+                                          />
+                                          <p className="text-[10px] font-bold text-gray-400 ml-1">Max 15 characters, alphanumeric only</p>
+                                       </div>
                                        <input 
                                           name="payment_receipt"
                                           type="file" 
                                           accept="image/*,.pdf"
+                                          required
                                           className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-2 text-xs font-bold text-gray-500 focus:ring-2 focus:ring-[#b50a0a] outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300"
                                        />
                                        <button 

@@ -78,7 +78,7 @@ export function HybridLinkInput({
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Name</label>
           <input
             type="text"
-            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#b50a0a] focus:ring-1 focus:ring-[#b50a0a]"
+            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#b50a0a] focus:ring-1 focus:ring-[#b50a0a]"
             placeholder={placeholderName}
             value={value.name || ''}
             onChange={(e) => onChange({ ...value, name: e.target.value })}
@@ -90,7 +90,7 @@ export function HybridLinkInput({
           <div className="relative">
              <input
                type="email"
-               className={`w-full px-4 py-2 pl-10 bg-white border rounded-lg text-sm focus:outline-none focus:border-[#b50a0a] focus:ring-1 focus:ring-[#b50a0a] ${
+               className={`w-full px-4 py-2 pl-10 bg-white border rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#b50a0a] focus:ring-1 focus:ring-[#b50a0a] ${
                  status === 'verified' ? 'border-green-300 bg-green-50/30' : 
                  status === 'unverified' ? 'border-amber-200' : 'border-gray-200'
                }`}

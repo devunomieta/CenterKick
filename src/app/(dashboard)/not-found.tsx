@@ -36,7 +36,7 @@ export default function DashboardNotFound() {
             className="w-full px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold transition-all shadow-lg shadow-slate-900/20 hover:shadow-slate-900/30 hover:-translate-y-0.5 flex items-center justify-center gap-2"
           >
             <LayoutDashboard className="w-4 h-4" />
-            Go to Dashboard Home
+            Back to home
           </Link>
           
           <button 
