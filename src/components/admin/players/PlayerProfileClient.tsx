@@ -1987,8 +1987,6 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                 </div>
                 
                 {editingSection === 'bio' ? (
-                  <div className="space-y-6 relative">
-                    <textarea 
                   <div className="space-y-4">
                     <div className="bg-slate-50 border border-slate-200 rounded-3xl p-4">
                       <RichTextEditor
