@@ -527,7 +527,7 @@ export function HomeClient({
                   </div>
 
                   <p className="text-gray-500 text-sm text-center font-medium leading-relaxed line-clamp-3 mb-6">
-                    {agent.bio || 'Verified representative dedicated to scouting academy stars and negotiating professional club deals.'}
+                    {(agent.bio || 'Verified representative dedicated to scouting academy stars and negotiating professional club deals.').replace(/<[^>]+>/g, '')}
                   </p>
                 </div>
 
@@ -611,7 +611,7 @@ export function HomeClient({
                   </div>
 
                   <p className="text-gray-500 text-sm text-center font-medium leading-relaxed line-clamp-3 mb-6">
-                    {org.bio || 'Premium sports organization committed to developing academy prospects and providing professional infrastructure.'}
+                    {(org.bio || 'Premium sports organization committed to developing academy prospects and providing professional infrastructure.').replace(/<[^>]+>/g, '')}
                   </p>
                 </div>
 

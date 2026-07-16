@@ -21,6 +21,7 @@ import {
   X
 } from 'lucide-react';
 import { ProfileCompletenessWidget } from '@/components/dashboard/ProfileCompletenessWidget';
+import { RichTextEditor } from '@/components/cms/RichTextEditor';
 import { createClient } from '@/lib/supabase/client';
 import { requestProfileEdit } from './actions';
 import { useToast } from '@/context/ToastContext';
@@ -1104,7 +1105,7 @@ export default function ProfileEditor() {
 
                 <div className="pt-8 border-t border-gray-50">
                    {role === 'coach' && <CoachCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
-                   {(role === 'player' || role === 'athlete') && <PlayerCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
+                   {(role === 'player' || role === 'athlete') && <PlayerCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} achievements={achievements} onAchievementsChange={(val) => {setAchievements(val); setIsDirty(true);}} disabled={!isEditing} />}
                    {role === 'agent' && <AgentPortfolioForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
                    {role === 'scout' && <ScoutDiscoveriesForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
                    {role === 'organization' && <OrganizationDetailsForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
@@ -1124,9 +1125,10 @@ export default function ProfileEditor() {
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center ml-1 mb-2">
                     <label className="text-xs font-bold text-gray-900 tracking-wide">Professional Bio</label>
-                    <span className="text-[10px] font-bold text-gray-500">{(profile?.bio || '').trim().split(/\s+/).filter(Boolean).length} words</span>
                   </div>
-                  <textarea name="bio" rows={8} value={profile?.bio || ''} onChange={(e) => setProfile({...profile, bio: e.target.value})} placeholder="Describe your professional journey, skills, and ambitions..." className="w-full bg-gray-50 border-none rounded-3xl px-4 md:px-8 py-6 text-base font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none leading-relaxed text-black placeholder:text-gray-900" />
+                  <div className="bg-gray-50 rounded-3xl p-4 md:p-8">
+                    <RichTextEditor content={profile?.bio || ''} onChange={(val) => setProfile({...profile, bio: val})} />
+                  </div>
                 </div>
 
                 {(role === 'agent' || role === 'organization') && (

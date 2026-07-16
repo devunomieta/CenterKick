@@ -1,8 +1,8 @@
 'use client';
 
-import { Plus, Trash2, Activity } from 'lucide-react';
+import { Plus, Trash2, Activity, Trophy } from 'lucide-react';
 
-export function PlayerCareerForm({ data, onChange }: { data: any, onChange: (val: any) => void, disabled?: boolean }) {
+export function PlayerCareerForm({ data, onChange, achievements, onAchievementsChange, disabled }: { data: any, onChange: (val: any) => void, achievements?: any[], onAchievementsChange?: (val: any[]) => void, disabled?: boolean }) {
   
   const addTransfer = () => {
     const transfers = data.transfer_history || [];
@@ -28,6 +28,28 @@ export function PlayerCareerForm({ data, onChange }: { data: any, onChange: (val
     onChange({ ...data, physical_technical_attributes: { ...attrs, [field]: value } });
   };
 
+  const addAchievement = () => {
+    if (!onAchievementsChange) return;
+    const current = achievements || [];
+    onAchievementsChange([...current, { title: '', year: '', category: 'Individual' }]);
+  };
+
+  const updateAchievement = (index: number, field: string, value: any) => {
+    if (!onAchievementsChange) return;
+    const current = [...(achievements || [])];
+    if (typeof current[index] === 'string') {
+      current[index] = { title: current[index], year: '', category: 'Individual' };
+    }
+    current[index] = { ...current[index], [field]: value };
+    onAchievementsChange(current);
+  };
+
+  const removeAchievement = (index: number) => {
+    if (!onAchievementsChange) return;
+    const current = (achievements || []).filter((_: any, i: number) => i !== index);
+    onAchievementsChange(current);
+  };
+
   return (
     <div className="space-y-8">
       {/* Physical & Technical Attributes */}
@@ -46,6 +68,7 @@ export function PlayerCareerForm({ data, onChange }: { data: any, onChange: (val
                placeholder="e.g. High, 85/100, etc." 
                value={data.physical_technical_attributes?.pace || ''} 
                onChange={(e) => updatePhysical('pace', e.target.value)} 
+               disabled={disabled}
              />
            </div>
            <div>
@@ -56,6 +79,7 @@ export function PlayerCareerForm({ data, onChange }: { data: any, onChange: (val
                placeholder="e.g. Excellent, 90 mins" 
                value={data.physical_technical_attributes?.stamina || ''} 
                onChange={(e) => updatePhysical('stamina', e.target.value)} 
+               disabled={disabled}
              />
            </div>
            <div>
@@ -66,6 +90,7 @@ export function PlayerCareerForm({ data, onChange }: { data: any, onChange: (val
                placeholder="e.g. 88%" 
                value={data.physical_technical_attributes?.passing || ''} 
                onChange={(e) => updatePhysical('passing', e.target.value)} 
+               disabled={disabled}
              />
            </div>
            <div>
@@ -76,6 +101,7 @@ export function PlayerCareerForm({ data, onChange }: { data: any, onChange: (val
                placeholder="e.g. None, Minor Ankle Sprain (2022)" 
                value={data.physical_technical_attributes?.injury_history || ''} 
                onChange={(e) => updatePhysical('injury_history', e.target.value)} 
+               disabled={disabled}
              />
            </div>
         </div>
@@ -88,30 +114,34 @@ export function PlayerCareerForm({ data, onChange }: { data: any, onChange: (val
              <h3 className="text-lg font-black text-gray-900">Transfer History</h3>
              <p className="text-sm text-gray-500 mt-1">List your previous clubs and transfer details.</p>
           </div>
-          <button type="button" onClick={addTransfer} className="flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-sm font-bold transition-colors">
-            <Plus className="w-4 h-4" /> Add Transfer
-          </button>
+          {!disabled && (
+            <button type="button" onClick={addTransfer} className="flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-sm font-bold transition-colors">
+              <Plus className="w-4 h-4" /> Add Transfer
+            </button>
+          )}
         </div>
 
         <div className="space-y-4">
           {(data.transfer_history || []).map((record: any, index: number) => (
             <div key={index} className="p-5 bg-white border border-gray-200 rounded-2xl relative group shadow-sm hover:shadow-md transition-shadow">
-              <button type="button" onClick={() => removeTransfer(index)} className="absolute top-4 right-4 text-gray-400 hover:text-red-600 transition-colors bg-white rounded-lg p-1 z-10 opacity-0 group-hover:opacity-100">
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {!disabled && (
+                <button type="button" onClick={() => removeTransfer(index)} className="absolute top-4 right-4 text-gray-400 hover:text-red-600 transition-colors bg-white rounded-lg p-1 z-10 opacity-0 group-hover:opacity-100">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="lg:col-span-2">
                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Previous Club</label>
-                   <input type="text" className="w-full px-3 py-2 border rounded-lg text-sm" value={record.club} onChange={(e) => updateTransfer(index, 'club', e.target.value)} placeholder="e.g. Real Madrid" />
+                   <input type="text" className="w-full px-3 py-2 border rounded-lg text-sm bg-white" value={record.club} onChange={(e) => updateTransfer(index, 'club', e.target.value)} placeholder="e.g. Real Madrid" disabled={disabled} />
                 </div>
                 <div>
                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Transfer Date (Year)</label>
-                   <input type="text" className="w-full px-3 py-2 border rounded-lg text-sm" value={record.date} onChange={(e) => updateTransfer(index, 'date', e.target.value)} placeholder="e.g. 2023" />
+                   <input type="text" className="w-full px-3 py-2 border rounded-lg text-sm bg-white" value={record.date} onChange={(e) => updateTransfer(index, 'date', e.target.value)} placeholder="e.g. 2023" disabled={disabled} />
                 </div>
                 <div>
                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Transfer Type</label>
-                   <select className="w-full px-3 py-2 border rounded-lg text-sm bg-white" value={record.type} onChange={(e) => updateTransfer(index, 'type', e.target.value)}>
+                   <select className="w-full px-3 py-2 border rounded-lg text-sm bg-white" value={record.type} onChange={(e) => updateTransfer(index, 'type', e.target.value)} disabled={disabled}>
                      <option value="Permanent">Permanent</option>
                      <option value="Loan">Loan</option>
                      <option value="Free Transfer">Free Transfer</option>
@@ -119,7 +149,7 @@ export function PlayerCareerForm({ data, onChange }: { data: any, onChange: (val
                 </div>
                 <div className="md:col-span-2 lg:col-span-4">
                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Transfer Fee (Optional)</label>
-                   <input type="text" className="w-full px-3 py-2 border rounded-lg text-sm" value={record.fee} onChange={(e) => updateTransfer(index, 'fee', e.target.value)} placeholder="e.g. €50M, Undisclosed" />
+                   <input type="text" className="w-full px-3 py-2 border rounded-lg text-sm bg-white" value={record.fee} onChange={(e) => updateTransfer(index, 'fee', e.target.value)} placeholder="e.g. €50M, Undisclosed" disabled={disabled} />
                 </div>
               </div>
             </div>
@@ -133,6 +163,68 @@ export function PlayerCareerForm({ data, onChange }: { data: any, onChange: (val
           )}
         </div>
       </div>
+
+      {/* Awards & Honours */}
+      {achievements !== undefined && onAchievementsChange && (
+        <div className="space-y-4 border-t border-gray-100 pt-8">
+          <div className="flex items-center justify-between">
+            <div>
+               <h3 className="text-lg font-black text-gray-900 flex items-center gap-2"><Trophy className="w-5 h-5 text-amber-500" /> Awards & Honours</h3>
+               <p className="text-sm text-gray-500 mt-1">Capture your individual, club, and country awards.</p>
+            </div>
+            {!disabled && (
+              <button type="button" onClick={addAchievement} className="flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-sm font-bold transition-colors">
+                <Plus className="w-4 h-4" /> Add Honour
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            {(achievements || []).map((record: any, index: number) => {
+              const isString = typeof record === 'string';
+              const title = isString ? record : record.title;
+              const year = isString ? '' : (record.year || '');
+              const category = isString ? 'Individual' : (record.category || 'Individual');
+
+              return (
+                <div key={index} className="p-5 bg-white border border-gray-200 rounded-2xl relative group shadow-sm hover:shadow-md transition-shadow">
+                  {!disabled && (
+                    <button type="button" onClick={() => removeAchievement(index)} className="absolute top-4 right-4 text-gray-400 hover:text-red-600 transition-colors bg-white rounded-lg p-1 z-10 opacity-0 group-hover:opacity-100">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="lg:col-span-2">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Honour Title</label>
+                      <input type="text" className="w-full px-3 py-2 border rounded-lg text-sm bg-white" value={title} onChange={(e) => updateAchievement(index, 'title', e.target.value)} placeholder="e.g. Player of the Year" disabled={disabled} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Year</label>
+                      <input type="text" className="w-full px-3 py-2 border rounded-lg text-sm bg-white" value={year} onChange={(e) => updateAchievement(index, 'year', e.target.value)} placeholder="e.g. 2023" disabled={disabled} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Category</label>
+                      <select className="w-full px-3 py-2 border rounded-lg text-sm bg-white" value={category} onChange={(e) => updateAchievement(index, 'category', e.target.value)} disabled={disabled}>
+                        <option value="Individual">Individual</option>
+                        <option value="Club">Club</option>
+                        <option value="Country">Country</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            
+            {(achievements?.length || 0) === 0 && (
+              <div className="text-center py-10 bg-gray-50 border border-dashed border-gray-200 rounded-2xl">
+                <Trophy className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500 font-medium">No honours recorded yet.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

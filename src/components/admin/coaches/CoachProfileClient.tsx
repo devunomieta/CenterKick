@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { 
@@ -15,6 +15,8 @@ import { DateDisplay } from '@/components/common/DateDisplay';
 import { getPendingEdits, processProfileEdit, getPlayerTransactions } from '@/app/admin/players/actions';
 import { updateCoach, getCoachStats, addCoachStat, updateCoachStat, deleteCoachStat, getCoachAchievements, addCoachAchievement, updateCoachAchievement, deleteCoachAchievement, updateProfileTags, getCoachNews } from '@/app/admin/coaches/actions';
 import Link from 'next/link';
+import { RichTextEditor } from '@/components/cms/RichTextEditor';
+import parse from 'html-react-parser';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
@@ -704,26 +706,26 @@ export default function CoachProfileClient({
                   </button>
                 </div>
                 
-                {editingSection === 'bio' ? (
-                  <div className="space-y-6 relative">
-                    <textarea 
-                      rows={5}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-4 md:p-8 text-[13px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-[#b50a0a] focus:border-transparent outline-none transition-all resize-none"
-                      value={displayValue('bio', coach.bio || '') as string}
-                      onChange={(e) => updateField('bio', e.target.value)}
-                      placeholder="Share your coaching philosophy, career highlights, and methodology..."
-                    />
-                    <div className="flex gap-4">
+                {editingSection === 'bio' ? (                  
+                  <div className="space-y-4">
+                    <div className="bg-slate-50 border border-slate-200 rounded-3xl p-4">
+                      <RichTextEditor
+                        content={displayValue('bio', coach.bio || '') as string}
+                        onChange={(val) => updateField('bio', val)}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-4">
                       <button onClick={handleSaveChanges} className="px-10 py-4 bg-slate-900 text-white rounded-2xl text-xs font-bold tracking-[0.2em] hover:bg-[#b50a0a] transition-all shadow-lg shadow-slate-200">Save Biography</button>
                       <button onClick={() => { setEditingSection(null); setEditedFields({}); }} className="px-10 py-4 bg-white text-slate-400 border border-slate-200 rounded-2xl text-xs font-bold tracking-wide hover:bg-slate-50 transition-all">Cancel</button>
                     </div>
                   </div>
-                ) : (
-                  <div className="relative">
+                ) : (                  
+                  <div>
                     <div className="p-4 md:p-8 bg-slate-50/50 rounded-[1.5rem] border border-slate-100 relative group/bio shadow-inner">
-                      <div className="text-[13px] font-medium text-slate-600 leading-[1.8] whitespace-pre-wrap">
-                        {coach.bio || "No professional biography has been provided yet."}
+                      <div className="text-sm text-slate-600 leading-relaxed font-medium prose prose-sm max-w-none prose-a:text-indigo-600 hover:prose-a:text-indigo-800">
+                        {coach.bio ? parse(coach.bio) : "No professional biography has been provided yet."}
                       </div>
+                      <div className="absolute -left-2 top-10 w-1 h-32 bg-[#b50a0a]/20 rounded-full opacity-0 group-hover/bio:opacity-100 transition-opacity"></div>
                     </div>
                   </div>
                 )}

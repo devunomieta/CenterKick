@@ -202,8 +202,6 @@ export function Footer({ content, settings }: { content?: any; settings?: any })
                   <a href="https://devunomieta.xyz" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-white/80 mx-1">@DEVUNOMIETA</a>
                   <span className="opacity-40 px-1">|</span>
                   <a href="https://cortdevs.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-white/80 mx-1">CORTDEVS</a>
-                  <span className="hidden opacity-40 px-1">|</span>
-                  <a href="https://cortdevs.com" target="_blank" rel="noopener noreferrer" className="hidden hover:text-white transition-colors text-white/80 mx-1">HACHSTACKS</a>
                </span>
             </div>
          </div>

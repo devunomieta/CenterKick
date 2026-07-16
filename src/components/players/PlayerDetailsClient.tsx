@@ -2,7 +2,8 @@
 
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { Facebook, Instagram, Twitter, ChevronLeft, MapPin } from "lucide-react";
+import parse from 'html-react-parser';
+import { Facebook, Instagram, Twitter, ChevronLeft, MapPin, Trophy, Medal, Star } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
@@ -221,21 +222,37 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
 
                      <div className="mb-8 pb-8 border-b border-gray-100">
                         <h2 className="text-2xl sm:text-3xl font-bold text-gray-600 mb-6">Bio</h2>
-                        <p className="text-base leading-relaxed text-gray-600 font-medium">
-                           {athlete.bio || `Meet ${athlete.first_name || ''} ${athlete.last_name || ''}, one of the talented players on CenterKick.`}
-                        </p>
+                        <div className="text-base leading-relaxed text-gray-600 font-medium prose prose-sm sm:prose-base max-w-none prose-a:text-[#b50a0a] hover:prose-a:text-red-700">
+                           {athlete.bio ? parse(athlete.bio) : `Meet ${athlete.first_name || ''} ${athlete.last_name || ''}, one of the talented players on CenterKick.`}
+                        </div>
                      </div>
 
                      <div>
                         <h2 className="text-2xl sm:text-3xl font-bold text-gray-600 mb-6">Honours</h2>
                         {athlete.achievements && Array.isArray(athlete.achievements) && athlete.achievements.length > 0 ? (
-                           <div className="space-y-3">
-                              {athlete.achievements.map((item: any, i: number) => (
-                                 <div key={i} className="text-base font-bold text-gray-900 flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-[#b50a0a] rounded-full shrink-0" />
-                                    {item.title || item}
-                                 </div>
-                              ))}
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {athlete.achievements.map((item: any, i: number) => {
+                                 const isString = typeof item === 'string';
+                                 const title = isString ? item : item.title;
+                                 const year = isString ? '' : item.year;
+                                 const category = isString ? '' : item.category;
+
+                                 return (
+                                    <div key={i} className="p-4 bg-gray-50 border border-gray-100 rounded-2xl flex flex-col gap-2">
+                                       <div className="flex items-center gap-2">
+                                          <Trophy className="w-5 h-5 text-amber-500 shrink-0" />
+                                          <span className="text-base font-bold text-gray-900">{title}</span>
+                                       </div>
+                                       {(year || category) && (
+                                          <div className="flex items-center gap-3 text-xs font-bold text-gray-500 uppercase tracking-wider ml-7">
+                                             {category && <span>{category}</span>}
+                                             {category && year && <span>•</span>}
+                                             {year && <span>{year}</span>}
+                                          </div>
+                                       )}
+                                    </div>
+                                 );
+                              })}
                            </div>
                         ) : (
                            <p className="text-gray-500 text-base font-medium">No honours recorded yet.</p>

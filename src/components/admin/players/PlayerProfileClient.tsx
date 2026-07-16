@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { 
@@ -11,6 +11,8 @@ import {
   Star, Award, Building2, CheckCircle2
 } from 'lucide-react';
 import Image from 'next/image';
+import { RichTextEditor } from '@/components/cms/RichTextEditor';
+import parse from 'html-react-parser';
 import { RestrictedAccessInline, RestrictedAccess } from '@/components/admin/RestrictedAccess';
 import { DateDisplay } from '@/components/common/DateDisplay';
 
@@ -1987,27 +1989,23 @@ export default function PlayerProfileClient({ player, agents, leagues, clubs, se
                 {editingSection === 'bio' ? (
                   <div className="space-y-6 relative">
                     <textarea 
-                      rows={2}
-                      onInput={(e) => {
-                        const target = e.target as HTMLTextAreaElement;
-                        target.style.height = 'auto';
-                        target.style.height = `${target.scrollHeight}px`;
-                      }}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-4 md:p-8 text-[13px] font-medium text-slate-600 leading-relaxed shadow-inner focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-all resize-none overflow-hidden"
-                      value={displayValue('bio', player.bio || '') as string}
-                      onChange={(e) => updateField('bio', e.target.value)}
-                      placeholder="Share the professional journey, key milestones, and personal story of this athlete..."
-                    />
-                    <div className="flex gap-4">
+                  <div className="space-y-4">
+                    <div className="bg-slate-50 border border-slate-200 rounded-3xl p-4">
+                      <RichTextEditor
+                        content={displayValue('bio', player.bio || '') as string}
+                        onChange={(val) => updateField('bio', val)}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-4">
                       <button onClick={handleSaveChanges} className="px-10 py-4 bg-slate-900 text-white rounded-2xl text-xs font-bold tracking-[0.2em] hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200">Save Biography</button>
                       <button onClick={() => { setEditingSection(null); setEditedFields({}); }} className="px-10 py-4 bg-white text-slate-400 border border-slate-200 rounded-2xl text-xs font-bold tracking-wide hover:bg-slate-50 transition-all">Cancel</button>
                     </div>
                   </div>
                 ) : (
-                  <div className="relative">
+                  <div>
                     <div className="p-4 md:p-8 bg-slate-50/50 rounded-[1.5rem] border border-slate-100 relative group/bio shadow-inner">
-                      <div className="text-[13px] font-medium text-slate-600 leading-[1.8] whitespace-pre-wrap">
-                        {player.bio || "No professional biography has been provided for this athlete yet. Use the edit button to share their professional journey and achievements."}
+                      <div className="text-sm text-slate-600 leading-relaxed font-medium prose prose-sm max-w-none prose-a:text-indigo-600 hover:prose-a:text-indigo-800">
+                        {player.bio ? parse(player.bio) : "No professional biography has been provided for this athlete yet. Use the edit button to share their professional journey and achievements."}
                       </div>
                       <div className="absolute -left-2 top-10 w-1 h-32 bg-indigo-500/20 rounded-full opacity-0 group-hover/bio:opacity-100 transition-opacity"></div>
                     </div>
