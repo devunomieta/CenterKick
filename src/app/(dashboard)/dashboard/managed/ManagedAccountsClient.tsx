@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Users, Search, Plus, CreditCard, Trash2, Edit } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import { linkManagedAccount, unlinkManagedAccount } from './actions';
 
 export default function ManagedAccountsClient({ userProfile }: { userProfile: any }) {
   const [managedUsers, setManagedUsers] = useState<any[]>([]);
@@ -22,7 +23,7 @@ export default function ManagedAccountsClient({ userProfile }: { userProfile: an
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq(idField, userProfile.id);
+      .eq(idField, userProfile.user_id);
 
     if (!error && data) {
       setManagedUsers(data);
@@ -50,15 +51,10 @@ export default function ManagedAccountsClient({ userProfile }: { userProfile: an
       return;
     }
 
-    const updateField = userProfile.role === 'organization' ? { organization_id: userProfile.id } : { agent_id: userProfile.id };
-    
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update(updateField)
-      .eq('id', targetProfile.id);
+    const result = await linkManagedAccount(targetProfile.id, userProfile.user_id, userProfile.role);
 
-    if (updateError) {
-      showToast(`Failed to link: ${updateError.message}`, 'error');
+    if (result.error) {
+      showToast(`Failed to link: ${result.error}`, 'error');
     } else {
       showToast('Member successfully linked to your portfolio!', 'success');
       setManagedUsers([...managedUsers, targetProfile]);
@@ -72,13 +68,10 @@ export default function ManagedAccountsClient({ userProfile }: { userProfile: an
     if (!confirm("Are you sure you want to unlink this member from your portfolio?")) return;
     setIsProcessing(true);
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({ agent_id: null, organization_id: null })
-      .eq('id', memberId);
+    const result = await unlinkManagedAccount(memberId);
 
-    if (error) {
-      showToast(`Failed to unlink: ${error.message}`, 'error');
+    if (result.error) {
+      showToast(`Failed to unlink: ${result.error}`, 'error');
     } else {
       showToast('Member successfully unlinked.', 'success');
       setManagedUsers(managedUsers.filter(m => m.id !== memberId));

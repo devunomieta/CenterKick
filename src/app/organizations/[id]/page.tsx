@@ -59,8 +59,10 @@ export default async function OrgPage({ params }: { params: Promise<{ id: string
    const { data: members } = await supabaseAdmin
       .from('profiles')
       .select('id, first_name, last_name, role, slug, avatar_url, position, market_value, country')
-      .eq('organization_id', profile.id)
+      .eq('organization_id', profile.user_id)
       .eq('status', 'active');
+
+
 
    return <OrgDetailsClient profile={profile} members={members || []} />;
 }
