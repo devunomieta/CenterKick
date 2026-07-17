@@ -337,6 +337,7 @@ export default function ProfileEditor() {
     };
     
     if (role === 'coach') {
+      profileData.formation = roleData.formation;
       profileData.coaching_licenses = roleData.coaching_licenses;
       profileData.specializations = roleData.specializations;
       profileData.languages_spoken = roleData.languages_spoken;
@@ -1141,7 +1142,7 @@ export default function ProfileEditor() {
                 )}
 
                 <div className="pt-8 border-t border-gray-50">
-                   {role === 'coach' && <CoachCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
+                   {role === 'coach' && <CoachCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} achievements={achievements} onAchievementsChange={(val) => {setAchievements(val); setIsDirty(true);}} disabled={!isEditing} />}
                    {(role === 'player' || role === 'athlete') && <PlayerCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} achievements={achievements} onAchievementsChange={(val) => {setAchievements(val); setIsDirty(true);}} disabled={!isEditing} />}
                    {role === 'agent' && <AgentPortfolioForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
                    {role === 'scout' && <ScoutDiscoveriesForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}

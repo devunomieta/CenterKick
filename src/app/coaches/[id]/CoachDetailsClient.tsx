@@ -7,6 +7,7 @@ import { Trophy, Users, Target, TrendingUp, Settings2, ArrowRight, Share2, Mail,
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import parse from 'html-react-parser';
+import { ImageLightbox } from '@/components/common/ImageLightbox';
 
 const formatAbsoluteUrl = (url: string) => {
    if (!url) return '';
@@ -23,25 +24,23 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
    const [activeTab, setActiveTab] = useState("Profile");
    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
    const [contactFormData, setContactFormData] = useState({ name: '', email: '', message: '' });
+   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
    const [contactStatus, setContactStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
    const router = useRouter();
-
    const displayName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Anonymous Coach';
    const nameParts = displayName.split(' ');
    const firstName = nameParts[0];
    const restOfName = nameParts.slice(1).join(' ');
 
    // Use real stats if available, otherwise fallback to 0
-   const careerStats = profile.career_stats || [];
+   const managerialHistory = profile.managerial_history || [];
    const stats = {
-      matches: careerStats.reduce((acc: number, curr: any) => acc + (curr.games_managed || curr.appearances || 0), 0),
-      wins: careerStats.reduce((acc: number, curr: any) => acc + (curr.wins || 0), 0),
-      draws: careerStats.reduce((acc: number, curr: any) => acc + (curr.draws || 0), 0),
-      losses: careerStats.reduce((acc: number, curr: any) => acc + (curr.losses || 0), 0),
-      goalsFor: careerStats.reduce((acc: number, curr: any) => acc + (curr.goals_scored || curr.goals || 0), 0),
-      goalsAgainst: careerStats.reduce((acc: number, curr: any) => acc + (curr.goals_conceded || 0), 0),
+      wins: managerialHistory.reduce((acc: number, curr: any) => acc + (curr.wins || 0), 0),
+      draws: managerialHistory.reduce((acc: number, curr: any) => acc + (curr.draws || 0), 0),
+      losses: managerialHistory.reduce((acc: number, curr: any) => acc + (curr.losses || 0), 0),
    };
-   const totalPoints = (stats.wins * 3) + stats.draws;
+   const totalMatches = stats.wins + stats.draws + stats.losses;
+   const totalPoints = (stats.wins * 3) + (stats.draws * 1);
 
    const calculateAge = (dob: string | undefined | null) => {
       if (!dob) return "NIL";
@@ -194,7 +193,7 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
             <div className="bg-white border-b border-gray-100 shadow-sm z-40">
                <div className="max-w-[1000px] mx-auto flex items-center justify-between px-4 lg:px-0">
                   <div className="flex overflow-x-auto no-scrollbar py-1">
-                     {["Profile", "Bio", "Statistics"].map((tab) => (
+                     {["Profile", "Bio", "Statistics", "Gallery"].map((tab) => (
                         <button
                            key={tab}
                            onClick={() => setActiveTab(tab)}
@@ -222,82 +221,7 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                {activeTab === "Profile" && (
                   <div className="flex flex-col space-y-24">
                      
-                     <section>
-                        <div className="mb-12">
-                           <h2 className="text-3xl font-bold text-gray-700 tracking-tighter inline-block relative">
-                              Performance Status
-                              <span className="absolute -bottom-3 left-0 w-12 border-b-2 border-gray-300"></span>
-                           </h2>
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-                           <div className="space-y-12">
-                              <div className="relative group">
-                                 <div className="mb-6">
-                                    <h3 className="text-2xl font-bold text-[#a20000] tracking-tight">2023/2024 Season</h3>
-                                    <p className="text-sm font-bold text-gray-400 tracking-wide mt-2 underline decoration-[#a20000]/20 underline-offset-4 decoration-2">Manager Performance Statistics</p>
-                                 </div>
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-8">
-                                 <div className="flex items-center gap-4 bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md">
-                                       <Users className="w-6 h-6 text-[#a20000]" />
-                                    </div>
-                                    <div>
-                                       <span className="text-3xl font-bold text-gray-900 block leading-none">{stats.matches}</span>
-                                       <span className="text-xs font-bold text-gray-400 tracking-wide">Matches</span>
-                                    </div>
-                                 </div>
-                                 <div className="flex items-center gap-4 bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md">
-                                       <Target className="w-6 h-6 text-[#a20000]" />
-                                    </div>
-                                    <div>
-                                       <span className="text-3xl font-bold text-gray-900 block leading-none">{stats.goalsFor}:{stats.goalsAgainst}</span>
-                                       <span className="text-xs font-bold text-gray-400 tracking-wide">Goals F/A</span>
-                                    </div>
-                                 </div>
-                                 <div className="flex items-center gap-4 bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md">
-                                       <TrendingUp className="w-6 h-6 text-[#a20000]" />
-                                    </div>
-                                    <div>
-                                       <span className="text-3xl font-bold text-gray-900 block leading-none">{stats.wins}:{stats.draws}:{stats.losses}</span>
-                                       <span className="text-xs font-bold text-gray-400 tracking-wide">W/D/L</span>
-                                    </div>
-                                 </div>
-                                 <div className="flex items-center gap-4 bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md">
-                                       <Trophy className="w-6 h-6 text-[#a20000]" />
-                                    </div>
-                                    <div>
-                                       <span className="text-3xl font-bold text-gray-900 block leading-none">{totalPoints}</span>
-                                       <span className="text-xs font-bold text-gray-400 tracking-wide">Points</span>
-                                    </div>
-                                 </div>
-                              </div>
-                           </div>
-
-                           <div className="relative group">
-                              <div className="mb-6">
-                                 <h3 className="text-xl font-bold text-gray-800 tracking-tighter underline underline-offset-8 decoration-[#a20000]/30">Primary Formation</h3>
-                              </div>
-                              <div className="bg-[#1a472a] rounded-2xl overflow-hidden aspect-[4/3] shadow-2xl relative border-4 border-gray-200">
-                                 <div className="absolute inset-0 flex items-center justify-center p-8">
-                                    <div className="w-full h-full border-2 border-white/20 rounded-md relative opacity-50">
-                                       <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/20 -translate-y-1/2"></div>
-                                       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-2 border-white/20 rounded-full w-24 h-24"></div>
-                                    </div>
-                                 </div>
-                                 <div className="absolute bottom-6 left-8 bg-black/40 backdrop-blur-md px-4 py-2 rounded-lg">
-                                    <span className="text-xs font-bold text-white tracking-wide block">Main Formation</span>
-                                    <span className="text-2xl font-bold text-white leading-none">{profile.formation || "4-3-3"}</span>
-                                 </div>
-                              </div>
-                           </div>
-                        </div>
-                     </section>
+                     
 
                      <section>
                         <div className="mb-12">
@@ -309,28 +233,18 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-16 border border-gray-100 rounded-3xl p-10 bg-gray-50 shadow-sm">
                            {[
-                              { label: "Jersey #", value: profile.jersey_number || "N/A" },
-                              { label: "Market Value", value: profile.market_value || "N/A" },
-                              { 
-                                 label: "Managing Agent", 
-                                 value: profile.agent?.profiles ? (
-                                   <Link href={`/agents/${profile.agent.id}`} className="hover:text-[#a20000] transition-all underline">
-                                     {profile.agent.profiles.first_name} {profile.agent.profiles.last_name}
-                                     <span className="text-xs ml-2 text-gray-400 font-bold">({profile.agent.profiles.agency_name || 'Independent'})</span>
-                                   </Link>
-                                 ) : "Independent" 
-                              },
-                              { label: "Date Of Birth", value: profile.date_of_birth || "N/A" },
+                              { label: "Current League", value: profile.league_name || "N/A" },
+                              { label: "Current Club", value: profile.current_club || "Free Agent" },
+                              { label: "Contract Expiry", value: profile.contract_expiry ? new Date(profile.contract_expiry).toLocaleDateString() : "N/A" },
+                              { label: "Current Position", value: profile.current_position?.[0] || profile.role || "Head Coach" },
+                              { label: "Coaching Licenses", value: profile.coaching_licenses?.join(', ') || profile.license || "N/A" },
+                              { label: "Specialization", value: profile.specializations?.join(', ') || "N/A" },
                               { label: "Country", value: profile.country || "N/A" },
-                              { label: "Height", value: profile.height_cm ? `${profile.height_cm}cm` : "N/A" },
-                              { label: "Weight", value: profile.weight_kg ? `${profile.weight_kg}kg` : "N/A" },
-                              { label: "Manager Title", value: "Verified Coach" },
-                              { label: "Joined", value: new Date(profile.created_at).toLocaleDateString() },
-                              { label: "Technical License", value: profile.license || "Professional" }
+                              { label: "Languages", value: profile.languages_spoken?.join(', ') || "N/A" },
                            ].map((item, idx) => (
-                              <div key={idx} className="flex items-center justify-between border-b border-gray-200/50 pb-4">
-                                 <span className="text-xs font-bold text-gray-400 tracking-wide">{item.label}</span>
-                                 <span className="text-[13px] font-bold text-gray-900">{item.value}</span>
+                              <div key={idx} className="flex flex-col md:flex-row md:items-start justify-between border-b border-gray-200/50 pb-4 gap-2">
+                                 <span className="text-xs font-bold text-gray-400 tracking-wide md:w-1/3 shrink-0">{item.label}</span>
+                                 <span className="text-[13px] font-bold text-gray-900 md:text-right md:w-2/3 leading-snug">{item.value}</span>
                               </div>
                            ))}
                         </div>
@@ -391,20 +305,175 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                {activeTab === "Statistics" && (
                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                      <div className="mb-12">
-                        <h2 className="text-3xl font-bold text-gray-700 tracking-tighter inline-block relative">
+                        
+                     <div className="mb-12">
+                        <section>
+                           <h2 className="text-3xl font-bold text-gray-700 tracking-tighter inline-block relative mb-8">
+                              Performance Status
+                              <span className="absolute -bottom-3 left-0 w-12 border-b-2 border-[#b50a0a]"></span>
+                           </h2>
+                           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                              <div className="p-6 rounded-[2rem] bg-gray-50 border border-gray-100 flex flex-col items-center justify-center text-center">
+                                 <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4">
+                                    <Target className="w-6 h-6 text-[#b50a0a]" />
+                                 </div>
+                                 <p className="text-sm font-bold text-gray-400 uppercase tracking-wide mb-1">Matches</p>
+                                 <p className="text-3xl font-black text-gray-900">{totalMatches}</p>
+                              </div>
+                              <div className="p-6 rounded-[2rem] bg-gray-50 border border-gray-100 flex flex-col items-center justify-center text-center">
+                                 <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4">
+                                    <Trophy className="w-6 h-6 text-emerald-500" />
+                                 </div>
+                                 <p className="text-sm font-bold text-gray-400 uppercase tracking-wide mb-1">W / D / L</p>
+                                 <p className="text-2xl font-black text-gray-900">{stats.wins} <span className="text-gray-300">/</span> {stats.draws} <span className="text-gray-300">/</span> {stats.losses}</p>
+                              </div>
+                              <div className="p-6 rounded-[2rem] bg-gray-50 border border-gray-100 flex flex-col items-center justify-center text-center">
+                                 <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4">
+                                    <TrendingUp className="w-6 h-6 text-blue-500" />
+                                 </div>
+                                 <p className="text-sm font-bold text-gray-400 uppercase tracking-wide mb-1">Points</p>
+                                 <p className="text-3xl font-black text-gray-900">{totalPoints}</p>
+                              </div>
+                              <div className="p-6 rounded-[2rem] bg-gray-50 border border-gray-100 flex flex-col items-center justify-center text-center">
+                                 <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4">
+                                    <Settings2 className="w-6 h-6 text-amber-500" />
+                                 </div>
+                                 <p className="text-sm font-bold text-gray-400 uppercase tracking-wide mb-1">Formation</p>
+                                 <p className="text-xl font-black text-gray-900">{profile.formation || 'N/A'}</p>
+                              </div>
+                           </div>
+                        </section>
+                     </div>
+
+<h2 className="text-3xl font-bold text-gray-700 tracking-tighter inline-block relative">
                            Detailed Statistics
                            <span className="absolute -bottom-3 left-0 w-12 border-b-2 border-gray-300"></span>
                         </h2>
                      </div>
-                     <div className="bg-gray-50 h-96 rounded-3xl border border-dashed border-gray-300 flex items-center justify-center">
-                        <div className="text-center space-y-4">
-                           <TrendingUp className="w-12 h-12 text-gray-300 mx-auto" />
-                           <p className="text-gray-400 font-bold tracking-wide text-sm">Detailed statistics arriving soon...</p>
+                     {managerialHistory && managerialHistory.length > 0 ? (
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                           <div className="overflow-x-auto">
+                              <table className="w-full text-left border-collapse">
+                                 <thead>
+                                    <tr className="bg-gray-50 border-b border-gray-100">
+                                       <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Club / Team</th>
+                                       <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
+                                       <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Period</th>
+                                       <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">W / D / L</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody className="divide-y divide-gray-100">
+                                    {managerialHistory.map((record: any, idx: number) => (
+                                       <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                                          <td className="py-4 px-6">
+                                             <span className="font-bold text-gray-900">{record.club || 'N/A'}</span>
+                                          </td>
+                                          <td className="py-4 px-6 text-gray-600 font-medium">
+                                             {record.role || 'N/A'}
+                                          </td>
+                                          <td className="py-4 px-6 text-center text-gray-500 font-medium">
+                                             {record.startDate ? new Date(record.startDate).getFullYear() : '?'} - {record.endDate ? new Date(record.endDate).getFullYear() : 'Present'}
+                                          </td>
+                                          <td className="py-4 px-6 text-center font-bold text-gray-900">
+                                             <span className="text-emerald-600">{record.wins || 0}</span>
+                                             <span className="text-gray-300 mx-1">/</span>
+                                             <span className="text-amber-500">{record.draws || 0}</span>
+                                             <span className="text-gray-300 mx-1">/</span>
+                                             <span className="text-red-500">{record.losses || 0}</span>
+                                          </td>
+                                       </tr>
+                                    ))}
+                                 </tbody>
+                              </table>
+                           </div>
                         </div>
-                     </div>
+                     ) : (
+                        <div className="bg-gray-50 h-96 rounded-3xl border border-dashed border-gray-300 flex items-center justify-center">
+                           <div className="text-center space-y-4">
+                              <TrendingUp className="w-12 h-12 text-gray-300 mx-auto" />
+                              <p className="text-gray-400 font-bold tracking-wide text-sm">No detailed statistics available yet.</p>
+                           </div>
+                        </div>
+                     )}
                   </div>
                )}
-            </div>
+            
+               {activeTab === "Gallery" && (
+                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                     <div className="mb-12">
+                        <h2 className="text-3xl font-bold text-gray-700 tracking-tighter inline-block relative">
+                           Media Gallery
+                           <span className="absolute -bottom-3 left-0 w-12 border-b-2 border-gray-300"></span>
+                        </h2>
+                     </div>
+                     {/* Videos Section */}
+                     {profile.video_links && profile.video_links.length > 0 && (
+                        <div className="mb-12">
+                           <h3 className="text-sm font-bold text-gray-500 tracking-[0.2em] mb-6 uppercase">Featured Videos</h3>
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              {profile.video_links.map((url: string, i: number) => {
+                                 let embedUrl = url;
+                                 if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                                    const ytIdMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+                                    if (ytIdMatch && ytIdMatch[1]) {
+                                       embedUrl = `https://www.youtube.com/embed/${ytIdMatch[1]}`;
+                                    }
+                                 } else if (url.includes('vimeo.com')) {
+                                    const vimIdMatch = url.match(/vimeo\.com\/(?:.*#|.*\/videos\/)?([0-9]+)/);
+                                    if (vimIdMatch && vimIdMatch[1]) {
+                                       embedUrl = `https://player.vimeo.com/video/${vimIdMatch[1]}`;
+                                    }
+                                 }
+
+                                 return (
+                                    <div key={i} className={`aspect-video bg-black rounded-3xl overflow-hidden shadow-lg border border-gray-100 ${i === 0 ? 'md:col-span-3' : 'md:col-span-1'}`}>
+                                       <iframe 
+                                          src={embedUrl}
+                                          className="w-full h-full"
+                                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                          allowFullScreen
+                                          loading="lazy"
+                                       />
+                                    </div>
+                                 );
+                              })}
+                           </div>
+                        </div>
+                     )}
+
+                     {/* Photos Section */}
+                     {profile.gallery_urls && profile.gallery_urls.length > 0 && (
+                        <div>
+                           <h3 className="text-sm font-bold text-gray-500 tracking-[0.2em] mb-6 uppercase">Action Shots</h3>
+                           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                              {profile.gallery_urls.map((media: any, i: number) => (
+                                 <div key={i} className="relative aspect-square rounded-3xl overflow-hidden group cursor-pointer" onClick={() => setSelectedImageIndex(i)}>
+                                    <img src={media.url || media} alt="Action Shot" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors duration-500"></div>
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+                     )}
+                     
+                     {(!profile.video_links || profile.video_links.length === 0) && (!profile.gallery_urls || profile.gallery_urls.length === 0) && (
+                        <div className="bg-gray-50 h-96 rounded-3xl border border-dashed border-gray-300 flex items-center justify-center">
+                           <div className="text-center space-y-4">
+                              <Trophy className="w-12 h-12 text-gray-300 mx-auto" />
+                              <p className="text-gray-400 font-bold tracking-wide text-sm">No media gallery available yet.</p>
+                           </div>
+                        </div>
+                     )}
+                     
+                     {selectedImageIndex !== null && (
+                        <ImageLightbox 
+                          images={(profile.gallery_urls || []).map((m: any) => m.url || m)} 
+                          initialIndex={selectedImageIndex} 
+                          onClose={() => setSelectedImageIndex(null)} 
+                        />
+                     )}
+                  </div>
+               )}\n            </div>
          </main>
 
          {isContactModalOpen && (
