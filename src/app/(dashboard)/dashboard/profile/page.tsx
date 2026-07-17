@@ -482,6 +482,24 @@ export default function ProfileEditor() {
       router.refresh();
     }
   };
+  const uploadPersonnelImage = async (file: File): Promise<string | null> => {
+    showToast('Uploading personnel photo...', 'success');
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const fileName = `personnel_${user?.id}_${Date.now()}.webp`;
+    const { data, error } = await supabase.storage.from('site-assets').upload(`avatars/${fileName}`, file, { upsert: true });
+
+    if (error) {
+      showToast(`Upload failed: ${error.message}`, 'error');
+      return null;
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from('site-assets').getPublicUrl(`avatars/${fileName}`);
+      showToast('Photo uploaded successfully!', 'success');
+      return publicUrl;
+    }
+  };
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1146,7 +1164,7 @@ export default function ProfileEditor() {
                    {(role === 'player' || role === 'athlete') && <PlayerCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} achievements={achievements} onAchievementsChange={(val) => {setAchievements(val); setIsDirty(true);}} disabled={!isEditing} />}
                    {role === 'agent' && <AgentPortfolioForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
                    {role === 'scout' && <ScoutDiscoveriesForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
-                   {role === 'organization' && <OrganizationDetailsForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
+                   {role === 'organization' && <OrganizationDetailsForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} onUploadImage={uploadPersonnelImage} />}
                 </div>
 
                 {isEditing && (

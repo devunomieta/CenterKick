@@ -1,9 +1,11 @@
 'use client';
 
-import { Plus, Trash2, Building, Trophy, Users } from 'lucide-react';
+import { Plus, Trash2, Building, Trophy, Users, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 import { HybridLinkInput } from './HybridLinkInput';
 
-export function OrganizationDetailsForm({ data, onChange }: { data: any, onChange: (val: any) => void, disabled?: boolean }) {
+export function OrganizationDetailsForm({ data, onChange, onUploadImage }: { data: any, onChange: (val: any) => void, disabled?: boolean, onUploadImage?: (file: File) => Promise<string | null> }) {
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const orgTypes = ['Pro Club', 'Semi-Pro Club', 'Academy', 'Agency', 'Scouting Network', 'Football Association'];
 
   const addPersonnel = () => {
@@ -20,6 +22,22 @@ export function OrganizationDetailsForm({ data, onChange }: { data: any, onChang
     onChange({ ...data, key_personnel: personnel });
   };
   
+  const handleImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUploadImage) return;
+    setUploadingIndex(index);
+    try {
+      const url = await onUploadImage(file);
+      if (url) {
+        const personnel = [...(data.key_personnel || [])];
+        personnel[index] = { ...personnel[index], image_url: url };
+        onChange({ ...data, key_personnel: personnel });
+      }
+    } finally {
+      setUploadingIndex(null);
+    }
+  };
+
   const updatePersonnelRole = (index: number, role: string) => {
     const personnel = [...(data.key_personnel || [])];
     personnel[index] = { ...personnel[index], role };

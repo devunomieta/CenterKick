@@ -473,7 +473,7 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                         />
                      )}
                   </div>
-               )}\n            </div>
+               )}          </div>
          </main>
 
          {isContactModalOpen && (
