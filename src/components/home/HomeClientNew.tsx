@@ -597,8 +597,12 @@ export function HomeClient({
             renderItem={(org) => (
               <div className="group bg-white border border-gray-100 rounded-3xl p-6 shadow-md hover:shadow-xl hover:border-amber-500/10 transition-all duration-500 h-full flex flex-col justify-between">
                 <div>
-                  <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4 border border-amber-100 group-hover:scale-105 transition-transform">
-                    <Building className="w-6 h-6 text-amber-600" />
+                  <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4 border border-amber-100 group-hover:scale-105 transition-transform overflow-hidden">
+                     {(org.avatar_url || org.logo_url) ? (
+                        <img src={org.avatar_url || org.logo_url} alt={getDisplayName(org)} className="w-full h-full object-cover" />
+                     ) : (
+                        <Building className="w-6 h-6 text-amber-600" />
+                     )}
                   </div>
 
                   <div className="text-center mb-4">

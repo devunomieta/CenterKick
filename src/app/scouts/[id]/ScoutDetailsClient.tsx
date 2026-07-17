@@ -18,6 +18,13 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import parse from 'html-react-parser';
+
+const formatAbsoluteUrl = (url: string) => {
+   if (!url) return '';
+   if (url.startsWith('http://') || url.startsWith('https://')) return url;
+   return `https://${url}`;
+};
 
 interface ScoutDetailsClientProps {
   profile: Record<string, any>;
@@ -101,17 +108,17 @@ export default function ScoutDetailsClient({ profile }: ScoutDetailsClientProps)
                      <div className="flex items-center gap-6">
                         <div className="flex items-center gap-4">
                            {profile.social_links?.facebook && (
-                              <a href={profile.social_links.facebook} target="_blank" rel="noopener noreferrer">
+                              <a href={formatAbsoluteUrl(profile.social_links.facebook)} target="_blank" rel="noopener noreferrer">
                                  <Facebook className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
                               </a>
                            )}
                            {profile.social_links?.instagram && (
-                              <a href={profile.social_links.instagram} target="_blank" rel="noopener noreferrer">
+                              <a href={formatAbsoluteUrl(profile.social_links.instagram)} target="_blank" rel="noopener noreferrer">
                                  <Instagram className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
                               </a>
                            )}
                            {profile.social_links?.twitter && (
-                              <a href={profile.social_links.twitter} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)">
+                              <a href={formatAbsoluteUrl(profile.social_links.twitter)} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)">
                                  <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current hover:text-[#b50a0a] transition-colors"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
                               </a>
                            )}
@@ -129,7 +136,7 @@ export default function ScoutDetailsClient({ profile }: ScoutDetailsClientProps)
             </div>
 
             {/* Tabs Navigation */}
-            <div className="bg-white border-b border-gray-100 sticky top-32 z-40 shadow-sm overflow-x-auto no-scrollbar">
+            <div className="bg-white border-b border-gray-100 z-40 shadow-sm overflow-x-auto no-scrollbar">
                <div className="max-w-[1200px] mx-auto flex items-center gap-12 h-20 px-4 lg:px-0">
                   {["Bio", "Affiliations"].map((tab) => (
                      <button
@@ -158,9 +165,9 @@ export default function ScoutDetailsClient({ profile }: ScoutDetailsClientProps)
                               Scouting Philosophy
                            </h2>
                         </div>
-                        <div className="prose prose-xl text-gray-500 font-medium leading-[1.8]">
+                        <div className="prose prose-sm sm:prose-base text-gray-500 font-medium leading-[1.8] max-w-none">
                            {profile.bio ? (
-                             <p className="whitespace-pre-line">{profile.bio}</p>
+                             parse(profile.bio)
                            ) : (
                              <p>No biography or scouting philosophy provided yet.</p>
                            )}
@@ -208,23 +215,6 @@ export default function ScoutDetailsClient({ profile }: ScoutDetailsClientProps)
                      )}
                   </div>
                )}
-            </div>
-
-            {/* Bottom CTA Overlay Banner */}
-            <div className="bg-[#a20000] py-24 mb-10 mx-4 lg:mx-0 rounded-none lg:rounded-[100px] shadow-[0_40px_80px_rgba(162,0,0,0.3)] relative overflow-hidden">
-               <div className="max-w-[1000px] mx-auto px-4 text-center relative z-10">
-                  <h2 className="text-4xl lg:text-5xl font-black text-white mb-10 tracking-tighter leading-tight">
-                     Partner with premier talent scouts <br />
-                     <span className="opacity-60">To build your scouting network.</span>
-                  </h2>
-                  <div className="flex flex-wrap justify-center gap-6">
-                     <Link href="/register">
-                        <button className="bg-white text-black px-12 py-5 rounded-2xl font-bold tracking-wide text-sm hover:bg-black hover:text-white transition-all shadow-2xl">
-                           Partner With Us
-                        </button>
-                     </Link>
-                  </div>
-               </div>
             </div>
          </main>
 

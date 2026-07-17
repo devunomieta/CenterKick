@@ -15,10 +15,19 @@ import {
    ChevronLeft,
    MapPin,
    Facebook,
-   Instagram
+   Instagram,
+   X,
+   Send
 } from "lucide-react";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import parse from 'html-react-parser';
+
+const formatAbsoluteUrl = (url: string) => {
+   if (!url) return '';
+   if (url.startsWith('http://') || url.startsWith('https://')) return url;
+   return `https://${url}`;
+};
 
 interface CoachDetailsClientProps {
   profile: any;
@@ -26,12 +35,27 @@ interface CoachDetailsClientProps {
 
 export default function CoachDetailsClient({ profile }: CoachDetailsClientProps) {
    const [activeTab, setActiveTab] = useState("Profile");
+   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+   const [contactFormData, setContactFormData] = useState({ name: '', email: '', message: '' });
+   const [contactStatus, setContactStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
    const router = useRouter();
 
    const displayName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Anonymous Coach';
    const nameParts = displayName.split(' ');
    const firstName = nameParts[0];
    const restOfName = nameParts.slice(1).join(' ');
+
+   // Use real stats if available, otherwise fallback to 0
+   const careerStats = profile.career_stats || [];
+   const stats = {
+      matches: careerStats.reduce((acc: number, curr: any) => acc + (curr.games_managed || curr.appearances || 0), 0),
+      wins: careerStats.reduce((acc: number, curr: any) => acc + (curr.wins || 0), 0),
+      draws: careerStats.reduce((acc: number, curr: any) => acc + (curr.draws || 0), 0),
+      losses: careerStats.reduce((acc: number, curr: any) => acc + (curr.losses || 0), 0),
+      goalsFor: careerStats.reduce((acc: number, curr: any) => acc + (curr.goals_scored || curr.goals || 0), 0),
+      goalsAgainst: careerStats.reduce((acc: number, curr: any) => acc + (curr.goals_conceded || 0), 0),
+   };
+   const totalPoints = (stats.wins * 3) + stats.draws;
 
    const calculateAge = (dob: string | undefined | null) => {
       if (!dob) return "NIL";
@@ -48,16 +72,6 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
    const profileFormation = profile.formation || 'NIL';
    const profileClub = profile.current_club || 'NIL';
 
-   // Mock stats if not in database (for UI completeness as per landing page request)
-   const stats = profile.stats || {
-      matches: 56,
-      goalsFor: 143,
-      goalsAgainst: 51,
-      wins: 41,
-      draws: 11,
-      losses: 4,
-      points: 86
-   };
 
    return (
       <div className="min-h-screen bg-white">
@@ -160,27 +174,21 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                         <div className="h-6 w-[1px] bg-white/20" />
                         <div className="flex items-center gap-4">
                            {profile.social_links?.facebook && (
-                              <a href={profile.social_links.facebook} target="_blank" rel="noopener noreferrer">
+                              <a href={formatAbsoluteUrl(profile.social_links.facebook)} target="_blank" rel="noopener noreferrer">
                                  <Facebook className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
                               </a>
                            )}
                            {profile.social_links?.instagram && (
-                              <a href={profile.social_links.instagram} target="_blank" rel="noopener noreferrer">
+                              <a href={formatAbsoluteUrl(profile.social_links.instagram)} target="_blank" rel="noopener noreferrer">
                                  <Instagram className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
                               </a>
                            )}
                            {profile.social_links?.twitter && (
-                              <a href={profile.social_links.twitter} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)">
+                              <a href={formatAbsoluteUrl(profile.social_links.twitter)} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)">
                                  <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current hover:text-[#b50a0a] transition-colors"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
                               </a>
                            )}
-                           {!profile.social_links && (
-                              <>
-                                 <Facebook className="w-4 h-4 text-white/20" />
-                                 <Instagram className="w-4 h-4 text-white/20" />
-                                 <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current text-white/20"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
-                              </>
-                           )}
+
                         </div>
                      </div>
                   </div>
@@ -188,7 +196,7 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
             </div>
 
             {/* Tab Navigation Section */}
-            <div className="bg-white border-b border-gray-100 shadow-sm sticky top-32 z-40">
+            <div className="bg-white border-b border-gray-100 shadow-sm z-40">
                <div className="max-w-[1000px] mx-auto flex items-center justify-between px-4 lg:px-0">
                   <div className="flex overflow-x-auto no-scrollbar py-1">
                      {["Profile", "Bio", "Statistics"].map((tab) => (
@@ -207,7 +215,7 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                      ))}
                   </div>
                   <div className="hidden lg:flex items-center gap-4">
-                     <button className="bg-[#a20000] hover:bg-[#8a0000] text-white px-6 py-2.5 rounded-lg text-xs font-bold tracking-wide transition-all">
+                     <button onClick={() => setIsContactModalOpen(true)} className="bg-[#a20000] hover:bg-[#8a0000] text-white px-6 py-2.5 rounded-lg text-xs font-bold tracking-wide transition-all">
                         Hire Coach
                      </button>
                   </div>
@@ -269,7 +277,7 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                                        <Trophy className="w-6 h-6 text-[#a20000]" />
                                     </div>
                                     <div>
-                                       <span className="text-3xl font-bold text-gray-900 block leading-none">{stats.points}</span>
+                                       <span className="text-3xl font-bold text-gray-900 block leading-none">{totalPoints}</span>
                                        <span className="text-xs font-bold text-gray-400 tracking-wide">Points</span>
                                     </div>
                                  </div>
@@ -332,6 +340,39 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                            ))}
                         </div>
                      </section>
+
+                     {/* Honors & Achievements */}
+                     <section>
+                        <h2 className="text-2xl sm:text-3xl font-bold text-gray-600 mb-6">Honours</h2>
+                        {profile.achievements && Array.isArray(profile.achievements) && profile.achievements.length > 0 ? (
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {profile.achievements.map((item: any, i: number) => {
+                                 const isString = typeof item === 'string';
+                                 const title = isString ? item : item.title;
+                                 const year = isString ? '' : item.year;
+                                 const category = isString ? '' : item.category;
+
+                                 return (
+                                    <div key={i} className="p-4 bg-gray-50 border border-gray-100 rounded-2xl flex flex-col gap-2">
+                                       <div className="flex items-center gap-2">
+                                          <Trophy className="w-5 h-5 text-amber-500 shrink-0" />
+                                          <span className="text-base font-bold text-gray-900">{title}</span>
+                                       </div>
+                                       {(year || category) && (
+                                          <div className="flex items-center gap-3 text-xs font-bold text-gray-500 uppercase tracking-wider ml-7">
+                                             {category && <span>{category}</span>}
+                                             {category && year && <span>•</span>}
+                                             {year && <span>{year}</span>}
+                                          </div>
+                                       )}
+                                    </div>
+                                 );
+                              })}
+                           </div>
+                        ) : (
+                           <p className="text-gray-500 text-base font-medium">No honours recorded yet.</p>
+                        )}
+                     </section>
                   </div>
                )}
 
@@ -342,9 +383,9 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                            Biography
                         </h2>
                      </div>
-                     <div className="prose prose-lg text-gray-600 max-w-none space-y-6 font-medium leading-[2]">
+                     <div className="prose prose-sm sm:prose-base text-gray-600 max-w-none space-y-6 font-medium leading-[2]">
                         {profile.bio ? (
-                           <p className="whitespace-pre-line">{profile.bio}</p>
+                           parse(profile.bio)
                         ) : (
                            <p>No biography provided yet.</p>
                         )}
@@ -369,27 +410,79 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
                   </div>
                )}
             </div>
+         </main>
 
-            {/* Support Message / CTA Section */}
-            <div className="bg-[#fcfafa] py-24 mb-10 w-full overflow-hidden relative">
-               <div className="max-w-[1000px] mx-auto px-4 lg:px-0">
-                  <div className="bg-gray-950 rounded-[40px] shadow-2xl relative text-center py-24 px-8 border-[12px] border-gray-900">
-                     <span className="text-[#a20000] text-xs font-bold tracking-[0.3em] mt-6 block mb-4">
-                        Join CenterKick
-                     </span>
-                     <h2 className="text-4xl md:text-5xl font-black text-white mb-10 tracking-tighter leading-tight drop-shadow-2xl">
-                        Design a profile to <br />
-                        <span className="text-[#a20000]">Showcase Your Talent NOW</span>
-                     </h2>
-                     <Link href="/register">
-                       <button className="bg-white text-gray-900 hover:text-[#a20000] font-bold text-sm tracking-[0.2em] px-12 py-5 rounded-2xl shadow-xl hover:shadow-[0_20px_40px_rgba(162,0,0,0.2)] transition-all inline-flex items-center gap-4 group">
-                          Get Started <ArrowRight className="w-5 h-5 text-[#a20000] group-hover:translate-x-2 transition-transform" />
-                       </button>
-                     </Link>
+         {isContactModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+               <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+                  <button onClick={() => setIsContactModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                     <X className="w-6 h-6" />
+                  </button>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">Hire Coach</h3>
+                  <p className="text-sm text-gray-500 mb-6">Send an inquiry to {displayName}. CenterKick admin will review and connect you.</p>
+                  
+                  <div className="space-y-4">
+                     <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Your Name</label>
+                        <input 
+                           type="text" 
+                           value={contactFormData.name}
+                           onChange={(e) => setContactFormData({...contactFormData, name: e.target.value})}
+                           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#a20000] focus:border-transparent outline-none" 
+                           placeholder="John Doe"
+                        />
+                     </div>
+                     <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Your Email</label>
+                        <input 
+                           type="email" 
+                           value={contactFormData.email}
+                           onChange={(e) => setContactFormData({...contactFormData, email: e.target.value})}
+                           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#a20000] focus:border-transparent outline-none" 
+                           placeholder="john@example.com"
+                        />
+                     </div>
+                     <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Message / Proposal</label>
+                        <textarea 
+                           rows={4}
+                           value={contactFormData.message}
+                           onChange={(e) => setContactFormData({...contactFormData, message: e.target.value})}
+                           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#a20000] focus:border-transparent outline-none resize-none" 
+                           placeholder="Describe your offer or interest..."
+                        />
+                     </div>
+                     <button 
+                        onClick={async () => {
+                           setContactStatus('loading');
+                           try {
+                              const res = await fetch('/api/contact', {
+                                 method: 'POST',
+                                 headers: { 'Content-Type': 'application/json' },
+                                 body: JSON.stringify({ ...contactFormData, targetType: 'coach', targetId: profile.id, targetName: displayName })
+                              });
+                              if (res.ok) {
+                                 setContactStatus('success');
+                                 setTimeout(() => setIsContactModalOpen(false), 2000);
+                              } else {
+                                 setContactStatus('error');
+                              }
+                           } catch (e) {
+                              setContactStatus('error');
+                           }
+                        }}
+                        disabled={contactStatus === 'loading' || contactStatus === 'success' || !contactFormData.name || !contactFormData.email || !contactFormData.message}
+                        className="w-full bg-[#a20000] hover:bg-[#8a0000] text-white font-bold tracking-wide py-4 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                     >
+                        {contactStatus === 'loading' ? 'Sending...' : contactStatus === 'success' ? 'Request Sent!' : <><Send className="w-4 h-4" /> Send Request</>}
+                     </button>
+                     {contactStatus === 'error' && (
+                        <p className="text-red-500 text-xs text-center font-bold">Failed to send request. Please try again.</p>
+                     )}
                   </div>
                </div>
             </div>
-         </main>
+         )}
 
          <Footer />
       </div>

@@ -3,11 +3,16 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import parse from 'html-react-parser';
-import { Facebook, Instagram, Twitter, ChevronLeft, MapPin, Trophy, Medal, Star } from "lucide-react";
+import { Facebook, Instagram, Twitter, ChevronLeft, MapPin, Trophy, X } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+
+const formatAbsoluteUrl = (url: string) => {
+   if (!url) return '';
+   if (url.startsWith('http://') || url.startsWith('https://')) return url;
+   return `https://${url}`;
+};
 
 interface PlayerDetailsClientProps {
   athlete: any;
@@ -17,6 +22,7 @@ interface PlayerDetailsClientProps {
 
 export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: PlayerDetailsClientProps) {
    const [activeTab, setActiveTab] = useState("Profile");
+   const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const router = useRouter();
    const displayName = athlete.full_name || `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim() || 'Anonymous Player';
    const nameParts = displayName.split(' ');
@@ -143,26 +149,19 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                         <div className="h-6 w-[1px] bg-white/20" />
                         <div className="flex items-center gap-4">
                            {athlete.social_links?.facebook && (
-                              <a href={athlete.social_links.facebook} target="_blank" rel="noopener noreferrer">
+                              <a href={formatAbsoluteUrl(athlete.social_links.facebook)} target="_blank" rel="noopener noreferrer">
                                  <Facebook className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
                               </a>
                            )}
                            {athlete.social_links?.instagram && (
-                              <a href={athlete.social_links.instagram} target="_blank" rel="noopener noreferrer">
+                              <a href={formatAbsoluteUrl(athlete.social_links.instagram)} target="_blank" rel="noopener noreferrer">
                                  <Instagram className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
                               </a>
                            )}
                            {athlete.social_links?.twitter && (
-                              <a href={athlete.social_links.twitter} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)">
+                              <a href={formatAbsoluteUrl(athlete.social_links.twitter)} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)">
                                  <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current hover:text-[#b50a0a] transition-colors"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
                               </a>
-                           )}
-                           {!athlete.social_links && (
-                              <>
-                                 <Facebook className="w-4 h-4 text-white/20" />
-                                 <Instagram className="w-4 h-4 text-white/20" />
-                                 <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current text-white/20"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
-                              </>
                            )}
                         </div>
                      </div>
@@ -174,7 +173,7 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
             <div className="z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm">
                <div className="max-w-[1000px] mx-auto px-4 lg:px-0">
                   <div className="flex items-center overflow-x-auto [&::-webkit-scrollbar]:hidden gap-1 sm:gap-0">
-                     {["Profile", "Career Stat.", "Gallery", "News"].map((tab) => (
+                     {["Profile", "Career Stat.", "Gallery"].map((tab) => (
                         <button
                            key={tab}
                            onClick={() => setActiveTab(tab)}
@@ -269,7 +268,7 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                      {athlete.video_links && athlete.video_links.length > 0 && (
                         <div className="mb-12">
                            <h3 className="text-sm font-bold text-gray-500 tracking-[0.2em] mb-6 uppercase">Featured Videos</h3>
-                           <div className="grid grid-cols-1 gap-6">
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                               {athlete.video_links.map((url: string, i: number) => {
                                  let embedUrl = url;
                                  if (url.includes('youtube.com') || url.includes('youtu.be')) {
@@ -285,7 +284,7 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                                  }
 
                                  return (
-                                    <div key={i} className="aspect-video bg-black rounded-3xl overflow-hidden shadow-lg border border-gray-100">
+                                    <div key={i} className={`aspect-video bg-black rounded-3xl overflow-hidden shadow-lg border border-gray-100 ${i === 0 ? 'md:col-span-3' : 'md:col-span-1'}`}>
                                        <iframe 
                                           src={embedUrl}
                                           className="w-full h-full"
@@ -306,11 +305,24 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                            <h3 className="text-sm font-bold text-gray-500 tracking-[0.2em] mb-6 uppercase">Action Shots</h3>
                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                               {athlete.gallery_urls.map((url: string, i: number) => (
-                                 <div key={i} className="aspect-square bg-gray-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 group cursor-pointer">
+                                 <div key={i} onClick={() => setSelectedImage(url)} className="aspect-square bg-gray-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 group cursor-pointer">
                                     <img src={url} alt="Action shot" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                                  </div>
                               ))}
                            </div>
+                        </div>
+                     )}
+
+                     {/* Lightbox */}
+                     {selectedImage && (
+                        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
+                           <button 
+                              onClick={() => setSelectedImage(null)} 
+                              className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors"
+                           >
+                              <X className="w-8 h-8" />
+                           </button>
+                           <img src={selectedImage} alt="Fullscreen action shot" className="max-w-full max-h-[90vh] object-contain rounded-lg" />
                         </div>
                      )}
 
@@ -459,42 +471,7 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                   </div>
                )}
 
-               {activeTab === "News" && (
-                  <div className="animate-in fade-in duration-500">
-                     <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 tracking-tighter">Latest <span className="text-[#b50a0a]">News</span></h2>
-                     
-                     {news && news.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                           {news.map((post, i) => (
-                              <Link href={`/news/${post.slug}`} key={i} className="group block">
-                                 <div className="aspect-video bg-gray-100 rounded-3xl overflow-hidden mb-5">
-                                    <img 
-                                       src={post.cover_image || post.cover_image_url || 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=800'} 
-                                       alt={post.title}
-                                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                                    />
-                                 </div>
-                                 <p className="text-xs font-bold tracking-wide text-gray-400 mb-2">
-                                    {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                 </p>
-                                 <h3 className="text-xl font-bold text-gray-900 leading-tight mb-3 group-hover:text-[#b50a0a] transition-colors line-clamp-2">
-                                    {post.title}
-                                 </h3>
-                                 <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed">
-                                    {post.excerpt}
-                                 </p>
-                              </Link>
-                           ))}
-                        </div>
-                     ) : (
-                        <div className="py-20 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                           <p className="text-gray-400 text-sm font-bold tracking-wide">No news available.</p>
-                        </div>
-                     )}
-                  </div>
-               )}
-
-               {activeTab !== "Profile" && activeTab !== "Gallery" && activeTab !== "Career Stat." && activeTab !== "News" && (
+               {activeTab !== "Profile" && activeTab !== "Gallery" && activeTab !== "Career Stat." && (
                   <div className="py-20 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
                      <p className="text-gray-400 text-sm font-bold tracking-wide">{activeTab} — Coming Soon</p>
                   </div>

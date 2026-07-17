@@ -15,10 +15,19 @@ import {
    ArrowRight,
    ChevronLeft,
    Facebook,
-   Instagram
+   Instagram,
+   Send,
+   X
 } from "lucide-react";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import parse from 'html-react-parser';
+
+const formatAbsoluteUrl = (url: string) => {
+   if (!url) return '';
+   if (url.startsWith('http://') || url.startsWith('https://')) return url;
+   return `https://${url}`;
+};
 
 interface OrgDetailsClientProps {
   profile: any;
@@ -27,10 +36,22 @@ interface OrgDetailsClientProps {
 
 export default function OrgDetailsClient({ profile, members = [] }: OrgDetailsClientProps) {
    const [activeTab, setActiveTab] = useState("Profile");
+   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+   const [contactFormData, setContactFormData] = useState({ name: '', email: '', message: '' });
+   const [contactStatus, setContactStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
    const router = useRouter();
 
    const displayName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Anonymous Organization';
-   const profileEst = profile.established_year || profile.established || 'NIL';
+   let profileEst = 'NIL';
+   if (profile.established_year) {
+      profileEst = typeof profile.established_year === 'string' && profile.established_year.includes('-') 
+         ? new Date(profile.established_year).getFullYear().toString()
+         : profile.established_year.toString();
+   } else if (profile.established) {
+      profileEst = typeof profile.established === 'string' && profile.established.includes('-') 
+         ? new Date(profile.established).getFullYear().toString()
+         : profile.established.toString();
+   }
 
    return (
       <div className="min-h-screen bg-white">
@@ -119,17 +140,17 @@ export default function OrgDetailsClient({ profile, members = [] }: OrgDetailsCl
                      <div className="flex items-center gap-6">
                         <div className="flex items-center gap-4">
                            {profile.social_links?.facebook && (
-                              <a href={profile.social_links.facebook} target="_blank" rel="noopener noreferrer">
+                              <a href={formatAbsoluteUrl(profile.social_links.facebook)} target="_blank" rel="noopener noreferrer">
                                  <Facebook className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
                               </a>
                            )}
                            {profile.social_links?.instagram && (
-                              <a href={profile.social_links.instagram} target="_blank" rel="noopener noreferrer">
+                              <a href={formatAbsoluteUrl(profile.social_links.instagram)} target="_blank" rel="noopener noreferrer">
                                  <Instagram className="w-4 h-4 hover:text-[#b50a0a] transition-colors" />
                               </a>
                            )}
                            {profile.social_links?.twitter && (
-                              <a href={profile.social_links.twitter} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)">
+                              <a href={formatAbsoluteUrl(profile.social_links.twitter)} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)">
                                  <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current hover:text-[#b50a0a] transition-colors"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
                               </a>
                            )}
@@ -166,11 +187,9 @@ export default function OrgDetailsClient({ profile, members = [] }: OrgDetailsCl
                      ))}
                   </div>
                   <div className="hidden lg:flex items-center gap-4">
-                     <Link href="/register">
-                        <button className="bg-[#a20000] hover:bg-[#8a0000] text-white px-6 py-2.5 rounded-lg text-xs font-bold tracking-wide transition-all">
-                           Connect Partner
-                        </button>
-                     </Link>
+                     <button onClick={() => setIsContactModalOpen(true)} className="bg-[#a20000] hover:bg-[#8a0000] text-white px-6 py-2.5 rounded-lg text-xs font-bold tracking-wide transition-all">
+                        Connect Partner
+                     </button>
                   </div>
                </div>
             </div>
@@ -233,9 +252,9 @@ export default function OrgDetailsClient({ profile, members = [] }: OrgDetailsCl
                            <h2 className="text-sm font-bold text-gray-900 tracking-wide mb-6 pb-2 border-b border-gray-100">
                               About Our Academy
                            </h2>
-                           <p className="text-gray-600 text-base leading-relaxed font-medium">
-                              {profile.bio || 'Premium sports organization committed to developing academy prospects and providing professional infrastructure.'}
-                           </p>
+                           <div className="text-gray-600 text-base leading-relaxed font-medium prose prose-sm max-w-none prose-a:text-[#b50a0a]">
+                              {profile.bio ? parse(profile.bio) : 'Premium sports organization committed to developing academy prospects and providing professional infrastructure.'}
+                           </div>
                         </section>
                      </div>
 
@@ -260,11 +279,9 @@ export default function OrgDetailsClient({ profile, members = [] }: OrgDetailsCl
                            </div>
                         </div>
 
-                        <Link href="/register" className="block w-full">
-                           <button className="w-full bg-[#a20000] hover:bg-black text-white py-3.5 rounded-xl font-bold tracking-wide text-xs transition-all flex items-center justify-center gap-2">
-                              Send Message <ArrowRight className="w-3.5 h-3.5" />
-                           </button>
-                        </Link>
+                        <button onClick={() => setIsContactModalOpen(true)} className="w-full bg-[#a20000] hover:bg-black text-white py-3.5 rounded-xl font-bold tracking-wide text-xs transition-all flex items-center justify-center gap-2">
+                           Send Message <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
                      </div>
                   </div>
                )}
