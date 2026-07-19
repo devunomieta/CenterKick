@@ -23,19 +23,18 @@ import {
 import { ProfileCompletenessWidget } from '@/components/dashboard/ProfileCompletenessWidget';
 import { RichTextEditor } from '@/components/cms/RichTextEditor';
 import { createClient } from '@/lib/supabase/client';
-import { requestProfileEdit } from './actions';
+import { requestProfileEdit, invalidateProfileCache, submitUserLeague, submitUserClub } from './actions';
 import { useToast } from '@/context/ToastContext';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useRouter } from 'next/navigation';
-import { invalidateProfileCache } from './actions';
 import { CopyableProfileLink } from '@/components/dashboard/CopyableProfileLink';
 import { CoachCareerForm } from './components/CoachCareerForm';
 import { PlayerCareerForm } from './components/PlayerCareerForm';
 import { AgentPortfolioForm } from './components/AgentPortfolioForm';
 import { ScoutDiscoveriesForm } from './components/ScoutDiscoveriesForm';
 import { OrganizationDetailsForm } from './components/OrganizationDetailsForm';
-
+import { SearchableCombobox } from '@/components/common/SearchableCombobox';
 
 const calculateAge = (dob: string) => {
   if (!dob) return '';
@@ -344,12 +343,31 @@ export default function ProfileEditor() {
     if (!user) { showToast('You must be logged in', 'error'); setIsSaving(false); return; }
 
     const formData = new FormData(e.target as HTMLFormElement);
+
+    let finalLeagueId = profile?.league;
+    if (finalLeagueId && finalLeagueId.startsWith('NEW:')) {
+      const newLeagueName = finalLeagueId.replace('NEW:', '');
+      const res = await submitUserLeague(newLeagueName, profile?.new_league_country || null);
+      if (res.success && res.data) {
+        finalLeagueId = res.data.id;
+      } else {
+        showToast(res.error || 'Failed to create new league', 'error');
+        setIsSaving(false);
+        return;
+      }
+    }
+
+    let finalClubName = profile?.current_club;
+    if (finalClubName && finalLeagueId && !clubsList.some(c => c.name === finalClubName && c.league_id === finalLeagueId)) {
+       await submitUserClub(finalClubName, finalLeagueId);
+    }
+
     const profileData: any = {
       id: profile?.id,
       user_id: user.id,
       achievements: achievements,
-      league: formData.get('league') || profile?.league || null,
-      current_club: formData.get('current_club') || profile?.current_club || null,
+      league: finalLeagueId || null,
+      current_club: finalClubName || null,
       contract_expiry: formData.get('contract_expiry') || profile?.contract_expiry || null,
       updated_at: new Date().toISOString()
     };
@@ -974,33 +992,47 @@ export default function ProfileEditor() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:p-2">
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Current League</label>
-                        <select
+                        <SearchableCombobox
                           disabled={!isEditing}
-                          name="league"
+                          options={leaguesList}
                           value={profile?.league || ''}
-                          onChange={(e) => setProfile({...profile, league: e.target.value, current_club: ''})}
-                          className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black disabled:opacity-70 disabled:bg-gray-100"
-                        >
-                          <option value="">Select League</option>
-                          {leaguesList.map((l: any) => (
-                            <option key={l.id} value={l.id}>{l.name}</option>
-                          ))}
-                        </select>
+                          onChange={(val, isNew, newName) => {
+                             if (isNew && newName) {
+                                setProfile({...profile, league: `NEW:${newName}`, current_club: ''});
+                             } else {
+                                setProfile({...profile, league: val, current_club: ''});
+                             }
+                          }}
+                          placeholder="Select League"
+                        />
+                        {profile?.league?.startsWith('NEW:') && (
+                           <div className="mt-2 animate-in fade-in zoom-in duration-300">
+                             <label className="text-[10px] font-bold text-red-600 uppercase tracking-wide">Required: Select Country for New League</label>
+                             <select 
+                               className="w-full bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-red-500 transition-all outline-none text-red-900"
+                               onChange={(e) => setProfile({...profile, new_league_country: e.target.value})}
+                               value={profile?.new_league_country || ''}
+                               required
+                             >
+                               <option value="">Select Country</option>
+                               {countriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                             </select>
+                           </div>
+                        )}
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Current Club</label>
-                        <select
+                        <SearchableCombobox
                           disabled={!isEditing || !profile?.league}
-                          name="current_club"
+                          options={clubsList.filter(c => c.league_id === profile?.league || profile?.league?.startsWith('NEW:'))}
                           value={profile?.current_club || ''}
-                          onChange={(e) => setProfile({...profile, current_club: e.target.value})}
-                          className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black disabled:opacity-70 disabled:bg-gray-100"
-                        >
-                          <option value="">Select Club</option>
-                          {clubsList.filter(c => c.league_id === profile?.league).map((c: any) => (
-                            <option key={c.name} value={c.name}>{c.name}</option>
-                          ))}
-                        </select>
+                          valueField="name"
+                          displayField="name"
+                          onChange={(val, isNew, newName) => {
+                             setProfile({...profile, current_club: isNew ? newName : val});
+                          }}
+                          placeholder="Select Club"
+                        />
                       </div>
                     </div>
 
@@ -1046,11 +1078,38 @@ export default function ProfileEditor() {
                           </div>
                           <div className="flex flex-col space-y-1 flex-1 min-w-[120px]">
                             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">League</label>
-                            <select disabled={!isEditing} value={stat.league} onChange={(e) => { const newStats = [...careerStats]; newStats[i].league = e.target.value; newStats[i].club = ''; setCareerStats(newStats); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] disabled:opacity-70 disabled:bg-gray-100"><option value="">Select League</option>{leaguesList.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select>
+                            <SearchableCombobox
+                              disabled={!isEditing}
+                              options={leaguesList}
+                              value={stat.league || ''}
+                              valueField="id"
+                              displayField="name"
+                              onChange={(val, isNew, newName) => {
+                                const newStats = [...careerStats]; 
+                                newStats[i].league = isNew ? `NEW:${newName}` : val; 
+                                newStats[i].club = ''; 
+                                setCareerStats(newStats); 
+                                setIsDirty(true);
+                              }}
+                              placeholder="Select League"
+                            />
                           </div>
                           <div className="flex flex-col space-y-1 flex-1 min-w-[120px]">
                             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Club</label>
-                            <select disabled={!isEditing || !stat.league} value={stat.club} onChange={(e) => { const newStats = [...careerStats]; newStats[i].club = e.target.value; setCareerStats(newStats); setIsDirty(true); }} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] disabled:opacity-70 disabled:bg-gray-100"><option value="">Select Club</option>{clubsList.filter(c => c.league_id === stat.league).map(c => <option key={c.name} value={c.name}>{c.name}</option>)}</select>
+                            <SearchableCombobox
+                              disabled={!isEditing || !stat.league}
+                              options={clubsList.filter(c => c.league_id === stat.league || stat.league?.startsWith('NEW:'))}
+                              value={stat.club || ''}
+                              valueField="name"
+                              displayField="name"
+                              onChange={(val, isNew, newName) => {
+                                const newStats = [...careerStats]; 
+                                newStats[i].club = isNew ? newName : val; 
+                                setCareerStats(newStats); 
+                                setIsDirty(true);
+                              }}
+                              placeholder="Select Club"
+                            />
                           </div>
                           <div className="flex gap-2 w-full sm:w-auto">
                             <div className="flex flex-col space-y-1 w-16">
@@ -1082,8 +1141,8 @@ export default function ProfileEditor() {
                 )}
 
                 <div className="pt-8 border-t border-gray-50">
-                   {role === 'coach' && <CoachCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} achievements={achievements} onAchievementsChange={(val) => {setAchievements(val); setIsDirty(true);}} disabled={!isEditing} />}
-                   {(role === 'player' || role === 'athlete') && <PlayerCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} achievements={achievements} onAchievementsChange={(val) => {setAchievements(val); setIsDirty(true);}} disabled={!isEditing} />}
+                   {role === 'coach' && <CoachCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} achievements={achievements} onAchievementsChange={(val) => {setAchievements(val); setIsDirty(true);}} disabled={!isEditing} clubsList={clubsList} leaguesList={leaguesList} />}
+                   {(role === 'player' || role === 'athlete') && <PlayerCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} achievements={achievements} onAchievementsChange={(val) => {setAchievements(val); setIsDirty(true);}} disabled={!isEditing} clubsList={clubsList} leaguesList={leaguesList} />}
                    {role === 'agent' && <AgentPortfolioForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} isSigned={profile?.is_signed} />}
                    {role === 'scout' && <ScoutDiscoveriesForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
                    {role === 'organization' && <OrganizationDetailsForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} onUploadImage={uploadPersonnelImage} />}

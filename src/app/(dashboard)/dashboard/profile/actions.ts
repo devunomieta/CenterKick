@@ -78,3 +78,73 @@ export async function invalidateProfileCache() {
     }
   }
 }
+
+export async function submitUserLeague(name: string, country_id: string | null) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Unauthorized' };
+
+  const { data, error } = await supabase
+    .from('leagues')
+    .insert({
+      name,
+      country_id,
+      is_user_submitted: true,
+      is_verified: false,
+      is_active: true
+    })
+    .select('id, name')
+    .single();
+
+  if (error) return { error: error.message };
+
+  // Notify admins
+  const { data: admins } = await supabase.from('users').select('id').in('role', ['admin', 'superadmin', 'operations']);
+  if (admins && admins.length > 0) {
+    const adminNotifications = admins.map(admin => ({
+      user_id: admin.id,
+      title: 'New League Submitted',
+      message: `A user has submitted a new league: ${name}.`,
+      type: 'info',
+      action_url: '/admin/settings/football-data'
+    }));
+    await supabase.from('notifications').insert(adminNotifications);
+  }
+
+  return { success: true, data };
+}
+
+export async function submitUserClub(name: string, league_id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Unauthorized' };
+
+  const { data, error } = await supabase
+    .from('clubs')
+    .insert({
+      name,
+      league_id,
+      is_user_submitted: true,
+      is_verified: false,
+      is_active: true
+    })
+    .select('id, name, league_id')
+    .single();
+
+  if (error) return { error: error.message };
+
+  // Notify admins
+  const { data: admins } = await supabase.from('users').select('id').in('role', ['admin', 'superadmin', 'operations']);
+  if (admins && admins.length > 0) {
+    const adminNotifications = admins.map(admin => ({
+      user_id: admin.id,
+      title: 'New Club Submitted',
+      message: `A user has submitted a new club: ${name}.`,
+      type: 'info',
+      action_url: '/admin/settings/football-data'
+    }));
+    await supabase.from('notifications').insert(adminNotifications);
+  }
+
+  return { success: true, data };
+}

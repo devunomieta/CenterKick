@@ -2,7 +2,9 @@
 
 import { Plus, Trash2, Activity, Trophy } from 'lucide-react';
 
-export function PlayerCareerForm({ data, onChange, achievements, onAchievementsChange, disabled }: { data: any, onChange: (val: any) => void, achievements?: any[], onAchievementsChange?: (val: any[]) => void, disabled?: boolean }) {
+import { SearchableCombobox } from '@/components/common/SearchableCombobox';
+
+export function PlayerCareerForm({ data, onChange, achievements, onAchievementsChange, disabled, clubsList = [] }: { data: any, onChange: (val: any) => void, achievements?: any[], onAchievementsChange?: (val: any[]) => void, disabled?: boolean, clubsList?: any[], leaguesList?: any[] }) {
   
   const addTransfer = () => {
     const transfers = data.transfer_history || [];
@@ -135,7 +137,15 @@ export function PlayerCareerForm({ data, onChange, achievements, onAchievementsC
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Previous Club</label>
-                   <input type="text" className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:border-[#b50a0a] focus:ring-1 focus:ring-[#b50a0a] outline-none text-gray-900 disabled:bg-gray-50 disabled:text-gray-500" value={record.club} onChange={(e) => updateTransfer(index, 'club', e.target.value)} placeholder="e.g. Real Madrid" disabled={disabled} />
+                   <SearchableCombobox
+                     disabled={disabled}
+                     options={clubsList}
+                     value={record.club || ''}
+                     valueField="name"
+                     displayField="name"
+                     onChange={(val, isNew, newName) => updateTransfer(index, 'club', isNew ? newName : val)}
+                     placeholder="e.g. Real Madrid"
+                   />
                 </div>
                 <div>
                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">

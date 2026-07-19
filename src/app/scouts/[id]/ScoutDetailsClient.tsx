@@ -428,7 +428,7 @@ export default function ScoutDetailsClient({ profile }: ScoutDetailsClientProps)
                      {selectedImageIndex !== null && profile.gallery_urls && (
                         <ImageLightbox 
                            images={profile.gallery_urls.map((m: any) => m.url || m)} 
-                           currentIndex={selectedImageIndex} 
+                           initialIndex={selectedImageIndex} 
                            onClose={() => setSelectedImageIndex(null)} 
                         />
                      )}

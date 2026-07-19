@@ -42,6 +42,7 @@ export default function FootballDataManagement() {
   const [selectedClubs, setSelectedClubs] = useState<string[]>([]);
   const [bulkLeagueId, setBulkLeagueId] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showUnverifiedOnly, setShowUnverifiedOnly] = useState(false);
   
   const toast = useToast();
 
@@ -193,11 +194,27 @@ export default function FootballDataManagement() {
     setIsLoading(false);
   };
 
-   const filteredData = (data[activeTab] || []).filter((item: Record<string, any>) => 
-    item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.countries?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredData = (data[activeTab] || []).filter(item => {
+    const searchMatch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const unverifiedMatch = showUnverifiedOnly ? (item.is_user_submitted && !item.is_verified) : true;
+    return searchMatch && unverifiedMatch;
+  });
+
+  const handleApprove = async (id: string) => {
+    setIsActionLoading(true);
+    try {
+      if (activeTab === 'leagues') {
+        await updateLeague(id, { is_verified: true, is_user_submitted: false });
+      } else if (activeTab === 'clubs') {
+        await updateClub(id, { is_verified: true, is_user_submitted: false });
+      }
+      toast.showToast(`${getSingularLabel(activeTab)} verified successfully!`, 'success');
+      fetchAllData();
+    } catch (e) {
+      toast.showToast('Failed to verify entry', 'error');
+    }
+    setIsActionLoading(false);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
@@ -217,12 +234,39 @@ export default function FootballDataManagement() {
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
           </button>
-          <button 
-            onClick={() => handleOpenModal()}
-            className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-xs font-bold tracking-wide hover:bg-[#b50a0a] transition-all flex items-center gap-2 shadow-lg shadow-slate-200 whitespace-nowrap"
-          >
-            <Plus className="w-4 h-4" /> Add New {getSingularLabel(activeTab)}
-          </button>
+          <div className="flex-1 flex flex-col md:flex-row items-stretch md:items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input 
+                  type="text"
+                  placeholder={`Search ${activeTab}...`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#b50a0a] transition-all"
+                />
+              </div>
+              
+              {(activeTab === 'leagues' || activeTab === 'clubs') && (
+                <button
+                  onClick={() => setShowUnverifiedOnly(!showUnverifiedOnly)}
+                  className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold border transition-colors ${
+                    showUnverifiedOnly 
+                      ? 'bg-amber-50 text-amber-600 border-amber-200' 
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <AlertCircle className="w-4 h-4" />
+                  Pending Verification
+                </button>
+              )}
+
+              <button 
+                onClick={() => handleOpenModal()}
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold hover:bg-black transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Add {getSingularLabel(activeTab)}
+              </button>
+            </div>
         </div>
       </div>
 
@@ -419,13 +463,20 @@ export default function FootballDataManagement() {
                     )}
 
                     <td className="px-6 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <button onClick={() => handleOpenModal(item)} className="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all">
-                            <Edit className="w-4 h-4" />
-                         </button>
-                         <button onClick={() => handleDelete(item.id)} className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
-                            <Trash2 className="w-4 h-4" />
-                         </button>
+                      <div className="flex items-center justify-end gap-1">
+                         {item.is_user_submitted && !item.is_verified && (activeTab === 'leagues' || activeTab === 'clubs') && (
+                            <button onClick={() => handleApprove(item.id)} title="Approve" className="p-2.5 text-amber-500 hover:bg-amber-50 rounded-xl transition-all">
+                               <CheckCircle2 className="w-4 h-4" />
+                            </button>
+                         )}
+                         <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => handleOpenModal(item)} className="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all">
+                               <Edit className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleDelete(item.id)} className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
+                               <Trash2 className="w-4 h-4" />
+                            </button>
+                         </div>
                       </div>
                     </td>
                   </tr>

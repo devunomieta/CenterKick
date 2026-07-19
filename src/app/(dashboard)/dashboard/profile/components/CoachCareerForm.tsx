@@ -2,7 +2,9 @@
 
 import { Plus, Trash2, Trophy } from 'lucide-react';
 
-export function CoachCareerForm({ data, onChange, achievements, onAchievementsChange, disabled }: { data: any, onChange: (val: any) => void, achievements?: any[], onAchievementsChange?: (val: any[]) => void, disabled?: boolean }) {
+import { SearchableCombobox } from '@/components/common/SearchableCombobox';
+
+export function CoachCareerForm({ data, onChange, achievements, onAchievementsChange, disabled, clubsList = [] }: { data: any, onChange: (val: any) => void, achievements?: any[], onAchievementsChange?: (val: any[]) => void, disabled?: boolean, clubsList?: any[], leaguesList?: any[] }) {
   const licenses = ['UEFA Pro', 'UEFA A', 'UEFA B', 'UEFA C', 'AFC Pro', 'AFC A', 'CONCACAF Pro', 'National Badge', 'Other'];
   const specializations = ['Youth Development', 'Tactical Analysis', 'Physical Conditioning', 'Goalkeeping', 'Set Pieces', 'Data Analytics'];
   const languages = ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Dutch', 'Arabic', 'Chinese'];
@@ -204,7 +206,15 @@ export function CoachCareerForm({ data, onChange, achievements, onAchievementsCh
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Club/Organization</label>
-                   <input type="text" disabled={disabled} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:border-[#b50a0a] outline-none" value={record.club} onChange={(e) => updateManagerialRecord(index, 'club', e.target.value)} placeholder="e.g. Manchester United" />
+                   <SearchableCombobox
+                     disabled={disabled}
+                     options={clubsList}
+                     value={record.club || ''}
+                     valueField="name"
+                     displayField="name"
+                     onChange={(val, isNew, newName) => updateManagerialRecord(index, 'club', isNew ? newName : val)}
+                     placeholder="e.g. Manchester United"
+                   />
                 </div>
                 <div>
                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Role Held</label>
