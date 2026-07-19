@@ -55,15 +55,11 @@ export default function ProfileEditor() {
   const [isEditing, setIsEditing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
-  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
-  const [memberEmailInput, setMemberEmailInput] = useState('');
   const { showToast } = useToast();
   const router = useRouter();
   const [achievements, setAchievements] = useState<any[]>([]);
-  const [portfolioMembers, setPortfolioMembers] = useState<any[]>([]);
   const [videoLinks, setVideoLinks] = useState<string[]>([]);
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
-  const [editingMember, setEditingMember] = useState<any>(null);
   
   const [isUploadingIdProof, setIsUploadingIdProof] = useState(false);
   const [isUploadingRoleProof, setIsUploadingRoleProof] = useState(false);
@@ -143,14 +139,6 @@ export default function ProfileEditor() {
         setSeasonsList(seasons || []);
         setLeaguesList(leagues || []);
         setClubsList(clubs || []);
-
-        if (userRecord?.role === 'agent' || userRecord?.role === 'organization') {
-          const { data: members } = await supabase
-            .from('profiles')
-            .select('id, first_name, last_name, role, market_value, avatar_url, position, email, user_id')
-            .eq('agent_id', user.id);
-          setPortfolioMembers(members || []);
-        }
       }
       setIsLoading(false);
     }
@@ -583,104 +571,7 @@ export default function ProfileEditor() {
     return (match && match[2].length === 11) ? match[2] : null;
   };
 
-  const processAddMember = async (email: string) => {
-    if (!email) return;
-
-    setIsSaving(true);
-    showToast('Linking member...', 'success');
-
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    const { data: targetProfile, error: searchError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('email', email.trim())
-      .single();
-
-    if (searchError || !targetProfile) {
-      showToast('Could not find a profile with that email.', 'error');
-      setIsSaving(false);
-      return;
-    }
-
-    const linkPayload = role === 'organization' ? { organization_id: user?.id } : { agent_id: user?.id };
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update(linkPayload)
-      .eq('id', targetProfile.id);
-
-    if (updateError) {
-      console.error('Link member error:', updateError);
-      showToast(`Failed to link: ${updateError.message}`, 'error');
-    } else {
-      showToast('Member successfully linked to your portfolio!', 'success');
-      setPortfolioMembers([...portfolioMembers, targetProfile]);
-    }
-    setIsSaving(false);
-  };
-
-  const handleRemoveMember = async (memberId: string) => {
-    if (!confirm("Are you sure you want to unlink this member from your portfolio?")) return;
-    setIsSaving(true);
-
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('profiles')
-      .update({ agent_id: null, organization_id: null })
-      .eq('id', memberId);
-
-    if (error) {
-      console.error('Unlink error:', error);
-      showToast(`Failed to unlink: ${error.message}`, 'error');
-    } else {
-      showToast('Member successfully unlinked.', 'success');
-      setPortfolioMembers(portfolioMembers.filter((m: any) => m.id !== memberId));
-    }
-    setIsSaving(false);
-  };
-
   const isAdminOrOps = ['superadmin', 'admin', 'operations'].includes(role);
-
-
-
-  const handleRequestEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingMember) return;
-
-    setIsSaving(true);
-    setStatus(null);
-
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-
-    const changes: Record<string, { old: any; new: any }> = {};
-    const fields = ['first_name', 'last_name', 'bio', 'position', 'market_value', 'height_cm', 'weight_kg', 'foot', 'jersey_number'];
-
-    fields.forEach(f => {
-      const newVal = formData.get(f);
-      const oldVal = editingMember[f];
-      if (newVal !== null && newVal !== undefined && String(newVal) !== String(oldVal || '')) {
-        changes[f] = { old: oldVal, new: newVal };
-      }
-    });
-
-    if (Object.keys(changes).length === 0) {
-      showToast('No changes detected.', 'success');
-      setEditingMember(null);
-      setIsSaving(false);
-      return;
-    }
-
-    const res = await requestProfileEdit(editingMember.id, changes);
-    if (res.error) {
-      showToast(res.error, 'error');
-    } else {
-      showToast('Edits submitted to Admin for approval.', 'success');
-      setEditingMember(null);
-    }
-    setIsSaving(false);
-  };
 
   if (isLoading) return <div className="pt-20 text-center font-bold tracking-wide animate-pulse">Loading Editor...</div>;
 
@@ -1191,39 +1082,16 @@ export default function ProfileEditor() {
 
                 {(role === 'agent' || role === 'organization') && (
                   <div className="pt-8 border-t border-gray-50">
-                    <h4 className="text-lg font-black text-gray-900 tracking-wide mb-6">Represented Talent Portfolio</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                      {portfolioMembers.map((member) => (
-                        <div key={member.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                          <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                            {member.avatar_url && <img src={member.avatar_url} className="w-full h-full object-cover" />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-gray-900 truncate">{member.first_name} {member.last_name}</p>
-                            <p className="text-xs font-bold text-gray-900 truncate">{member.position || member.role} {member.market_value ? `• $${member.market_value}` : ''}</p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setEditingMember(member)}
-                            className="text-gray-300 hover:text-blue-500"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveMember(member.id)}
-                            className="text-gray-300 hover:text-[#b50a0a]"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
+                    <h4 className="text-lg font-black text-gray-900 tracking-wide mb-2">Represented Talent Portfolio</h4>
+                    <p className="text-sm font-medium text-gray-500 mb-6">Your linked talent is automatically displayed on your public profile.</p>
+                    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 text-center">
+                      <p className="text-sm font-bold text-gray-900 mb-4">Manage your linked accounts in the Managed Accounts page.</p>
                       <button
                         type="button"
-                        onClick={() => setIsAddMemberModalOpen(true)}
-                        className="p-4 border-2 border-dashed border-gray-100 rounded-2xl flex items-center justify-center gap-2 text-gray-300 hover:text-[#b50a0a] transition-all min-h-[74px]"
+                        onClick={() => router.push('/dashboard/managed')}
+                        className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-black transition-colors"
                       >
-                        <Plus className="w-4 h-4" />
+                        Go to Managed Accounts
                       </button>
                     </div>
                   </div>
@@ -1423,107 +1291,7 @@ export default function ProfileEditor() {
         </div>
       </div>
 
-      {/* Edit Requested Modal */}
-      {editingMember && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-300">
-            <h3 className="text-xl font-black text-gray-900 mb-6">Request Edits for {editingMember.first_name} {editingMember.last_name}</h3>
-            
-            <form onSubmit={handleRequestEdit} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">First Name</label>
-                  <input name="first_name" defaultValue={editingMember.first_name} className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Last Name</label>
-                  <input name="last_name" defaultValue={editingMember.last_name} className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none" />
-                </div>
-              </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Bio</label>
-                <textarea name="bio" defaultValue={editingMember.bio} rows={3} className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-1.5">
-                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Primary Position</label>
-                   <select name="position" defaultValue={editingMember.position} className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none appearance-none">
-                     <option value="Striker">Striker</option>
-                     <option value="Midfielder">Midfielder</option>
-                     <option value="Defender">Defender</option>
-                     <option value="Goalkeeper">Goalkeeper</option>
-                   </select>
-                 </div>
-                 <div className="space-y-1.5">
-                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Market Value ($)</label>
-                   <input disabled={!isAdminOrOps} name="market_value" defaultValue={editingMember.market_value} className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none disabled:opacity-70 disabled:bg-gray-100" />
-                 </div>
-                 <div className="space-y-1.5">
-                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Height (cm)</label>
-                   <input name="height_cm" type="number" defaultValue={editingMember.height_cm} className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none" />
-                 </div>
-                 <div className="space-y-1.5">
-                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Weight (kg)</label>
-                   <input name="weight_kg" type="number" defaultValue={editingMember.weight_kg} className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none" />
-                 </div>
-                 <div className="space-y-1.5">
-                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Main Foot</label>
-                   <select name="foot" defaultValue={editingMember.foot} className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none appearance-none">
-                     <option value="Right">Right</option>
-                     <option value="Left">Left</option>
-                     <option value="Both">Both</option>
-                   </select>
-                 </div>
-                 <div className="space-y-1.5">
-                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Jersey Number</label>
-                   <input name="jersey_number" type="number" defaultValue={editingMember.jersey_number} className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none" />
-                 </div>
-              </div>
-
-              <div className="flex gap-3 justify-end pt-4 border-t border-gray-100">
-                <button type="button" onClick={() => setEditingMember(null)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors">Cancel</button>
-                <button type="submit" disabled={isSaving} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-black transition-colors disabled:opacity-50">
-                  {isSaving ? 'Submitting...' : 'Submit Request'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Add Member Modal */}
-      {isAddMemberModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300">
-            <h3 className="text-xl font-black text-gray-900 mb-2">Add Portfolio Member</h3>
-            <p className="text-sm text-gray-500 font-medium mb-6">Enter the exact email address of the player or coach to link them to your organization.</p>
-            <input 
-              type="email" 
-              value={memberEmailInput}
-              onChange={(e) => setMemberEmailInput(e.target.value)}
-              placeholder="player@example.com"
-              className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] outline-none transition-all mb-6 text-black"
-            />
-            <div className="flex gap-3 justify-end">
-              <button type="button" onClick={() => setIsAddMemberModalOpen(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors">Cancel</button>
-              <button 
-                type="button" 
-                disabled={isSaving || !memberEmailInput.trim()}
-                onClick={() => {
-                  setIsAddMemberModalOpen(false);
-                  processAddMember(memberEmailInput);
-                  setMemberEmailInput('');
-                }} 
-                className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-[#b50a0a] hover:bg-red-800 transition-colors disabled:opacity-50"
-              >
-                {isSaving ? 'Linking...' : 'Link Member'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
