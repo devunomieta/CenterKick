@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { Briefcase, Users, Globe, ArrowRight, Share2, Mail, CheckCircle2, Award, ChevronLeft, Facebook, Instagram, Linkedin } from "lucide-react";
+import { Briefcase, Users, Globe, ArrowRight, Share2, Mail, CheckCircle2, Award, ChevronLeft, Facebook, Instagram, Linkedin, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
@@ -23,6 +23,7 @@ interface AgentDetailsClientProps {
 export default function AgentDetailsClient({ profile, managedClients }: AgentDetailsClientProps) {
    const mergedLinks = { ...(profile.social_links || {}), ...(profile.official_links || {}) };
    const [activeTab, setActiveTab] = useState("Bio");
+   const [showLicense, setShowLicense] = useState(false);
    const router = useRouter();
 
    const displayName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Anonymous Agent';
@@ -30,14 +31,36 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
    const firstName = nameParts[0];
    const restOfName = nameParts.slice(1).join(' ');
 
-   const profileAgency = profile.agency_name || 'NIL';
+   const profileAgency = profile.agency_name || 'Free Agent';
 
-   // Metrics can be derived from managedClients if available
+   const regionsArr = profile.regions_of_operation || [];
+   const allRegionsSelected = regionsArr.length === 5 && !regionsArr.includes('Global');
+   const isGlobal = regionsArr.length === 0 || regionsArr.includes('Global') || allRegionsSelected;
+   const displayRegions = isGlobal ? ['Global'] : regionsArr;
+
+   const calculatePortfolioValue = () => {
+      let total = 0;
+      managedClients.forEach(client => {
+         const mv = client.market_value;
+         if (!mv) return;
+         let num = parseFloat(mv.toString().replace(/[^0-9.]/g, ''));
+         if (isNaN(num)) return;
+         if (mv.toString().toUpperCase().includes('M')) num *= 1000000;
+         else if (mv.toString().toUpperCase().includes('K')) num *= 1000;
+         total += num;
+      });
+      if (total === 0) return "N/A";
+      if (total >= 1000000) return `€${(total / 1000000).toFixed(1)}M`;
+      if (total >= 1000) return `€${(total / 1000).toFixed(1)}K`;
+      return `€${total}`;
+   };
+
+   const manualTransfers = profile.notable_transfers || [];
+
    const metrics = {
-      transfers: profile.total_transfers || 0,
+      transfers: manualTransfers.length,
       talent: managedClients.length,
-      value: profile.portfolio_value || "N/A",
-      success: profile.success_rate || "N/A"
+      value: calculatePortfolioValue()
    };
 
    return (
@@ -140,47 +163,25 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
                </div>
             </div>
 
-            {/* Quick Metrics Bar */}
-            <div className="bg-gray-50 border-y border-gray-100 py-8 sm:py-12">
-               <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-12">
-                     <div className="text-center md:text-left">
-                        <span className="text-xs font-bold text-gray-400 tracking-wide block mb-2">Total Transfers</span>
-                        <span className="text-4xl font-bold text-gray-900 leading-none">{metrics.transfers}+</span>
-                     </div>
-                     <div className="text-center md:text-left border-l border-gray-200 md:pl-12">
-                        <span className="text-xs font-bold text-gray-400 tracking-wide block mb-2">Managed Talent</span>
-                        <span className="text-4xl font-bold text-gray-900 leading-none">{metrics.talent}</span>
-                     </div>
-                     <div className="text-center md:text-left border-l border-gray-200 md:pl-12">
-                        <span className="text-xs font-bold text-gray-400 tracking-wide block mb-2">Portfolio Value</span>
-                        <span className="text-4xl font-bold text-[#a20000] leading-none">{metrics.value}</span>
-                     </div>
-                     <div className="text-center md:text-left border-l border-gray-200 md:pl-12">
-                        <span className="text-xs font-bold text-gray-400 tracking-wide block mb-2">Success Rate</span>
-                        <span className="text-4xl font-bold text-gray-900 leading-none">{metrics.success}</span>
-                     </div>
-                  </div>
-               </div>
-            </div>
+
 
             {/* Tabs Navigation */}
-            <div className="bg-white border-b border-gray-100 z-40 shadow-sm overflow-x-auto no-scrollbar">
-               <div className="max-w-[1200px] mx-auto flex items-center gap-12 h-20 px-4 lg:px-0">
-                  {["Bio", "Portfolio"].map((tab) => (
-                     <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`text-xs font-bold tracking-[0.25em] h-full relative transition-all ${
- activeTab === tab ? "text-[#a20000]" : "text-gray-400 hover:text-gray-900"
- }`}
-                     >
-                        {tab}
-                        {activeTab === tab && (
-                           <span className="absolute bottom-0 left-0 w-full h-1 bg-[#a20000] rounded-t-full shadow-[0_-4px_10px_rgba(162,0,0,0.3)]"></span>
-                        )}
-                     </button>
-                  ))}
+            <div className="z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm">
+               <div className="max-w-[1200px] mx-auto px-4 lg:px-0">
+                  <div className="flex items-center overflow-x-auto [&::-webkit-scrollbar]:hidden gap-1 sm:gap-0">
+                     {["Bio", "Portfolio"].map((tab) => (
+                        <button
+                           key={tab}
+                           onClick={() => setActiveTab(tab)}
+                           className={`relative text-xs font-bold tracking-wide whitespace-nowrap py-4 px-3 sm:px-4 hover:text-[#b50a0a] transition-colors ${activeTab === tab ? 'text-[#b50a0a] font-bold' : 'text-gray-500'}`}
+                        >
+                           {tab}
+                           {activeTab === tab && (
+                              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#b50a0a] rounded-t-full" />
+                           )}
+                        </button>
+                     ))}
+                  </div>
                </div>
             </div>
 
@@ -197,41 +198,32 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
                      </div>
 
                      {managedClients.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                            {managedClients.map((client) => {
                               const isCoach = client.users?.role === 'coach';
                               const roleUrl = isCoach ? 'coaches' : 'players';
                               
                               return (
-                                 <Link 
-                                    key={client.id} 
-                                    href={`/${roleUrl}/${client.slug}`}
-                                    className="group bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-2xl transition-all hover:-translate-y-2"
-                                 >
-                                    <div className="aspect-[4/5] relative overflow-hidden bg-gray-100">
-                                       <Image 
-                                          src={client.avatar_url || "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=600&auto=format&fit=crop"} 
-                                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                          alt={client.full_name || 'Client Avatar'} 
-                                          fill
-                                       />
-                                       <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-white tracking-wide border border-white/20">
-                                          {client.position || (isCoach ? 'Tactician' : 'Attack')}
-                                       </div>
-                                    </div>
-                                    <div className="p-6">
-                                       <span className="text-xs font-bold text-[#a20000] tracking-[0.3em] mb-1 block">
-                                          {isCoach ? 'Technical Staff' : 'Professional Athlete'}
-                                       </span>
-                                       <h4 className="text-lg font-bold text-gray-900 tracking-tighter group-hover:text-[#a20000] transition-colors">
-                                          {client.first_name} {client.last_name}
-                                       </h4>
-                                       <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-50 text-xs font-bold text-gray-400 tracking-wide">
-                                          <div className="flex items-center gap-2">
-                                             <Globe className="w-3 h-3" />
-                                             {client.country || 'Nigeria'}
+                                 <Link href={`/${roleUrl}/${client.slug}`} key={client.id}>
+                                    <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100 hover:border-[#a20000] hover:shadow-xl transition-all group cursor-pointer">
+                                       <div className="flex items-center gap-4">
+                                          <div className="w-16 h-16 rounded-2xl overflow-hidden border border-gray-200">
+                                             {client.avatar_url ? (
+                                                <img src={client.avatar_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt={client.full_name || 'Client Avatar'} />
+                                             ) : (
+                                                <div className="w-full h-full bg-white flex items-center justify-center">
+                                                   <Users className="w-6 h-6 text-gray-300" />
+                                                </div>
+                                             )}
                                           </div>
-                                          <ArrowRight className="w-4 h-4 text-gray-200 group-hover:text-[#a20000] group-hover:translate-x-1 transition-all" />
+                                          <div>
+                                             <h3 className="text-base font-bold text-gray-900 tracking-tight line-clamp-1 group-hover:text-[#a20000] transition-colors">
+                                                {client.first_name} {client.last_name}
+                                             </h3>
+                                             <p className="text-xs font-bold text-gray-500 tracking-wide mt-1 capitalize">
+                                                {isCoach ? 'Coach' : 'Player'} • {client.position || client.country || 'Global'}
+                                             </p>
+                                          </div>
                                        </div>
                                     </div>
                                  </Link>
@@ -246,40 +238,118 @@ export default function AgentDetailsClient({ profile, managedClients }: AgentDet
                            <p className="text-gray-400 font-bold tracking-wide text-base">No talent managed yet.</p>
                         </div>
                      )}
+                     {manualTransfers.length > 0 && (
+                        <div className="pt-16 mt-8 border-t border-gray-100">
+                           <div className="flex items-center justify-between mb-8">
+                              <h2 className="text-3xl font-bold text-gray-700 tracking-tighter inline-block relative border-b-4 border-[#a20000] pb-2">
+                                 Notable Transfers
+                              </h2>
+                           </div>
+                           <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
+                              <div className="overflow-x-auto">
+                                 <table className="w-full text-left border-collapse">
+                                    <thead>
+                                       <tr className="bg-gray-50/50">
+                                          <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Player</th>
+                                          <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Date</th>
+                                          <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">From Club</th>
+                                          <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">To Club</th>
+                                          <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Fee</th>
+                                          <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Agent Role</th>
+                                       </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                       {manualTransfers.map((transfer: any, index: number) => (
+                                          <tr key={index} className="hover:bg-gray-50/30 transition-colors">
+                                             <td className="p-5 text-sm font-bold text-gray-900 whitespace-nowrap">{transfer.playerName}</td>
+                                             <td className="p-5 text-sm font-bold text-gray-500 whitespace-nowrap">{transfer.date}</td>
+                                             <td className="p-5 text-sm font-bold text-gray-900 whitespace-nowrap">{transfer.fromClub}</td>
+                                             <td className="p-5 text-sm font-bold text-[#a20000] whitespace-nowrap">{transfer.toClub}</td>
+                                             <td className="p-5 text-sm font-bold text-gray-900 whitespace-nowrap">{transfer.fee}</td>
+                                             <td className="p-5 text-sm font-bold text-gray-500 whitespace-nowrap">{transfer.agentRole}</td>
+                                          </tr>
+                                       ))}
+                                    </tbody>
+                                 </table>
+                              </div>
+                           </div>
+                        </div>
+                     )}
                   </div>
                )}
 
                {activeTab === "Bio" && (
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                     <div className="lg:col-span-2 space-y-12">
+                  <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                     {/* Overview Section */}
+                     <div className="bg-gray-50 border border-gray-100 rounded-[40px] p-10 shadow-sm mb-16">
+                        <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-8">Overview</h2>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                           <div className="flex flex-col gap-2">
+                              <span className="text-xs font-bold text-gray-400 tracking-wide uppercase">Total Transfers</span>
+                              <span className="text-2xl font-black text-gray-900">{metrics.transfers}</span>
+                           </div>
+                           <div className="flex flex-col gap-2 border-l border-gray-200 pl-8">
+                              <span className="text-xs font-bold text-gray-400 tracking-wide uppercase">Managed Talent</span>
+                              <span className="text-2xl font-black text-[#a20000]">{metrics.talent}</span>
+                           </div>
+                           <div className="flex flex-col gap-2 border-l border-gray-200 pl-8">
+                              <span className="text-xs font-bold text-gray-400 tracking-wide uppercase">Portfolio Value</span>
+                              <span className="text-2xl font-black text-gray-900">{metrics.value}</span>
+                           </div>
+                           <div className="flex flex-col gap-2 border-l border-gray-200 pl-8">
+                              <span className="text-xs font-bold text-gray-400 tracking-wide uppercase">Country</span>
+                              <span className="text-xl font-bold text-gray-900">{profile.country || "Global"}</span>
+                           </div>
+                           
+                           <div className="flex flex-col gap-2 pt-8 border-t border-gray-200 col-span-1">
+                              <span className="text-xs font-bold text-gray-400 tracking-wide uppercase">License</span>
+                              <div className="flex items-center gap-2">
+                                 {showLicense ? (
+                                    <span className="text-lg font-bold text-gray-900">{profile.fa_license_number || profile.license_code || "N/A"}</span>
+                                 ) : (
+                                    <span className="px-3 py-1 bg-green-100 border border-green-200 rounded-full text-xs font-bold text-green-700 uppercase">Licensed</span>
+                                 )}
+                                 {(profile.fa_license_number || profile.license_code) && (
+                                    <button 
+                                       onClick={() => setShowLicense(!showLicense)}
+                                       className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition-colors"
+                                       title={showLicense ? "Hide ID" : "Show ID"}
+                                    >
+                                       {showLicense ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                 )}
+                              </div>
+                           </div>
+                           <div className="flex flex-col gap-2 pt-8 border-t border-gray-200 border-l pl-8 col-span-1">
+                              <span className="text-xs font-bold text-gray-400 tracking-wide uppercase">Agency Role</span>
+                              <span className="text-lg font-bold text-gray-900">{profileAgency}</span>
+                           </div>
+                           <div className="flex flex-col gap-2 pt-8 border-t border-gray-200 border-l pl-8 col-span-2">
+                              <span className="text-xs font-bold text-gray-400 tracking-wide uppercase">Regions of Operations</span>
+                              <div className="flex flex-wrap gap-2 mt-1">
+                                 {displayRegions.map((region: string, i: number) => (
+                                    <span key={i} className={region === 'Global' ? "text-base font-bold text-gray-900" : "px-3 py-1 bg-white border border-gray-200 rounded-full text-xs font-bold text-gray-600"}>
+                                       {region}
+                                    </span>
+                                 ))}
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Agent's Philosophy (Bio) */}
+                     <div className="space-y-8">
                         <div>
                            <h2 className="text-3xl font-bold text-gray-700 tracking-tighter inline-block relative border-b-4 border-[#a20000] pb-2">
                               Agent&apos;s Philosophy
                            </h2>
                         </div>
-                        <div className="prose prose-sm sm:prose-base text-gray-500 font-medium leading-[1.8] max-w-none">
+                        <div className="text-base leading-relaxed text-gray-600 font-medium prose prose-sm sm:prose-base max-w-none prose-a:text-[#b50a0a] hover:prose-a:text-red-700">
                            {profile.bio ? (
                              parse(profile.bio)
                            ) : (
                              <p>No biography provided yet.</p>
                            )}
-                        </div>
-                     </div>
-                     <div className="space-y-8">
-                        <div className="bg-gray-50 rounded-[40px] p-10 border border-gray-100 shadow-sm">
-                           <h3 className="text-base font-bold text-gray-900 tracking-wide mb-8 border-b border-gray-200 pb-4">Affiliations</h3>
-                           <div className="space-y-6">
-                              {[
-                                 { label: "License", value: profile.license_code || "FIFA Licensed Agent" },
-                                 { label: "Agency", value: profile.agency_name || "Independent" },
-                                 { label: "Country", value: profile.country || "Global" }
-                              ].map((item, i) => (
-                                 <div key={i}>
-                                    <span className="text-xs font-bold text-gray-400 tracking-wide block mb-1">{item.label}</span>
-                                    <span className="text-base font-bold text-gray-900">{item.value}</span>
-                                 </div>
-                              ))}
-                           </div>
                         </div>
                      </div>
                   </div>

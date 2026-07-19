@@ -12,14 +12,31 @@ export async function login(prevState: any, formData: FormData) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  let authData: any;
+  let authError: any;
 
-  if (error) {
-    return { error: error.message };
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    authData = data;
+    authError = error;
+  } catch (err: any) {
+    if (err.message?.includes('fetch failed') || err.message?.includes('network') || err.message?.includes('ENOTFOUND')) {
+      return { error: 'No Internet' };
+    }
+    return { error: 'An unexpected error occurred during login.' };
   }
+
+  if (authError) {
+    if (authError.message?.includes('fetch failed')) {
+       return { error: 'No Internet' };
+    }
+    return { error: authError.message };
+  }
+
+  const data = authData;
 
   // Fetch user role and status to determine redirect and access
   const { data: userRecord } = await supabase

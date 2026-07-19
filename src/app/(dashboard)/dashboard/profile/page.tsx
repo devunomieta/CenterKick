@@ -257,6 +257,18 @@ export default function ProfileEditor() {
     
     const formData = new FormData(e.target as HTMLFormElement);
     
+    if (role !== 'organization') {
+      const idNumber = formData.get('id_number') as string;
+      const hasIdNumber = !!idNumber?.trim();
+      const hasIdProof = !!profile?.id_proof_url;
+      
+      if (hasIdNumber !== hasIdProof) {
+        showToast('Both National ID / Passport Number and the Verification Document must be provided together.', 'error');
+        setIsSaving(false);
+        return;
+      }
+    }
+    
     const profileData: any = {
       gender: formData.get('gender') || null,
       country: formData.get('country'),
@@ -697,7 +709,7 @@ export default function ProfileEditor() {
                     <div className="flex flex-col md:flex-row gap-4 md:gap-6 w-full">
                       <div className="space-y-1.5 flex-1">
                           <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Contract Status</label>
-                          <select disabled={!isEditing} name="is_signed" defaultValue={profile?.is_signed ? 'true' : 'false'} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black disabled:opacity-70 disabled:bg-gray-100">
+                          <select disabled={!isEditing} name="is_signed" value={profile?.is_signed ? 'true' : 'false'} onChange={(e) => setProfile({...profile, is_signed: e.target.value === 'true'})} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black disabled:opacity-70 disabled:bg-gray-100">
                             <option value="true">Signed Agent / Club</option>
                             <option value="false">Free Agent</option>
                           </select>
@@ -1071,7 +1083,7 @@ export default function ProfileEditor() {
                 <div className="pt-8 border-t border-gray-50">
                    {role === 'coach' && <CoachCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} achievements={achievements} onAchievementsChange={(val) => {setAchievements(val); setIsDirty(true);}} disabled={!isEditing} />}
                    {(role === 'player' || role === 'athlete') && <PlayerCareerForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} achievements={achievements} onAchievementsChange={(val) => {setAchievements(val); setIsDirty(true);}} disabled={!isEditing} />}
-                   {role === 'agent' && <AgentPortfolioForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
+                   {role === 'agent' && <AgentPortfolioForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} isSigned={profile?.is_signed} />}
                    {role === 'scout' && <ScoutDiscoveriesForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
                    {role === 'organization' && <OrganizationDetailsForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} onUploadImage={uploadPersonnelImage} />}
                 </div>

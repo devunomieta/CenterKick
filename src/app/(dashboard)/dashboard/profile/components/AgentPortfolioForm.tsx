@@ -1,9 +1,8 @@
 'use client';
 
-import { Plus, Trash2, Users } from 'lucide-react';
-import { HybridLinkInput } from './HybridLinkInput';
+import { Plus, Trash2 } from 'lucide-react';
 
-export function AgentPortfolioForm({ data, onChange }: { data: any, onChange: (val: any) => void, disabled?: boolean }) {
+export function AgentPortfolioForm({ data, onChange, disabled, isSigned }: { data: any, onChange: (val: any) => void, disabled?: boolean, isSigned?: boolean }) {
   const roles = ['Director', 'Intermediary', 'Scout', 'Legal Advisor'];
   const regions = ['Europe (UEFA)', 'South America (CONMEBOL)', 'North America (CONCACAF)', 'Africa (CAF)', 'Asia (AFC)', 'Global'];
   const languages = ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Arabic'];
@@ -15,25 +14,6 @@ export function AgentPortfolioForm({ data, onChange }: { data: any, onChange: (v
     } else {
       onChange({ ...data, [field]: [...currentArray, value] });
     }
-  };
-
-  const addClient = () => {
-    const portfolio = data.client_portfolio || [];
-    onChange({
-      ...data,
-      client_portfolio: [...portfolio, { name: '', email: '' }]
-    });
-  };
-
-  const updateClient = (index: number, value: any) => {
-    const portfolio = [...(data.client_portfolio || [])];
-    portfolio[index] = value;
-    onChange({ ...data, client_portfolio: portfolio });
-  };
-
-  const removeClient = (index: number) => {
-    const portfolio = (data.client_portfolio || []).filter((_: any, i: number) => i !== index);
-    onChange({ ...data, client_portfolio: portfolio });
   };
 
   const addTransfer = () => {
@@ -63,23 +43,27 @@ export function AgentPortfolioForm({ data, onChange }: { data: any, onChange: (v
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">FIFA/FA License Number</label>
           <input 
              type="text"
-             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:border-[#b50a0a]"
+             disabled={disabled}
+             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:border-[#b50a0a] disabled:opacity-70 disabled:bg-gray-100"
              placeholder="e.g. FA-12345"
              value={data.fa_license_number || ''}
              onChange={(e) => onChange({ ...data, fa_license_number: e.target.value })}
            />
         </div>
-        <div className="space-y-3">
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Agency Role</label>
-          <select 
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:border-[#b50a0a]"
-            value={data.agency_role || ''}
-            onChange={(e) => onChange({ ...data, agency_role: e.target.value })}
-          >
-            <option value="">Select role...</option>
-            {roles.map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </div>
+        {isSigned !== false && (
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Agency Role</label>
+            <select 
+              disabled={disabled}
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:border-[#b50a0a] disabled:opacity-70 disabled:bg-gray-100"
+              value={data.agency_role || ''}
+              onChange={(e) => onChange({ ...data, agency_role: e.target.value })}
+            >
+              <option value="">Select role...</option>
+              {roles.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-100 pt-6">
@@ -102,45 +86,6 @@ export function AgentPortfolioForm({ data, onChange }: { data: any, onChange: (v
               ))}
             </div>
          </div>
-      </div>
-
-      {/* Client Portfolio */}
-      <div className="space-y-4 border-t border-gray-100 pt-8">
-        <div className="flex items-center justify-between">
-          <div>
-             <h3 className="text-lg font-black text-gray-900">Client Portfolio</h3>
-             <p className="text-sm text-gray-500 mt-1">Add your players or staff. We will automatically link them if they are on CenterKick.</p>
-          </div>
-          <button type="button" onClick={addClient} className="flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-sm font-bold transition-colors">
-            <Plus className="w-4 h-4" /> Add Client
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          {(data.client_portfolio || []).map((client: any, index: number) => (
-            <div key={index} className="relative group">
-              <button
-                type="button"
-                onClick={() => removeClient(index)}
-                className="absolute -top-2 -right-2 text-gray-400 hover:text-red-600 transition-colors bg-white rounded-full p-1.5 shadow-md z-10 opacity-0 group-hover:opacity-100"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-              <HybridLinkInput 
-                 value={client} 
-                 onChange={(val) => updateClient(index, val)} 
-                 placeholderName="Client Name"
-                 placeholderEmail="Client Email (For linking)"
-              />
-            </div>
-          ))}
-          {(data.client_portfolio?.length || 0) === 0 && (
-            <div className="text-center py-10 bg-gray-50 border border-dashed border-gray-200 rounded-2xl">
-               <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-               <p className="text-sm text-gray-500 font-medium">No clients added yet.</p>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Notable Transfers */}

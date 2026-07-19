@@ -75,14 +75,27 @@ function LoginContent() {
                type="button"
                onClick={async () => {
                   setIsGoogleLoading(true);
-                  const { createClient } = await import('@/lib/supabase/client');
-                  const supabase = createClient();
-                  await supabase.auth.signInWithOAuth({
-                     provider: 'google',
-                     options: {
-                        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`
+                  try {
+                     const { createClient } = await import('@/lib/supabase/client');
+                     const supabase = createClient();
+                     const { error } = await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                           redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`
+                        }
+                     });
+                     if (error && (error.message?.includes('fetch failed') || error.message?.includes('network'))) {
+                        showToast('No Internet', 'error');
                      }
-                  });
+                  } catch (e: any) {
+                     if (e.message?.includes('fetch failed') || e.message?.includes('network') || e.message?.includes('ENOTFOUND')) {
+                        showToast('No Internet', 'error');
+                     } else {
+                        showToast('An unexpected error occurred during login.', 'error');
+                     }
+                  } finally {
+                     setIsGoogleLoading(false);
+                  }
                }}
                className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-all text-xs font-bold tracking-wide text-gray-600 shadow-sm"
             >
