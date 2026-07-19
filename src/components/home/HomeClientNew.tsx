@@ -531,7 +531,7 @@ export function HomeClient({
                   </p>
                 </div>
 
-                <Link href={`/agents/${agent.slug}`} className="w-full">
+                <Link href={`/${agent.users?.role === 'scout' ? 'scouts' : 'agents'}/${agent.slug}`} className="w-full">
                     <div className="w-full bg-gray-50 hover:bg-[#b50a0a] text-gray-700 hover:text-white border border-gray-100 hover:border-[#b50a0a] text-xs font-bold tracking-wide py-3 rounded-xl transition-all flex items-center justify-center gap-1.5">
                     View Portfolio <ExternalLink className="w-3 h-3" />
                   </div>
