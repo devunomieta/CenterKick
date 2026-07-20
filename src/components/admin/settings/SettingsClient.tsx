@@ -98,7 +98,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
   const sections = [
     { title: 'Global Configuration', label: 'Core', icon: Globe },
     { title: 'Mail & SMTP Settings', label: 'Infrastructure', icon: Mail },
-    { title: 'Payment Settings', label: 'Billing & Subscriptions', icon: CreditCard },
+
     { title: 'Security & Access', label: 'System', icon: Shield },
     { title: 'Banners & Assets', label: 'Branding', icon: Layers },
     { title: 'Social Links', label: 'Marketing', icon: Layers },
@@ -127,11 +127,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
     setIsSaving(true);
     const toastId = showToast('Saving configuration...', 'loading');
     try {
-      if (activeSection === 'Payment Settings') {
-        await updatePaymentSettings(settings);
-      } else {
-        await updateSystemSettings(settings);
-      }
+      await updateSystemSettings(settings);
       showToast(`${activeSection} updated successfully`, 'success');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Failed to save settings', 'error');
@@ -163,7 +159,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
     const sectionKeys: Record<string, string[]> = {
       'Global Configuration': ['siteTitle', 'allowReg', 'publicSearch', 'maintenanceMode', 'disabledRoles'],
       'Mail & SMTP Settings': ['resendKey', 'fromEmail'],
-      'Payment Settings': ['paymentLink', 'bankName', 'accountName', 'accountNumber'],
+
       'Security & Access': ['enable2fa', 'strictPass', 'sessionTimeout'],
       'Banners & Assets': ['logoUrl', 'faviconUrl', 'ogImage'],
       'Social Links': ['facebookUrl', 'instagramUrl', 'twitterUrl', 'youtubeUrl']
@@ -235,7 +231,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tighter">System Settings</h1>
-          <p className="text-gray-900 text-xs font-bold tracking-[0.2em] mt-1">
+          <p className="text-gray-500 text-sm font-normal mt-1">
             Configure global platform variables and system maintenance.
           </p>
         </div>
@@ -289,62 +285,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
         <div className="lg:col-span-3">
           <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm min-h-[500px] flex flex-col">
             
-            {activeSection === 'Payment Settings' && (
-              <div className="space-y-10 animate-in slide-in-from-bottom-2 duration-300">
-                <div className="flex items-center justify-between border-b border-gray-50 pb-6">
-                   <div>
-                      <h3 className="text-base font-bold text-gray-900 tracking-wide">Billing Configuration</h3>
-                      <p className="text-xs text-gray-900 font-bold mt-1">Manage payment links and direct transfer details</p>
-                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 gap-4 md:p-8">
-                   <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Default Payment Link (e.g. Paystack, Stripe)</label>
-                      <input 
-                        type="url" 
-                        value={settings.paymentLink || ''}
-                        onChange={(e) => updateSetting('paymentLink', e.target.value)}
-                        placeholder="https://paystack.com/pay/..." 
-                        className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none"
-                      />
-                   </div>
-
-                   <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Bank Name</label>
-                      <input 
-                        type="text" 
-                        value={settings.bankName || ''}
-                        onChange={(e) => updateSetting('bankName', e.target.value)}
-                        placeholder="e.g. Zenith Bank" 
-                        className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none"
-                      />
-                   </div>
-
-                   <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Account Name</label>
-                      <input 
-                        type="text" 
-                        value={settings.accountName || ''}
-                        onChange={(e) => updateSetting('accountName', e.target.value)}
-                        placeholder="CenterKick Ltd" 
-                        className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none"
-                      />
-                   </div>
-
-                   <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Account Number</label>
-                      <input 
-                        type="text" 
-                        value={settings.accountNumber || ''}
-                        onChange={(e) => updateSetting('accountNumber', e.target.value)}
-                        placeholder="1023456789" 
-                        className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none"
-                      />
-                   </div>
-                </div>
-              </div>
-            )}
 
             {activeSection === 'Global Configuration' && (
               <div className="space-y-10 animate-in slide-in-from-bottom-2 duration-300">

@@ -132,21 +132,26 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
     }
   };
 
-  const getStatusBadge = (status: string, isActive: boolean) => {
+  const getStatusBadge = (subStatus: string, isActive: boolean) => {
     if (!isActive) return (
       <span className="w-fit px-2 py-1 bg-red-50 text-red-700 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-1 whitespace-nowrap">
         <XCircle className="w-2.5 h-2.5" /> Deactivated
       </span>
     );
-    switch (status?.toLowerCase()) {
-      case 'active':
-        return <span className="w-fit px-2 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-lg border border-green-100 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="w-2.5 h-2.5" /> Active</span>;
-      case 'pending':
+    switch (subStatus?.toUpperCase()) {
+      case 'PAID':
+        return <span className="w-fit px-2 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-lg border border-green-100 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="w-2.5 h-2.5" /> Paid</span>;
+      case 'FREE':
+        return <span className="w-fit px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-100 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="w-2.5 h-2.5" /> Free</span>;
+      case 'PENDING APPROVAL':
         return <span className="w-fit px-2 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded-lg border border-amber-100 flex items-center gap-1 whitespace-nowrap"><Clock className="w-2.5 h-2.5" /> Pending</span>;
-      case 'rejected':
+      case 'EXPIRED':
+        return <span className="w-fit px-2 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-1 whitespace-nowrap"><XCircle className="w-2.5 h-2.5" /> Expired</span>;
+      case 'REJECTED':
         return <span className="w-fit px-2 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-1 whitespace-nowrap"><XCircle className="w-2.5 h-2.5" /> Rejected</span>;
+      case 'UNPAID':
       default:
-        return <span className="w-fit px-2 py-1 bg-gray-50 text-gray-400 text-xs font-bold rounded-lg border border-gray-100 flex items-center gap-1 whitespace-nowrap"><Clock className="w-2.5 h-2.5" /> Incomplete</span>;
+        return <span className="w-fit px-2 py-1 bg-gray-50 text-gray-500 text-xs font-bold rounded-lg border border-gray-100 flex items-center gap-1 whitespace-nowrap"><Clock className="w-2.5 h-2.5" /> Unpaid</span>;
     }
   };
 
@@ -206,7 +211,7 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
         columns={[
           { key: 'account', label: 'Account User', width: 'w-[35%]' },
           { key: 'identity', label: 'Identity / Role', width: 'w-[20%]', className: 'whitespace-nowrap' },
-          { key: 'status', label: 'Status', width: 'w-[15%]', className: 'whitespace-nowrap' },
+          { key: 'status', label: 'Subscription', width: 'w-[15%]', className: 'whitespace-nowrap' },
           { key: 'registered', label: 'Registered On', width: 'w-[15%]', className: 'whitespace-nowrap' },
           { key: 'actions', label: 'Actions', width: 'w-[15%]', className: 'text-right whitespace-nowrap' }
         ]}
@@ -237,9 +242,13 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
               </td>
               <td className="px-2 md:px-4 py-6 border-b border-gray-50">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center font-bold text-white text-sm border-2 border-white shadow-md shrink-0">
-                    {user.email?.[0]?.toUpperCase()}
-                  </div>
+                  {user.profile?.avatar_url ? (
+                    <img src={user.profile.avatar_url} alt="" className="w-10 h-10 rounded-xl object-cover border-2 border-white shadow-md shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center font-bold text-white text-sm border-2 border-white shadow-md shrink-0">
+                      {user.email?.[0]?.toUpperCase()}
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-gray-900 truncate">{user.email}</p>
                     <p className="text-xs font-bold text-gray-400 tracking-wide truncate">
@@ -263,9 +272,9 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
 
                   <td className="px-4 md:px-8 py-6 whitespace-nowrap">
                     <div className="flex flex-col gap-2">
-                      {getStatusBadge(profileStatus, isActive)}
+                      {getStatusBadge(user.subStatus, isActive)}
                       {/* Inline Approve button for pending accounts */}
-                      {isPendingActivation && isParticipant && (
+                      {user.subStatus === 'PENDING APPROVAL' && isActive && isParticipant && (
                         <button
                           onClick={() => runAction(user.id, () => activateUser(user.id))}
                           disabled={isLoading}
@@ -289,22 +298,22 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
                     <div className="flex items-center justify-end gap-2">
                       <Link
                         href={getProfileLink(user)}
-                        className="p-2.5 bg-white border border-gray-100 rounded-xl hover:bg-gray-900 hover:text-white hover:border-gray-900 transition-all shadow-sm"
+                        className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-900 hover:text-white transition-all shadow-sm group"
                         title="View full profile"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-4 h-4 text-gray-600 group-hover:text-white" />
                       </Link>
 
                       <div className="relative">
                         <button
                           onClick={() => setOpenDropdown(openDropdown === user.id ? null : user.id)}
                           disabled={isLoading}
-                          className="p-2.5 bg-white border border-gray-100 rounded-xl hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50"
+                          className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-200 transition-all shadow-sm disabled:opacity-50 group"
                           title="More actions"
                         >
                           {isLoading 
-                            ? <RefreshCw className="w-4 h-4 text-gray-400 animate-spin" />
-                            : <MoreVertical className="w-4 h-4 text-gray-400" />}
+                            ? <RefreshCw className="w-4 h-4 text-gray-600 animate-spin" />
+                            : <MoreVertical className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />}
                         </button>
 
                         {openDropdown === user.id && (
@@ -331,7 +340,7 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
                                 </button>
                               )}
 
-                              {isPendingActivation && isParticipant && (
+                              {user.subStatus === 'PENDING APPROVAL' && isParticipant && (
                                 <button
                                   onClick={() => runAction(user.id, () => activateUser(user.id))}
                                   className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold tracking-wide text-green-700 hover:bg-green-50 rounded-xl transition-all"

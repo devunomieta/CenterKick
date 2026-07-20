@@ -141,7 +141,7 @@ export default function AdminUserProfileClient({
             <h2 className="text-xl font-bold text-slate-900 tracking-tighter">Basic Info</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-8 gap-x-6">
             <div>
               <p className="text-xs font-bold text-slate-400 tracking-widest uppercase mb-1">Gender</p>
               <p className="text-sm font-semibold text-slate-900">{profile.gender || 'Not specified'}</p>
@@ -157,9 +157,11 @@ export default function AdminUserProfileClient({
                 {profile.country || 'Not specified'}
               </p>
             </div>
-            <div>
+            <div className="overflow-hidden">
               <p className="text-xs font-bold text-slate-400 tracking-widest uppercase mb-1">Contact Email</p>
-              <p className="text-sm font-semibold text-slate-900">{profile.contact_email || 'Not specified'}</p>
+              <p className="text-sm font-semibold text-slate-900 truncate" title={profile.contact_email || 'Not specified'}>
+                {profile.contact_email || 'Not specified'}
+              </p>
             </div>
             <div>
               <p className="text-xs font-bold text-slate-400 tracking-widest uppercase mb-1">Phone Number</p>
@@ -217,7 +219,7 @@ export default function AdminUserProfileClient({
               <Info className="w-5 h-5 text-slate-400" />
               <h2 className="text-xl font-bold text-slate-900 tracking-tighter">Biography</h2>
             </div>
-            <div className="prose prose-slate max-w-none text-sm" dangerouslySetInnerHTML={{ __html: profile.bio }} />
+            <div className="prose prose-slate max-w-none text-sm whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: profile.bio }} />
           </div>
         )}
 

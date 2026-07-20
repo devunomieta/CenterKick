@@ -160,7 +160,7 @@ export function RolesClient({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-gray-900 tracking-tighter">Manage <span className="text-[#b50a0a]">Roles & Access</span></h1>
-          <p className="text-gray-900 text-xs font-bold tracking-[0.2em] mt-1">Configure administrative accounts, manage permissions, and audit system activities.</p>
+          <p className="text-gray-500 text-sm font-normal mt-1">Configure administrative accounts, manage permissions, and audit system activities.</p>
         </div>
         <button 
           onClick={() => setIsInviteModalOpen(true)}

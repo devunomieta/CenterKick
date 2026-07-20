@@ -42,9 +42,9 @@ export default function MediaAssetsClient({ assets: initialAssets }: MediaPagePr
           <div>
             <h1 className="text-3xl font-bold text-gray-900 tracking-tighter flex items-center gap-3">
               <ImageIcon className="w-8 h-8 text-[#b50a0a]" />
-              Media Assets
+              Media Assets Library
             </h1>
-            <p className="text-gray-500 text-xs font-bold tracking-[0.2em] mt-1">Manage all uploaded visuals and assets for the blog system.</p>
+            <p className="text-gray-500 text-sm font-normal mt-1">Manage all uploaded visuals and assets for the blog system.</p>
           </div>
         </div>
 

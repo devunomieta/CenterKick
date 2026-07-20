@@ -28,7 +28,7 @@ export default async function ModerationPage() {
           <h1 className="text-3xl font-bold text-gray-900 tracking-tighter">
             Profile <span className="text-[#b50a0a]">Moderation</span>
           </h1>
-          <p className="text-gray-500 text-xs font-bold tracking-wide mt-1">Review and manage user profiles visibility and status.</p>
+          <p className="text-gray-500 text-sm font-normal mt-1">Review and manage user profiles visibility and status.</p>
         </div>
       </div>
 

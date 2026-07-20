@@ -68,14 +68,46 @@ export default async function AdminUsersPage({
     const userIds = rawUsers.map((u: any) => u.id);
     const { data: profiles } = await adminClient
       .from('profiles')
-      .select('user_id, status, first_name, last_name, slug')
+      .select('user_id, status, first_name, last_name, slug, avatar_url, verification_requested')
+      .in('user_id', userIds);
+
+    const { data: transactions } = await adminClient
+      .from('transactions')
+      .select('user_id, status, amount')
       .in('user_id', userIds);
 
     const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
-    users = rawUsers.map((u: any) => ({
-      ...u,
-      profile: profileMap.get(u.id) || null,
-    }));
+    const txMap = new Map();
+    (transactions || []).forEach((tx: any) => {
+       if (!txMap.has(tx.user_id)) txMap.set(tx.user_id, []);
+       txMap.get(tx.user_id).push(tx);
+    });
+
+    users = rawUsers.map((u: any) => {
+      const profile = profileMap.get(u.id) || null;
+      let subStatus = 'UNPAID';
+      
+      if (profile) {
+        const userTxs = txMap.get(u.id) || [];
+        const hasPaid = userTxs.some((t: any) => t.status === 'confirmed');
+        if (hasPaid) {
+          const confirmedTx = userTxs.find((t: any) => t.status === 'confirmed');
+          subStatus = confirmedTx?.amount === 0 ? 'FREE' : 'PAID';
+        } else if (profile.verification_requested) {
+          subStatus = 'PENDING APPROVAL';
+        } else if (profile.status === 'expired') {
+          subStatus = 'EXPIRED';
+        } else if (profile.status === 'rejected') {
+          subStatus = 'REJECTED';
+        }
+      }
+
+      return {
+        ...u,
+        profile,
+        subStatus
+      };
+    });
   }
 
   return (

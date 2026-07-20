@@ -225,7 +225,7 @@ export default function FootballDataManagement() {
             <Database className="w-8 h-8 text-[#b50a0a]" />
             Data <span className="text-[#b50a0a]">Management</span>
           </h1>
-          <p className="text-xs font-bold text-slate-400 tracking-[0.2em] mt-1">Ecosystem constants & historical records management</p>
+          <p className="text-sm font-normal text-slate-500 mt-1">Ecosystem constants & historical records management</p>
         </div>
         <div className="flex items-center gap-3">
           <button 

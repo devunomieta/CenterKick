@@ -8,10 +8,12 @@ import {
 } from 'lucide-react';
 import { SignOutButton } from '@/components/dashboard/SignOutButton';
 import { Home } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 
 export function AdminSidebar({ role }: { role: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { showToast } = useToast();
 
   const isBlogger = role === 'blogger';
   const isOperations = role === 'operations';
@@ -44,20 +46,20 @@ export function AdminSidebar({ role }: { role: string }) {
     ...(isOperations || isSuperOrAdmin ? [{
       group: 'Tournament',
       items: [
-        { label: 'Manage Tournament', href: '/admin/tournaments', icon: Trophy }
+        { label: 'Manage Tournament', href: '#', icon: Trophy, isComingSoon: true }
       ]
     }] : []),
     ...(isBlogger || isSuperOrAdmin ? [{
       group: 'Content',
       items: [
         { label: 'Blog / CMS', href: '/admin/blog', icon: FileText },
-        ...(!isBlogger ? [{ label: 'Manage UI', href: '/admin/manage-ui', icon: PenTool }] : [])
+        ...(!isBlogger ? [{ label: 'Manage UI', href: '#', icon: PenTool, isComingSoon: true }] : [])
       ]
     }] : []),
     {
       group: 'Infrastructure',
       items: [
-        ...(isSuperOrAdmin ? [{ label: 'Manage Roles', href: '/admin/roles', icon: ShieldCheck }] : []),
+        ...(isSuperOrAdmin ? [{ label: 'Manage Roles', href: '#', icon: ShieldCheck, isComingSoon: true }] : []),
         ...(['superadmin', 'admin', 'operations'].includes(role) ? [{ label: 'Data Management', href: '/admin/data-management', icon: Database }] : []),
         ...(isFinance || isSuperOrAdmin ? [
           { label: 'Transactions', href: '/admin/payments/transactions', icon: CreditCard },
@@ -65,7 +67,7 @@ export function AdminSidebar({ role }: { role: string }) {
         ] : []),
         ...(role === 'superadmin' ? [
           { label: 'System Settings', href: '/admin/settings', icon: Settings },
-          { label: 'System Errors', href: '/admin/system-errors', icon: AlertTriangle }
+          { label: 'System Errors', href: '#', icon: AlertTriangle, isComingSoon: true }
         ] : [])
       ]
     }
@@ -76,25 +78,37 @@ export function AdminSidebar({ role }: { role: string }) {
       {menuItems.map((section, idx) => (
         <div key={idx} className="space-y-1">
           <span className="px-4 text-xs font-bold text-gray-500 tracking-[0.2em]">{section.group}</span>
-          {section.items.map((item) => {
+          {section.items.map((item: any) => {
             const isActive = item.href === '/admin' 
               ? pathname === '/admin' 
-              : item.href.includes('?role=') 
+              : item.href !== '#' && item.href.includes('?role=') 
                 ? searchParams.get('role') === item.href.split('=')[1]
-                : pathname.startsWith(item.href) && !item.href.includes('?role=');
+                : item.href !== '#' && pathname.startsWith(item.href) && !item.href.includes('?role=');
+                
             return (
               <Link
-                key={item.href}
+                key={item.label}
                 href={item.href}
+                onClick={(e) => {
+                  if (item.isComingSoon) {
+                    e.preventDefault();
+                    showToast('Coming Soon', 'info');
+                  }
+                }}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all group ${isActive
  ? 'text-white bg-[#b50a0a] shadow-lg shadow-red-900/20'
  : 'text-gray-400 hover:text-white hover:bg-white/5'
- }`}
+ } ${item.isComingSoon ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
                 <item.icon className={`w-5 h-5 transition-colors ${isActive ? 'text-white' : 'group-hover:text-[#b50a0a]'
  }`} />
                 <span className={`text-xs tracking-wide ${isActive ? 'text-white' : 'text-gray-400'
  }`}>{item.label}</span>
+                {item.isComingSoon && (
+                  <span className="ml-auto text-[10px] font-bold text-gray-500 bg-gray-800/50 px-2 py-0.5 rounded-full uppercase tracking-widest group-hover:text-gray-300 transition-colors">
+                    Soon
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -102,14 +116,7 @@ export function AdminSidebar({ role }: { role: string }) {
       ))}
 
       <div className="pt-4 mt-4 border-t border-gray-800/50 space-y-1">
-        <span className="px-4 text-xs font-bold text-gray-500 tracking-[0.2em]">Session</span>
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-gray-400 hover:text-white hover:bg-white/5 group"
-        >
-          <Home className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
-          <span className="text-xs tracking-wide text-gray-400 group-hover:text-white">User Dashboard</span>
-        </Link>
+
         <div className="scale-95 origin-left">
           <SignOutButton />
         </div>

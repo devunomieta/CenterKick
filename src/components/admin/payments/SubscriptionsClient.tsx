@@ -137,7 +137,7 @@ export function SubscriptionsClient({
          <div className="flex items-center justify-between">
             <div>
                <h1 className="text-3xl font-bold text-gray-900 tracking-tighter">Subscription Registry</h1>
-               <p className="text-gray-900 text-xs font-bold tracking-[0.2em] mt-1">
+               <p className="text-sm font-normal text-gray-500 mt-1">
                   Centrally manage account growth rates, settlement channels, and gateway integrations.
                </p>
             </div>

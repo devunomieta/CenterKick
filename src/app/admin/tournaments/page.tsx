@@ -22,7 +22,7 @@ export default async function AdminTournamentsPage() {
             </div>
             <h1 className="text-4xl font-bold text-gray-900 tracking-tighter">Manage Tournaments</h1>
           </div>
-          <p className="text-gray-500 font-bold text-xs tracking-[0.2em] ml-1">
+          <p className="text-gray-500 text-sm font-normal mt-1">
             Global Tournament Control Center
           </p>
         </div>
