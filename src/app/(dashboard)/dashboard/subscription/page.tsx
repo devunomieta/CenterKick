@@ -13,6 +13,7 @@ import {
   Calendar, 
   Globe, 
   X, 
+  CheckCircle,
   Building, 
   FileText, 
   Eye, 
@@ -22,6 +23,7 @@ import {
   RefreshCcw
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { requestVerification, activateFreeSubscription, verifyPaystackPayment } from './actions';
 
 interface UserProfile {
   role?: string;
@@ -73,6 +75,7 @@ export default function SubscriptionPage() {
   const [msg, setMsg] = useState<{type: 'success'|'error', text: string}|null>(null);
   const [pricingPlan, setPricingPlan] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -128,7 +131,6 @@ export default function SubscriptionPage() {
     setMsg(null);
     
     const formData = new FormData(e.currentTarget);
-    const { requestVerification } = await import('./actions');
     const res = await requestVerification(formData);
 
     if (res.error) {
@@ -177,11 +179,18 @@ export default function SubscriptionPage() {
       plan: paystackPlanCode || undefined, // pass plan if exists
       currency: 'NGN',
       ref: 'ck_' + Math.floor((Math.random() * 1000000000) + 1),
-      callback: function(response: any){
-          showToast('Payment successful! Your subscription is now active.', 'success');
-          // Reload page to update UI
-          setIsRefreshing(true);
-          setTimeout(() => window.location.reload(), 1500);
+      callback: async function(response: any){
+          setIsSubmitting(true);
+          const verifyRes = await verifyPaystackPayment(response.reference, basePrice, paystackPlanCode || undefined);
+          if (verifyRes.success) {
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                window.location.reload();
+            }, 5000);
+          } else {
+             showToast(verifyRes.error || 'Payment verification failed', 'error');
+             setIsSubmitting(false);
+          }
       },
       onClose: function(){
           showToast('Payment window closed.', 'error');
@@ -692,6 +701,24 @@ export default function SubscriptionPage() {
              </div>
            </div>
          </div>
+      )}
+
+       {/* Success Modal */}
+       {showSuccessModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in duration-300">
+              <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-10 h-10 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-2">Thank You!</h2>
+              <p className="text-gray-500 font-medium mb-8 leading-relaxed">
+                Your payment was successful and your subscription is now active. Reloading your dashboard in 5 seconds...
+              </p>
+              <div className="flex justify-center">
+                <div className="w-6 h-6 border-2 border-gray-200 border-t-[#b50a0a] rounded-full animate-spin"></div>
+              </div>
+            </div>
+          </div>
        )}
     </div>
     </>

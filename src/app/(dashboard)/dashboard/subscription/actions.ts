@@ -222,3 +222,76 @@ export async function activateFreeSubscription() {
   revalidatePath('/dashboard/subscription');
   return { success: true };
 }
+
+export async function verifyPaystackPayment(reference: string, amount: number, planCode?: string) {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { error: 'Unauthorized' };
+  }
+
+  const { data: profile, error: profileFetchError } = await supabase
+    .from('profiles')
+    .select('id, role')
+    .eq('user_id', user.id)
+    .single();
+
+  if (profileFetchError || !profile) {
+    return { error: 'Profile not found' };
+  }
+
+  const adminClient = createAdminClient();
+
+  // Fetch secret from site_content
+  const { data: settingsData } = await adminClient
+      .from('site_content')
+      .select('content')
+      .eq('page', 'settings')
+      .eq('section', 'payment')
+      .single();
+      
+  const secret = settingsData?.content?.paystackSecret || process.env.PAYSTACK_SECRET_KEY;
+  if (!secret) return { error: 'Payment gateway not configured' };
+
+  try {
+    const res = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${secret}`
+      }
+    });
+    
+    const data = await res.json();
+    if (data.status && data.data.status === 'success') {
+      // Create confirmed transaction
+      await adminClient.from('transactions').insert({
+        user_id: profile.id,
+        amount: data.data.amount / 100, // Paystack returns in kobo
+        currency: 'NGN',
+        status: 'confirmed',
+        reference: reference,
+        method: 'paystack',
+        metadata: {
+          type: 'subscription',
+          description: `Paystack Payment for ${profile.role}`,
+          paystack_plan: planCode || data.data.plan
+        }
+      });
+      
+      // Update profile status
+      await adminClient.from('profiles').update({
+        verification_requested: false,
+        status: 'active',
+        updated_at: new Date().toISOString()
+      }).eq('user_id', user.id);
+      
+      revalidatePath('/dashboard/subscription');
+      return { success: true };
+    } else {
+      return { error: 'Payment verification failed' };
+    }
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
