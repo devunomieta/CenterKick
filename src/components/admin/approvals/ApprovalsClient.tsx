@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import NProgress from 'nprogress';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -210,6 +211,7 @@ export function ApprovalsClient({
 
   const runApprovalAction = async (id: string, actionFn: () => Promise<{ success: boolean; error?: string }>) => {
     setActionLoadingId(id);
+    NProgress.start();
     try {
       const res = await actionFn();
       if (res.success) {
@@ -224,11 +226,13 @@ export function ApprovalsClient({
       showToast(err.message || "An unexpected error occurred.", "error");
     } finally {
       setActionLoadingId(null);
+      NProgress.done();
     }
   };
 
   const handleResendInv = async (email: string, lastName: string, role: string) => {
     setActionLoadingId(email);
+    NProgress.start();
     try {
       const res = await resendInvitation(email, lastName, role);
       if (res.success) {
@@ -240,6 +244,7 @@ export function ApprovalsClient({
       showToast(err.message || "Invitation error.", "error");
     } finally {
       setActionLoadingId(null);
+      NProgress.done();
     }
   };
 
@@ -612,15 +617,7 @@ export function ApprovalsClient({
           )}
 
 
-        </div>
-
-        {/* Footer info/alert */}
-        <div className="p-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-gray-400 tracking-wide">
-          <p>Verified Administrative Approvals Center</p>
-          <p>&bull;</p>
-          <p>Security Grade AAA Secure</p>
-        </div>
-      </div>
+        </div>      </div>
 
       {/* MODALS SECTION */}
 
@@ -685,9 +682,6 @@ export function ApprovalsClient({
                     const r = decisionReason;
                     const staffR = decisionAction.staffRole;
                     
-                    setDecisionAction(null);
-                    setDecisionReason('');
-
                     await runApprovalAction(actId, () => {
                       switch (actType) {
 
@@ -699,6 +693,9 @@ export function ApprovalsClient({
                         case 'reject_pay': return rejectPaymentTransaction(actId, r);
                       }
                     });
+
+                    setDecisionAction(null);
+                    setDecisionReason('');
                   }}
                   className={`flex-1 py-4 rounded-2xl text-xs font-bold tracking-[0.2em] text-white transition-all shadow-lg flex items-center justify-center gap-1.5 ${
  decisionAction.type.startsWith('approve')

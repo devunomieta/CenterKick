@@ -9,9 +9,15 @@ import { PasswordField } from '@/components/common/PasswordField';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
 import { NetworkStatusBadge } from '@/components/common/NetworkStatusBadge';
+import NProgress from 'nprogress';
 
 function SubmitButton() {
    const { pending } = useFormStatus();
+
+   useEffect(() => {
+      if (pending) NProgress.start();
+      else NProgress.done();
+   }, [pending]);
    return (
       <button
          type="submit"
@@ -75,6 +81,7 @@ function LoginContent() {
                type="button"
                onClick={async () => {
                   setIsGoogleLoading(true);
+                  NProgress.start();
                   try {
                      const { createClient } = await import('@/lib/supabase/client');
                      const supabase = createClient();
@@ -95,6 +102,7 @@ function LoginContent() {
                      }
                   } finally {
                      setIsGoogleLoading(false);
+                     NProgress.done();
                   }
                }}
                className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-all text-xs font-bold tracking-wide text-gray-600 shadow-sm"
