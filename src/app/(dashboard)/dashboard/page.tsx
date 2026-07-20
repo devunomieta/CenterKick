@@ -98,10 +98,10 @@ export default async function DashboardPage() {
   const careerStatsArray = safeParseArray(profile?.career_stats);
   const transferHistoryArray = safeParseArray(profile?.transfer_history);
   const achievementsArray = safeParseArray(profile?.achievements);
+  const managerialHistoryArray = safeParseArray(profile?.managerial_history);
 
-  console.log('[DEBUG] profile keys:', profile ? Object.keys(profile) : 'profile is null');
-  console.log('[DEBUG] profile.career_stats:', profile?.career_stats ? 'exists' : 'undefined');
-  console.log('[DEBUG] careerStatsArray length:', careerStatsArray.length);
+
+
   if ((role === 'player' || role === 'athlete') && careerStatsArray.length > 0) {
     careerStatsArray.forEach((stat: any) => {
       totalGoals += Number(stat.goals) || 0;
@@ -118,6 +118,37 @@ export default async function DashboardPage() {
   const transferCount = transferHistoryArray.length;
   const trophyCount = achievementsArray.length;
 
+  // Coach Analytics Calculations
+  let coachYearsExp = 0;
+  let coachClubsManaged = 0;
+  let coachWins = 0;
+  let coachDraws = 0;
+  let coachLosses = 0;
+
+  if ((role === 'coach' || role === 'manager') && managerialHistoryArray.length > 0) {
+    let earliestYear = new Date().getFullYear();
+    const uniqueClubs = new Set<string>();
+
+    managerialHistoryArray.forEach((stint: any) => {
+      // Form saves as startDate e.g. "2018"
+      const fromYear = parseInt(stint.startDate?.split('/')[0] || stint.startDate, 10);
+      if (!isNaN(fromYear) && fromYear < earliestYear) earliestYear = fromYear;
+      
+      if (stint.club && !uniqueClubs.has(stint.club)) uniqueClubs.add(stint.club);
+      
+      coachWins += Number(stint.wins) || 0;
+      coachDraws += Number(stint.draws) || 0;
+      coachLosses += Number(stint.losses) || 0;
+    });
+
+    coachYearsExp = Math.max(0, new Date().getFullYear() - earliestYear);
+    coachClubsManaged = uniqueClubs.size;
+  }
+  
+  const coachTotalMatches = coachWins + coachDraws + coachLosses;
+  const coachTotalPoints = (coachWins * 3) + coachDraws;
+  const coachWinRatio = coachTotalMatches > 0 ? Math.round((coachWins / coachTotalMatches) * 100) : 0;
+
   const baseStats = [
     { label: 'Public Profile Views', value: publicViews.toString(), icon: Eye, trend: 'All Time', color: 'text-blue-600', bg: 'bg-blue-50' },
     { label: 'Scouting Views', value: scoutingViews.toString(), icon: Target, trend: 'Verified Orgs', color: 'text-green-600', bg: 'bg-green-50' },
@@ -131,7 +162,14 @@ export default async function DashboardPage() {
     { label: 'Trophies', value: trophyCount.toString(), icon: Award, trend: 'Achievements', color: 'text-amber-600', bg: 'bg-amber-50' },
   ] : [];
 
-  const displayStats = [...baseStats, ...playerStats];
+  const coachStats = (role === 'coach' || role === 'manager') ? [
+    { label: 'Managerial Points', value: coachTotalPoints.toString(), icon: Award, trend: `${coachWinRatio}% Win Rate`, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'W/D/L Record', value: `${coachWins}W / ${coachDraws}D / ${coachLosses}L`, icon: Target, trend: `${coachTotalMatches} Matches`, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Clubs Managed', value: coachClubsManaged.toString(), icon: Globe, trend: `${coachYearsExp} Years Exp.`, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Trophies', value: trophyCount.toString(), icon: Award, trend: 'Achievements', color: 'text-amber-600', bg: 'bg-amber-50' },
+  ] : [];
+
+  const displayStats = [...baseStats, ...playerStats, ...coachStats];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">

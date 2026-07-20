@@ -1,5 +1,6 @@
 'use client';
 
+import Script from 'next/script';
 import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/context/ToastContext';
@@ -33,6 +34,9 @@ interface CMSPaymentSettings {
   bankName?: string;
   accountName?: string;
   accountNumber?: string;
+  paystackActive?: boolean;
+  paystackPublicKey?: string;
+  plans?: any;
 }
 
 interface UserTransaction {
@@ -105,14 +109,11 @@ export default function SubscriptionPage() {
         setPaymentSettings(settings?.content || { paymentLink: 'https://paystack.com/pay/centerkick-pro' });
 
         // Fetch user transaction history securely
-        const { getUserTransactions, getPricingPlan } = await import('./actions');
+        const { getUserTransactions } = await import('./actions');
         const txRes = await getUserTransactions();
         if (txRes && txRes.transactions) {
           setTransactions(txRes.transactions);
         }
-
-        const planData = await getPricingPlan(profData?.role || 'player');
-        setPricingPlan(planData);
       }
       setIsLoading(false);
     }
@@ -138,17 +139,76 @@ export default function SubscriptionPage() {
     setIsSubmitting(false);
   };
 
+  const handleActivateFreeTier = async () => {
+    setIsSubmitting(true);
+    try {
+      const { activateFreeSubscription } = await import('./actions');
+      const res = await activateFreeSubscription();
+      if (res.error) {
+        showToast(res.error, 'error');
+      } else {
+        showToast('Free tier activated automatically!', 'success');
+        setIsRefreshing(true);
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    } catch (err) {
+      showToast('Error activating free tier', 'error');
+    }
+    setIsSubmitting(false);
+  };
+
+  const handlePaystackCheckout = () => {
+    if (!profile || !profile.email || !paymentSettings?.paystackPublicKey) {
+      showToast('Payment configuration missing.', 'error');
+      return;
+    }
+    const paystack = (window as any).PaystackPop;
+    if (!paystack) {
+      showToast('Payment gateway is loading. Please try again in a few seconds.', 'error');
+      return;
+    }
+
+    const handler = paystack.setup({
+      key: paymentSettings.paystackPublicKey,
+      email: profile.email,
+      amount: basePrice * 100, // Paystack amount is in kobo
+      plan: paystackPlanCode || undefined, // pass plan if exists
+      currency: 'NGN',
+      ref: 'ck_' + Math.floor((Math.random() * 1000000000) + 1),
+      callback: function(response: any){
+          showToast('Payment successful! Your subscription is now active.', 'success');
+          // Reload page to update UI
+          setIsRefreshing(true);
+          setTimeout(() => window.location.reload(), 1500);
+      },
+      onClose: function(){
+          showToast('Payment window closed.', 'error');
+      }
+    });
+    handler.openIframe();
+  };
+
   const userRole = profile?.role || 'player';
-  const basePrice = pricingPlan?.amount || 15000;
-  const durationMonths = pricingPlan?.duration_months || 12;
-  const planName = pricingPlan?.plan_name || `${userRole.charAt(0).toUpperCase() + userRole.slice(1)}`;
+  const rolePlan = (paymentSettings as any)?.plans?.[userRole];
+  
+  const basePrice = rolePlan?.amount ? Number(rolePlan.amount) : 0;
+  
+  let durationMonths = 12; // default
+  if (rolePlan?.frequency === 'Monthly') durationMonths = 1;
+  else if (rolePlan?.frequency === 'Quarterly') durationMonths = 3;
+  else if (rolePlan?.frequency === 'Biannually') durationMonths = 6;
+  else if (rolePlan?.frequency === 'Lifetime Access') durationMonths = 0; // 0 means lifetime
+
+  const paystackPlanCode = rolePlan?.paystackPlanCode || null;
+
+  const planName = rolePlan?.name || `${userRole.charAt(0).toUpperCase() + userRole.slice(1)}`;
   const usdPrice = basePrice / 1500;
 
   const plan = {
     name: planName,
-    price: `₦${basePrice.toLocaleString()}`,
-    usdEquivalent: `$${usdPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    period: `Per ${durationMonths === 1 ? 'Month' : durationMonths === 3 ? 'Quarter' : durationMonths === 6 ? 'Half-Year' : durationMonths === 12 ? 'Year' : durationMonths + ' Months'}`,
+    price: basePrice === 0 ? 'Free' : `₦${basePrice.toLocaleString()}`,
+    usdEquivalent: basePrice === 0 ? 'Free' : `$${usdPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    period: basePrice === 0 ? 'Forever' : durationMonths === 0 ? 'Lifetime Access' : `Per ${durationMonths === 1 ? 'Month' : durationMonths === 3 ? 'Quarter' : durationMonths === 6 ? 'Half-Year' : durationMonths === 12 ? 'Year' : durationMonths + ' Months'}`,
     status: transactions.some(t => t.status === 'confirmed') ? 'Active' : (profile?.verification_requested ? 'Pending Approval' : 'Unverified'),
     features: [
       "Verified Professional Badge",
@@ -166,7 +226,7 @@ export default function SubscriptionPage() {
   let subscriptionEndDate: Date | null = null;
   let daysUntilExpiry: number | null = null;
 
-  if (latestConfirmedTx && durationMonths) {
+  if (latestConfirmedTx && durationMonths > 0) {
     const startDate = new Date(latestConfirmedTx.created_at);
     subscriptionEndDate = new Date(startDate);
     subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + durationMonths);
@@ -176,11 +236,13 @@ export default function SubscriptionPage() {
     daysUntilExpiry = Math.ceil(timeDiff / (1000 * 3600 * 24));
   }
 
-  const recurringTypeStr = durationMonths === 1 ? 'monthly' : durationMonths === 12 ? 'annual' : `${durationMonths}-month`;
+  const recurringTypeStr = durationMonths === 1 ? 'monthly' : durationMonths === 12 ? 'annual' : durationMonths === 0 ? 'lifetime' : `${durationMonths}-month`;
 
   if (isLoading) return <div className="pt-20 text-center font-bold tracking-wide animate-pulse text-gray-400">Loading Billing Data...</div>;
 
   return (
+    <>
+    <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
     <div className="max-w-full max-w-[1000px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8">
         <div>
@@ -267,102 +329,135 @@ export default function SubscriptionPage() {
                      {plan.status === 'Unverified' && (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-8 border-t border-gray-50">
                            
-                           {/* Route 1: Online Payment */}
-                           <div className="space-y-6 bg-white p-6 rounded-[30px] border border-gray-100 shadow-sm flex flex-col items-start">
-                              <div>
-                                <span className="inline-block px-3 py-1 bg-gray-900 text-white text-xs font-bold tracking-widest rounded-full mb-3 uppercase">Route 1: Automated</span>
-                                <h3 className="text-lg font-bold text-gray-900">Instant Online Activation</h3>
-                                <p className="text-xs font-bold text-gray-500 tracking-wide mt-2">Pay securely online to activate your professional badge and unlock all features instantly.</p>
-                              </div>
-                              <div className="pt-2 w-full">
-                                <a 
-                                   href={paymentSettings?.paymentLink || '#'} 
-                                   target="_blank" 
-                                   rel="noopener noreferrer"
-                                   className="flex items-center justify-center gap-3 w-full bg-gray-900 text-white px-8 py-4 rounded-2xl text-xs font-bold tracking-[0.2em] hover:bg-[#b50a0a] transition-all shadow-xl hover:-translate-y-1 uppercase"
-                                >
-                                   Subscribe Now <ChevronRight className="w-4 h-4" />
-                                </a>
-                              </div>
-                           </div>
-
-                           {/* Route 2: Manual Payment */}
-                           {paymentSettings?.bankName && (
-                              <div className="space-y-6 bg-white p-6 rounded-[30px] border border-gray-100 shadow-sm flex flex-col h-full">
+                           {basePrice === 0 ? (
+                              <div className="lg:col-span-2 space-y-6 bg-white p-6 rounded-[30px] border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
                                  <div>
-                                   <span className="inline-block px-3 py-1 bg-gray-900 text-white text-xs font-bold tracking-widest rounded-full mb-3 uppercase">Route 2: Manual</span>
-                                   <h3 className="text-lg font-bold text-gray-900">Direct Bank Transfer</h3>
-                                   <p className="text-xs font-bold text-gray-500 tracking-wide mt-2">Transfer to our account, then upload your receipt below to notify the admin.</p>
+                                    <span className="inline-block px-3 py-1 bg-green-900 text-white text-xs font-bold tracking-widest rounded-full mb-3 uppercase">Free Tier Available</span>
+                                    <h3 className="text-lg font-bold text-gray-900">Activate Your Account for Free</h3>
+                                    <p className="text-xs font-bold text-gray-500 tracking-wide mt-2 max-w-md">Your account type is eligible for a lifetime free subscription. Click below to activate your professional badge immediately.</p>
                                  </div>
-
-                                 <div className="bg-gray-50 p-5 rounded-[20px] border border-gray-100">
-                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                                         <div>
-                                             <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">Bank</p>
-                                             <p className="text-xs font-bold text-gray-900">{paymentSettings.bankName}</p>
-                                         </div>
-                                         <div>
-                                             <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">Name</p>
-                                             <p className="text-xs font-bold text-gray-900">{paymentSettings.accountName}</p>
-                                         </div>
-                                         <div className="lg:col-span-2">
-                                             <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">Account Number</p>
-                                             <div className="flex items-center gap-2 mt-0.5">
-                                                <p className="text-base font-bold tracking-widest text-[#b50a0a]">{paymentSettings.accountNumber}</p>
-                                                <button 
-                                                   type="button"
-                                                   onClick={() => {
-                                                      navigator.clipboard.writeText(paymentSettings.accountNumber || '');
-                                                      showToast('Account number copied!', 'success');
-                                                   }}
-                                                   className="p-1.5 bg-[#b50a0a]/10 text-[#b50a0a] hover:bg-[#b50a0a] hover:text-white rounded-md transition-colors"
-                                                   title="Copy Account Number"
-                                                >
-                                                   <Copy className="w-3.5 h-3.5" />
-                                                </button>
-                                             </div>
-                                         </div>
-                                     </div>
-                                 </div>
-
-                                 <div className="mt-auto border-t border-gray-100 pt-6">
-                                    <form onSubmit={handleClaimVerification} className="space-y-3">                                        <p className="text-xs font-bold tracking-wide text-gray-900 mb-1">Claim Payment</p>
-                                       <div className="space-y-1">
-                                          <input 
-                                             name="payment_reference"
-                                             type="text" 
-                                             placeholder="Transaction Ref/ID" 
-                                             pattern="[A-Za-z0-9]+"
-                                             maxLength={15}
-                                             onInput={(e) => {
-                                                e.currentTarget.value = e.currentTarget.value.replace(/[^A-Za-z0-9]/g, '');
-                                             }}
-                                             required
-                                             className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none transition-all"
-                                          />
-                                          <p className="text-xs font-bold text-gray-400 ml-1">Max 15 characters, alphanumeric only</p>
-                                       </div>
-                                       <input 
-                                          name="payment_receipt"
-                                          type="file" 
-                                          accept="image/*,.pdf"
-                                          required
-                                          className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-2 text-xs font-bold text-gray-500 focus:ring-2 focus:ring-[#b50a0a] outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300"
-                                       />
-                                       <button 
-                                          disabled={isSubmitting}
-                                          className="w-full bg-white border border-gray-200 text-gray-900 py-3 rounded-xl text-xs font-bold tracking-wide hover:border-[#b50a0a] hover:text-[#b50a0a] transition-all disabled:opacity-50 mt-2"
-                                       >
-                                          {isSubmitting ? 'Processing...' : 'Notify Admin'}
-                                       </button>
-                                       {msg && (
-                                          <div className={`mt-2 p-3 rounded-xl text-xs font-bold tracking-wide ${msg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                                             {msg.text}
-                                          </div>
-                                       )}
-                                    </form>
+                                 <div className="pt-4">
+                                    <button 
+                                       onClick={handleActivateFreeTier}
+                                       disabled={isSubmitting}
+                                       className="flex items-center justify-center gap-3 bg-green-600 text-white px-8 py-4 rounded-2xl text-xs font-bold tracking-[0.2em] hover:bg-green-700 transition-all shadow-xl hover:-translate-y-1 uppercase disabled:opacity-50"
+                                    >
+                                       {isSubmitting ? 'Activating...' : 'Activate Free Subscription'} <ChevronRight className="w-4 h-4" />
+                                    </button>
                                  </div>
                               </div>
+                           ) : (
+                              <>
+                                 {/* Route 1: Online Payment */}
+                                 {(paymentSettings?.paystackActive || paymentSettings?.legacyLinkActive) && (
+                                    <div className="space-y-6 bg-white p-6 rounded-[30px] border border-gray-100 shadow-sm flex flex-col items-start">
+                                       <div>
+                                         <span className="inline-block px-3 py-1 bg-gray-900 text-white text-xs font-bold tracking-widest rounded-full mb-3 uppercase">Route 1: Automated</span>
+                                         <h3 className="text-lg font-bold text-gray-900">Instant Online Activation</h3>
+                                         <p className="text-xs font-bold text-gray-500 tracking-wide mt-2">Pay securely online to activate your professional badge and unlock all features instantly.</p>
+                                       </div>
+                                       <div className="pt-2 w-full">
+                                         {paymentSettings?.paystackActive && paymentSettings?.paystackPublicKey ? (
+                                            <button 
+                                               onClick={handlePaystackCheckout}
+                                               className="flex items-center justify-center gap-3 w-full bg-gray-900 text-white px-8 py-4 rounded-2xl text-xs font-bold tracking-[0.2em] hover:bg-[#b50a0a] transition-all shadow-xl hover:-translate-y-1 uppercase"
+                                            >
+                                               Subscribe Now <ChevronRight className="w-4 h-4" />
+                                            </button>
+                                         ) : paymentSettings?.legacyLinkActive ? (
+                                           <a 
+                                              href={paymentSettings?.paymentLink || '#'} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="flex items-center justify-center gap-3 w-full bg-gray-900 text-white px-8 py-4 rounded-2xl text-xs font-bold tracking-[0.2em] hover:bg-[#b50a0a] transition-all shadow-xl hover:-translate-y-1 uppercase"
+                                           >
+                                              Subscribe Now <ChevronRight className="w-4 h-4" />
+                                           </a>
+                                         ) : null}
+                                       </div>
+                                    </div>
+                                 )}
+
+                                 {/* Route 2: Manual Payment */}
+                                 {paymentSettings?.bankName && (
+                                    <div className="space-y-6 bg-white p-6 rounded-[30px] border border-gray-100 shadow-sm flex flex-col h-full">
+                                       <div>
+                                         <span className="inline-block px-3 py-1 bg-gray-900 text-white text-xs font-bold tracking-widest rounded-full mb-3 uppercase">Route 2: Manual</span>
+                                         <h3 className="text-lg font-bold text-gray-900">Direct Bank Transfer</h3>
+                                         <p className="text-xs font-bold text-gray-500 tracking-wide mt-2">Transfer to our account, then upload your receipt below to notify the admin.</p>
+                                       </div>
+
+                                       <div className="bg-gray-50 p-5 rounded-[20px] border border-gray-100">
+                                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                               <div>
+                                                   <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">Bank</p>
+                                                   <p className="text-xs font-bold text-gray-900">{paymentSettings.bankName}</p>
+                                               </div>
+                                               <div>
+                                                   <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">Name</p>
+                                                   <p className="text-xs font-bold text-gray-900">{paymentSettings.accountName}</p>
+                                               </div>
+                                               <div className="lg:col-span-2">
+                                                   <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">Account Number</p>
+                                                   <div className="flex items-center gap-2 mt-0.5">
+                                                      <p className="text-base font-bold tracking-widest text-[#b50a0a]">{paymentSettings.accountNumber}</p>
+                                                      <button 
+                                                         type="button"
+                                                         onClick={() => {
+                                                            navigator.clipboard.writeText(paymentSettings.accountNumber || '');
+                                                            showToast('Account number copied!', 'success');
+                                                         }}
+                                                         className="p-1.5 bg-[#b50a0a]/10 text-[#b50a0a] hover:bg-[#b50a0a] hover:text-white rounded-md transition-colors"
+                                                         title="Copy Account Number"
+                                                      >
+                                                         <Copy className="w-3.5 h-3.5" />
+                                                      </button>
+                                                   </div>
+                                               </div>
+                                           </div>
+                                       </div>
+
+                                       <div className="mt-auto border-t border-gray-100 pt-6">
+                                          <form onSubmit={handleClaimVerification} className="space-y-3">
+                                             <p className="text-xs font-bold tracking-wide text-gray-900 mb-1">Claim Payment</p>
+                                             <div className="space-y-1">
+                                                <input 
+                                                   name="payment_reference"
+                                                   type="text" 
+                                                   placeholder="Transaction Ref/ID" 
+                                                   pattern="[A-Za-z0-9]+"
+                                                   maxLength={15}
+                                                   onInput={(e) => {
+                                                      e.currentTarget.value = e.currentTarget.value.replace(/[^A-Za-z0-9]/g, '');
+                                                   }}
+                                                   required
+                                                   className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none transition-all"
+                                                />
+                                                <p className="text-xs font-bold text-gray-400 ml-1">Max 15 characters, alphanumeric only</p>
+                                             </div>
+                                             <input 
+                                                name="payment_receipt"
+                                                type="file" 
+                                                accept="image/*,.pdf"
+                                                required
+                                                className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-2 text-xs font-bold text-gray-500 focus:ring-2 focus:ring-[#b50a0a] outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300"
+                                             />
+                                             <button 
+                                                disabled={isSubmitting}
+                                                className="w-full bg-white border border-gray-200 text-gray-900 py-3 rounded-xl text-xs font-bold tracking-wide hover:border-[#b50a0a] hover:text-[#b50a0a] transition-all disabled:opacity-50 mt-2"
+                                             >
+                                                {isSubmitting ? 'Processing...' : 'Notify Admin'}
+                                             </button>
+                                             {msg && (
+                                                <div className={`mt-2 p-3 rounded-xl text-xs font-bold tracking-wide ${msg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                                   {msg.text}
+                                                </div>
+                                             )}
+                                          </form>
+                                       </div>
+                                    </div>
+                                 )}
+                              </>
                            )}
                         </div>
                      )}

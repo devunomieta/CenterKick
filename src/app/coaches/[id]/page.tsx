@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import CoachDetailsClient from './CoachDetailsClient';
 import { isProfileComplete } from '@/lib/utils/profile';
-
+import { trackProfileView } from '@/app/actions/tracking';
 export default async function CoachPage({ params }: { params: Promise<{ id: string }> }) {
    const { id } = await params;
    const supabaseUser = await createClient();
@@ -24,6 +24,12 @@ export default async function CoachPage({ params }: { params: Promise<{ id: stri
    if (error || !profile) {
       if (error) console.error('Coach fetch database error:', error.message);
       notFound();
+   }
+
+   const { data: leagues } = await supabaseAdmin.from('leagues').select('*');
+   const getLeagueName = (leagueId: string) => leagues?.find(l => l.id === leagueId)?.name || leagueId;
+   if (profile.league) {
+      profile.league_name = getLeagueName(profile.league);
    }
 
    // Only show active profiles to public, or let admins/owners see pending
@@ -47,6 +53,8 @@ export default async function CoachPage({ params }: { params: Promise<{ id: stri
    if (!isProfileComplete(profile) && !isOwner && !(profile.users as any)?.role?.includes('admin')) {
       notFound();
    }
+
+   await trackProfileView(profile.id);
 
    return <CoachDetailsClient profile={profile} />;
 }

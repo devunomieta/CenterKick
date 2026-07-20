@@ -53,7 +53,18 @@ export default function CoachDetailsClient({ profile }: CoachDetailsClientProps)
    };
 
    const profileAge = calculateAge(profile.date_of_birth);
-   const profileExp = profile.years_of_experience ? `${profile.years_of_experience} yrs` : 'NIL';
+   
+   let calcYearsExp = profile.years_of_experience || 0;
+   if (managerialHistory.length > 0) {
+      let earliestYear = new Date().getFullYear();
+      managerialHistory.forEach((stint: any) => {
+         const fromYear = parseInt(stint.startDate?.split('/')[0] || stint.startDate, 10);
+         if (!isNaN(fromYear) && fromYear < earliestYear) earliestYear = fromYear;
+      });
+      const calculated = Math.max(0, new Date().getFullYear() - earliestYear);
+      if (calculated > 0) calcYearsExp = calculated;
+   }
+   const profileExp = calcYearsExp > 0 ? `${calcYearsExp} yrs` : 'NIL';
    const profileFormation = profile.formation || 'NIL';
    const profileClub = profile.current_club || 'NIL';
 

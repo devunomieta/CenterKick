@@ -20,7 +20,7 @@ export function SubscriptionsClient({
       const errs: {[key: string]: string} = {};
 
       // 1. External Payment URL Validation
-      if (settings.paymentLink) {
+      if (settings.legacyLinkActive && settings.paymentLink) {
          try {
             new URL(settings.paymentLink);
          } catch (_) {
@@ -45,6 +45,11 @@ export function SubscriptionsClient({
             errs.paystackSecret = 'Secret key is required when Paystack is active';
          } else if (!settings.paystackSecret.startsWith('sk_')) {
             errs.paystackSecret = 'Secret key must be a valid Paystack key starting with sk_';
+         }
+         if (!settings.paystackPublicKey) {
+            errs.paystackPublicKey = 'Public key is required when Paystack is active';
+         } else if (!settings.paystackPublicKey.startsWith('pk_')) {
+            errs.paystackPublicKey = 'Public key must be a valid Paystack key starting with pk_';
          }
       }
 
@@ -152,241 +157,299 @@ export function SubscriptionsClient({
             </div>
          )}
 
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:p-8">
-            {/* Universal Payment Link */}
-            <div className="bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
-               <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-600 border border-gray-100">
-                     <ExternalLink className="w-6 h-6" />
-                  </div>
-                  <div>
-                     <h3 className="text-base font-bold text-gray-900">Legacy Checkout</h3>
-                     <p className="text-xs font-bold text-gray-900 tracking-wide mt-0.5">Universal Redirect Link</p>
-                  </div>
-               </div>
+         <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-12">
+            <div className="overflow-x-auto">
+               <table className="w-full text-left border-collapse">
+                  <thead>
+                     <tr className="bg-gray-50/50 border-b border-gray-100">
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Gateway / Channel</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap text-center">Status</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest min-w-[400px]">Configuration Keys & Settings</th>
+                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                     {/* Legacy Checkout */}
+                     <tr className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-6 align-top whitespace-nowrap">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-600 border border-gray-100">
+                                 <ExternalLink className="w-6 h-6" />
+                              </div>
+                              <div>
+                                 <h3 className="text-base font-bold text-gray-900">Legacy Checkout</h3>
+                                 <p className="text-xs font-bold text-gray-500 tracking-wide mt-0.5">Universal Redirect Link</p>
+                              </div>
+                           </div>
+                        </td>
+                        <td className="px-6 py-6 align-top text-center">
+                           <button
+                              onClick={() => setSettings({ ...settings, legacyLinkActive: !settings.legacyLinkActive })}
+                              className={`w-10 h-5 rounded-full relative transition-colors inline-block mt-3 ${settings.legacyLinkActive ? 'bg-gray-900' : 'bg-gray-200'}`}
+                           >
+                              <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${settings.legacyLinkActive ? 'right-1' : 'left-1'}`}></div>
+                           </button>
+                        </td>
+                        <td className="px-6 py-6 align-top">
+                           {settings.legacyLinkActive ? (
+                              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                 <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">External Payment URL</label>
+                                    <div className="relative group">
+                                       <input
+                                          type="text"
+                                          value={settings.paymentLink || ''}
+                                          onChange={(e) => setSettings({ ...settings, paymentLink: e.target.value })}
+                                          placeholder="https://..."
+                                          className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-gray-200 transition-all text-gray-900 ${errors.paymentLink ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
+                                       />
+                                       {settings.paymentLink && !errors.paymentLink && (
+                                          <a href={settings.paymentLink} target="_blank" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors">
+                                             <ExternalLink className="w-3.5 h-3.5" />
+                                          </a>
+                                       )}
+                                    </div>
+                                    {errors.paymentLink && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.paymentLink}</p>}
+                                 </div>
+                                 <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Checkout Instructions</label>
+                                    <textarea
+                                       rows={2}
+                                       value={settings.instructions || ''}
+                                       onChange={(e) => setSettings({ ...settings, instructions: e.target.value })}
+                                       placeholder="Instructions shown for manual/universal links..."
+                                       className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-gray-200 transition-all text-gray-900 resize-none"
+                                    />
+                                 </div>
+                              </div>
+                           ) : (
+                              <span className="text-xs font-bold text-gray-400 italic mt-4 block">Disabled</span>
+                           )}
+                        </td>
+                     </tr>
 
-               <div className="space-y-4">
-                  <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">External Payment URL</label>
-                     <div className="relative group">
-                        <input
-                           type="text"
-                           value={settings.paymentLink || ''}
-                           onChange={(e) => setSettings({ ...settings, paymentLink: e.target.value })}
-                           placeholder="https://..."
-                           className={`w-full bg-gray-50 border rounded-xl p-4 text-xs font-bold focus:ring-2 focus:ring-gray-200 transition-all text-gray-900 ${errors.paymentLink ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
-                        />
-                        {settings.paymentLink && !errors.paymentLink && (
-                           <a href={settings.paymentLink} target="_blank" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors">
-                              <ExternalLink className="w-3.5 h-3.5" />
-                           </a>
-                        )}
-                     </div>
-                     {errors.paymentLink && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.paymentLink}</p>}
-                  </div>
-                  <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Checkout Instructions</label>
-                     <textarea
-                        rows={2}
-                        value={settings.instructions || ''}
-                        onChange={(e) => setSettings({ ...settings, instructions: e.target.value })}
-                        placeholder="Instructions shown for manual/universal links..."
-                        className="w-full bg-gray-50 border-none rounded-xl p-4 text-xs font-bold focus:ring-2 focus:ring-gray-200 transition-all text-gray-900 resize-none"
-                     />
-                  </div>
-               </div>
-            </div>
+                     {/* Bank Settlement */}
+                     <tr className="hover:bg-amber-50/30 transition-colors">
+                        <td className="px-6 py-6 align-top whitespace-nowrap">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100">
+                                 <DollarSign className="w-6 h-6" />
+                              </div>
+                              <div>
+                                 <h3 className="text-base font-bold text-gray-900">Bank Settlement</h3>
+                                 <p className="text-xs font-bold text-gray-500 tracking-wide mt-0.5">Local Transfers</p>
+                              </div>
+                           </div>
+                        </td>
+                        <td className="px-6 py-6 align-top text-center">
+                           <span className="inline-block mt-3 px-3 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold uppercase tracking-widest rounded-md">Always Active</span>
+                        </td>
+                        <td className="px-6 py-6 align-top">
+                           <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                              <div className="space-y-1.5">
+                                 <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Institution</label>
+                                 <input
+                                    type="text"
+                                    value={settings.bankName || ''}
+                                    onChange={(e) => setSettings({ ...settings, bankName: e.target.value })}
+                                    placeholder="Bank name"
+                                    className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-amber-200 transition-all ${errors.bankName ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
+                                 />
+                                 {errors.bankName && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.bankName}</p>}
+                              </div>
+                              <div className="space-y-1.5">
+                                 <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Acc. Name</label>
+                                 <input
+                                    type="text"
+                                    value={settings.accountName || ''}
+                                    onChange={(e) => setSettings({ ...settings, accountName: e.target.value })}
+                                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-xs font-bold text-gray-900"
+                                 />
+                              </div>
+                              <div className="space-y-1.5">
+                                 <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Number</label>
+                                 <input
+                                    type="text"
+                                    value={settings.accountNumber || ''}
+                                    onChange={(e) => setSettings({ ...settings, accountNumber: e.target.value })}
+                                    className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-amber-200 transition-all ${errors.accountNumber ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
+                                 />
+                                 {errors.accountNumber && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.accountNumber}</p>}
+                              </div>
+                           </div>
+                        </td>
+                     </tr>
 
-            {/* Bank Settlement */}
-            <div className="bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
-               <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100">
-                     <DollarSign className="w-6 h-6" />
-                  </div>
-                  <div>
-                     <h3 className="text-base font-bold text-gray-900">Bank Settlement</h3>
-                     <p className="text-xs font-bold text-gray-900 tracking-wide mt-0.5">Local Transfers</p>
-                  </div>
-               </div>
+                     {/* Paystack */}
+                     <tr className="hover:bg-teal-50/30 transition-colors">
+                        <td className="px-6 py-6 align-top whitespace-nowrap">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600 border border-teal-100">
+                                 <Zap className="w-6 h-6" />
+                              </div>
+                              <div>
+                                 <h3 className="text-base font-bold text-gray-900">Paystack</h3>
+                                 <p className="text-xs font-bold text-gray-500 tracking-wide mt-0.5">Automated Gateway</p>
+                              </div>
+                           </div>
+                        </td>
+                        <td className="px-6 py-6 align-top text-center">
+                           <button
+                              onClick={() => setSettings({ ...settings, paystackActive: !settings.paystackActive })}
+                              className={`w-10 h-5 rounded-full relative transition-colors inline-block mt-3 ${settings.paystackActive ? 'bg-teal-500' : 'bg-gray-200'}`}
+                           >
+                              <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${settings.paystackActive ? 'right-1' : 'left-1'}`}></div>
+                           </button>
+                        </td>
+                        <td className="px-6 py-6 align-top">
+                           {settings.paystackActive ? (
+                              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                 <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Secret Key</label>
+                                    <input
+                                       type="password"
+                                       value={settings.paystackSecret || ''}
+                                       onChange={(e) => setSettings({ ...settings, paystackSecret: e.target.value })}
+                                       placeholder="sk_live_..."
+                                       className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-teal-100 transition-all ${errors.paystackSecret ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
+                                    />
+                                    {errors.paystackSecret && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.paystackSecret}</p>}
+                                 </div>
+                                 <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Public Key</label>
+                                    <input
+                                       type="text"
+                                       value={settings.paystackPublicKey || ''}
+                                       onChange={(e) => setSettings({ ...settings, paystackPublicKey: e.target.value })}
+                                       placeholder="pk_live_..."
+                                       className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-teal-100 transition-all ${errors.paystackPublicKey ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
+                                    />
+                                    {errors.paystackPublicKey && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.paystackPublicKey}</p>}
+                                 </div>
+                                 <div className="space-y-1.5 xl:col-span-2">
+                                    <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Webhook URL</label>
+                                    <div className="px-4 py-3 bg-gray-50 rounded-xl text-xs font-mono text-gray-400 break-all select-all border border-gray-100">
+                                       {typeof window !== 'undefined' ? `${window.location.origin}/api/webhooks/paystack` : '.../api/webhooks/paystack'}
+                                    </div>
+                                 </div>
+                              </div>
+                           ) : (
+                              <span className="text-xs font-bold text-gray-400 italic mt-4 block">Disabled</span>
+                           )}
+                        </td>
+                     </tr>
 
-               <div className="grid grid-cols-1 gap-4">
-                  <div className="grid grid-cols-1 gap-1.5">
-                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Institution</label>
-                     <input
-                        type="text"
-                        value={settings.bankName || ''}
-                        onChange={(e) => setSettings({ ...settings, bankName: e.target.value })}
-                        placeholder="Bank name"
-                        className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-amber-200 transition-all ${errors.bankName ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
-                     />
-                     {errors.bankName && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.bankName}</p>}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Acc. Name</label>
-                        <input
-                           type="text"
-                           value={settings.accountName || ''}
-                           onChange={(e) => setSettings({ ...settings, accountName: e.target.value })}
-                           className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-xs font-bold text-gray-900"
-                        />
-                     </div>
-                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Number</label>
-                        <input
-                           type="text"
-                           value={settings.accountNumber || ''}
-                           onChange={(e) => setSettings({ ...settings, accountNumber: e.target.value })}
-                           className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-amber-200 transition-all ${errors.accountNumber ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
-                        />
-                     </div>
-                  </div>
-                  {errors.accountNumber && <p className="text-xs font-bold text-red-500 ml-1">{errors.accountNumber}</p>}
-               </div>
+                     {/* Stripe */}
+                     <tr className="hover:bg-indigo-50/30 transition-colors">
+                        <td className="px-6 py-6 align-top whitespace-nowrap">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100">
+                                 <CreditCard className="w-6 h-6" />
+                              </div>
+                              <div>
+                                 <h3 className="text-base font-bold text-gray-900">Stripe</h3>
+                                 <p className="text-xs font-bold text-gray-500 tracking-wide mt-0.5">Global Checkout</p>
+                              </div>
+                           </div>
+                        </td>
+                        <td className="px-6 py-6 align-top text-center">
+                           <button
+                              onClick={() => setSettings({ ...settings, stripeActive: !settings.stripeActive })}
+                              className={`w-10 h-5 rounded-full relative transition-colors inline-block mt-3 ${settings.stripeActive ? 'bg-indigo-500' : 'bg-gray-200'}`}
+                           >
+                              <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${settings.stripeActive ? 'right-1' : 'left-1'}`}></div>
+                           </button>
+                        </td>
+                        <td className="px-6 py-6 align-top">
+                           {settings.stripeActive ? (
+                              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                 <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Publishable Key</label>
+                                    <input
+                                       type="text"
+                                       value={settings.stripeKey || ''}
+                                       onChange={(e) => setSettings({ ...settings, stripeKey: e.target.value })}
+                                       placeholder="pk_live_..."
+                                       className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-indigo-100 transition-all ${errors.stripeKey ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
+                                    />
+                                    {errors.stripeKey && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.stripeKey}</p>}
+                                 </div>
+                                 <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Secret Key</label>
+                                    <input
+                                       type="password"
+                                       value={settings.stripeSecret || ''}
+                                       onChange={(e) => setSettings({ ...settings, stripeSecret: e.target.value })}
+                                       placeholder="sk_live_..."
+                                       className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-indigo-100 transition-all ${errors.stripeSecret ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
+                                    />
+                                    {errors.stripeSecret && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.stripeSecret}</p>}
+                                 </div>
+                              </div>
+                           ) : (
+                              <span className="text-xs font-bold text-gray-400 italic mt-4 block">Disabled</span>
+                           )}
+                        </td>
+                     </tr>
+
+                     {/* PayPal */}
+                     <tr className="hover:bg-blue-50/30 transition-colors">
+                        <td className="px-6 py-6 align-top whitespace-nowrap">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
+                                 <DollarSign className="w-6 h-6" />
+                              </div>
+                              <div>
+                                 <h3 className="text-base font-bold text-gray-900">PayPal</h3>
+                                 <p className="text-xs font-bold text-gray-500 tracking-wide mt-0.5">Braintree/Legacy</p>
+                              </div>
+                           </div>
+                        </td>
+                        <td className="px-6 py-6 align-top text-center">
+                           <button
+                              onClick={() => setSettings({ ...settings, paypalActive: !settings.paypalActive })}
+                              className={`w-10 h-5 rounded-full relative transition-colors inline-block mt-3 ${settings.paypalActive ? 'bg-blue-500' : 'bg-gray-200'}`}
+                           >
+                              <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${settings.paypalActive ? 'right-1' : 'left-1'}`}></div>
+                           </button>
+                        </td>
+                        <td className="px-6 py-6 align-top">
+                           {settings.paypalActive ? (
+                              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                 <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Client ID</label>
+                                    <input
+                                       type="text"
+                                       value={settings.paypalId || ''}
+                                       onChange={(e) => setSettings({ ...settings, paypalId: e.target.value })}
+                                       placeholder="AZ_..."
+                                       className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-blue-100 transition-all ${errors.paypalId ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
+                                    />
+                                    {errors.paypalId && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.paypalId}</p>}
+                                 </div>
+                                 <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Environment</label>
+                                    <select
+                                       value={settings.paypalEnv || 'sandbox'}
+                                       onChange={(e) => setSettings({ ...settings, paypalEnv: e.target.value })}
+                                       className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-blue-100 transition-all"
+                                    >
+                                       <option value="sandbox" className="text-gray-900 bg-white">Sandbox (Testing)</option>
+                                       <option value="live" className="text-gray-900 bg-white">Live (Production)</option>
+                                    </select>
+                                 </div>
+                              </div>
+                           ) : (
+                              <span className="text-xs font-bold text-gray-400 italic mt-4 block">Disabled</span>
+                           )}
+                        </td>
+                     </tr>
+                  </tbody>
+               </table>
             </div>
          </div>
 
-
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3 gap-4 md:p-8">
-            {/* Paystack Full Integration */}
-            <div className="bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative overflow-hidden group">
-               <div className="absolute top-0 right-0 w-24 h-24 bg-teal-50/50 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-teal-100/50 transition-colors"></div>
-               <div className="relative z-10 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                     <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600 border border-teal-100 transition-transform group-hover:scale-110">
-                        <Zap className="w-6 h-6" />
-                     </div>
-                     <div>
-                        <h3 className="text-base font-bold text-gray-900 tracking-tight">Paystack</h3>
-                        <p className="text-xs font-bold text-gray-900 tracking-wide mt-0.5">Automated Gateway</p>
-                     </div>
-                  </div>
-                  <button
-                     onClick={() => setSettings({ ...settings, paystackActive: !settings.paystackActive })}
-                     className={`w-10 h-5 rounded-full relative transition-colors ${settings.paystackActive ? 'bg-teal-500' : 'bg-gray-200'}`}
-                  >
-                     <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${settings.paystackActive ? 'right-1' : 'left-1'}`}></div>
-                  </button>
-               </div>
-
-               <div className="space-y-4 relative z-10">
-                  <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Secret Key</label>
-                     <input
-                        type="password"
-                        value={settings.paystackSecret || ''}
-                        onChange={(e) => setSettings({ ...settings, paystackSecret: e.target.value })}
-                        placeholder="sk_live_..."
-                        className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-teal-100 transition-all ${errors.paystackSecret ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
-                     />
-                     {errors.paystackSecret && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.paystackSecret}</p>}
-                  </div>
-                  <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Webhook URL</label>
-                     <div className="p-3 bg-gray-50 rounded-xl text-xs font-mono text-gray-400 break-all select-all">
-                        {typeof window !== 'undefined' ? `${window.location.origin}/api/hooks/paystack` : '.../api/hooks/paystack'}
-                     </div>
-                  </div>
-               </div>
-            </div>
-
-            {/* Stripe Full Integration */}
-            <div className="bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative overflow-hidden group">
-               <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50/50 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-indigo-100/50 transition-colors"></div>
-               <div className="relative z-10 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                     <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100 transition-transform group-hover:scale-110">
-                        <CreditCard className="w-6 h-6" />
-                     </div>
-                     <div>
-                        <h3 className="text-base font-bold text-gray-900 tracking-tight">Stripe</h3>
-                        <p className="text-xs font-bold text-gray-900 tracking-wide mt-0.5">Global Checkout</p>
-                     </div>
-                  </div>
-                  <button
-                     onClick={() => setSettings({ ...settings, stripeActive: !settings.stripeActive })}
-                     className={`w-10 h-5 rounded-full relative transition-colors ${settings.stripeActive ? 'bg-indigo-500' : 'bg-gray-200'}`}
-                  >
-                     <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${settings.stripeActive ? 'right-1' : 'left-1'}`}></div>
-                  </button>
-               </div>
-
-               <div className="space-y-4 relative z-10">
-                  <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Publishable Key</label>
-                     <input
-                        type="text"
-                        value={settings.stripeKey || ''}
-                        onChange={(e) => setSettings({ ...settings, stripeKey: e.target.value })}
-                        placeholder="pk_live_..."
-                        className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-indigo-100 transition-all ${errors.stripeKey ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
-                     />
-                     {errors.stripeKey && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.stripeKey}</p>}
-                  </div>
-                  <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Secret Key</label>
-                     <input
-                        type="password"
-                        value={settings.stripeSecret || ''}
-                        onChange={(e) => setSettings({ ...settings, stripeSecret: e.target.value })}
-                        placeholder="sk_live_..."
-                        className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-indigo-100 transition-all ${errors.stripeSecret ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
-                     />
-                     {errors.stripeSecret && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.stripeSecret}</p>}
-                  </div>
-               </div>
-            </div>
-
-            {/* PayPal Full Integration */}
-            <div className="bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative overflow-hidden group">
-               <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-blue-100/50 transition-colors"></div>
-               <div className="relative z-10 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                     <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100 transition-transform group-hover:scale-110">
-                        <DollarSign className="w-6 h-6" />
-                     </div>
-                     <div>
-                        <h3 className="text-base font-bold text-gray-900 tracking-tight">PayPal</h3>
-                        <p className="text-xs font-bold text-gray-900 tracking-wide mt-0.5">Braintree/Legacy</p>
-                     </div>
-                  </div>
-                  <button
-                     onClick={() => setSettings({ ...settings, paypalActive: !settings.paypalActive })}
-                     className={`w-10 h-5 rounded-full relative transition-colors ${settings.paypalActive ? 'bg-blue-500' : 'bg-gray-200'}`}
-                  >
-                     <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${settings.paypalActive ? 'right-1' : 'left-1'}`}></div>
-                  </button>
-               </div>
-
-               <div className="space-y-4 relative z-10">
-                  <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Client ID</label>
-                     <input
-                        type="text"
-                        value={settings.paypalId || ''}
-                        onChange={(e) => setSettings({ ...settings, paypalId: e.target.value })}
-                        placeholder="AZ_..."
-                        className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-blue-100 transition-all ${errors.paypalId ? 'border-red-500 focus:ring-red-200' : 'border-transparent'}`}
-                     />
-                     {errors.paypalId && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors.paypalId}</p>}
-                  </div>
-                  <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Environment</label>
-                     <select
-                        value={settings.paypalEnv || 'sandbox'}
-                        onChange={(e) => setSettings({ ...settings, paypalEnv: e.target.value })}
-                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-xs font-bold text-gray-900 focus:ring-2 focus:ring-blue-100 transition-all"
-                     >
-                        <option value="sandbox" className="text-gray-900 bg-white">Sandbox (Testing)</option>
-                        <option value="live" className="text-gray-900 bg-white">Live (Production)</option>
-                     </select>
-                  </div>
-               </div>
-            </div>
-         </div>
-
-         {/* Role-Based Tiers */}
-         <div className="space-y-8">
+         {/* Role-Based Tiers (Table Layout) */}
+         <div className="space-y-6">
             <div className="flex items-center gap-4">
                <div className="h-px flex-1 bg-gray-100"></div>
                <div className="text-center px-4">
@@ -396,76 +459,75 @@ export function SubscriptionsClient({
                <div className="h-px flex-1 bg-gray-100"></div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3 xl:grid-cols-1 md:grid-cols-3 gap-4 md:p-8">
-               {roles.map((role) => {
-                  const plan = settings.plans?.[role.id] || {};
-                  const Icon = role.icon;
-                  return (
-                     <div key={role.id} className="bg-gray-900 p-10 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
-                        <div className={`absolute top-0 right-0 w-48 h-48 bg-gradient-to-br ${role.color} to-transparent blur-[60px] rounded-full -mr-24 -mt-24 group-hover:scale-125 transition-transform duration-700`}></div>
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+               <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                     <thead>
+                        <tr className="bg-gray-50/50 border-b border-gray-100">
+                           <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Account Type</th>
+                           <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Plan Name</th>
+                           <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Charge Rate</th>
+                           <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Billing Interval</th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-gray-100">
+                        {roles.map((role) => {
+                           const plan = settings.plans?.[role.id] || {};
+                           const Icon = role.icon;
+                           return (
+                              <tr key={role.id} className="hover:bg-gray-50/50 transition-colors group">
+                                 {/* Role Label */}
+                                 <td className="px-6 py-5 whitespace-nowrap">
+                                    <span className="text-sm font-bold text-gray-900">{role.label}</span>
+                                 </td>
 
-                        <div className="relative z-10 flex flex-col h-full gap-4 md:p-8">
-                           <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
-                                 <Icon className="w-5 h-5 text-white" />
-                              </div>
-                              <div className="flex-1">
-                                 <p className="text-xs font-bold text-[#b50a0a] tracking-wide mb-0.5">{role.label}</p>
-                                 <input
-                                    type="text"
-                                    value={plan.name || `CenterKick ${role.id.charAt(0).toUpperCase() + role.id.slice(1)} Pro`}
-                                    onChange={(e) => updatePlan(role.id, 'name', e.target.value)}
-                                    className="bg-transparent border-none text-xs font-bold tracking-[0.1em] focus:ring-0 p-0 w-full text-white"
-                                    placeholder="PLAN NAME"
-                                 />
-                              </div>
-                           </div>
-
-                           <div className="space-y-4">
-                              <div className="space-y-2">
-                                 <label className="text-xs font-bold text-gray-200 tracking-wide ml-1">Amount / Charge Rate</label>
-                                 <div className={`flex items-center gap-3 bg-white/5 border rounded-2xl p-4 focus-within:ring-2 focus-within:ring-[#b50a0a] transition-all ${errors[`plan_amount_${role.id}`] ? 'border-red-500' : 'border-white/10'}`}>
-                                    <span className="text-2xl font-bold tracking-tighter text-white/40 select-none">$</span>
+                                 {/* Plan Name */}
+                                 <td className="px-6 py-5 min-w-[200px]">
                                     <input
                                        type="text"
-                                       value={plan.amount || '0.00'}
-                                       onChange={(e) => updatePlan(role.id, 'amount', e.target.value)}
-                                       className="bg-transparent border-none text-3xl font-bold tracking-tighter focus:ring-0 p-0 w-full text-white"
-                                       placeholder="0.00"
+                                       value={plan.name || `CenterKick ${role.id.charAt(0).toUpperCase() + role.id.slice(1)}`}
+                                       onChange={(e) => updatePlan(role.id, 'name', e.target.value)}
+                                       className="w-full bg-transparent border-none text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-amber-200 rounded-lg px-3 py-2 transition-all placeholder:text-gray-300"
+                                       placeholder="PLAN NAME"
                                     />
-                                 </div>
-                                 {errors[`plan_amount_${role.id}`] && <p className="text-xs font-bold text-red-500 ml-1 mt-1">{errors[`plan_amount_${role.id}`]}</p>}
-                              </div>
+                                 </td>
 
-                              <div className="space-y-2">
-                                 <label className="text-xs font-bold text-gray-200 tracking-wide ml-1">Billing Interval</label>
-                                 <select
-                                    value={plan.frequency || 'Lifetime Access'}
-                                    onChange={(e) => updatePlan(role.id, 'frequency', e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-gray-300 tracking-wide px-4 py-3 focus:ring-1 focus:ring-[#b50a0a]"
-                                 >
-                                    <option value="Lifetime Access" className="text-gray-900 bg-white">Lifetime Access</option>
-                                    <option value="Monthly" className="text-gray-900 bg-white">Monthly Billing</option>
-                                    <option value="Quarterly" className="text-gray-900 bg-white">Quarterly Billing</option>
-                                    <option value="Yearly" className="text-gray-900 bg-white">Yearly Billing</option>
-                                 </select>
-                              </div>
+                                 {/* Amount */}
+                                 <td className="px-6 py-5 min-w-[180px]">
+                                    <div className={`flex items-center gap-2 bg-gray-50 border rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-amber-200 transition-all ${errors[`plan_amount_${role.id}`] ? 'border-red-500' : 'border-transparent'}`}>
+                                       <span className="text-sm font-bold text-gray-400 select-none">₦</span>
+                                       <input
+                                          type="text"
+                                          value={plan.amount || '0.00'}
+                                          onChange={(e) => updatePlan(role.id, 'amount', e.target.value)}
+                                          className="bg-transparent border-none text-sm font-bold text-gray-900 focus:ring-0 p-0 w-full"
+                                          placeholder="0.00"
+                                       />
+                                    </div>
+                                    {errors[`plan_amount_${role.id}`] && <p className="text-xs font-bold text-red-500 mt-1">{errors[`plan_amount_${role.id}`]}</p>}
+                                 </td>
 
-                              <div className="space-y-2">
-                                 <label className="text-xs font-bold text-gray-200 tracking-wide ml-1">Inclusions / Pitch</label>
-                                 <textarea
-                                    rows={3}
-                                    value={plan.description || `Specialized tier for all ${role.id} profiles.`}
-                                    onChange={(e) => updatePlan(role.id, 'description', e.target.value)}
-                                    className="w-full bg-white/5 border border-white/5 rounded-xl p-4 text-xs font-medium text-gray-200 focus:ring-1 focus:ring-[#b50a0a] resize-none leading-relaxed"
-                                    placeholder="Enter plan benefits..."
-                                 />
-                              </div>
-                           </div>
-                        </div>
-                     </div>
-                  );
-               })}
+                                 {/* Frequency */}
+                                 <td className="px-6 py-5 min-w-[180px]">
+                                    <select
+                                       value={plan.frequency || 'Lifetime Access'}
+                                       onChange={(e) => updatePlan(role.id, 'frequency', e.target.value)}
+                                       className="w-full bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-900 px-4 py-2 focus:ring-2 focus:ring-amber-200 transition-all"
+                                    >
+                                       <option value="Lifetime Access">Lifetime Access</option>
+                                       <option value="Monthly">Monthly Billing</option>
+                                       <option value="Quarterly">Quarterly Billing</option>
+                                       <option value="Biannually">Biannually (6 Months)</option>
+                                       <option value="Yearly">Yearly Billing</option>
+                                    </select>
+                                 </td>
+
+                              </tr>
+                           );
+                        })}
+                     </tbody>
+                  </table>
+               </div>
             </div>
          </div>
       </div>

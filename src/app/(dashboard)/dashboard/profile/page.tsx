@@ -104,6 +104,7 @@ export default function ProfileEditor() {
         
         // Initialize role data
         setRoleData({
+          formation: profileRecord?.formation || '',
           coaching_licenses: profileRecord?.coaching_licenses || [],
           specializations: profileRecord?.specializations || [],
           languages_spoken: profileRecord?.languages_spoken || [],

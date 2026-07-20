@@ -78,30 +78,20 @@ export function CoachCareerForm({ data, onChange, achievements, onAchievementsCh
           </select>
         </div>
         
-        <div className="space-y-3">
-           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Years of Experience</label>
-           <input 
-             type="number"
-             min="0"
-             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:border-[#b50a0a]"
-             placeholder="e.g. 5"
-             value={data.years_of_experience || ''}
-             onChange={(e) => onChange({ ...data, years_of_experience: e.target.value })}
-             disabled={disabled}
-           />
-        </div>
+
 
         <div className="space-y-3">
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Primary Formation</label>
-          <select 
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:border-[#b50a0a] focus:ring-1 focus:ring-[#b50a0a]"
-            value={data.formation || ''}
-            onChange={(e) => onChange({ ...data, formation: e.target.value })}
-            disabled={disabled}
-          >
-            <option value="">Select formation...</option>
-            {formations.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
+          <SearchableCombobox
+             disabled={disabled}
+             options={formations.map(f => ({ name: f }))}
+             value={data.formation || ''}
+             valueField="name"
+             displayField="name"
+             onChange={(val, isNew, newName) => onChange({ ...data, formation: isNew ? newName : val })}
+             placeholder="Select or enter formation..."
+             className="w-full"
+          />
         </div>
       </div>
 

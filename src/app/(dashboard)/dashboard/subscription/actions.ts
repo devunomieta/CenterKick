@@ -168,3 +168,57 @@ export async function getPricingPlan(role: string) {
   if (error || !plan) return null;
   return plan;
 }
+
+export async function activateFreeSubscription() {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { error: 'Unauthorized' };
+  }
+
+  const { data: profile, error: profileFetchError } = await supabase
+    .from('profiles')
+    .select('id, role')
+    .eq('user_id', user.id)
+    .single();
+
+  if (profileFetchError || !profile) {
+    return { error: 'Profile not found' };
+  }
+
+  const adminClient = createAdminClient();
+
+  // Create a confirmed transaction for 0 amount
+  const { error: transError } = await adminClient
+    .from('transactions')
+    .insert({
+      user_id: profile.id,
+      amount: 0,
+      currency: 'NGN',
+      status: 'confirmed',
+      reference: 'free_activation_' + Math.random().toString(36).substring(7),
+      method: 'free_tier',
+      metadata: {
+        type: 'subscription',
+        description: `Lifetime free tier activation for ${profile.role}`
+      }
+    });
+
+  if (transError) {
+    return { error: 'Failed to record transaction' };
+  }
+
+  // Update profile status
+  await supabase
+    .from('profiles')
+    .update({
+      verification_requested: false,
+      status: 'active',
+      updated_at: new Date().toISOString()
+    })
+    .eq('user_id', user.id);
+
+  revalidatePath('/dashboard/subscription');
+  return { success: true };
+}
