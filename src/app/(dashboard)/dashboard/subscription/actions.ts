@@ -231,15 +231,23 @@ export async function verifyPaystackPayment(reference: string, amount: number, p
     return { error: 'Unauthorized' };
   }
 
+  const { data: userData } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
   const { data: profile, error: profileFetchError } = await supabase
     .from('profiles')
-    .select('id, role')
+    .select('id')
     .eq('user_id', user.id)
     .single();
 
   if (profileFetchError || !profile) {
     return { error: 'Profile not found' };
   }
+
+  const userRole = userData?.role || 'player';
 
   const adminClient = createAdminClient();
 
@@ -274,14 +282,14 @@ export async function verifyPaystackPayment(reference: string, amount: number, p
         method: 'paystack_integration',
         metadata: {
           type: 'subscription',
-          description: `Paystack Payment for ${profile.role}`,
+          description: `Paystack Payment for ${userRole}`,
           paystack_plan: planCode || data.data.plan
         }
       });
       
       if (insertError) {
         console.error('Transaction insert error:', insertError);
-        return { error: 'Failed to record transaction' };
+        return { error: `Failed to record transaction: ${insertError.message || JSON.stringify(insertError)}` };
       }
       
       // Update profile status

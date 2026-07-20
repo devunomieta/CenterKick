@@ -36,13 +36,22 @@ export async function POST(req: Request) {
       const { reference, customer, amount, plan } = event.data;
       
       // Look up user by email
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id, role')
+        .eq('email', customer.email)
+        .single();
+
+      if (!userData) return NextResponse.json({ received: true });
+
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, user_id, role')
-        .eq('email', customer.email)
+        .select('id, user_id')
+        .eq('user_id', userData.id)
         .single();
         
       if (profile) {
+         const userRole = userData.role;
          // Create transaction
          const { error: txError } = await supabase.from('transactions').insert({
             user_id: profile.id,
@@ -53,7 +62,7 @@ export async function POST(req: Request) {
             method: 'paystack_integration',
             metadata: {
               type: 'subscription',
-              description: `Paystack Auto-Debit for ${profile.role}`,
+              description: `Paystack Auto-Debit for ${userRole}`,
               paystack_plan: plan
             }
          });
