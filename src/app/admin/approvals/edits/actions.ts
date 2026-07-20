@@ -36,7 +36,23 @@ export async function approveEdit(editId: string) {
 
   // Update profile with new value
   const updateData: any = {};
-  updateData[edit.field_name] = edit.new_value;
+  
+  // Field Mapper for Human Readable labels
+  const fieldMapper: Record<string, string> = {
+    'First Name': 'first_name',
+    'Last Name': 'last_name',
+    'Date of Birth': 'date_of_birth',
+    'ID Number': 'id_number'
+  };
+
+  const dbField = fieldMapper[edit.field_name] || edit.field_name.toLowerCase().replace(/ /g, '_');
+  
+  let finalValue = edit.new_value;
+  if (edit.field_name.includes('Verification')) {
+    finalValue = true;
+  }
+  
+  updateData[dbField] = finalValue;
 
   const { error: updateError } = await supabase
     .from('profiles')

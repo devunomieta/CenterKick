@@ -175,9 +175,29 @@ export async function approveProfileEdit(editId: string, reason: string = '') {
 
   if (editError || !edit) return { success: false, error: editError?.message || 'Edit request not found' };
 
+  // Field Mapper for Human Readable labels
+  const fieldMapper: Record<string, string> = {
+    'First Name': 'first_name',
+    'Last Name': 'last_name',
+    'Date of Birth': 'date_of_birth',
+    'ID Number': 'id_number',
+    'Identity Verification': 'identity_verified',
+    'License Verification': 'license_verified',
+    'Birth Certificate Verification': 'license_verified',
+    'FA Affiliation Verification': 'organization_verified'
+  };
+
+  const dbField = fieldMapper[edit.field_name] || edit.field_name.toLowerCase().replace(/ /g, '_');
+  
+  // If this is a document verification approval, the database expects a boolean true
+  let finalValue = edit.new_value;
+  if (edit.field_name.includes('Verification')) {
+    finalValue = true;
+  }
+
   // Update profile field and set edit status to approved
   const [profileResult, editResult] = await Promise.all([
-    admin.from('profiles').update({ [edit.field_name]: edit.new_value }).eq('id', edit.profile_id),
+    admin.from('profiles').update({ [dbField]: finalValue }).eq('id', edit.profile_id),
     admin.from('profile_edits').update({ status: 'approved', updated_at: new Date().toISOString() }).eq('id', editId)
   ]);
 

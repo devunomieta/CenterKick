@@ -38,6 +38,16 @@ export async function requestProfileEdit(profileId: string, changes: Record<stri
 
   if (editsToInsert.length === 0) return { success: true };
 
+  const fields = editsToInsert.map(e => e.field_name);
+  if (fields.length > 0) {
+    await supabase
+      .from('profile_edits')
+      .delete()
+      .eq('profile_id', profileId)
+      .eq('status', 'pending')
+      .in('field_name', fields);
+  }
+
   const { error: insertError } = await supabase
     .from('profile_edits')
     .insert(editsToInsert);

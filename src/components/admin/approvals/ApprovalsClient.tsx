@@ -120,6 +120,22 @@ export function ApprovalsClient({
     const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://devunomieta-centerkick.supabase.co';
     return `${baseUrl}/storage/v1/object/public${url.startsWith('/') ? '' : '/'}${url}`;
   };
+
+  const handleOpenSecureDoc = async (url: string | null | undefined, e: React.MouseEvent) => {
+    e.preventDefault();
+    const resolvedUrl = resolveDocUrl(url);
+    if (!resolvedUrl) return;
+    try {
+      const response = await fetch(resolvedUrl);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+    } catch (error) {
+      console.error('Error fetching secure document:', error);
+      showToast('Failed to securely load document', 'error');
+    }
+  };
   const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [tab, setTab] = useState(activeTab);
@@ -409,10 +425,14 @@ export function ApprovalsClient({
                 (filtered as ProfileEdit[]).map((edit: ProfileEdit) => (
                   <div key={edit.id} className="p-6 space-y-4 hover:bg-gray-50/50 transition-colors">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-600 text-sm shrink-0 border border-gray-200">
-                          {((edit.profiles?.first_name && edit.profiles.first_name[0]) || 'E').toUpperCase()}
-                        </div>
+                      <div className="flex items-center gap-3">
+                        {edit.profiles?.avatar_url ? (
+                          <img src={edit.profiles.avatar_url} alt="Avatar" className="w-10 h-10 rounded-xl object-cover border border-gray-200 shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-600 text-sm shrink-0 border border-gray-200">
+                            {((edit.profiles?.first_name && edit.profiles.first_name[0]) || 'E').toUpperCase()}
+                          </div>
+                        )}
                         <div>
                           <div className="flex items-center gap-2">
                             {edit.profiles?.user_id ? (
@@ -443,7 +463,7 @@ export function ApprovalsClient({
                             targetName: `${edit.profiles?.first_name} ${edit.profiles?.last_name}`,
                             targetEmail: edit.profiles?.email || 'N/A'
                           })}
-                          className="flex items-center gap-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold tracking-wide shadow-md transition-all disabled:opacity-50"
+                          className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold tracking-wide shadow-md transition-all disabled:opacity-50"
                         >
                           <Check className="w-3 h-3" />
                           Approve
@@ -458,7 +478,7 @@ export function ApprovalsClient({
                             targetName: `${edit.profiles?.first_name} ${edit.profiles?.last_name}`,
                             targetEmail: edit.profiles?.email || 'N/A'
                           })}
-                          className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-lg text-xs font-bold tracking-wide transition-all disabled:opacity-50"
+                          className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-lg text-xs font-bold tracking-wide transition-all disabled:opacity-50"
                         >
                           Reject
                         </button>
@@ -466,18 +486,18 @@ export function ApprovalsClient({
                     </div>
 
                     {/* Side-by-Side Values Panel */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-gray-50 border border-gray-100 p-4 rounded-2xl">
-                      <div className="space-y-1">
-                        <p className="text-xs font-bold text-gray-400 tracking-wide">Field Requested</p>
-                        <p className="text-sm font-bold text-gray-800 tracking-wide">{formatFieldName(edit.field_name)}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 bg-gray-50 border border-gray-100 p-3 rounded-xl mt-2">
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] font-bold text-gray-400 tracking-wide uppercase">Field Requested</p>
+                        <p className="text-xs font-bold text-gray-800 tracking-wide">{formatFieldName(edit.field_name)}</p>
                       </div>
-                      <div className="space-y-1 bg-red-50/50 border border-red-100/50 p-2.5 rounded-xl">
-                        <p className="text-xs font-bold text-red-400 tracking-wide">Current Value</p>
-                        <p className="text-sm font-bold text-red-700 line-through truncate">{edit.old_value || '-- empty --'}</p>
+                      <div className="space-y-0.5 bg-red-50/50 border border-red-100/50 p-2 rounded-lg">
+                        <p className="text-[10px] font-bold text-red-400 tracking-wide uppercase">Current Value</p>
+                        <p className="text-xs font-bold text-red-700 line-through truncate">{edit.old_value || '-- empty --'}</p>
                       </div>
-                      <div className="space-y-1 bg-green-50/50 border border-green-100/50 p-2.5 rounded-xl">
-                        <p className="text-xs font-bold text-green-400 tracking-wide">Proposed Value</p>
-                        <p className="text-sm font-bold text-green-700 truncate">{edit.new_value || '-- empty --'}</p>
+                      <div className="space-y-0.5 bg-green-50/50 border border-green-100/50 p-2 rounded-lg">
+                        <p className="text-[10px] font-bold text-green-400 tracking-wide uppercase">Proposed Value</p>
+                        <p className="text-xs font-bold text-green-700 truncate">{edit.new_value || '-- empty --'}</p>
                       </div>
                     </div>
                   </div>
@@ -497,10 +517,14 @@ export function ApprovalsClient({
                 (filtered as ProfileEdit[]).map((edit: ProfileEdit) => (
                   <div key={edit.id} className="p-6 space-y-4 hover:bg-gray-50/50 transition-colors">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-600 text-sm shrink-0 border border-gray-200">
-                          {((edit.profiles?.first_name && edit.profiles.first_name[0]) || 'E').toUpperCase()}
-                        </div>
+                      <div className="flex items-center gap-3">
+                        {edit.profiles?.avatar_url ? (
+                          <img src={edit.profiles.avatar_url} alt="Avatar" className="w-10 h-10 rounded-xl object-cover border border-gray-200 shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-600 text-sm shrink-0 border border-gray-200">
+                            {((edit.profiles?.first_name && edit.profiles.first_name[0]) || 'E').toUpperCase()}
+                          </div>
+                        )}
                         <div>
                           <div className="flex items-center gap-2">
                             {edit.profiles?.user_id ? (
@@ -566,7 +590,7 @@ export function ApprovalsClient({
                       </div>
                       <div className="space-y-2">
                         <p className="text-xs font-bold text-gray-400 tracking-wide">Uploaded Document Proof</p>
-                        <a href={resolveDocUrl(edit.document_url)} target="_blank" rel="noreferrer" className="block relative h-40 bg-gray-200 rounded-xl overflow-hidden group">
+                        <a href="#" onClick={(e) => handleOpenSecureDoc(edit.document_url, e)} className="block relative h-40 bg-gray-200 rounded-xl overflow-hidden group">
                           {edit.document_url?.endsWith('.pdf') ? (
                             <div className="flex flex-col items-center justify-center h-full bg-gray-800 text-white hover:bg-gray-700 transition-colors">
                               <FileText className="w-8 h-8 mb-2" />

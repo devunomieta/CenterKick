@@ -38,7 +38,7 @@ export default async function AdminApprovalsPage({
     // 1. Fetch staff unassigned verification queue
     adminClient
       .from('users')
-      .select('*, profiles(first_name, last_name, email, country)')
+      .select('*, profiles(first_name, last_name, email, country, avatar_url)')
       .eq('role', 'unassigned')
       .eq('is_verification_requested', true)
       .order('created_at', { ascending: false }),
@@ -46,16 +46,27 @@ export default async function AdminApprovalsPage({
     // 2. Fetch Pending Profile Edits
     adminClient
       .from('profile_edits')
-      .select('*, profiles(first_name, last_name, email, role, country)')
+      .select('*, profiles(first_name, last_name, email, role, country, avatar_url)')
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
   ]);
+
+  // Process signed URLs for secure document verification
+  const secureEdits = await Promise.all((pendingEdits || []).map(async (edit: any) => {
+    if (edit.document_url && !edit.document_url.startsWith('http')) {
+      const { data } = await adminClient.storage
+        .from('verification_proofs')
+        .createSignedUrl(edit.document_url, 3600);
+      return { ...edit, document_url: data?.signedUrl || edit.document_url };
+    }
+    return edit;
+  }));
 
   return (
     <div className="space-y-6">
       <ApprovalsClient 
         pendingStaff={pendingStaff || []}
-        pendingEdits={pendingEdits || []}
+        pendingEdits={secureEdits}
         activeTab={currentTab}
         currentUserRole={userRecord?.role || 'admin'}
       />
