@@ -432,7 +432,7 @@ export function ApprovalsClient({
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
                         {edit.profiles?.avatar_url ? (
-                          <img src={edit.profiles.avatar_url} alt="Avatar" className="w-10 h-10 rounded-xl object-cover border border-gray-200 shrink-0" />
+                          <img src={resolveDocUrl(edit.profiles.avatar_url)} alt="Avatar" className="w-10 h-10 rounded-xl object-cover border border-gray-200 shrink-0" />
                         ) : (
                           <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-600 text-sm shrink-0 border border-gray-200">
                             {((edit.profiles?.first_name && edit.profiles.first_name[0]) || 'E').toUpperCase()}
@@ -524,7 +524,7 @@ export function ApprovalsClient({
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
                         {edit.profiles?.avatar_url ? (
-                          <img src={edit.profiles.avatar_url} alt="Avatar" className="w-10 h-10 rounded-xl object-cover border border-gray-200 shrink-0" />
+                          <img src={resolveDocUrl(edit.profiles.avatar_url)} alt="Avatar" className="w-10 h-10 rounded-xl object-cover border border-gray-200 shrink-0" />
                         ) : (
                           <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-600 text-sm shrink-0 border border-gray-200">
                             {((edit.profiles?.first_name && edit.profiles.first_name[0]) || 'E').toUpperCase()}

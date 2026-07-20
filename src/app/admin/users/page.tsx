@@ -24,23 +24,25 @@ export default async function AdminUsersPage({
   // 1. Fetch Stats for all roles (using admin client for reliable counts)
   const [
     { count: totalCount },
-    { count: pendingCount },
     { count: activeCount },
     { count: playersCount },
     { count: coachesCount },
     { count: agentsCount },
     { count: scoutsCount },
-    { count: orgsCount }
+    { count: orgsCount },
+    { data: countryData }
   ] = await Promise.all([
     adminClient.from('users').select('*', { count: 'exact', head: true }),
-    adminClient.from('profiles').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     adminClient.from('profiles').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     adminClient.from('users').select('*', { count: 'exact', head: true }).eq('role', 'player'),
     adminClient.from('users').select('*', { count: 'exact', head: true }).eq('role', 'coach'),
     adminClient.from('users').select('*', { count: 'exact', head: true }).eq('role', 'agent'),
     adminClient.from('users').select('*', { count: 'exact', head: true }).eq('role', 'scout'),
     adminClient.from('users').select('*', { count: 'exact', head: true }).eq('role', 'organization'),
+    adminClient.from('profiles').select('country').not('country', 'is', null)
   ]);
+
+  const globalReachCount = new Set((countryData || []).map(p => p.country)).size;
 
   // 2. Fetch Users with Filters (admin client bypasses RLS completely)
   let query = adminClient
@@ -76,13 +78,6 @@ export default async function AdminUsersPage({
     }));
   }
 
-  const stats = [
-    { label: 'All Accounts', value: totalCount || 0, icon: Users, color: 'text-gray-900', bg: 'bg-gray-100' },
-    { label: 'Pending Onboarding', value: pendingCount || 0, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Verified Active', value: activeCount || 0, icon: Shield, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Total Global Reach', value: (totalCount || 0) * 12, icon: Globe, color: 'text-[#b50a0a]', bg: 'bg-red-50' },
-  ];
-
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
@@ -96,30 +91,61 @@ export default async function AdminUsersPage({
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
-            <div className={`w-12 h-12 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center mb-4`}>
-              <stat.icon className="w-5 h-5" />
-            </div>
-            <p className="text-xs font-bold text-gray-400 tracking-wide">{stat.label}</p>
-            <p className="text-2xl font-bold text-gray-900 tracking-tighter mt-1">{stat.value}</p>
-          </div>
-        ))}
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Total Accounts */}
+        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-between relative overflow-hidden">
+           <div className="flex justify-between items-start mb-4">
+              <div>
+                <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">All User Accounts</p>
+                <p className="text-4xl font-black text-gray-900 tracking-tighter mt-1">{totalCount || 0}</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-900 flex items-center justify-center shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+           </div>
+           <div className="flex justify-between items-center pt-4 border-t border-gray-50 mt-auto w-full">
+             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Players</p><p className="text-sm font-bold text-gray-900">{playersCount || 0}</p></div>
+             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Coaches</p><p className="text-sm font-bold text-gray-900">{coachesCount || 0}</p></div>
+             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Agents</p><p className="text-sm font-bold text-gray-900">{agentsCount || 0}</p></div>
+             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Scouts</p><p className="text-sm font-bold text-gray-900">{scoutsCount || 0}</p></div>
+             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Orgs</p><p className="text-sm font-bold text-gray-900">{orgsCount || 0}</p></div>
+           </div>
+        </div>
 
-      {/* Sub-counts for Roles */}
-      <div className="bg-gray-900 rounded-[2rem] p-4 md:p-8 text-white flex flex-wrap gap-12 border border-white/5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#b50a0a] rounded-full blur-[100px] opacity-10 -mr-32 -mt-32"></div>
-        <div>
-          <p className="text-xs font-bold text-[#b50a0a] tracking-[0.3em] mb-1">Role Distribution</p>
-          <div className="flex gap-4 md:p-8">
-            <div><p className="text-xl font-bold">{playersCount || 0}</p><p className="text-xs font-bold text-gray-500 tracking-wide">Players</p></div>
-            <div><p className="text-xl font-bold">{coachesCount || 0}</p><p className="text-xs font-bold text-gray-500 tracking-wide">Coaches</p></div>
-            <div><p className="text-xl font-bold">{agentsCount || 0}</p><p className="text-xs font-bold text-gray-500 tracking-wide">Agents</p></div>
-            <div><p className="text-xl font-bold">{scoutsCount || 0}</p><p className="text-xs font-bold text-gray-500 tracking-wide">Scouts</p></div>
-            <div><p className="text-xl font-bold">{orgsCount || 0}</p><p className="text-xs font-bold text-gray-500 tracking-wide">Orgs</p></div>
-          </div>
+        {/* Verified Active */}
+        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-between">
+           <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">Verified Active</p>
+                <p className="text-4xl font-black text-gray-900 tracking-tighter mt-1">{activeCount || 0}</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center shrink-0">
+                <Shield className="w-5 h-5" />
+              </div>
+           </div>
+           <div className="pt-4 mt-auto">
+             <div className="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden">
+                <div className="bg-green-500 h-full rounded-full" style={{ width: `${totalCount ? Math.round(((activeCount||0) / totalCount) * 100) : 0}%` }}></div>
+             </div>
+             <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase">{totalCount ? Math.round(((activeCount||0) / totalCount) * 100) : 0}% of all accounts (System Admin accounts inclusive)</p>
+           </div>
+        </div>
+
+        {/* Global Reach */}
+        <div className="bg-[#b50a0a] p-6 rounded-[2rem] shadow-xl shadow-red-900/10 flex flex-col justify-between relative overflow-hidden text-white">
+           <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-[60px] opacity-20 -mr-16 -mt-16"></div>
+           <div className="flex justify-between items-start relative z-10">
+              <div>
+                <p className="text-xs font-bold text-red-200 tracking-wide uppercase">Global Reach</p>
+                <p className="text-4xl font-black text-white tracking-tighter mt-1">{globalReachCount}</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-black/20 text-white flex items-center justify-center shrink-0">
+                <Globe className="w-5 h-5" />
+              </div>
+           </div>
+           <div className="pt-4 mt-auto relative z-10">
+             <p className="text-xs font-bold text-red-100">Unique Countries Represented</p>
+           </div>
         </div>
       </div>
 

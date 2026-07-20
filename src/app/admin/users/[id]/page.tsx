@@ -91,6 +91,25 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
     }
   };
 
+  // Calculate dynamic completion percentage
+  let completionPercentage = 0;
+  if (profile) {
+    const fieldsToCheck = ['first_name', 'last_name', 'date_of_birth', 'country', 'phone_number', 'gender', 'bio'];
+    let filled = 0;
+    for (const field of fieldsToCheck) {
+      if (profile[field]) filled++;
+    }
+    completionPercentage = Math.round((filled / fieldsToCheck.length) * 100);
+  }
+
+  // Parse subscription state
+  let planState = 'Free';
+  if (subscription) {
+    planState = subscription.status 
+      ? subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1) 
+      : 'Active';
+  }
+
   // Resolve storage links or URLs
   const resolveDocUrl = (url: string | null | undefined) => {
     if (!url) return '';
@@ -117,7 +136,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
             {/* Avatar */}
             <div className="w-20 h-20 rounded-3xl bg-white/10 border border-white/20 flex items-center justify-center font-bold text-3xl text-white shrink-0 overflow-hidden shadow-inner">
               {profile?.avatar_url
-                ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                ? <img src={resolveDocUrl(profile.avatar_url)} alt="" className="w-full h-full object-cover" />
                 : user.email?.[0]?.toUpperCase()}
             </div>
             <div>
@@ -141,11 +160,11 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
           {/* Quick Stats */}
           <div className="flex gap-4 md:p-8 shrink-0 bg-white/5 border border-white/10 p-6 rounded-[1.8rem] backdrop-blur-sm">
             <div className="text-center px-2">
-              <p className="text-2xl font-bold">{profile ? '100%' : '0%'}</p>
+              <p className="text-2xl font-bold">{completionPercentage}%</p>
               <p className="text-xs text-white/40 font-bold tracking-wide mt-1">Completion</p>
             </div>
             <div className="text-center px-2 border-l border-white/10">
-              <p className="text-2xl font-bold">{subscription ? 'Active' : 'None'}</p>
+              <p className="text-2xl font-bold">{planState}</p>
               <p className="text-xs text-white/40 font-bold tracking-wide mt-1">Plan State</p>
             </div>
             <div className="text-center px-2 border-l border-white/10">
