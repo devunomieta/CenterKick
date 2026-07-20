@@ -6,6 +6,7 @@ import {
    Zap, DollarSign, UserCheck, Search, Users
 } from 'lucide-react';
 import { updatePaymentSettings } from '@/app/admin/payments/subscriptions/actions';
+import { useToast } from '@/context/ToastContext';
 
 export function SubscriptionsClient({
    initialSettings
@@ -15,6 +16,7 @@ export function SubscriptionsClient({
    const [settings, setSettings] = useState(initialSettings);
    const [isSaving, setIsSaving] = useState(false);
    const [errors, setErrors] = useState<{[key: string]: string}>({});
+   const { showToast } = useToast();
 
    const validate = () => {
       const errs: {[key: string]: string} = {};
@@ -93,16 +95,16 @@ export function SubscriptionsClient({
 
    const handleSave = async () => {
       if (!validate()) {
-         alert('Please correct the validation errors in the registry form before saving.');
+         showToast('Please correct the validation errors in the registry form before saving.', 'error');
          return;
       }
 
       setIsSaving(true);
       try {
          await updatePaymentSettings(settings);
-         alert('Registry updated successfully');
+         showToast('Registry updated successfully', 'success');
       } catch (error) {
-         alert('Failed to update registry');
+         showToast('Failed to update registry', 'error');
       } finally {
          setIsSaving(false);
       }
