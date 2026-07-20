@@ -28,6 +28,28 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
   if (!user) notFound();
 
+  // Deprecate generic view by redirecting to specialized dashboards if possible
+  const role = user.role?.toLowerCase();
+  const slug = profile?.slug;
+  if (slug) {
+    if (role === 'player') {
+      const { redirect } = await import('next/navigation');
+      redirect(`/admin/players/${slug}`);
+    } else if (role === 'coach') {
+      const { redirect } = await import('next/navigation');
+      redirect(`/admin/coaches/${slug}`);
+    } else if (role === 'agent') {
+      const { redirect } = await import('next/navigation');
+      redirect(`/admin/agents/${slug}`);
+    } else if (role === 'scout') {
+      const { redirect } = await import('next/navigation');
+      redirect(`/admin/scouts/${slug}`);
+    } else if (role === 'organization') {
+      const { redirect } = await import('next/navigation');
+      redirect(`/admin/organizations/${slug}`);
+    }
+  }
+
   const isActive = user.is_active !== false;
   const profileStatus = profile?.status;
 

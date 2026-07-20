@@ -156,10 +156,10 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
     const id = user.profile?.id;
     
     if (role === 'player' && slug) return `/admin/players/${slug}`;
-    if (role === 'coach' && id) return `/admin/coaches/${id}`;
-    if (role === 'agent' && id) return `/admin/agents/${id}`;
-    if (role === 'scout' && id) return `/admin/scouts/${id}`;
-    if (role === 'organization' && id) return `/admin/organizations/${id}`;
+    if (role === 'coach' && slug) return `/admin/coaches/${slug}`;
+    if (role === 'agent' && slug) return `/admin/agents/${slug}`;
+    if (role === 'scout' && slug) return `/admin/scouts/${slug}`;
+    if (role === 'organization' && slug) return `/admin/organizations/${slug}`;
     
     // Fallback if no specific profile or unsupported role
     return `/admin/users/${user.id}`;
@@ -363,7 +363,7 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
                               <div className="h-px bg-gray-100 my-1"></div>
 
                               <Link
-                                href={`/admin/users/${user.id}`}
+                                href={getProfileLink(user)}
                                 className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold tracking-wide text-gray-600 hover:bg-gray-50 rounded-xl transition-all"
                               >
                                 <Eye className="w-3.5 h-3.5" /> View Full Profile

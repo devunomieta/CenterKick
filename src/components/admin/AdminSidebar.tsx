@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   Users, UserCheck, Briefcase, FileText, PenTool,
   ShieldCheck, CreditCard, Settings, LayoutDashboard, Clock, Trophy, Search, Database, AlertTriangle
@@ -11,6 +11,7 @@ import { Home } from 'lucide-react';
 
 export function AdminSidebar({ role }: { role: string }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const isBlogger = role === 'blogger';
   const isOperations = role === 'operations';
@@ -33,11 +34,11 @@ export function AdminSidebar({ role }: { role: string }) {
       group: 'Directories',
       items: [
         { label: 'All Accounts', href: '/admin/users', icon: LayoutDashboard },
-        { label: 'Players', href: '/admin/players', icon: Users },
-        { label: 'Coaches', href: '/admin/coaches', icon: UserCheck },
-        { label: 'Agents', href: '/admin/agents', icon: Briefcase },
-        { label: 'Scouts', href: '/admin/scouts', icon: Search },
-        { label: 'Organizations', href: '/admin/organizations', icon: Trophy }
+        { label: 'Players', href: '/admin/users?role=player', icon: Users },
+        { label: 'Coaches', href: '/admin/users?role=coach', icon: UserCheck },
+        { label: 'Agents', href: '/admin/users?role=agent', icon: Briefcase },
+        { label: 'Scouts', href: '/admin/users?role=scout', icon: Search },
+        { label: 'Organizations', href: '/admin/users?role=organization', icon: Trophy }
       ]
     }] : []),
     ...(isOperations || isSuperOrAdmin ? [{
@@ -78,7 +79,9 @@ export function AdminSidebar({ role }: { role: string }) {
           {section.items.map((item) => {
             const isActive = item.href === '/admin' 
               ? pathname === '/admin' 
-              : pathname.startsWith(item.href);
+              : item.href.includes('?role=') 
+                ? searchParams.get('role') === item.href.split('=')[1]
+                : pathname.startsWith(item.href) && !item.href.includes('?role=');
             return (
               <Link
                 key={item.href}
