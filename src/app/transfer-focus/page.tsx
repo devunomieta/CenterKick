@@ -6,6 +6,7 @@ import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, User } from "luci
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isProfileComplete } from "@/lib/utils/profile";
 
 interface Profile {
    id: string;
@@ -20,6 +21,10 @@ interface Profile {
    country?: string;
    date_of_birth?: string;
    avatar_url?: string;
+   cover_url?: string;
+   cover_image_url?: string;
+   gallery_urls?: string[];
+   video_links?: string[];
    contract_expiry?: string;
    tactics?: {
       preferred_formation?: string;
@@ -30,6 +35,7 @@ interface Profile {
    formation?: string;
    license?: string;
    league?: string;
+   managerial_history?: any[];
 }
 
 interface BlogPost {
@@ -107,25 +113,36 @@ export default function TransferFocusPage() {
    useEffect(() => {
       async function fetchData() {
          try {
-            // 1. Fetch active profiles, filtering out admin and superadmin roles
-            const { data: profilesData, error: profError } = await supabase
-               .from('profiles')
-               .select('*')
-               .eq('status', 'active')
-               .not('role', 'in', '("admin","superadmin")');
-            
-            if (profError) throw profError;
-            setProfiles(profilesData || []);
+            const transferCategoryIds = ['2978eee7-d598-4097-b11a-805a280c7b06', '82ad8313-7dad-451b-86fc-8f22e0d61703'];
 
-            // 2. Fetch CMS news
-            const { data: newsData, error: newsError } = await supabase
-               .from('cms_posts')
-               .select('*')
-               .eq('is_draft', false)
-               .order('published_at', { ascending: false });
+            // Run queries concurrently for better performance
+            const [profilesRes, newsRes] = await Promise.all([
+               // 1. Fetch only necessary profile columns for players and coaches
+               supabase
+                  .from('profiles')
+                  .select('id, slug, first_name, last_name, role, position, current_club, country, date_of_birth, avatar_url, cover_url, gallery_urls, video_links, contract_expiry, tactics, formation, license, managerial_history')
+                  .eq('status', 'active')
+                  .in('role', ['player', 'coach']),
 
-            if (newsError) throw newsError;
-            setNewsPosts(newsData || []);
+               // 2. Fetch only transfer news, limit to 6, select specific columns
+               supabase
+                  .from('cms_posts')
+                  .select('id, slug, title, cover_image_url, published_at, created_at, category_id')
+                  .eq('is_draft', false)
+                  .in('category_id', transferCategoryIds)
+                  .order('published_at', { ascending: false })
+                  .limit(6)
+            ]);
+
+            if (profilesRes.error) throw profilesRes.error;
+            if (newsRes.error) throw newsRes.error;
+
+            // Only display complete profiles as per public directory rules
+            const rawProfiles = profilesRes.data || [];
+            const completedProfiles = rawProfiles.filter(p => isProfileComplete(p));
+
+            setProfiles(completedProfiles);
+            setNewsPosts(newsRes.data || []);
 
          } catch (error) {
             console.error("Error fetching transfer focus data:", error);
@@ -169,16 +186,26 @@ export default function TransferFocusPage() {
       });
 
       // Filter by role-specific logic
+      const now = new Date();
+      const oneYearFromNow = new Date();
+      oneYearFromNow.setFullYear(now.getFullYear() + 1);
+
       if (activeTab === 'FREE AGENT') {
-         return filtered.filter(p => p.role === 'player' && (!p.current_club || p.current_club.toLowerCase().includes('free')));
+         // ONLY currently not signed players
+         return filtered.filter(p => p.role === 'player' && (!p.current_club || p.current_club.trim() === '' || p.current_club.toLowerCase().includes('free')));
       } else if (activeTab === 'CONTRACT ENDING') {
-         return filtered.filter(p => p.role === 'player' && p.current_club && !p.current_club.toLowerCase().includes('free'));
+         // ONLY Players with contract expiring within a year (who are currently signed)
+         return filtered.filter(p => {
+            if (p.role !== 'player' || !p.contract_expiry) return false;
+            // Ensure they are currently signed (not a free agent)
+            if (!p.current_club || p.current_club.trim() === '' || p.current_club.toLowerCase().includes('free')) return false;
+            
+            const expiry = new Date(p.contract_expiry);
+            return expiry > now && expiry <= oneYearFromNow;
+         });
       } else if (activeTab === 'AVAILABLE COACHES') {
-         return filtered.filter(p => p.role === 'coach');
-      } else if (activeTab === 'SCOUTS') {
-         return filtered.filter(p => p.role === 'scout');
-      } else if (activeTab === 'ORGANIZATIONS') {
-         return filtered.filter(p => p.role === 'organization');
+         // ONLY Coaches not signed in a club actively
+         return filtered.filter(p => p.role === 'coach' && (!p.current_club || p.current_club.trim() === '' || p.current_club.toLowerCase().includes('free')));
       }
 
       return filtered;
@@ -197,27 +224,10 @@ export default function TransferFocusPage() {
 
    const totalPages = Math.ceil(filteredProfiles.length / pageSize) || 1;
 
-   // Divide news posts into Rumors (Transfer Focus category) and Top news
-   const rumorsNews = useMemo(() => {
-      // Find posts in Transfer Focus / Transfers categories first
-      const transferCategoryIds = ['2978eee7-d598-4097-b11a-805a280c7b06', '82ad8313-7dad-451b-86fc-8f22e0d61703'];
-      const matched = newsPosts.filter(p => p.category_id && transferCategoryIds.includes(p.category_id));
-      if (matched.length === 0) {
-         // Fallback to top news
-         return newsPosts.slice(0, 3);
-      }
-      return matched.slice(0, 3);
+   // Use the pre-filtered news posts (already limited to 6 from DB)
+   const transferNews = useMemo(() => {
+      return newsPosts;
    }, [newsPosts]);
-
-   const topTransferNews = useMemo(() => {
-      // Exclude rumors from top news if possible, or just slice next 3
-      const rumorIds = rumorsNews.map(r => r.id);
-      const matched = newsPosts.filter(p => !rumorIds.includes(p.id));
-      if (matched.length === 0) {
-         return newsPosts.slice(3, 6);
-      }
-      return matched.slice(0, 3);
-   }, [newsPosts, rumorsNews]);
 
    return (
       <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
@@ -240,7 +250,7 @@ export default function TransferFocusPage() {
             {/* Sub-Navigation Tabs */}
             <div className="bg-[#2d2d2d] border-b border-gray-800">
                <div className="max-w-[1200px] mx-auto px-4 flex items-center overflow-x-auto no-scrollbar gap-2">
-                  {['FREE AGENT', 'CONTRACT ENDING', 'AVAILABLE COACHES', 'SCOUTS', 'ORGANIZATIONS'].map((tab) => (
+                  {['FREE AGENT', 'CONTRACT ENDING', 'AVAILABLE COACHES'].map((tab) => (
                      <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -328,41 +338,28 @@ export default function TransferFocusPage() {
                            <thead>
                               <tr className="bg-[#a20000] text-white">
                                  {/* Dynamic Column Headers based on Role */}
-                                 {activeTab.includes('AGENT') || activeTab.includes('ENDING') ? (
+                                 {activeTab === 'FREE AGENT' ? (
+                                    <>
+                                       <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[30%] border-r border-white/10">Player</th>
+                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[25%] border-r border-white/10">Position</th>
+                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[25%] text-center border-r border-white/10">Country</th>
+                                       <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[20%] text-right">Age</th>
+                                    </>
+                                 ) : activeTab === 'CONTRACT ENDING' ? (
                                     <>
                                        <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[25%] border-r border-white/10">Player</th>
                                        <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[20%] border-r border-white/10">Position</th>
-                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[15%] text-center border-r border-white/10">Country</th>
                                        <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[10%] text-center border-r border-white/10">Age</th>
-                                       <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[30%] text-right">
-                                          {activeTab === 'FREE AGENT' ? 'Out of Contract Since' : 'Contract Expiry'}
-                                       </th>
+                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[25%] text-center border-r border-white/10">Current Club</th>
+                                       <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[20%] text-right">Contract Expiry</th>
                                     </>
-                                 ) : activeTab.includes('COACH')  ? (
+                                 ) : activeTab.includes('COACH') ? (
                                     <>
-                                       <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[30%] border-r border-white/10">Coach / Specialist</th>
-                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[25%] border-r border-white/10">Preferred Formation</th>
-                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[15%] text-center border-r border-white/10">Country</th>
-                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[15%] text-center border-r border-white/10">License</th>
-                                       <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[15%] text-right">Primary Tactics</th>
+                                       <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[35%] border-r border-white/10">Coach / Specialist</th>
+                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[35%] border-r border-white/10">Most Recent Club</th>
+                                       <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[30%] text-right">WDL Record</th>
                                     </>
-                                 ) : activeTab === 'SCOUTS' ? (
-                                    <>
-                                       <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[30%] border-r border-white/10">Talent Scout</th>
-                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[25%] border-r border-white/10">Agency Name</th>
-                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[15%] text-center border-r border-white/10">Country</th>
-                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[15%] text-center border-r border-white/10">Verification</th>
-                                       <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[15%] text-right">Status</th>
-                                    </>
-                                 ) : (
-                                    <>
-                                       <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[35%] border-r border-white/10">Organization / Academy</th>
-                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[25%] border-r border-white/10">League / Level</th>
-                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[15%] text-center border-r border-white/10">Country</th>
-                                       <th className="font-bold text-xs tracking-wide px-6 py-4.5 w-[15%] text-center border-r border-white/10">Formation</th>
-                                       <th className="font-bold text-xs tracking-wide px-8 py-4.5 w-[10%] text-right">Status</th>
-                                    </>
-                                 )}
+                                 ) : null}
                               </tr>
                            </thead>
                            <tbody>
@@ -374,7 +371,7 @@ export default function TransferFocusPage() {
                                     <tr key={profile.id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors group">
                                        
                                        {/* Render columns dynamically based on selected role tab */}
-                                       {activeTab.includes('AGENT') || activeTab.includes('ENDING') ? (
+                                       {activeTab === 'FREE AGENT' ? (
                                           <>
                                              <td className="px-8 py-4.5 border-r border-gray-100">
                                                 <div className="flex items-center gap-4">
@@ -393,108 +390,81 @@ export default function TransferFocusPage() {
                                              <td className="px-6 py-4.5 border-r border-gray-100">
                                                 <span className="font-bold text-xs text-[#b50a0a] tracking-wide">{profile.position || 'Striker'}</span>
                                              </td>
-                                             <td className="px-6 py-4.5 border-r border-gray-100">
+                                             <td className="px-6 py-4.5 border-r border-gray-100 text-center">
                                                 {renderFlags(profile.country)}
+                                             </td>
+                                             <td className="px-8 py-4.5 text-right font-bold text-xs text-gray-900">
+                                                {calculateAge(profile.date_of_birth)}
+                                             </td>
+                                          </>
+                                       ) : activeTab === 'CONTRACT ENDING' ? (
+                                          <>
+                                             <td className="px-8 py-4.5 border-r border-gray-100">
+                                                <div className="flex items-center gap-4">
+                                                   <div className="relative w-10 h-10 rounded-full overflow-hidden border border-emerald-500/20 shadow-sm shrink-0">
+                                                      <img 
+                                                         src={profile.avatar_url || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=150"} 
+                                                         alt={name} 
+                                                         className="w-full h-full object-cover" 
+                                                      />
+                                                   </div>
+                                                   <Link href={`/${roleSlug}/${profile.slug}`} className="font-bold text-xs text-gray-900 hover:text-[#b50a0a] transition-colors cursor-pointer">
+                                                      {name}
+                                                   </Link>
+                                                </div>
+                                             </td>
+                                             <td className="px-6 py-4.5 border-r border-gray-100">
+                                                <span className="font-bold text-xs text-[#b50a0a] tracking-wide">{profile.position || 'Striker'}</span>
                                              </td>
                                              <td className="px-6 py-4.5 text-center border-r border-gray-100">
                                                 <span className="font-bold text-sm text-gray-900">{calculateAge(profile.date_of_birth)}</span>
                                              </td>
+                                             <td className="px-6 py-4.5 border-r border-gray-100 text-center">
+                                                <span className="font-bold text-xs text-gray-600 tracking-wide">{profile.current_club}</span>
+                                             </td>
                                              <td className="px-8 py-4.5 text-right font-bold text-xs text-gray-600">
-                                                {activeTab === 'FREE AGENT' ? (
-                                                   <span className="text-red-500">Free Agent</span>
-                                                ) : (
-                                                   <span>{profile.contract_expiry ? new Date(profile.contract_expiry).toLocaleDateString() : 'Ending Soon'}</span>
-                                                )}
+                                                <span>{profile.contract_expiry ? new Date(profile.contract_expiry).toLocaleDateString() : 'Ending Soon'}</span>
                                              </td>
                                           </>
                                        ) : activeTab.includes('COACH') ? (
                                           <>
-                                             <td className="px-8 py-4.5 border-r border-gray-100">
-                                                <div className="flex items-center gap-4">
-                                                   <div className="relative w-10 h-10 rounded-full overflow-hidden border border-amber-500/20 shadow-sm shrink-0">
-                                                      <img 
-                                                         src={profile.avatar_url || "https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=150"} 
-                                                         alt={name} 
-                                                         className="w-full h-full object-cover" 
-                                                      />
-                                                   </div>
-                                                   <Link href={`/coaches/${profile.slug}`} className="font-bold text-xs text-gray-900 hover:text-[#b50a0a] transition-colors cursor-pointer">
-                                                      {name}
-                                                   </Link>
-                                                </div>
-                                             </td>
-                                             <td className="px-6 py-4.5 border-r border-gray-100">
-                                                <span className="font-bold text-xs text-gray-900 tracking-wide">{profile.tactics?.preferred_formation || profile.formation || '4-3-3 Attacking'}</span>
-                                             </td>
-                                             <td className="px-6 py-4.5 border-r border-gray-100">
-                                                {renderFlags(profile.country)}
-                                             </td>
-                                             <td className="px-6 py-4.5 text-center border-r border-gray-100">
-                                                <span className="font-bold text-xs text-[#b50a0a] tracking-wide">{profile.license || 'UEFA A License'}</span>
-                                             </td>
-                                             <td className="px-8 py-4.5 text-right font-bold text-xs text-gray-500 tracking-wide">
-                                                {profile.tactics?.defense_style || 'Pressing'}
-                                             </td>
+                                             {(() => {
+                                                const history = profile.managerial_history || [];
+                                                // Sort by date descending assuming they have dates, or just take the last element
+                                                const recentClubEntry = history.length > 0 ? history[history.length - 1] : null;
+                                                const recentClub = recentClubEntry ? recentClubEntry.club : (profile.current_club || 'N/A');
+                                                
+                                                const w = history.reduce((acc: number, curr: any) => acc + (curr.wins || 0), 0);
+                                                const d = history.reduce((acc: number, curr: any) => acc + (curr.draws || 0), 0);
+                                                const l = history.reduce((acc: number, curr: any) => acc + (curr.losses || 0), 0);
+                                                
+                                                return (
+                                                   <>
+                                                      <td className="px-8 py-4.5 border-r border-gray-100">
+                                                         <div className="flex items-center gap-4">
+                                                            <div className="relative w-10 h-10 rounded-full overflow-hidden border border-amber-500/20 shadow-sm shrink-0">
+                                                               <img 
+                                                                  src={profile.avatar_url || "https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=150"} 
+                                                                  alt={name} 
+                                                                  className="w-full h-full object-cover" 
+                                                               />
+                                                            </div>
+                                                            <Link href={`/coaches/${profile.slug}`} className="font-bold text-xs text-gray-900 hover:text-[#b50a0a] transition-colors cursor-pointer">
+                                                               {name}
+                                                            </Link>
+                                                         </div>
+                                                      </td>
+                                                      <td className="px-6 py-4.5 border-r border-gray-100">
+                                                         <span className="font-bold text-xs text-gray-900 tracking-wide">{recentClub}</span>
+                                                      </td>
+                                                      <td className="px-8 py-4.5 text-right font-bold text-xs tracking-wide">
+                                                         <span className="text-green-600">{w}W</span> / <span className="text-gray-500">{d}D</span> / <span className="text-red-600">{l}L</span>
+                                                      </td>
+                                                   </>
+                                                )
+                                             })()}
                                           </>
-                                       ) : activeTab === 'SCOUTS' ? (
-                                          <>
-                                             <td className="px-8 py-4.5 border-r border-gray-100">
-                                                <div className="flex items-center gap-4">
-                                                   <div className="relative w-10 h-10 rounded-full overflow-hidden border border-blue-500/20 shadow-sm shrink-0">
-                                                      <img 
-                                                         src={profile.avatar_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=150"} 
-                                                         alt={name} 
-                                                         className="w-full h-full object-cover" 
-                                                      />
-                                                   </div>
-                                                   <Link href={`/agents/${profile.slug}`} className="font-bold text-xs text-gray-900 hover:text-[#b50a0a] transition-colors cursor-pointer">
-                                                      {name}
-                                                   </Link>
-                                                </div>
-                                             </td>
-                                             <td className="px-6 py-4.5 border-r border-gray-100">
-                                                <span className="font-bold text-xs text-gray-900 tracking-wide">{profile.agency_name || 'Independent Scout'}</span>
-                                             </td>
-                                             <td className="px-6 py-4.5 border-r border-gray-100">
-                                                {renderFlags(profile.country)}
-                                             </td>
-                                             <td className="px-6 py-4.5 text-center border-r border-gray-100">
-                                                <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold tracking-wide border border-blue-100">Verified</span>
-                                             </td>
-                                             <td className="px-8 py-4.5 text-right">
-                                                <span className="text-sm font-bold text-emerald-600 tracking-wide">Active</span>
-                                             </td>
-                                          </>
-                                       ) : (
-                                          <>
-                                             <td className="px-8 py-4.5 border-r border-gray-100">
-                                                <div className="flex items-center gap-4">
-                                                   <div className="relative w-10 h-10 rounded-full overflow-hidden border border-amber-500/20 shadow-sm shrink-0">
-                                                      <img 
-                                                         src={profile.avatar_url || "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=150"} 
-                                                         alt={name} 
-                                                         className="w-full h-full object-cover" 
-                                                      />
-                                                   </div>
-                                                   <Link href={`/organizations/${profile.slug}`} className="font-bold text-xs text-gray-900 hover:text-[#b50a0a] transition-colors cursor-pointer">
-                                                      {name}
-                                                   </Link>
-                                                </div>
-                                             </td>
-                                             <td className="px-6 py-4.5 border-r border-gray-100">
-                                                <span className="font-bold text-xs text-[#b50a0a] tracking-wide">{profile.league || 'Elite Youth League'}</span>
-                                             </td>
-                                             <td className="px-6 py-4.5 border-r border-gray-100">
-                                                {renderFlags(profile.country)}
-                                             </td>
-                                             <td className="px-6 py-4.5 text-center border-r border-gray-100">
-                                                <span className="font-bold text-xs text-gray-900 tracking-wide">{profile.formation || 'Academy Standard'}</span>
-                                             </td>
-                                             <td className="px-8 py-4.5 text-right">
-                                                <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-xs font-bold tracking-wide border border-amber-100">Partner</span>
-                                             </td>
-                                          </>
-                                       )}
+                                       ) : null}
                                     </tr>
                                  );
                               })}
@@ -537,12 +507,12 @@ export default function TransferFocusPage() {
                   )}
                </div>
 
-               {/* Latest Transfer Rumors News Section */}
-               <div className="mt-8">
+               {/* Transfer News Section */}
+               <div className="mt-8 mb-16">
                   <div className="flex items-center justify-between mb-8">
                      <div className="flex items-center gap-2">
                         <div className="w-2 h-6 bg-[#b50a0a]"></div>
-                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-800">Latest transfer rumors news</h2>
+                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-800">Latest transfer news</h2>
                      </div>
                      <Link href="/news" className="text-xs font-bold text-gray-400 hover:text-[#b50a0a] tracking-wide flex items-center gap-1 transition-colors">
                         SEE ALL <ChevronRight className="w-4 h-4" />
@@ -550,8 +520,8 @@ export default function TransferFocusPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                     {rumorsNews.map((news) => (
-                        <Link href={`/news/${news.slug}`} key={`rumor-${news.id}`} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 group cursor-pointer hover:shadow-xl transition-all block">
+                     {transferNews.map((news) => (
+                        <Link href={`/news/${news.slug}`} key={`news-${news.id}`} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 group cursor-pointer hover:shadow-xl transition-all block">
                            <div className="h-[200px] overflow-hidden relative">
                               <img src={news.cover_image_url || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600'} alt={news.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                            </div>
@@ -564,44 +534,9 @@ export default function TransferFocusPage() {
                            </div>
                         </Link>
                      ))}
-                     {rumorsNews.length === 0 && (
+                     {transferNews.length === 0 && (
                         <div className="col-span-full py-12 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                           <p className="text-gray-400 text-sm font-bold tracking-wide">No transfer rumors currently published.</p>
-                        </div>
-                     )}
-                  </div>
-               </div>
-
-               {/* Top Football Transfer News Section */}
-               <div className="mt-8 mb-16">
-                  <div className="flex items-center justify-between mb-8">
-                     <div className="flex items-center gap-2">
-                        <div className="w-2 h-6 bg-[#b50a0a]"></div>
-                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-800">Top football transfer news</h2>
-                     </div>
-                     <Link href="/news" className="text-xs font-bold text-gray-400 hover:text-[#b50a0a] tracking-wide flex items-center gap-1 transition-colors">
-                        SEE ALL <ChevronRight className="w-4 h-4" />
-                     </Link>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                     {topTransferNews.map((news) => (
-                        <Link href={`/news/${news.slug}`} key={`top-${news.id}`} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 group cursor-pointer hover:shadow-xl transition-all block">
-                           <div className="h-[200px] overflow-hidden relative">
-                              <img src={news.cover_image_url || 'https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=600'} alt={news.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                           </div>
-                           <div className="p-6 relative">
-                              <div className="absolute top-0 left-6 w-[30px] h-[3px] bg-[#b50a0a]"></div>
-                              <h3 className="font-bold text-sm text-gray-900 leading-snug mb-4 group-hover:text-[#b50a0a] transition-colors line-clamp-2 tracking-tighter">
-                                 {news.title}
-                              </h3>
-                              <span className="text-xs font-bold text-gray-400 tracking-wide">{new Date(news.published_at || news.created_at || '').toLocaleDateString()}</span>
-                           </div>
-                        </Link>
-                     ))}
-                     {topTransferNews.length === 0 && (
-                        <div className="col-span-full py-12 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                           <p className="text-gray-400 text-sm font-bold tracking-wide">No top transfer articles currently published.</p>
+                           <p className="text-gray-400 text-sm font-bold tracking-wide">No transfer news currently published.</p>
                         </div>
                      )}
                   </div>
