@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Home, Users, BarChart2, Settings, Menu, Bell, X, Shield, Search } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import { SignOutButton } from '@/components/dashboard/SignOutButton';
 import { BannerManager } from '@/components/dashboard/BannerManager';
@@ -52,8 +53,9 @@ export default async function DashboardLayout({
     .eq('user_id', user.id)
     .eq('status', 'active');
     
-  // Fetch confirmed transactions as fallback
-  const { data: confirmedTxs } = await supabase
+  // Fetch confirmed transactions as fallback using adminClient to bypass RLS
+  const adminClient = createAdminClient();
+  const { data: confirmedTxs } = await adminClient
     .from('transactions')
     .select('id')
     .eq('user_id', profile?.id)

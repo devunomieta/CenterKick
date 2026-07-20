@@ -288,8 +288,13 @@ export async function verifyPaystackPayment(reference: string, amount: number, p
       });
       
       if (insertError) {
-        console.error('Transaction insert error:', insertError);
-        return { error: `Failed to record transaction: ${insertError.message || JSON.stringify(insertError)}` };
+        // If it's a unique constraint violation, it means the webhook already successfully inserted the transaction just milliseconds before this ran. This is a massive success, not an error!
+        if (insertError.code === '23505' || insertError.message?.includes('duplicate key') || insertError.message?.includes('transactions_reference_key')) {
+           // We can safely ignore this and proceed.
+        } else {
+           console.error('Transaction insert error:', insertError);
+           return { error: `Failed to record transaction: ${insertError.message || JSON.stringify(insertError)}` };
+        }
       }
       
       // Update profile status
