@@ -279,28 +279,33 @@ export function ApprovalsClient({
             <button
               key={c.id}
               onClick={() => handleTabChange(c.id)}
-              className={`p-5 rounded-[1.8rem] border-2 text-left transition-all duration-300 relative overflow-hidden group active:scale-[0.98] ${
+              className={`p-4 rounded-2xl border-2 text-left flex items-center gap-4 transition-all duration-300 relative overflow-hidden group active:scale-[0.98] ${
  isActive 
- ? 'border-[#b50a0a] bg-white shadow-xl shadow-red-900/5' 
+ ? 'border-[#b50a0a] bg-white shadow-md shadow-red-900/5' 
  : 'border-gray-100 bg-white shadow-sm hover:border-gray-200 hover:shadow-md'
  }`}
             >
-              <div className={`w-12 h-12 rounded-2xl ${c.bg} ${c.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
-                <c.icon className="w-5 h-5" />
+              <div className={`w-10 h-10 rounded-xl ${c.bg} ${c.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                <c.icon className="w-4 h-4" />
               </div>
-              <p className="text-xs font-bold text-gray-400 tracking-[0.2em]">{c.label}</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <p className={`text-3xl font-bold tracking-tighter ${isActive ? 'text-[#b50a0a]' : 'text-gray-900'}`}>
-                  {c.count}
-                </p>
-                {c.count > 0 && (
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isActive ? 'bg-red-50 text-[#b50a0a]' : 'bg-gray-100 text-gray-500'}`}>
-                    Action Req.
-                  </span>
-                )}
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 tracking-[0.15em] uppercase">{c.label}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className={`text-xl font-bold tracking-tight leading-none ${isActive ? 'text-[#b50a0a]' : 'text-gray-900'}`}>
+                    {c.count}
+                  </p>
+                  {c.count > 0 && (
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${isActive ? 'bg-red-50 text-[#b50a0a]' : 'bg-gray-100 text-gray-500'}`}>
+                      Action Req.
+                    </span>
+                  )}
+                </div>
               </div>
               {(isActive || c.count > 0) && (
-                <div className="absolute top-6 right-6 w-2 h-2 bg-[#b50a0a] rounded-full animate-ping"></div>
+                <>
+                  <div className="absolute top-3 right-3 w-2 h-2 bg-[#b50a0a] rounded-full animate-ping"></div>
+                  <div className="absolute top-3 right-3 w-2 h-2 bg-[#b50a0a] rounded-full"></div>
+                </>
               )}
             </button>
           );

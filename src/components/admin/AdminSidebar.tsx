@@ -24,7 +24,7 @@ export function AdminSidebar({ role }: { role: string }) {
     {
       group: 'Core',
       items: [
-        { label: 'Overview', href: '/admin', icon: LayoutDashboard },
+
         ...(['superadmin', 'admin', 'operations', 'finance'].includes(role) 
           ? [
               { label: 'Verification Hub', href: '/admin/approvals', icon: ShieldCheck }

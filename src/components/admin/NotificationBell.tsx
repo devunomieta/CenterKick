@@ -5,6 +5,8 @@ import { Bell, Check, ExternalLink, Info, AlertTriangle, CheckCircle, XCircle, C
 import { markNotificationRead, markAllNotificationsRead } from '@/app/admin/notifications/actions';
 import { DateDisplay } from '@/components/common/DateDisplay';
 import Link from 'next/link';
+import { useToast } from '@/context/ToastContext';
+import { createClient } from '@/lib/supabase/client';
 
 interface Notification {
   id: string;
@@ -19,8 +21,40 @@ interface Notification {
 export function NotificationBell({ initialNotifications }: { initialNotifications: Notification[] }) {
   const [notifications, setNotifications] = useState(initialNotifications);
   const [isOpen, setIsOpen] = useState(false);
+  const { showToast } = useToast();
   
   const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  useEffect(() => {
+    let channel: any;
+    const setupRealtime = async () => {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) return;
+      
+      channel = supabase.channel('realtime:admin_notifications')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${data.session.user.id}`
+        }, (payload) => {
+          const newNotif = payload.new as Notification;
+          setNotifications(prev => [newNotif, ...prev]);
+          const toastType = ['success', 'error', 'warning', 'info'].includes(newNotif.type) ? newNotif.type : 'info';
+          showToast(`New Notification: ${newNotif.title}`, toastType as any);
+        })
+        .subscribe();
+    };
+    setupRealtime();
+
+    return () => {
+      if (channel) {
+        const supabase = createClient();
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [showToast]);
 
   const handleMarkRead = async (id: string) => {
     const res = await markNotificationRead(id);

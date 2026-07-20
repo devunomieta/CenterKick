@@ -7,7 +7,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
   const admin = createAdminClient();
 
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  
+
   let targetUserId = id;
 
   if (!isUUID) {
@@ -87,11 +87,11 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
   // Route to the appropriate Client Component
   return (
-    <AdminUserProfileClient 
-      profile={profile} 
-      role={role} 
+    <AdminUserProfileClient
+      profile={profile}
+      role={role}
       subStatus={subStatus}
-      initialClients={linkedAccounts} 
+      initialClients={linkedAccounts}
       clubsList={clubs || []}
       leaguesList={leagues || []}
       seasonsList={seasons || []}

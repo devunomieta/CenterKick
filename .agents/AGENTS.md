@@ -29,3 +29,9 @@ Whenever generating a new Supabase migration file, always ensure to include a ti
 
 ## Feedback Toast Notifications
 Every action that requires user feedback (e.g., success, error, warnings, validation failures) MUST trigger a toast notification containing non-technical, user-friendly language instead of inline status text or generic console logs. Always utilize the existing Toast context for this.
+
+# CenterKick Database Rules
+
+## Transactions Table
+In CenterKick, the \	ransactions\ table stores the \profile.id\ in its \user_id\ column. Always extract the correct \profile.id\ for each user and then query the \	ransactions\ table using those exact profile IDs.
+

@@ -107,11 +107,6 @@ export default async function AdminLayout({
         <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-6 sm:px-4 md:px-8 shadow-sm relative z-10 shrink-0">
           <div className="flex items-center gap-4">
             <AdminMobileNav role={userRecord?.role || 'player'} adminLogoUrl={adminLogoUrl} />
-            
-            <div className="hidden sm:flex items-center gap-4 text-sm font-bold text-gray-400 tracking-wide">
-              <Shield className="w-4 h-4 text-[#b50a0a]" />
-              <span>Secure Admin Session Active</span>
-            </div>
           </div>
           
           <div className="flex items-center gap-4 sm:gap-6">
@@ -121,8 +116,12 @@ export default async function AdminLayout({
                   <p className="text-xs font-bold text-gray-900">{user?.email}</p>
                   <p className="text-xs font-bold text-[#b50a0a] tracking-[0.2em]">{userRecord?.role || 'Admin'}</p>
                </div>
-               <div className="w-10 h-10 rounded-xl bg-gray-900 border-2 border-gray-800 flex items-center justify-center font-bold text-white shadow-lg shrink-0">
-                  {user?.email?.[0]?.toUpperCase() || 'U'}
+               <div className="w-10 h-10 rounded-xl bg-gray-900 border-2 border-gray-800 flex items-center justify-center font-bold text-white shadow-lg shrink-0 overflow-hidden">
+                  {userRecord?.avatar_url ? (
+                    <img src={userRecord.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    user?.email?.[0]?.toUpperCase() || 'U'
+                  )}
                </div>
             </div>
           </div>

@@ -134,25 +134,22 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
 
   const getStatusBadge = (subStatus: string, isActive: boolean) => {
     if (!isActive) return (
-      <span className="w-fit px-2 py-1 bg-red-50 text-red-700 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-1 whitespace-nowrap">
-        <XCircle className="w-2.5 h-2.5" /> Deactivated
+      <span className={`text-[10px] uppercase px-2.5 py-1 rounded-full font-bold tracking-widest inline-flex w-fit bg-red-50 text-red-600 border border-red-100`}>
+        DEACTIVATED
       </span>
     );
-    switch (subStatus?.toUpperCase()) {
-      case 'PAID':
-        return <span className="w-fit px-2 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-lg border border-green-100 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="w-2.5 h-2.5" /> Paid</span>;
-      case 'FREE':
-        return <span className="w-fit px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-100 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="w-2.5 h-2.5" /> Free</span>;
-      case 'PENDING APPROVAL':
-        return <span className="w-fit px-2 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded-lg border border-amber-100 flex items-center gap-1 whitespace-nowrap"><Clock className="w-2.5 h-2.5" /> Pending</span>;
-      case 'EXPIRED':
-        return <span className="w-fit px-2 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-1 whitespace-nowrap"><XCircle className="w-2.5 h-2.5" /> Expired</span>;
-      case 'REJECTED':
-        return <span className="w-fit px-2 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-1 whitespace-nowrap"><XCircle className="w-2.5 h-2.5" /> Rejected</span>;
-      case 'UNPAID':
-      default:
-        return <span className="w-fit px-2 py-1 bg-gray-50 text-gray-500 text-xs font-bold rounded-lg border border-gray-100 flex items-center gap-1 whitespace-nowrap"><Clock className="w-2.5 h-2.5" /> Unpaid</span>;
-    }
+    
+    return (
+      <span className={`text-[10px] uppercase px-2.5 py-1 rounded-full font-bold tracking-widest inline-flex w-fit ${
+        subStatus === 'PAID' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 
+        subStatus === 'PENDING APPROVAL' ? 'bg-blue-50 text-blue-600 border border-blue-100' : 
+        subStatus === 'EXPIRED' ? 'bg-red-50 text-red-600 border border-red-100' : 
+        subStatus === 'REJECTED' ? 'bg-red-50 text-red-600 border border-red-100' : 
+        'bg-slate-50 text-slate-500 border border-slate-200'
+      }`}>
+        {subStatus}
+      </span>
+    );
   };
 
   const getProfileLink = (user: any) => {
@@ -273,17 +270,6 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
                   <td className="px-4 md:px-8 py-6 whitespace-nowrap">
                     <div className="flex flex-col gap-2">
                       {getStatusBadge(user.subStatus, isActive)}
-                      {/* Inline Approve button for pending accounts */}
-                      {user.subStatus === 'PENDING APPROVAL' && isActive && isParticipant && (
-                        <button
-                          onClick={() => runAction(user.id, () => activateUser(user.id))}
-                          disabled={isLoading}
-                          className="px-2 py-1 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 transition-all flex items-center gap-1 w-fit disabled:opacity-50"
-                        >
-                          {isLoading ? <RefreshCw className="w-2.5 h-2.5 animate-spin" /> : <CheckCircle className="w-2.5 h-2.5" />}
-                          Approve
-                        </button>
-                      )}
                     </div>
                   </td>
 
@@ -340,23 +326,7 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize }:
                                 </button>
                               )}
 
-                              {user.subStatus === 'PENDING APPROVAL' && isParticipant && (
-                                <button
-                                  onClick={() => runAction(user.id, () => activateUser(user.id))}
-                                  className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold tracking-wide text-green-700 hover:bg-green-50 rounded-xl transition-all"
-                                >
-                                  <ShieldCheck className="w-3.5 h-3.5" /> Approve & Activate
-                                </button>
-                              )}
 
-                              {profileStatus === 'pending' && isParticipant && (
-                                <button
-                                  onClick={() => runAction(user.id, () => rejectUser(user.id))}
-                                  className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold tracking-wide text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                                >
-                                  <XCircle className="w-3.5 h-3.5" /> Reject Application
-                                </button>
-                              )}
 
                               <div className="h-px bg-gray-100 my-1"></div>
 

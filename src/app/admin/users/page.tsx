@@ -68,27 +68,29 @@ export default async function AdminUsersPage({
     const userIds = rawUsers.map((u: any) => u.id);
     const { data: profiles } = await adminClient
       .from('profiles')
-      .select('user_id, status, first_name, last_name, slug, avatar_url, verification_requested')
+      .select('id, user_id, status, first_name, last_name, slug, avatar_url, verification_requested')
       .in('user_id', userIds);
+
+    const profileIds = (profiles || []).map((p: any) => p.id);
 
     const { data: transactions } = await adminClient
       .from('transactions')
       .select('user_id, status, amount')
-      .in('user_id', userIds);
+      .in('user_id', profileIds);
 
     const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
     const txMap = new Map();
     (transactions || []).forEach((tx: any) => {
-       if (!txMap.has(tx.user_id)) txMap.set(tx.user_id, []);
-       txMap.get(tx.user_id).push(tx);
+      if (!txMap.has(tx.user_id)) txMap.set(tx.user_id, []);
+      txMap.get(tx.user_id).push(tx);
     });
 
     users = rawUsers.map((u: any) => {
       const profile = profileMap.get(u.id) || null;
       let subStatus = 'UNPAID';
-      
+
       if (profile) {
-        const userTxs = txMap.get(u.id) || [];
+        const userTxs = txMap.get(profile.id) || [];
         const hasPaid = userTxs.some((t: any) => t.status === 'confirmed');
         if (hasPaid) {
           const confirmedTx = userTxs.find((t: any) => t.status === 'confirmed');
@@ -126,63 +128,63 @@ export default async function AdminUsersPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Total Accounts */}
         <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-between relative overflow-hidden">
-           <div className="flex justify-between items-start mb-4">
-              <div>
-                <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">All User Accounts</p>
-                <p className="text-4xl font-black text-gray-900 tracking-tighter mt-1">{totalCount || 0}</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-900 flex items-center justify-center shrink-0">
-                <Users className="w-5 h-5" />
-              </div>
-           </div>
-           <div className="flex justify-between items-center pt-4 border-t border-gray-50 mt-auto w-full">
-             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Players</p><p className="text-sm font-bold text-gray-900">{playersCount || 0}</p></div>
-             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Coaches</p><p className="text-sm font-bold text-gray-900">{coachesCount || 0}</p></div>
-             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Agents</p><p className="text-sm font-bold text-gray-900">{agentsCount || 0}</p></div>
-             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Scouts</p><p className="text-sm font-bold text-gray-900">{scoutsCount || 0}</p></div>
-             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Orgs</p><p className="text-sm font-bold text-gray-900">{orgsCount || 0}</p></div>
-           </div>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">All User Accounts</p>
+              <p className="text-4xl font-black text-gray-900 tracking-tighter mt-1">{totalCount || 0}</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-900 flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="flex justify-between items-center pt-4 border-t border-gray-50 mt-auto w-full">
+            <div><p className="text-[10px] font-bold text-gray-400 uppercase">Players</p><p className="text-sm font-bold text-gray-900">{playersCount || 0}</p></div>
+            <div><p className="text-[10px] font-bold text-gray-400 uppercase">Coaches</p><p className="text-sm font-bold text-gray-900">{coachesCount || 0}</p></div>
+            <div><p className="text-[10px] font-bold text-gray-400 uppercase">Agents</p><p className="text-sm font-bold text-gray-900">{agentsCount || 0}</p></div>
+            <div><p className="text-[10px] font-bold text-gray-400 uppercase">Scouts</p><p className="text-sm font-bold text-gray-900">{scoutsCount || 0}</p></div>
+            <div><p className="text-[10px] font-bold text-gray-400 uppercase">Orgs</p><p className="text-sm font-bold text-gray-900">{orgsCount || 0}</p></div>
+          </div>
         </div>
 
         {/* Verified Active */}
         <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-between">
-           <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">Verified Active</p>
-                <p className="text-4xl font-black text-gray-900 tracking-tighter mt-1">{activeCount || 0}</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center shrink-0">
-                <Shield className="w-5 h-5" />
-              </div>
-           </div>
-           <div className="pt-4 mt-auto">
-             <div className="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-green-500 h-full rounded-full" style={{ width: `${totalCount ? Math.round(((activeCount||0) / totalCount) * 100) : 0}%` }}></div>
-             </div>
-             <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase">{totalCount ? Math.round(((activeCount||0) / totalCount) * 100) : 0}% of all accounts (System Admin accounts inclusive)</p>
-           </div>
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">Verified Active</p>
+              <p className="text-4xl font-black text-gray-900 tracking-tighter mt-1">{activeCount || 0}</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center shrink-0">
+              <Shield className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="pt-4 mt-auto">
+            <div className="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-green-500 h-full rounded-full" style={{ width: `${totalCount ? Math.round(((activeCount || 0) / totalCount) * 100) : 0}%` }}></div>
+            </div>
+            <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase">{totalCount ? Math.round(((activeCount || 0) / totalCount) * 100) : 0}% of all accounts (System Admin accounts inclusive)</p>
+          </div>
         </div>
 
         {/* Global Reach */}
         <div className="bg-[#b50a0a] p-6 rounded-[2rem] shadow-xl shadow-red-900/10 flex flex-col justify-between relative overflow-hidden text-white">
-           <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-[60px] opacity-20 -mr-16 -mt-16"></div>
-           <div className="flex justify-between items-start relative z-10">
-              <div>
-                <p className="text-xs font-bold text-red-200 tracking-wide uppercase">Global Reach</p>
-                <p className="text-4xl font-black text-white tracking-tighter mt-1">{globalReachCount}</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-black/20 text-white flex items-center justify-center shrink-0">
-                <Globe className="w-5 h-5" />
-              </div>
-           </div>
-           <div className="pt-4 mt-auto relative z-10">
-             <p className="text-xs font-bold text-red-100">Unique Countries Represented</p>
-           </div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-[60px] opacity-20 -mr-16 -mt-16"></div>
+          <div className="flex justify-between items-start relative z-10">
+            <div>
+              <p className="text-xs font-bold text-red-200 tracking-wide uppercase">Global Reach</p>
+              <p className="text-4xl font-black text-white tracking-tighter mt-1">{globalReachCount}</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-black/20 text-white flex items-center justify-center shrink-0">
+              <Globe className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="pt-4 mt-auto relative z-10">
+            <p className="text-xs font-bold text-red-100">Unique Countries Represented</p>
+          </div>
         </div>
       </div>
 
       {/* Client Table */}
-      <UsersClient 
+      <UsersClient
         initialUsers={users || []}
         totalCount={filteredTotal || 0}
         currentPage={page}

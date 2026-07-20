@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { Bell, Check, ExternalLink, Info, AlertTriangle, CheckCircle, XCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useToast } from '@/context/ToastContext';
+import { createClient } from '@/lib/supabase/client';
 
 interface Notification {
   id: string;
@@ -17,8 +20,40 @@ interface Notification {
 export function DashboardNotificationBell({ initialNotifications }: { initialNotifications: Notification[] }) {
   const [notifications, setNotifications] = useState(initialNotifications);
   const [isOpen, setIsOpen] = useState(false);
+  const { showToast } = useToast();
   
   const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  useEffect(() => {
+    let channel: any;
+    const setupRealtime = async () => {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) return;
+      
+      channel = supabase.channel('realtime:dashboard_notifications')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${data.session.user.id}`
+        }, (payload) => {
+          const newNotif = payload.new as Notification;
+          setNotifications(prev => [newNotif, ...prev]);
+          const toastType = ['success', 'error', 'warning', 'info'].includes(newNotif.type) ? newNotif.type : 'info';
+          showToast(`New Notification: ${newNotif.title}`, toastType as any);
+        })
+        .subscribe();
+    };
+    setupRealtime();
+
+    return () => {
+      if (channel) {
+        const supabase = createClient();
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [showToast]);
 
   const handleMarkRead = async (id: string) => {
     // In a real implementation we'd call a server action here. 
