@@ -100,6 +100,7 @@ export default function SubscriptionPage() {
           
         if (profData) {
           profData.role = userData?.role || 'player';
+          profData.email = user.email;
         }
 
         // Fetch payment settings from CMS
