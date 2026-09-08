@@ -15,6 +15,7 @@ import { getCachedData } from '@/lib/redis';
 
 import { getEffectiveUserSession } from '@/lib/auth/impersonation';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
+import { resolveIsSubscribed } from '@/lib/subscription';
 
 export default async function DashboardLayout({
   children,
@@ -58,30 +59,38 @@ export default async function DashboardLayout({
     .eq('user_id', activeUserId)
     .eq('status', 'active');
     
-  // Fetch confirmed transactions or coupon redemptions as fallback using adminClient
-  const [{ data: confirmedTxs }, { data: redemptions }] = await Promise.all([
-    adminClient
-      .from('transactions')
-      .select('id')
-      .eq('user_id', profile?.id)
-      .eq('status', 'confirmed')
-      .limit(1),
-    adminClient
-      .from('coupon_redemptions')
-      .select('id')
-      .or(`redeemer_id.eq.${activeUserId}${profile?.id ? `,redeemer_id.eq.${profile.id}` : ''}`)
-      .limit(1)
-  ]);
+  const isSubscribedFromProfileOrSub = resolveIsSubscribed({
+    isSubscribedFlag: (profile as any)?.is_subscribed,
+    subscriptionStatus: (profile as any)?.subscription_status,
+    hasActiveSubscriptionRow: Boolean(subscriptions && subscriptions.length > 0),
+  });
+
+  let hasConfirmedTransaction = false;
+  let hasCouponRedemption = false;
+
+  // Short-circuit: only fetch fallback tables if primary flags are not active
+  if (profile?.id && !isSubscribedFromProfileOrSub) {
+    const [{ data: confirmedTxs }, { data: redemptions }] = await Promise.all([
+      adminClient
+        .from('transactions')
+        .select('id')
+        .eq('user_id', profile?.id)
+        .eq('status', 'confirmed')
+        .limit(1),
+      adminClient
+        .from('coupon_redemptions')
+        .select('id')
+        .or(`redeemer_id.eq.${activeUserId}${profile?.id ? `,redeemer_id.eq.${profile.id}` : ''}`)
+        .limit(1)
+    ]);
+    hasConfirmedTransaction = Boolean(confirmedTxs && confirmedTxs.length > 0);
+    hasCouponRedemption = Boolean(redemptions && redemptions.length > 0);
+  }
   
   const role = (userRecord as any)?.role || 'player';
   const status = (profile as any)?.status || 'pending';
 
-  const isSubscribed = 
-    (subscriptions && subscriptions.length > 0) || 
-    ((profile as any)?.is_subscribed === true) ||
-    ['ACTIVE', 'SPONSORED', 'GIFT_COVERED'].includes((profile as any)?.subscription_status) ||
-    (confirmedTxs && confirmedTxs.length > 0) ||
-    (redemptions && redemptions.length > 0);
+  const isSubscribed = isSubscribedFromProfileOrSub || hasConfirmedTransaction || hasCouponRedemption;
 
   // Fetch notifications
   const { data: notifications } = await adminClient

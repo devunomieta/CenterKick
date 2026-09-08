@@ -36,6 +36,7 @@ import { AgentPortfolioForm } from './components/AgentPortfolioForm';
 import { ScoutDiscoveriesForm } from './components/ScoutDiscoveriesForm';
 import { OrganizationDetailsForm } from './components/OrganizationDetailsForm';
 import { SearchableCombobox } from '@/components/common/SearchableCombobox';
+import { resolveIsSubscribed } from '@/lib/subscription';
 
 const calculateAge = (dob: string) => {
   if (!dob) return '';
@@ -108,23 +109,32 @@ export default function ProfileEditor() {
         const profileRecord = data.profileRecord;
         const supabase = createClient();
 
-        const { data: subscriptions } = await supabase
-          .from('subscriptions')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('status', 'active');
+        const [{ data: subscriptions }, { data: confirmedTxs }, { data: redemptions }] = await Promise.all([
+          supabase
+            .from('subscriptions')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('status', 'active'),
+          supabase
+            .from('transactions')
+            .select('id')
+            .eq('user_id', profileRecord?.id)
+            .eq('status', 'confirmed')
+            .limit(1),
+          supabase
+            .from('coupon_redemptions')
+            .select('id')
+            .or(`redeemer_id.eq.${user.id},redeemer_id.eq.${profileRecord?.id}`)
+            .limit(1),
+        ]);
 
-        const { data: confirmedTxs } = await supabase
-          .from('transactions')
-          .select('id')
-          .eq('user_id', profileRecord?.id)
-          .eq('status', 'confirmed')
-          .limit(1);
-
-        const subActive = 
-          (subscriptions && subscriptions.length > 0) || 
-          Boolean(profileRecord?.is_subscribed) ||
-          (confirmedTxs && confirmedTxs.length > 0);
+        const subActive = resolveIsSubscribed({
+          isSubscribedFlag: profileRecord?.is_subscribed,
+          subscriptionStatus: profileRecord?.subscription_status,
+          hasActiveSubscriptionRow: Boolean(subscriptions && subscriptions.length > 0),
+          hasConfirmedTransaction: Boolean(confirmedTxs && confirmedTxs.length > 0),
+          hasCouponRedemption: Boolean(redemptions && redemptions.length > 0),
+        });
         setIsSubscribedUser(subActive);
 
         setRole(userRecord?.role || 'player');

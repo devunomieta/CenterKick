@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { resolveIsSubscribed } from '@/lib/subscription';
 
 export async function updateSession(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
@@ -85,7 +86,7 @@ export async function updateSession(request: NextRequest) {
         .single(),
       supabase
         .from('profiles')
-        .select('id, status, is_subscribed, verification_requested')
+        .select('id, status, is_subscribed, subscription_status, verification_requested')
         .eq('user_id', user.id)
         .single(),
       supabase
@@ -100,21 +101,38 @@ export async function updateSession(request: NextRequest) {
     profileStatus = profile?.status ?? null;
     const verificationRequested = profile?.verification_requested ?? false;
     
-    // Check for subscription using subscriptions table, profile flag, or confirmed transactions
-    let isSubscribed = (activeSubscriptions && activeSubscriptions.length > 0) || Boolean((profile as any)?.is_subscribed);
+    // Check for subscription across entitlement sources.
+    // First check fast profile/subscription row signals.
+    const isSubscribedFromProfileOrSub = resolveIsSubscribed({
+      isSubscribedFlag: (profile as any)?.is_subscribed,
+      subscriptionStatus: (profile as any)?.subscription_status,
+      hasActiveSubscriptionRow: Boolean(activeSubscriptions && activeSubscriptions.length > 0),
+    });
 
-    if (!isSubscribed && profile?.id) {
-      const { data: confirmedTxs } = await supabase
-        .from('transactions')
-        .select('id')
-        .eq('user_id', profile.id)
-        .eq('status', 'confirmed')
-        .limit(1);
+    let hasConfirmedTransaction = false;
+    let hasCouponRedemption = false;
 
-      if (confirmedTxs && confirmedTxs.length > 0) {
-        isSubscribed = true;
-      }
+    // Fast short-circuit: only query fallback tables if primary profile signals are not active
+    if (profile?.id && !isSubscribedFromProfileOrSub) {
+      const [{ data: confirmedTxs }, { data: redemptions }] = await Promise.all([
+        supabase
+          .from('transactions')
+          .select('id')
+          .eq('user_id', profile.id)
+          .eq('status', 'confirmed')
+          .limit(1),
+        supabase
+          .from('coupon_redemptions')
+          .select('id')
+          .or(`redeemer_id.eq.${user.id},redeemer_id.eq.${profile.id}`)
+          .limit(1),
+      ]);
+
+      hasConfirmedTransaction = Boolean(confirmedTxs && confirmedTxs.length > 0);
+      hasCouponRedemption = Boolean(redemptions && redemptions.length > 0);
     }
+
+    const isSubscribed = isSubscribedFromProfileOrSub || hasConfirmedTransaction || hasCouponRedemption;
 
     // 5. Mandatory subscription check for participants in the dashboard
     if (!isPublicAdminPath && isDashboardPath) {
