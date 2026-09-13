@@ -5,6 +5,8 @@ import { getGlobalCMSData } from '@/app/admin/manage-ui/actions';
 import { getEarnMembershipPageData } from './actions';
 import EarnMembershipClient from '@/components/earn/EarnMembershipClient';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Earn Free Membership | CenterKick Task Rewards & Sponsorship',
   description: 'Complete promotional tasks, share CenterKick with your network, and earn 100% free subscription activation codes.',

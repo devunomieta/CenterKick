@@ -93,6 +93,8 @@ export function AdminSidebar({ role }: { role: string }) {
                 isActive = pathname.startsWith('/admin/users') && currentRoleParam === itemRole;
               } else if (item.href === '/admin/users') {
                 isActive = pathname === '/admin/users' && !currentRoleParam;
+              } else if (item.href === '/admin/coupons') {
+                isActive = pathname === '/admin/coupons';
               } else {
                 isActive = pathname.startsWith(item.href);
               }
