@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { calculateSubscriptionPeriodEnd } from '@/lib/subscriptionDuration';
 
 export async function POST(req: Request) {
   try {
@@ -55,6 +56,9 @@ export async function POST(req: Request) {
         
       if (profile) {
          const userRole = userData.role;
+         const periodEnd = await calculateSubscriptionPeriodEnd(userRole, plan, event.data);
+         const periodEndIso = periodEnd.toISOString();
+
          // Create transaction
          const { error: txError } = await supabase.from('transactions').insert({
             user_id: profile.id,
@@ -74,12 +78,25 @@ export async function POST(req: Request) {
              console.error('Webhook tx insert error:', txError);
          }
          
-         // Update profile status
+         // Update profile status & entitlement period
          await supabase.from('profiles').update({
             verification_requested: false,
             status: 'active',
+            is_subscribed: true,
+            valid_until: periodEndIso,
             updated_at: new Date().toISOString()
          }).eq('user_id', profile.user_id);
+
+         // Upsert active subscription record
+         await supabase.from('subscriptions').upsert({
+            user_id: profile.user_id,
+            plan_name: plan || 'Paystack Subscription',
+            status: 'active',
+            gateway: 'paystack',
+            external_id: reference,
+            current_period_end: periodEndIso,
+            updated_at: new Date().toISOString()
+         });
       }
     }
 

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { sendEmailNotification } from '../notifications/actions';
 import { sanitizeString } from '@/lib/sanitize';
+import { calculateSubscriptionPeriodEnd } from '@/lib/subscriptionDuration';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://centerkick.com';
 
@@ -49,8 +50,18 @@ export async function approvePaymentTransaction(transactionId: string, reason: s
   ];
 
   if (tx.user_id) {
+    const userRole = tx.profiles?.role || tx.profiles?.users?.role;
+    const planName = tx.metadata?.plan || 'Professional';
+    const periodEnd = await calculateSubscriptionPeriodEnd(userRole, planName, tx.metadata);
+    const periodEndIso = periodEnd.toISOString();
+
     updates.push(
-      admin.from('profiles').update({ status: 'active', is_subscribed: true }).eq('id', tx.user_id)
+      admin.from('profiles').update({
+        status: 'active',
+        is_subscribed: true,
+        valid_until: periodEndIso,
+        updated_at: new Date().toISOString()
+      }).eq('id', tx.user_id)
     );
     if (tx.profiles?.user_id) {
       updates.push(
@@ -59,10 +70,11 @@ export async function approvePaymentTransaction(transactionId: string, reason: s
       // Execute the subscription upsert separately to avoid TS type instantiation issues with mixed query builders
       await admin.from('subscriptions').upsert({
         user_id: tx.profiles.user_id,
-        plan_name: tx.metadata?.plan || 'Professional',
+        plan_name: planName,
         status: 'active',
         gateway: tx.method,
         external_id: tx.reference,
+        current_period_end: periodEndIso,
         updated_at: new Date().toISOString()
       });
     }
