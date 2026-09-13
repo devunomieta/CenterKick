@@ -46,10 +46,16 @@ export async function validateCouponCode(
     return { valid: false, error: `CODE_${coupon.status}` };
   }
 
-  if (coupon.expiry_date && new Date(coupon.expiry_date) < new Date()) {
-    // Auto-expire
-    await adminClient.from('coupon_codes').update({ status: 'EXPIRED' }).eq('id', coupon.id);
-    return { valid: false, error: 'CODE_EXPIRED' };
+  if (coupon.expiry_date) {
+    const expDate = new Date(coupon.expiry_date);
+    if (expDate.getUTCHours() === 0 && expDate.getUTCMinutes() === 0 && expDate.getUTCSeconds() === 0) {
+      expDate.setUTCHours(23, 59, 59, 999);
+    }
+    if (expDate < new Date()) {
+      // Auto-expire
+      await adminClient.from('coupon_codes').update({ status: 'EXPIRED' }).eq('id', coupon.id);
+      return { valid: false, error: 'CODE_EXPIRED' };
+    }
   }
 
   if (coupon.redemption_count >= coupon.max_redemptions) {
@@ -165,12 +171,10 @@ export async function validateCouponCode(
     }
   }
 
-  // 6. Block Redemption if User has Active Subscription
+  // 6. Block Redemption ONLY if User has an Active Paid Subscription with valid future expiry
   if (redeemerProfile) {
     const isSubscribedFlag = Boolean(redeemerProfile.is_subscribed);
-    const hasActiveStatus = redeemerProfile.status === 'active' || ['ACTIVE', 'SPONSORED', 'GIFT_COVERED'].includes(redeemerProfile.subscription_status || '');
-    
-    // Check if subscription expiration date exists and is in the future
+    const hasSponsoredOrActiveSubStatus = ['ACTIVE', 'SPONSORED', 'GIFT_COVERED'].includes((redeemerProfile.subscription_status || '').toUpperCase());
     const hasValidFutureExpiry = redeemerProfile.valid_until ? new Date(redeemerProfile.valid_until) > new Date() : false;
 
     // Check if user has any confirmed subscription transactions matching profile.id OR profile.user_id OR userId
@@ -187,7 +191,7 @@ export async function validateCouponCode(
       if (tx) hasConfirmedTx = true;
     }
 
-    const isActiveSubscriber = isSubscribedFlag || (hasActiveStatus && (hasValidFutureExpiry || !redeemerProfile.valid_until)) || hasConfirmedTx;
+    const isActiveSubscriber = (isSubscribedFlag && (hasValidFutureExpiry || !redeemerProfile.valid_until)) || (hasSponsoredOrActiveSubStatus && hasValidFutureExpiry) || (hasConfirmedTx && hasValidFutureExpiry);
 
     if (isActiveSubscriber) {
       const formattedExpiry = redeemerProfile.valid_until

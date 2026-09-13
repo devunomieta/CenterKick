@@ -23,19 +23,12 @@ export default function CouponRedeemer({ userId, userEmail, isSubscribed, subscr
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showResolutionModal, setShowResolutionModal] = useState(false);
 
-  // Initial check on mount: If user already has an active subscription, display proactive warning
-  React.useEffect(() => {
-    if (isSubscribed) {
-      setErrorMsg(`Your account currently has an active ${subscriptionTier || 'professional'} subscription. Active subscribers cannot redeem voucher codes.`);
-    }
-  }, [isSubscribed, subscriptionTier]);
-
   // Debounced real-time validation preview (Checks code status without auto-submitting/redeeming)
   React.useEffect(() => {
     const cleanCode = code.trim().toUpperCase();
     if (!cleanCode || cleanCode.length < 5) {
       setValidation(null);
-      if (!isSubscribed) setErrorMsg(null);
+      setErrorMsg(null);
       return;
     }
 
@@ -65,15 +58,10 @@ export default function CouponRedeemer({ userId, userEmail, isSubscribed, subscr
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [code, userId, isSubscribed]);
+  }, [code, userId]);
 
   const handleValidate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubscribed) {
-      setErrorMsg(`Your account currently has an active subscription and cannot redeem voucher codes.`);
-      return;
-    }
-
     const cleanCode = code.trim().toUpperCase();
     if (!cleanCode) return;
 
