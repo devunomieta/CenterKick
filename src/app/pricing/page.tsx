@@ -3,6 +3,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { getGlobalCMSData } from '@/app/admin/manage-ui/actions';
 import { createClient } from '@/lib/supabase/server';
+import { getLiveUsdNgnRate, convertNgnToUsd } from '@/lib/utils/currencyRate';
 import {
   User,
   ShieldCheck,
@@ -24,9 +25,10 @@ export const metadata = {
 };
 
 export default async function PricingPage() {
-  const [globalCms, supabase] = await Promise.all([
+  const [globalCms, supabase, usdNgnRate] = await Promise.all([
     getGlobalCMSData(),
     createClient(),
+    getLiveUsdNgnRate(),
   ]);
 
   // Fetch dynamic payment and plan settings from site_content
@@ -50,7 +52,7 @@ export default async function PricingPage() {
       icon: User,
       badgeColor: 'bg-red-50 text-[#b50a0a] border-red-100',
       buttonBg: 'bg-[#b50a0a] hover:bg-red-800 text-white',
-      defaultAmount: 5000,
+      defaultAmount: 50000,
       currency: 'NGN',
       duration: '6 Months',
       features: [
@@ -69,7 +71,7 @@ export default async function PricingPage() {
       icon: Award,
       badgeColor: 'bg-amber-50 text-amber-800 border-amber-100',
       buttonBg: 'bg-gray-900 hover:bg-black text-white',
-      defaultAmount: 5000,
+      defaultAmount: 75000,
       currency: 'NGN',
       duration: '6 Months',
       features: [
@@ -88,7 +90,7 @@ export default async function PricingPage() {
       icon: ShieldCheck,
       badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-100',
       buttonBg: 'bg-emerald-600 hover:bg-emerald-700 text-white',
-      defaultAmount: 5000,
+      defaultAmount: 100000,
       currency: 'NGN',
       duration: '6 Months',
       features: [
@@ -107,7 +109,7 @@ export default async function PricingPage() {
       icon: Briefcase,
       badgeColor: 'bg-purple-50 text-purple-800 border-purple-100',
       buttonBg: 'bg-gray-900 hover:bg-black text-white',
-      defaultAmount: 5000,
+      defaultAmount: 120000,
       currency: 'NGN',
       duration: '6 Months',
       features: [
@@ -126,7 +128,7 @@ export default async function PricingPage() {
       icon: Building2,
       badgeColor: 'bg-blue-50 text-blue-800 border-blue-100',
       buttonBg: 'bg-[#b50a0a] hover:bg-red-800 text-white',
-      defaultAmount: 5000,
+      defaultAmount: 150000,
       currency: 'NGN',
       duration: '6 Months',
       features: [
@@ -140,16 +142,22 @@ export default async function PricingPage() {
     }
   ];
 
-  const formatPlanPrice = (roleId: string, defaultConfig: any) => {
+  const getPlanPrices = (roleId: string, defaultConfig: any) => {
     const cmsPlan = systemPlans[roleId];
+    let nairaAmount = defaultConfig.defaultAmount || 50000;
+
     if (cmsPlan && cmsPlan.amount !== undefined && cmsPlan.amount !== null) {
-      const amt = Number(cmsPlan.amount);
-      if (amt === 0) return 'Free';
-      const cur = cmsPlan.currency || 'NGN';
-      const symbol = cur === 'USD' ? '$' : cur === 'EUR' ? '€' : '₦';
-      return `${symbol}${amt.toLocaleString()}`;
+      nairaAmount = Number(cmsPlan.amount);
     }
-    return `₦${defaultConfig.defaultAmount ? Number(defaultConfig.defaultAmount).toLocaleString() : '50,000'}`;
+
+    if (nairaAmount === 0) {
+      return { usdText: 'Free', nairaText: 'Free' };
+    }
+
+    const usdText = convertNgnToUsd(nairaAmount, usdNgnRate);
+    const nairaText = `₦${nairaAmount.toLocaleString('en-US')}`;
+
+    return { usdText, nairaText };
   };
 
   const formatPlanDuration = (roleId: string, defaultConfig: any) => {
@@ -208,7 +216,7 @@ export default async function PricingPage() {
         {/* Pricing Cards Grid */}
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {rolesConfig.map((role) => {
-            const priceText = formatPlanPrice(role.id, role);
+            const { usdText, nairaText } = getPlanPrices(role.id, role);
             const durationText = formatPlanDuration(role.id, role);
             const Icon = role.icon;
 
@@ -234,9 +242,14 @@ export default async function PricingPage() {
                   {/* Price Display */}
                   <div className="mb-6 p-4 bg-gray-50/80 rounded-2xl border border-gray-100">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-black text-gray-900 tracking-tight">{priceText}</span>
+                      <span className="text-3xl font-black text-gray-900 tracking-tight">{usdText}</span>
                       <span className="text-xs font-bold text-gray-500">/ {durationText}</span>
                     </div>
+                    {nairaText !== 'Free' && (
+                      <p className="text-xs font-bold text-[#b50a0a] mt-1.5">
+                        ~ {nairaText} <span className="text-[11px] font-normal text-gray-400">NGN</span>
+                      </p>
+                    )}
                     <p className="text-[11px] font-medium text-gray-400 mt-1">Full platform access during validity period</p>
                   </div>
 
