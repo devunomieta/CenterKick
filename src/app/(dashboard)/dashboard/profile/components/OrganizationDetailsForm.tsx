@@ -101,7 +101,8 @@ export function OrganizationDetailsForm({ data, onChange, onUploadImage }: { dat
                const val = e.target.value.replace(/\D/g, '');
                if (val.length === 4) {
                  const currentYear = new Date().getFullYear();
-                 if (parseInt(val) > currentYear) return;
+                 const yearNum = parseInt(val, 10);
+                 if (yearNum < 1800 || yearNum > currentYear) return;
                }
                onChange({ ...data, year_established: val });
              }}

@@ -357,6 +357,69 @@ export default function ProfileEditor() {
           setIsSaving(false);
           return;
         }
+
+        if (idNumber && idNumber.trim().length < 4) {
+          showToast('National ID / Passport Number must be at least 4 characters long.', 'error');
+          setIsSaving(false);
+          return;
+        }
+      }
+    }
+
+    // Boundary & Validation Checks
+    const rawHeight = formData.get('height_cm');
+    if (rawHeight !== null && rawHeight !== '') {
+      const heightVal = Number(rawHeight);
+      if (isNaN(heightVal) || heightVal < 100 || heightVal > 230) {
+        showToast('Height must be between 100 cm and 230 cm.', 'error');
+        setIsSaving(false);
+        return;
+      }
+    }
+
+    const rawWeight = formData.get('weight_kg');
+    if (rawWeight !== null && rawWeight !== '') {
+      const weightVal = Number(rawWeight);
+      if (isNaN(weightVal) || weightVal < 30 || weightVal > 160) {
+        showToast('Weight must be between 30 kg and 160 kg.', 'error');
+        setIsSaving(false);
+        return;
+      }
+    }
+
+    const rawJersey = formData.get('jersey_number');
+    if (rawJersey !== null && rawJersey !== '') {
+      const jerseyVal = Number(rawJersey);
+      if (isNaN(jerseyVal) || jerseyVal < 1 || jerseyVal > 99) {
+        showToast('Jersey number must be an integer between 1 and 99.', 'error');
+        setIsSaving(false);
+        return;
+      }
+    }
+
+    const rawDob = (formData.get('date_of_birth') as string) || originalProfile?.date_of_birth;
+    if (rawDob) {
+      const dobDate = new Date(rawDob);
+      const now = new Date();
+      if (dobDate > now) {
+        showToast('Date of birth cannot be in the future.', 'error');
+        setIsSaving(false);
+        return;
+      }
+      const ageDiff = now.getTime() - dobDate.getTime();
+      const age = Math.floor(ageDiff / (365.25 * 24 * 60 * 60 * 1000));
+      if (role === 'player' || role === 'athlete') {
+        if (age < 10 || age > 90) {
+          showToast('Players must be between 10 and 90 years old.', 'error');
+          setIsSaving(false);
+          return;
+        }
+      } else if (role === 'coach' || role === 'scout' || role === 'agent') {
+        if (age < 18 || age > 90) {
+          showToast('Coaches, Scouts, and Agents must be at least 18 years old.', 'error');
+          setIsSaving(false);
+          return;
+        }
       }
     }
     
@@ -454,6 +517,19 @@ export default function ProfileEditor() {
           setIsSaving(false);
           return;
         }
+
+        if (
+          Number(stat.appearances || stat.apps || 0) < 0 ||
+          Number(stat.goals || 0) < 0 ||
+          Number(stat.assists || 0) < 0 ||
+          Number(stat.clean_sheets || 0) < 0 ||
+          Number(stat.yellow_cards || 0) < 0 ||
+          Number(stat.red_cards || 0) < 0
+        ) {
+          showToast(`Per Season Statistics entry #${i + 1} contains negative numbers. Statistics cannot be negative.`, 'error');
+          setIsSaving(false);
+          return;
+        }
       }
 
       // Validate Transfer History
@@ -468,6 +544,35 @@ export default function ProfileEditor() {
           setIsSaving(false);
           return;
         }
+      }
+    }
+
+    // Role-specific boundary validation
+    if (roleData?.years_of_experience) {
+      const exp = Number(roleData.years_of_experience);
+      if (!isNaN(exp) && (exp < 0 || exp > 60)) {
+        showToast('Years of experience must be an integer between 0 and 60.', 'error');
+        setIsSaving(false);
+        return;
+      }
+    }
+
+    if (role === 'organization' && roleData?.year_established) {
+      const year = Number(roleData.year_established);
+      const currentYear = new Date().getFullYear();
+      if (isNaN(year) || year < 1800 || year > currentYear) {
+        showToast(`Year established must be a valid 4-digit year between 1800 and ${currentYear}.`, 'error');
+        setIsSaving(false);
+        return;
+      }
+    }
+
+    if ((role === 'agent' || role === 'scout') && roleData?.fa_license_number) {
+      const code = String(roleData.fa_license_number).trim();
+      if (code.length > 0 && code.length < 3) {
+        showToast('FA License / Registration Number must be at least 3 characters long.', 'error');
+        setIsSaving(false);
+        return;
       }
     }
 
@@ -1201,17 +1306,17 @@ export default function ProfileEditor() {
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Height (cm)</label>
-                        <input disabled={!isEditing} name="height_cm" type="number" defaultValue={profile?.height_cm} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black disabled:opacity-70 disabled:bg-gray-100" />
+                        <input disabled={!isEditing} name="height_cm" type="number" min={100} max={230} placeholder="e.g. 182" defaultValue={profile?.height_cm} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black disabled:opacity-70 disabled:bg-gray-100" />
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Weight (kg)</label>
-                        <input disabled={!isEditing} name="weight_kg" type="number" defaultValue={profile?.weight_kg} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black disabled:opacity-70 disabled:bg-gray-100" />
+                        <input disabled={!isEditing} name="weight_kg" type="number" min={30} max={160} placeholder="e.g. 75" defaultValue={profile?.weight_kg} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black disabled:opacity-70 disabled:bg-gray-100" />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 md:gap-6 mt-6">
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Jersey #</label>
-                        <input disabled={!isEditing} name="jersey_number" type="number" defaultValue={profile?.jersey_number} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black disabled:opacity-70 disabled:bg-gray-100" />
+                        <input disabled={!isEditing} name="jersey_number" type="number" min={1} max={99} placeholder="e.g. 10" defaultValue={profile?.jersey_number} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black disabled:opacity-70 disabled:bg-gray-100" />
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Market Value ($)</label>
