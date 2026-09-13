@@ -101,7 +101,7 @@ export function DirectoryTable<T>({
         </div>
       )}
 
-      <div className="relative overflow-x-auto w-full [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full" ref={dropdownRef}>
+      <div className={`relative overflow-x-auto w-full [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full ${data.length > 0 && data.length <= 3 ? 'min-h-[280px] sm:min-h-[320px] pb-24 sm:pb-28' : ''}`} ref={dropdownRef}>
         {isPending && (
           <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center animate-in fade-in duration-300">
             <div className="flex flex-col items-center gap-2">

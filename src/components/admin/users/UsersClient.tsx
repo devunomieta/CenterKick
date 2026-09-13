@@ -305,7 +305,7 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize, i
           const isActive = user.is_active !== false;
           const isPendingActivation = profileStatus === 'pending' && isActive;
           const isParticipant = PARTICIPANT_ROLES.includes(user.role);
-          const isBottomRow = index >= totalCount - 3;
+          const isBottomRow = totalCount >= 4 && index >= totalCount - 2;
 
           return (
             <tr 
@@ -392,7 +392,7 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize, i
                               className="fixed inset-0 z-40" 
                               onClick={() => setOpenDropdown(null)}
                             />
-                            <div className={`absolute right-0 w-52 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in duration-200 ${
+                            <div className={`absolute right-0 w-48 sm:w-52 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in duration-200 ${
                               isBottomRow 
                                 ? 'bottom-full mb-2 origin-bottom-right slide-in-from-bottom-2' 
                                 : 'top-full mt-2 origin-top-right slide-in-from-top-2'
