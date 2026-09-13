@@ -140,7 +140,9 @@ export function PlayerCareerForm({ data, onChange, achievements, onAchievementsC
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Departing Club (From)</label>
+                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                     Departing Club (From) <span className="text-red-500">*</span>
+                   </label>
                    <SearchableCombobox
                      disabled={disabled}
                      options={clubsList}
@@ -152,7 +154,9 @@ export function PlayerCareerForm({ data, onChange, achievements, onAchievementsC
                    />
                 </div>
                 <div>
-                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Joined Club (To) <span className="text-gray-400 font-normal opacity-80">(Optional)</span></label>
+                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                     Joined Club (To) <span className="text-red-500">*</span>
+                   </label>
                    <SearchableCombobox
                      disabled={disabled}
                      options={clubsList}

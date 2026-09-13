@@ -442,6 +442,35 @@ export default function ProfileEditor() {
 
     const formData = new FormData(e.target as HTMLFormElement);
 
+    // Validate Per Season Statistics (if role === 'player')
+    if (role === 'player') {
+      for (let i = 0; i < careerStats.length; i++) {
+        const stat = careerStats[i];
+        const league = (stat.league_name || stat.league || '').trim();
+        const club = (stat.club_name || stat.club || '').trim();
+        const season = (stat.season || '').trim();
+        if (!season || !league || league === '—' || !club || club === '—') {
+          showToast(`Per Season Statistics entry #${i + 1} is incomplete. Season, League, and Club/Team must all be specified before saving.`, 'error');
+          setIsSaving(false);
+          return;
+        }
+      }
+
+      // Validate Transfer History
+      const transfers = roleData.transfer_history || [];
+      for (let i = 0; i < transfers.length; i++) {
+        const tr = transfers[i];
+        const from = (tr.from_club || tr.club || '').trim();
+        const to = (tr.to_club || '').trim();
+        const date = (tr.date || '').trim();
+        if (!date || !from || from === 'Unknown' || from === '—' || !to || to === 'Unknown' || to === '—') {
+          showToast(`Transfer History entry #${i + 1} is incomplete. Transfer Date, Departing Club (From), and Joined Club (To) must all be specified before saving.`, 'error');
+          setIsSaving(false);
+          return;
+        }
+      }
+    }
+
     let finalLeagueId = profile?.league;
     if (finalLeagueId && finalLeagueId.startsWith('NEW:')) {
       if (!profile?.new_league_country?.trim()) {

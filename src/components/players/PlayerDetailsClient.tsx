@@ -78,8 +78,21 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
       return isNaN(num) ? 0 : num;
    };
 
-   const sortedCareerStats = [...(careerStats || [])].sort((a, b) => getYearFromVal(b.season) - getYearFromVal(a.season));
-   const sortedTransferHistory = [...(athlete?.transfer_history || [])].sort((a, b) => getYearFromVal(b.date) - getYearFromVal(a.date));
+   const sortedCareerStats = [...(careerStats || [])]
+      .filter((s) => {
+         const league = (s.league_name || s.league || '').trim();
+         const club = (s.club_name || s.club || '').trim();
+         return Boolean(s.season && league && league !== '—' && club && club !== '—');
+      })
+      .sort((a, b) => getYearFromVal(b.season) - getYearFromVal(a.season));
+
+   const sortedTransferHistory = [...(athlete?.transfer_history || [])]
+      .filter((t) => {
+         const from = (t.from_club || t.club || '').trim();
+         const to = (t.to_club || '').trim();
+         return Boolean(t.date && from && from !== 'Unknown' && from !== '—' && to && to !== 'Unknown' && to !== '—');
+      })
+      .sort((a, b) => getYearFromVal(b.date) - getYearFromVal(a.date));
 
    const handleShareProfile = async () => {
       const currentUrl = window.location.href;

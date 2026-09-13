@@ -165,6 +165,11 @@ export default async function AthleteDetailsPage({ params }: AthletePageProps) {
             league_name: resolvedLeague || null,
          };
       })
+      .filter((s: any) => {
+         const league = (s.league_name || s.league || '').trim();
+         const club = (s.club_name || s.club || '').trim();
+         return Boolean(s.season && league && league !== '—' && club && club !== '—');
+      })
       .sort((a: any, b: any) => {
          const yearA = getSeasonYear(a.season);
          const yearB = getSeasonYear(b.season);
@@ -175,9 +180,9 @@ export default async function AthleteDetailsPage({ params }: AthletePageProps) {
    if (athlete.transfer_history && Array.isArray(athlete.transfer_history)) {
       athlete.transfer_history = athlete.transfer_history
          .map((t: any, index: number, arr: any[]) => {
-            const from_club = t.from_club || t.club || 'Unknown';
+            const from_club = t.from_club || t.club || '';
             const nextTransferFrom = index < arr.length - 1 ? (arr[index + 1].from_club || arr[index + 1].club) : null;
-            const to_club = t.to_club || nextTransferFrom || athlete.current_club || 'Unknown';
+            const to_club = t.to_club || nextTransferFrom || athlete.current_club || '';
 
             return {
                ...t,
@@ -187,6 +192,11 @@ export default async function AthleteDetailsPage({ params }: AthletePageProps) {
                from_club_logo: getClubLogo(from_club),
                to_club_logo: getClubLogo(to_club),
             };
+         })
+         .filter((t: any) => {
+            const from = (t.from_club || '').trim();
+            const to = (t.to_club || '').trim();
+            return Boolean(t.date && from && from !== 'Unknown' && from !== '—' && to && to !== 'Unknown' && to !== '—');
          })
          .sort((a: any, b: any) => {
             const dateA = getSeasonYear(a.date) || (a.date && !isNaN(Date.parse(a.date)) ? new Date(a.date).getTime() : 0);
