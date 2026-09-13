@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
   Users, UserCheck, Briefcase, FileText, PenTool, User,
-  ShieldCheck, CreditCard, Settings, LayoutDashboard, Clock, Trophy, Search, Database, AlertTriangle, Headphones, Ticket
+  ShieldCheck, CreditCard, Settings, LayoutDashboard, Clock, Trophy, Search, Database, AlertTriangle, Headphones, Ticket, Sparkles
 } from 'lucide-react';
 import { SignOutButton } from '@/components/dashboard/SignOutButton';
 import { Home } from 'lucide-react';
@@ -65,7 +65,8 @@ export function AdminSidebar({ role }: { role: string }) {
         ...(isFinance || isSuperOrAdmin ? [
           { label: 'Transactions', href: '/admin/payments/transactions', icon: CreditCard },
           { label: 'Subscriptions', href: '/admin/payments/subscriptions', icon: Settings },
-          { label: 'Coupons', href: '/admin/coupons', icon: Ticket }
+          { label: 'Coupons', href: '/admin/coupons', icon: Ticket },
+          { label: 'Earning Tasks', href: '/admin/coupons/tasks', icon: Sparkles }
         ] : []),
         ...(role === 'superadmin' ? [
           { label: 'System Settings', href: '/admin/settings', icon: Settings },

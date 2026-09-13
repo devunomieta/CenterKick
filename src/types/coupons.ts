@@ -72,7 +72,7 @@ export interface ValidationResult {
  * Generate a high-entropy, human-friendly coupon code string
  * Example: CK-ORG-9X2M-K84P or CK-GIFT-77A2-99BL
  */
-export function generateCouponCodePrefix(prefix: 'ORG' | 'GIFT' | 'PROMO' = 'PROMO'): string {
+export function generateCouponCodePrefix(prefix: 'ORG' | 'GIFT' | 'PROMO' | 'EARN' = 'PROMO'): string {
   const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // Excludes 0, O, 1, I to prevent confusion
   const generateSegment = (length: number) => {
     let result = '';

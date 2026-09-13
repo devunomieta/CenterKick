@@ -70,6 +70,7 @@ export function Footer({ content, settings }: { content?: any; settings?: any })
       { title: 'Home', url: '/' },
       { title: 'About Us', url: '/about' },
       { title: 'Pricing & Plans', url: '/pricing' },
+      { title: 'Earn Free Membership', url: '/earn-membership' },
       { title: 'Gift a Membership', url: '/gift' },
       { title: 'News', url: '/news' },
       { title: 'Player Profiles', url: '/players' },

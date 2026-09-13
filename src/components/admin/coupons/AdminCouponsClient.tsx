@@ -20,8 +20,10 @@ import {
   ExternalLink,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
 
@@ -315,12 +317,21 @@ export default function AdminCouponsClient({
           </div>
         </div>
 
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-6 py-3.5 rounded-2xl bg-[#a20000] hover:bg-black text-white text-xs font-bold tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shrink-0"
-        >
-          <Plus className="w-4 h-4" /> Create Promo Code
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          <Link
+            href="/admin/coupons/tasks"
+            className="px-5 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold tracking-wider transition-all flex items-center justify-center gap-2 border border-slate-700 shadow-md"
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" /> Earn Membership Tasks
+          </Link>
+
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-6 py-3.5 rounded-2xl bg-[#a20000] hover:bg-black text-white text-xs font-bold tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg"
+          >
+            <Plus className="w-4 h-4" /> Create Promo Code
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards Row */}
