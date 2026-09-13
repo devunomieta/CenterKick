@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { TransactionsClient } from '@/components/admin/payments/TransactionsClient';
 import { redirect } from 'next/navigation';
+import { getLiveUsdNgnRate } from '@/lib/utils/currencyRate';
 
 export default async function AdminTransactionsPage(props: {
   searchParams: Promise<{ 
@@ -35,6 +36,8 @@ export default async function AdminTransactionsPage(props: {
   const pageSize = 20;
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
+
+  const usdNgnRate = await getLiveUsdNgnRate();
 
   let query = supabase
     .from('transactions')
@@ -79,7 +82,7 @@ export default async function AdminTransactionsPage(props: {
   
   const totalRevenue = revenueData?.reduce((sum, tx) => {
     const amount = Number(tx.amount);
-    return sum + (tx.currency === 'USD' ? amount * 1500 : amount);
+    return sum + (tx.currency === 'USD' ? amount * usdNgnRate : amount);
   }, 0) || 0;
 
   const ADMIN_ROLES = ['superadmin', 'admin', 'blogger', 'operations', 'finance'];
@@ -158,7 +161,7 @@ export default async function AdminTransactionsPage(props: {
 
   revenueData?.forEach(tx => {
     const date = new Date(tx.created_at);
-    const amount = tx.currency === 'USD' ? Number(tx.amount) * 1500 : Number(tx.amount);
+    const amount = tx.currency === 'USD' ? Number(tx.amount) * usdNgnRate : Number(tx.amount);
 
     // 1. Daily calculation (if within the last 7 days)
     const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -216,13 +219,15 @@ export default async function AdminTransactionsPage(props: {
     ? ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
     : revGrowth;
 
+  const revenueGrowthRate = growthRate;
+
   const currentProjection = currentMonthRevenue > 0 
     ? currentMonthRevenue * 1.25 
     : totalRevenue * 0.15 || 4250.00;
 
   return (
-    <TransactionsClient 
-      transactions={transactions || []} 
+    <TransactionsClient
+      transactions={(transactions || []) as any}
       totalCount={count || 0}
       currentPage={page}
       pageSize={pageSize}
@@ -230,8 +235,9 @@ export default async function AdminTransactionsPage(props: {
       dailyData={dailyData}
       monthlyData={monthlyData}
       yearlyData={yearlyData}
-      currentProjection={currentProjection}
-      growthRate={growthRate}
+      currentProjection={currentMonthRevenue}
+      growthRate={revenueGrowthRate}
+      usdNgnRate={usdNgnRate}
     />
   );
 }

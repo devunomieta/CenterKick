@@ -87,6 +87,8 @@ export default function SubscriptionPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const router = useRouter();
 
+  const [usdNgnRate, setUsdNgnRate] = useState<number>(1327);
+
   useEffect(() => {
     async function loadData() {
       const { getEffectiveSubscriptionData, getUserTransactions } = await import('./actions');
@@ -95,6 +97,9 @@ export default function SubscriptionPage() {
       if (subData && subData.profData) {
         setProfile(subData.profData);
         setPaymentSettings(subData.settings);
+        if (subData.usdNgnRate) {
+          setUsdNgnRate(subData.usdNgnRate);
+        }
 
         const txRes = await getUserTransactions();
         if (txRes && txRes.transactions) {
@@ -244,7 +249,7 @@ export default function SubscriptionPage() {
   else if (rolePlan?.frequency === 'Lifetime Access') durationMonths = 0; // 0 means lifetime
 
   const planName = rolePlan?.name || `${userRole.charAt(0).toUpperCase() + userRole.slice(1)}`;
-  const usdPrice = basePrice / 1500;
+  const usdPrice = basePrice / (usdNgnRate || 1327);
 
   const plan = {
     name: planName,

@@ -58,7 +58,8 @@ export function TransactionsClient({
   monthlyData,
   yearlyData,
   currentProjection,
-  growthRate
+  growthRate,
+  usdNgnRate = 1327
 }: {
   transactions: Transaction[],
   totalCount: number,
@@ -69,14 +70,15 @@ export function TransactionsClient({
   monthlyData: { name: string, value: number }[],
   yearlyData: { name: string, value: number }[],
   currentProjection: number,
-  growthRate: number
+  growthRate: number,
+  usdNgnRate?: number
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [timeframe, setTimeframe] = useState('Monthly');
   const [currency, setCurrency] = useState<'USD' | 'NGN'>('NGN');
-  const exchangeRate = 1500; // 1 USD = 1500 NGN standard conversion
+  const exchangeRate = usdNgnRate || 1327;
 
   const totalPages = Math.ceil(totalCount / pageSize);
   

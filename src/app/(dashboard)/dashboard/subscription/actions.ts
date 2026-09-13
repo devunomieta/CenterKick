@@ -134,6 +134,7 @@ export async function requestVerification(formData: FormData) {
 }
 
 import { getEffectiveUserSession } from '@/lib/auth/impersonation';
+import { getLiveUsdNgnRate } from '@/lib/utils/currencyRate';
 
 export async function getEffectiveSubscriptionData() {
   const session = await getEffectiveUserSession();
@@ -145,11 +146,13 @@ export async function getEffectiveSubscriptionData() {
   const [
     { data: profData },
     { data: userData },
-    { data: settings }
+    { data: settings },
+    usdNgnRate
   ] = await Promise.all([
     adminClient.from('profiles').select('*').eq('user_id', activeUserId).single(),
     adminClient.from('users').select('role').eq('id', activeUserId).single(),
-    adminClient.from('site_content').select('content').eq('page', 'settings').eq('section', 'payment').single()
+    adminClient.from('site_content').select('content').eq('page', 'settings').eq('section', 'payment').single(),
+    getLiveUsdNgnRate()
   ]);
 
   if (profData) {
@@ -182,7 +185,8 @@ export async function getEffectiveSubscriptionData() {
   return {
     profData,
     settings: settings?.content || { paymentLink: 'https://paystack.com/pay/centerkick-pro' },
-    isImpersonating: session.isImpersonating
+    isImpersonating: session.isImpersonating,
+    usdNgnRate
   };
 }
 
