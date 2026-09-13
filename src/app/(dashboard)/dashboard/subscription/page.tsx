@@ -407,9 +407,17 @@ export default function SubscriptionPage() {
                                         <div className="flex items-center gap-2">
                                           <span className="text-xs font-extrabold uppercase tracking-wider text-red-400">Voucher Applied:</span>
                                           <span className="text-xs font-bold font-mono text-white">{appliedCoupon.code}</span>
+                                          {appliedCoupon.coupon_type === 'PERCENTAGE' && (
+                                            <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold border border-emerald-500/30">
+                                              {appliedCoupon.discount_value}% OFF
+                                            </span>
+                                          )}
                                         </div>
-                                        <p className="text-[11px] text-gray-400 mt-0.5">
-                                          Original: <span className="line-through">₦{basePrice.toLocaleString()}</span> • Discount: <span className="text-emerald-400 font-bold">-₦{discountAmount.toLocaleString()}</span>
+                                        <p className="text-[11px] text-gray-300 mt-1">
+                                          Original Plan Rate: <span className="line-through text-gray-400">₦{basePrice.toLocaleString()}</span> • Discount Savings: <span className="text-emerald-400 font-bold">-₦{discountAmount.toLocaleString()}</span> ({appliedCoupon.coupon_type === 'PERCENTAGE' ? `${appliedCoupon.discount_value}% discount` : 'Flat discount'})
+                                        </p>
+                                        <p className="text-xs font-black text-white mt-1">
+                                          Net Payable Total: <span className="text-emerald-400">₦{netPayablePrice.toLocaleString()}</span>
                                         </p>
                                       </div>
                                       <button

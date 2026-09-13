@@ -48,8 +48,24 @@ export async function createAdminCoupon(formData: {
     .eq('code', code)
     .maybeSingle();
 
-  if (existing) {
-    return { success: false, error: 'Coupon code already exists.' };
+  // Validate Flat Amount cap against target tier rate if target tier is specified
+  if (formData.couponType === 'FLAT' && formData.targetTier !== 'ALL') {
+    const { data: settingsData } = await supabase
+      .from('site_content')
+      .select('content')
+      .eq('page', 'settings')
+      .eq('section', 'payment')
+      .single();
+
+    const planConfig = settingsData?.content?.plans?.[formData.targetTier.toLowerCase()];
+    const planRate = planConfig?.amount ? Number(planConfig.amount) : 0;
+
+    if (planRate > 0 && formData.discountValue >= planRate) {
+      return {
+        success: false,
+        error: `Flat discount amount (₦${formData.discountValue.toLocaleString()}) cannot equal or exceed the ${formData.targetTier} plan rate (₦${planRate.toLocaleString()}). Use 100% Full Cover instead.`
+      };
+    }
   }
 
   const { data: coupon, error } = await supabase

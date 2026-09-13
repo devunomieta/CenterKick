@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import {
    CreditCard, ExternalLink, Shield, Save,
-   Zap, DollarSign, UserCheck, Search, Users
+   Zap, DollarSign, UserCheck, Search, Users,
+   Eye, EyeOff
 } from 'lucide-react';
 import { updatePaymentSettings } from '@/app/admin/payments/subscriptions/actions';
 import { useToast } from '@/context/ToastContext';
@@ -18,6 +19,11 @@ export function SubscriptionsClient({
    const [errors, setErrors] = useState<{[key: string]: string}>({});
    const [origin, setOrigin] = useState('');
    const { showToast } = useToast();
+
+   const [showPaystackTestSecret, setShowPaystackTestSecret] = useState(false);
+   const [showPaystackLiveSecret, setShowPaystackLiveSecret] = useState(false);
+   const [showStripeTestSecret, setShowStripeTestSecret] = useState(false);
+   const [showStripeLiveSecret, setShowStripeLiveSecret] = useState(false);
 
    useEffect(() => {
       if (typeof window !== 'undefined') {
@@ -387,13 +393,22 @@ export function SubscriptionsClient({
                               </div>
                               <div className="space-y-1.5">
                                  <label className="text-xs font-bold text-gray-900">Test Secret Key</label>
-                                 <input
-                                    type="password"
-                                    value={settings.paystackTestSecretKey || (settings.paystackEnv === 'test' ? settings.paystackSecret : '') || ''}
-                                    onChange={(e) => setSettings({ ...settings, paystackTestSecretKey: e.target.value })}
-                                    placeholder="sk_test_..."
-                                    className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs font-bold text-gray-900 shadow-sm focus:ring-2 focus:ring-amber-400 outline-none"
-                                 />
+                                 <div className="relative">
+                                    <input
+                                       type={showPaystackTestSecret ? "text" : "password"}
+                                       value={settings.paystackTestSecretKey || (settings.paystackEnv === 'test' ? settings.paystackSecret : '') || ''}
+                                       onChange={(e) => setSettings({ ...settings, paystackTestSecretKey: e.target.value })}
+                                       placeholder="sk_test_..."
+                                       className="w-full bg-white border border-gray-300 rounded-xl pl-3.5 pr-10 py-2.5 text-xs font-bold text-gray-900 shadow-sm focus:ring-2 focus:ring-amber-400 outline-none"
+                                    />
+                                    <button
+                                       type="button"
+                                       onClick={() => setShowPaystackTestSecret(!showPaystackTestSecret)}
+                                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900"
+                                    >
+                                       {showPaystackTestSecret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                    </button>
+                                 </div>
                               </div>
                               <div className="space-y-1.5">
                                  <label className="text-xs font-bold text-gray-900">Test Public Key</label>
@@ -419,13 +434,22 @@ export function SubscriptionsClient({
                               </div>
                               <div className="space-y-1.5">
                                  <label className="text-xs font-bold text-gray-800">Live Secret Key</label>
-                                 <input
-                                    type="password"
-                                    value={settings.paystackSecret || settings.paystackLiveSecretKey || ''}
-                                    onChange={(e) => setSettings({ ...settings, paystackSecret: e.target.value, paystackLiveSecretKey: e.target.value })}
-                                    placeholder="sk_live_..."
-                                    className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs font-bold text-gray-900 shadow-sm focus:ring-2 focus:ring-teal-400 outline-none"
-                                 />
+                                 <div className="relative">
+                                    <input
+                                       type={showPaystackLiveSecret ? "text" : "password"}
+                                       value={settings.paystackSecret || settings.paystackLiveSecretKey || ''}
+                                       onChange={(e) => setSettings({ ...settings, paystackSecret: e.target.value, paystackLiveSecretKey: e.target.value })}
+                                       placeholder="sk_live_..."
+                                       className="w-full bg-white border border-gray-300 rounded-xl pl-3.5 pr-10 py-2.5 text-xs font-bold text-gray-900 shadow-sm focus:ring-2 focus:ring-teal-400 outline-none"
+                                    />
+                                    <button
+                                       type="button"
+                                       onClick={() => setShowPaystackLiveSecret(!showPaystackLiveSecret)}
+                                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900"
+                                    >
+                                       {showPaystackLiveSecret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                    </button>
+                                 </div>
                               </div>
                               <div className="space-y-1.5">
                                  <label className="text-xs font-bold text-gray-800">Live Public Key</label>
@@ -539,13 +563,22 @@ export function SubscriptionsClient({
                               </div>
                               <div className="space-y-1.5">
                                  <label className="text-xs font-bold text-gray-900">Test Secret Key</label>
-                                 <input
-                                    type="password"
-                                    value={settings.stripeTestSecretKey || (settings.stripeEnv === 'test' ? settings.stripeSecret : '') || ''}
-                                    onChange={(e) => setSettings({ ...settings, stripeTestSecretKey: e.target.value })}
-                                    placeholder="sk_test_..."
-                                    className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs font-bold text-gray-900 shadow-sm focus:ring-2 focus:ring-amber-400 outline-none"
-                                 />
+                                 <div className="relative">
+                                    <input
+                                       type={showStripeTestSecret ? "text" : "password"}
+                                       value={settings.stripeTestSecretKey || (settings.stripeEnv === 'test' ? settings.stripeSecret : '') || ''}
+                                       onChange={(e) => setSettings({ ...settings, stripeTestSecretKey: e.target.value })}
+                                       placeholder="sk_test_..."
+                                       className="w-full bg-white border border-gray-300 rounded-xl pl-3.5 pr-10 py-2.5 text-xs font-bold text-gray-900 shadow-sm focus:ring-2 focus:ring-amber-400 outline-none"
+                                    />
+                                    <button
+                                       type="button"
+                                       onClick={() => setShowStripeTestSecret(!showStripeTestSecret)}
+                                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900"
+                                    >
+                                       {showStripeTestSecret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                    </button>
+                                 </div>
                               </div>
                            </div>
 
@@ -571,13 +604,22 @@ export function SubscriptionsClient({
                               </div>
                               <div className="space-y-1.5">
                                  <label className="text-xs font-bold text-gray-900">Live Secret Key</label>
-                                 <input
-                                    type="password"
-                                    value={settings.stripeSecret || settings.stripeLiveSecretKey || ''}
-                                    onChange={(e) => setSettings({ ...settings, stripeSecret: e.target.value, stripeLiveSecretKey: e.target.value })}
-                                    placeholder="sk_live_..."
-                                    className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs font-bold text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-400 outline-none"
-                                 />
+                                 <div className="relative">
+                                    <input
+                                       type={showStripeLiveSecret ? "text" : "password"}
+                                       value={settings.stripeSecret || settings.stripeLiveSecretKey || ''}
+                                       onChange={(e) => setSettings({ ...settings, stripeSecret: e.target.value, stripeLiveSecretKey: e.target.value })}
+                                       placeholder="sk_live_..."
+                                       className="w-full bg-white border border-gray-300 rounded-xl pl-3.5 pr-10 py-2.5 text-xs font-bold text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+                                    />
+                                    <button
+                                       type="button"
+                                       onClick={() => setShowStripeLiveSecret(!showStripeLiveSecret)}
+                                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900"
+                                    >
+                                       {showStripeLiveSecret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                    </button>
+                                 </div>
                               </div>
                            </div>
                          </div>
@@ -657,6 +699,48 @@ export function SubscriptionsClient({
                <div className="h-px flex-1 bg-gray-100"></div>
             </div>
 
+            {/* Universal Subscription Duration Control */}
+            <div className="bg-amber-50/70 border border-amber-200 p-5 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+               <div>
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                     <Zap className="w-4 h-4 text-amber-600" /> Universal Subscription Duration (All Plans)
+                  </h3>
+                  <p className="text-xs font-medium text-gray-600 mt-0.5">
+                     Selecting a duration here automatically applies to all account type plans at once.
+                  </p>
+               </div>
+               <div className="shrink-0 w-full sm:w-64">
+                  <select
+                     value={settings.globalDuration || settings.plans?.player?.frequency || 'Biannually'}
+                     onChange={(e) => {
+                        const newFreq = e.target.value;
+                        const durationMonths = newFreq === 'Monthly' ? 1 : newFreq === 'Quarterly' ? 3 : newFreq === 'Biannually' ? 6 : newFreq === 'Yearly' ? 12 : 0;
+                        const updatedPlans = { ...settings.plans };
+                        roles.forEach(r => {
+                           updatedPlans[r.id] = {
+                              ...(updatedPlans[r.id] || {}),
+                              frequency: newFreq,
+                              durationMonths
+                           };
+                        });
+                        setSettings({
+                           ...settings,
+                           globalDuration: newFreq,
+                           plans: updatedPlans
+                        });
+                        showToast(`Universal billing duration set to: ${newFreq}`, 'info');
+                     }}
+                     className="w-full bg-white border border-amber-300 rounded-xl text-xs font-bold text-gray-900 px-4 py-2.5 shadow-sm focus:ring-2 focus:ring-amber-500 outline-none"
+                  >
+                     <option value="Biannually">Biannually (6 Months)</option>
+                     <option value="Monthly">Monthly (1 Month)</option>
+                     <option value="Quarterly">Quarterly (3 Months)</option>
+                     <option value="Yearly">Yearly (12 Months)</option>
+                     <option value="Lifetime Access">Lifetime Access</option>
+                  </select>
+               </div>
+            </div>
+
             <div className="bg-white rounded-3xl sm:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
                {/* Desktop Table View */}
                <div className="hidden lg:block overflow-x-auto">
@@ -700,17 +784,9 @@ export function SubscriptionsClient({
                                     {errors[`plan_amount_${role.id}`] && <p className="text-xs font-bold text-red-500 mt-1">{errors[`plan_amount_${role.id}`]}</p>}
                                  </td>
                                  <td className="px-6 py-5 min-w-[180px]">
-                                    <select
-                                       value={plan.frequency || 'Lifetime Access'}
-                                       onChange={(e) => updatePlan(role.id, 'frequency', e.target.value)}
-                                       className="w-full bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 px-4 py-2 focus:ring-2 focus:ring-amber-200 transition-all"
-                                    >
-                                       <option value="Lifetime Access">Lifetime Access</option>
-                                       <option value="Monthly">Monthly Billing</option>
-                                       <option value="Quarterly">Quarterly Billing</option>
-                                       <option value="Biannually">Biannually (6 Months)</option>
-                                       <option value="Yearly">Yearly Billing</option>
-                                    </select>
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 border border-gray-200 text-xs font-bold text-gray-700 select-none">
+                                       {plan.frequency || settings.globalDuration || 'Biannually'}
+                                    </span>
                                  </td>
                               </tr>
                            );

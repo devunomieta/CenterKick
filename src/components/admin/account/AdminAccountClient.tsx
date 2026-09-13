@@ -12,6 +12,7 @@ import {
   uploadAdminAvatar 
 } from '@/app/admin/account/actions';
 import { useRouter } from 'next/navigation';
+import { PasswordField } from '@/components/common/PasswordField';
 
 interface AdminAccountClientProps {
   user: {
@@ -292,27 +293,23 @@ export function AdminAccountClient({ user, role, profile }: AdminAccountClientPr
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-700 tracking-wide ml-1">New Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#b50a0a]/20 focus:border-[#b50a0a] transition-all"
-                />
-              </div>
+              <PasswordField
+                name="password"
+                label="New Password"
+                placeholder="At least 8 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                showRequirements
+              />
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-700 tracking-wide ml-1">Confirm Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repeat new password"
-                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#b50a0a]/20 focus:border-[#b50a0a] transition-all"
-                />
-              </div>
+              <PasswordField
+                name="confirm_password"
+                label="Confirm Password"
+                placeholder="Repeat new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                confirmFor={password}
+              />
             </div>
 
             <div className="pt-4 border-t border-gray-50 flex justify-end">

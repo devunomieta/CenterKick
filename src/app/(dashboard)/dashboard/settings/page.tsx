@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Settings, Shield, Bell, Key, Save, CheckCircle2, Link2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { PasswordField } from '@/components/common/PasswordField';
 
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState('Account');
@@ -210,14 +211,8 @@ export default function SettingsPage() {
             <form onSubmit={handlePasswordUpdate} className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-4 md:p-8 md:p-12 space-y-8 animate-in fade-in duration-500">
               <h2 className="text-base font-bold tracking-wide text-gray-900">Update Password</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">New Password</label>
-                  <input name="password" required type="password" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-3 text-base font-bold text-black outline-none focus:ring-2 focus:ring-[#b50a0a]" />
-                </div>
-                <div className="space-y-4">
-                  <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Confirm Password</label>
-                  <input name="confirm_password" required type="password" className="w-full bg-gray-50 border-none rounded-2xl px-6 py-3 text-base font-bold text-black outline-none focus:ring-2 focus:ring-[#b50a0a]" />
-                </div>
+                <PasswordField name="password" label="New Password" placeholder="Enter new password" required showRequirements />
+                <PasswordField name="confirm_password" label="Confirm Password" placeholder="Re-enter password" required />
               </div>
 
               <button type="submit" disabled={isSaving} className="w-full sm:w-auto px-4 md:px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-xs font-bold tracking-wide rounded-xl transition-all shadow-md">
