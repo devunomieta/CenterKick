@@ -19,7 +19,8 @@ import {
   BarChart3,
   Search,
   Edit,
-  X
+  X,
+  RefreshCw
 } from 'lucide-react';
 import { ProfileCompletenessWidget } from '@/components/dashboard/ProfileCompletenessWidget';
 import { RichTextEditor } from '@/components/cms/RichTextEditor';
@@ -78,6 +79,8 @@ export default function ProfileEditor() {
   const [achievements, setAchievements] = useState<any[]>([]);
   const [videoLinks, setVideoLinks] = useState<string[]>([]);
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const [youtubeChannelUrl, setYoutubeChannelUrl] = useState<string>('');
+  const [isValidatingVideo, setIsValidatingVideo] = useState<boolean>(false);
   
   const [isUploadingIdProof, setIsUploadingIdProof] = useState(false);
   const [isUploadingRoleProof, setIsUploadingRoleProof] = useState(false);
@@ -144,6 +147,7 @@ export default function ProfileEditor() {
         setAchievements(profileRecord?.achievements || []);
         setVideoLinks(profileRecord?.video_links || []);
         setGalleryUrls(profileRecord?.gallery_urls || []);
+        setYoutubeChannelUrl(profileRecord?.youtube_channel_url || profileRecord?.official_links?.youtube_channel || '');
         setCareerStats(profileRecord?.career_stats || []); setIsDirty(true);
         setTransferHistory(profileRecord?.transfer_history || []); setIsDirty(true);
         
@@ -243,6 +247,39 @@ export default function ProfileEditor() {
     }
     const url = URL.createObjectURL(data);
     window.open(url, '_blank');
+  };
+
+  const handleAddVideoLink = async () => {
+    const input = document.getElementById('new_video_url') as HTMLInputElement;
+    if (!input || !input.value.trim()) return;
+
+    const url = input.value.trim();
+    setIsValidatingVideo(true);
+
+    try {
+      const res = await fetch('/api/validate-youtube-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.valid) {
+        showToast(data.error || 'Invalid YouTube video URL.', 'error');
+        setIsValidatingVideo(false);
+        return;
+      }
+
+      setVideoLinks([...videoLinks, data.canonicalUrl || url]);
+      input.value = '';
+      setIsDirty(true);
+      showToast('YouTube video verified and added successfully!', 'success');
+    } catch (err: any) {
+      showToast('Failed to validate video link. Please check your internet connection.', 'error');
+    } finally {
+      setIsValidatingVideo(false);
+    }
   };
 
   const handleFileUpload = async (file: File, type: 'id_proof' | 'role_proof') => {
@@ -548,6 +585,7 @@ export default function ProfileEditor() {
     const profileData: any = {
       video_links: videoLinks,
       gallery_urls: galleryUrls,
+      youtube_channel_url: youtubeChannelUrl.trim(),
       updated_at: new Date().toISOString()
     };
 
@@ -583,12 +621,14 @@ export default function ProfileEditor() {
       facebook: formData.get('social_facebook'),
       twitter: formData.get('social_twitter'),
       linkedin: formData.get('social_linkedin'),
+      youtube_channel: formData.get('social_youtube'),
     };
 
     const profileData: any = {
       id: profile?.id,
       user_id: user.id,
       official_links: updatedOfficialLinks,
+      youtube_channel_url: String(formData.get('social_youtube') || youtubeChannelUrl).trim(),
       updated_at: new Date().toISOString()
     };
 
@@ -1450,6 +1490,28 @@ export default function ProfileEditor() {
                   </div>
                 </div>
 
+                {/* My YouTube Channel */}
+                <div className="space-y-3 pt-6 border-t border-gray-50">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-gray-900 tracking-wide">My YouTube Channel</label>
+                    <span className="text-[10px] font-medium text-gray-500">Optional</span>
+                  </div>
+                  <input
+                    disabled={!isEditing}
+                    type="url"
+                    value={youtubeChannelUrl}
+                    onChange={(e) => {
+                      setYoutubeChannelUrl(e.target.value);
+                      setIsDirty(true);
+                    }}
+                    placeholder="https://www.youtube.com/@yourchannel or https://youtube.com/channel/..."
+                    className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none disabled:opacity-70 disabled:bg-gray-100"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Add your main YouTube channel URL here. This will add a prominent <strong>"My YouTube"</strong> link button to your public profile.
+                  </p>
+                </div>
+
                 {/* Embedded Videos */}
                 <div className="space-y-6 pt-10 border-t border-gray-50">
                   <div className="flex items-center justify-between">
@@ -1483,31 +1545,33 @@ export default function ProfileEditor() {
                       );
                     })}
                     {isEditing && (
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <input
                           id="new_video_url"
                           type="url"
-                          disabled={videoLinks.length >= 6}
+                          disabled={videoLinks.length >= 6 || isValidatingVideo}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddVideoLink();
+                            }
+                          }}
                           placeholder={videoLinks.length >= 6 ? "Maximum 6 videos limit reached" : "https://youtube.com/watch?v=..."}
                           className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#b50a0a] outline-none disabled:opacity-50"
                         />
                         <button
                           type="button"
-                          disabled={videoLinks.length >= 6}
-                          onClick={() => {
-                            if (videoLinks.length >= 6) {
-                              showToast('Maximum video limit reached (6 videos). Remove a video to add a new link.', 'error');
-                              return;
-                            }
-                            const el = document.getElementById('new_video_url') as HTMLInputElement;
-                            if (el && el.value) {
-                              setVideoLinks([...videoLinks, el.value]);
-                              el.value = '';
-                            }
-                          }}
-                          className="bg-gray-900 text-white px-6 py-3 rounded-xl text-xs font-bold hover:bg-black transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={videoLinks.length >= 6 || isValidatingVideo}
+                          onClick={handleAddVideoLink}
+                          className="bg-gray-900 text-white px-6 py-3 rounded-xl text-xs font-bold hover:bg-black transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                          {videoLinks.length >= 6 ? 'Limit Reached' : 'Add Link'}
+                          {isValidatingVideo ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Verifying Video...
+                            </>
+                          ) : (
+                            videoLinks.length >= 6 ? 'Limit Reached' : 'Add Link'
+                          )}
                         </button>
                       </div>
                     )}
@@ -1602,6 +1666,7 @@ export default function ProfileEditor() {
                     { name: 'Facebook', id: 'social_facebook', icon: Globe, placeholder: 'facebook.com/page', value: roleData?.official_links?.facebook || profile?.social_links?.facebook },
                     { name: 'Twitter / X', id: 'social_twitter', icon: Globe, placeholder: 'twitter.com/profile', value: roleData?.official_links?.twitter || profile?.social_links?.twitter },
                     { name: 'LinkedIn', id: 'social_linkedin', icon: Globe, placeholder: 'linkedin.com/in/name', value: roleData?.official_links?.linkedin || profile?.social_links?.linkedin },
+                    { name: 'YouTube Channel', id: 'social_youtube', icon: Globe, placeholder: 'youtube.com/@channel or youtube.com/channel/ID', value: youtubeChannelUrl || roleData?.official_links?.youtube_channel || profile?.official_links?.youtube_channel },
                   ].map((social, i) => (
                     <div key={i} className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">{social.name}</label>

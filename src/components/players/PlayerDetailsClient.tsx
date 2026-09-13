@@ -4,7 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import parse from 'html-react-parser';
 import { ImageLightbox } from '@/components/common/ImageLightbox';
-import { Facebook, Instagram, Twitter, ChevronLeft, MapPin, Trophy, X, Globe, Linkedin, Share2 } from "lucide-react";
+import { Facebook, Instagram, Twitter, ChevronLeft, MapPin, Trophy, X, Globe, Linkedin, Share2, Youtube } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -260,6 +260,18 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                            {mergedLinks.twitter && (
                               <a href={formatAbsoluteUrl(mergedLinks.twitter)} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)" className="hover:text-[#b50a0a] transition-colors">
                                  <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                              </a>
+                           )}
+                           {(athlete.youtube_channel_url || mergedLinks.youtube_channel || mergedLinks.youtube) && (
+                              <a
+                                 href={formatAbsoluteUrl(athlete.youtube_channel_url || mergedLinks.youtube_channel || mergedLinks.youtube)}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                                 title="My YouTube Channel"
+                                 className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#ff0000] hover:bg-[#cc0000] text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                              >
+                                 <Youtube className="w-3.5 h-3.5" />
+                                 My YouTube
                               </a>
                            )}
                         </div>
