@@ -38,7 +38,12 @@ export async function generateMetadata(): Promise<Metadata> {
       title: settings.siteTitle || "CenterKick | Sports Profile Management",
       description: "Premium sports profile management and subscription platform.",
       icons: {
-        icon: faviconUrl,
+        icon: [
+          { url: faviconUrl },
+          { url: '/favicon.ico' },
+        ],
+        shortcut: [faviconUrl],
+        apple: [faviconUrl],
       }
     };
   } catch (err) {
@@ -48,7 +53,11 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "CenterKick | Sports Profile Management",
       description: "Premium sports profile management and subscription platform.",
       icons: {
-        icon: "/favicon.ico",
+        icon: [
+          { url: "/favicon.ico" },
+        ],
+        shortcut: ["/favicon.ico"],
+        apple: ["/favicon.ico"],
       }
     };
   }
