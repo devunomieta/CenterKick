@@ -214,9 +214,48 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                         <span className="text-base font-bold text-white capitalize">{profileFoot}</span>
                      </div>
                   </div>
-                  <div className="flex items-center gap-3 text-base font-bold mb-8 text-white/80">
+                  <div className="flex items-center gap-3 text-base font-bold mb-4 text-white/80">
                      <MapPin className="w-3.5 h-3.5 text-[#b50a0a]" />
                      <span>{profileClub}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-4 mb-8 text-white">
+                     {mergedLinks.website && (
+                        <a href={formatAbsoluteUrl(mergedLinks.website)} target="_blank" rel="noopener noreferrer" title="Website" className="hover:text-[#b50a0a] transition-colors">
+                           <Globe className="w-4 h-4" />
+                        </a>
+                     )}
+                     {mergedLinks.linkedin && (
+                        <a href={formatAbsoluteUrl(mergedLinks.linkedin)} target="_blank" rel="noopener noreferrer" title="LinkedIn" className="hover:text-[#b50a0a] transition-colors">
+                           <Linkedin className="w-4 h-4" />
+                        </a>
+                     )}
+                     {mergedLinks.facebook && (
+                        <a href={formatAbsoluteUrl(mergedLinks.facebook)} target="_blank" rel="noopener noreferrer" title="Facebook" className="hover:text-[#b50a0a] transition-colors">
+                           <Facebook className="w-4 h-4" />
+                        </a>
+                     )}
+                     {mergedLinks.instagram && (
+                        <a href={formatAbsoluteUrl(mergedLinks.instagram)} target="_blank" rel="noopener noreferrer" title="Instagram" className="hover:text-[#b50a0a] transition-colors">
+                           <Instagram className="w-4 h-4" />
+                        </a>
+                     )}
+                     {mergedLinks.twitter && (
+                        <a href={formatAbsoluteUrl(mergedLinks.twitter)} target="_blank" rel="noopener noreferrer" title="X (formerly Twitter)" className="hover:text-[#b50a0a] transition-colors">
+                           <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                        </a>
+                     )}
+                     {(athlete.youtube_channel_url || mergedLinks.youtube_channel || mergedLinks.youtube) && (
+                        <a
+                           href={formatAbsoluteUrl(athlete.youtube_channel_url || mergedLinks.youtube_channel || mergedLinks.youtube)}
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           title="My YouTube Channel"
+                           className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#ff0000] hover:bg-[#cc0000] text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                        >
+                           <Youtube className="w-3.5 h-3.5" />
+                           My YouTube
+                        </a>
+                     )}
                   </div>
                </div>
 
