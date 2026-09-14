@@ -24,37 +24,62 @@ async function verifyCmsAccess() {
   return user;
 }
 
+import { postFormSchema } from '@/lib/validation/blog';
+import { checkRateLimit } from '@/lib/ratelimit';
+import { invalidateNewsCaches } from '@/lib/cms';
+
 export async function createPost(formData: FormData) {
   const user = await verifyCmsAccess();
+  
+  // Rate limiting check
+  const rateCheck = await checkRateLimit(`createPost:${user.id}`);
+  if (!rateCheck.success) {
+    return { error: 'Rate limit exceeded. Please wait a moment before posting again.' };
+  }
+
   const adminClient = createAdminClient();
 
-  const title = formData.get('title') as string;
-  const slug = (formData.get('slug') as string || title)
+  const rawTags = JSON.parse(formData.get('tags') as string || '[]');
+  const rawData = {
+    title: formData.get('title') as string,
+    slug: formData.get('slug') as string || '',
+    content: formData.get('content') as string,
+    excerpt: formData.get('excerpt') as string || '',
+    cover_image_url: formData.get('cover_image_url') as string || '',
+    category_id: formData.get('category_id') as string || null,
+    meta_title: formData.get('meta_title') as string || '',
+    meta_description: formData.get('meta_description') as string || '',
+    og_image_url: formData.get('og_image_url') as string || '',
+    published: formData.get('published') === 'true',
+    published_at: formData.get('published_at') as string || '',
+    tags: rawTags,
+  };
+
+  const validation = postFormSchema.safeParse(rawData);
+  if (!validation.success) {
+    const firstError = validation.error.issues[0]?.message || 'Invalid form data';
+    return { error: firstError };
+  }
+
+  const validated = validation.data;
+
+  const slug = (validated.slug || validated.title)
     .toLowerCase()
     .replace(/ /g, '-')
     .replace(/[^\w-]+/g, '')
     .replace(/--+/g, '-')
     .replace(/^-+/, '')
     .replace(/-+$/, '');
-  const content = formData.get('content') as string;
-  const excerpt = formData.get('excerpt') as string;
-  const cover_image_url = formData.get('cover_image_url') as string;
-  const category_id = formData.get('category_id') as string || null;
-  const meta_title = formData.get('meta_title') as string;
-  const meta_description = formData.get('meta_description') as string;
-  const og_image_url = formData.get('og_image_url') as string;
-  const is_draft = formData.get('published') !== 'true';
-  const tags = JSON.parse(formData.get('tags') as string || '[]');
   
-  // Custom backdating support
-  const customPublishedAt = formData.get('published_at') as string;
+  const is_draft = !validated.published;
+  const customPublishedAt = validated.published_at;
   const published_at = is_draft 
     ? null 
     : (customPublishedAt && customPublishedAt.trim() !== '' ? new Date(customPublishedAt).toISOString() : new Date().toISOString());
 
-  let final_cover_image_url = cover_image_url;
-  if (!final_cover_image_url && excerpt) {
-    const videoIdMatch = excerpt.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+  let final_cover_image_url = validated.cover_image_url;
+  if (!final_cover_image_url && validated.excerpt) {
+    const videoIdMatch = validated.excerpt.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
     if (videoIdMatch && videoIdMatch[1]) {
       final_cover_image_url = `https://img.youtube.com/vi/${videoIdMatch[1]}/hqdefault.jpg`;
     }
@@ -64,16 +89,16 @@ export async function createPost(formData: FormData) {
     .from('cms_posts')
     .insert({
       author_id: user.id,
-      title,
+      title: validated.title,
       slug,
       type: 'news',
-      content,
-      excerpt,
+      content: validated.content,
+      excerpt: validated.excerpt,
       cover_image_url: final_cover_image_url,
-      category_id,
-      meta_title,
-      meta_description,
-      og_image_url,
+      category_id: validated.category_id,
+      meta_title: validated.meta_title,
+      meta_description: validated.meta_description,
+      og_image_url: validated.og_image_url,
       is_draft,
       published_at,
     })
@@ -85,14 +110,15 @@ export async function createPost(formData: FormData) {
   }
 
   // Handle Tags
-  if (tags.length > 0) {
-    const tagInserts = tags.map((tagId: string) => ({
+  if (validated.tags.length > 0) {
+    const tagInserts = validated.tags.map((tagId: string) => ({
       post_id: post.id,
       tag_id: tagId
     }));
     await adminClient.from('post_tags').insert(tagInserts);
   }
 
+  await invalidateNewsCaches();
   revalidatePath('/admin/blog');
   revalidatePath('/news');
   revalidatePath('/');
@@ -174,6 +200,7 @@ export async function updatePost(postId: string, formData: FormData) {
     await adminClient.from('post_tags').insert(tagInserts);
   }
 
+  await invalidateNewsCaches();
   revalidatePath('/admin/blog');
   revalidatePath('/news');
   revalidatePath('/');
@@ -193,6 +220,7 @@ export async function deletePost(postId: string) {
     return { error: error.message };
   }
 
+  await invalidateNewsCaches();
   revalidatePath('/admin/blog');
   revalidatePath('/news');
   revalidatePath('/');
@@ -215,6 +243,7 @@ export async function togglePostStatus(postId: string, currentStatus: boolean) {
 
   if (error) return { error: error.message };
 
+  await invalidateNewsCaches();
   revalidatePath('/admin/blog');
   revalidatePath('/news');
   revalidatePath('/');

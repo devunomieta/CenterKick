@@ -63,3 +63,18 @@ export async function invalidateCache(key: string) {
   const { redis } = await import('./redis');
   await redis.del(key);
 }
+
+/**
+ * Purges all news-related cache keys across L1 (Memory) and L2 (Upstash Redis)
+ */
+export async function invalidateNewsCaches() {
+  const { redis } = await import('./redis');
+  await Promise.all([
+    redis.del('recent_news'),
+    redis.del('news_all_posts'),
+    redis.del('news_layout'),
+    redis.del('blog_categories'),
+    redis.del('blog_tags'),
+  ]);
+}
+
