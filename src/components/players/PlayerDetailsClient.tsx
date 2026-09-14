@@ -87,12 +87,17 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
       .sort((a, b) => getYearFromVal(b.season) - getYearFromVal(a.season));
 
    const sortedTransferHistory = [...(athlete?.transfer_history || [])]
+      .map((t, index) => ({ ...t, _originalIndex: index }))
       .filter((t) => {
          const from = (t.from_club || t.club || '').trim();
          const to = (t.to_club || '').trim();
          return Boolean(t.date && from && from !== 'Unknown' && from !== '—' && to && to !== 'Unknown' && to !== '—');
       })
-      .sort((a, b) => getYearFromVal(b.date) - getYearFromVal(a.date));
+      .sort((a, b) => {
+         const yearDiff = getYearFromVal(b.date) - getYearFromVal(a.date);
+         if (yearDiff !== 0) return yearDiff;
+         return b._originalIndex - a._originalIndex;
+      });
 
    const handleShareProfile = async () => {
       const currentUrl = window.location.href;
