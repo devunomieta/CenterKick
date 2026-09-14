@@ -25,7 +25,8 @@ import {
   ChevronRight,
   Sparkles,
   Lock,
-  UserCheck
+  UserCheck,
+  Copy
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/context/ToastContext';
@@ -531,7 +532,20 @@ export default function AdminTasksClient({
               {inspectSubmission.earned_coupon_code && (
                 <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-900">
                   <p className="text-[10px] font-bold uppercase tracking-widest">Generated Activation Code</p>
-                  <p className="text-lg font-black tracking-widest mt-1 text-emerald-700">{inspectSubmission.earned_coupon_code}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-lg font-black tracking-widest text-emerald-700 font-mono">{inspectSubmission.earned_coupon_code}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(inspectSubmission.earned_coupon_code);
+                        showToast(`Copied code: ${inspectSubmission.earned_coupon_code}`, 'success');
+                      }}
+                      className="p-1 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors"
+                      title="Copy Code"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

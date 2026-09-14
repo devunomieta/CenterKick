@@ -21,7 +21,9 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Copy,
+  Check
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -86,7 +88,17 @@ export default function AdminCouponsClient({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [navigatingEmail, setNavigatingEmail] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const { showToast } = useToast();
+
+  const copyToClipboard = (couponCode: string) => {
+    navigator.clipboard.writeText(couponCode);
+    setCopiedCode(couponCode);
+    showToast(`Copied code: ${couponCode}`, 'success');
+    setTimeout(() => {
+      setCopiedCode(null);
+    }, 2000);
+  };
 
   // Helper to get local YYYY-MM-DD today date string
   const getTodayDateString = () => {
@@ -306,28 +318,26 @@ export default function AdminCouponsClient({
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-8 rounded-3xl text-white shadow-2xl">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-[#a20000] text-white flex items-center justify-center shrink-0 shadow-lg">
-            <Ticket className="w-7 h-7" />
-          </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-5 sm:p-8 rounded-2xl sm:rounded-3xl text-white shadow-2xl">
+        <div className="flex items-center gap-3 sm:gap-4">
+          
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Coupon & Sponsorship System</h1>
-            <p className="text-xs sm:text-sm text-slate-400 font-medium mt-1">Manage promotional codes, bulk seat packages, and anti-fraud velocity logs.</p>
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight">Coupon & Sponsorship System</h1>
+            <p className="text-xs sm:text-sm text-slate-400 font-medium mt-0.5 sm:mt-1">Manage promotional codes, bulk seat packages, and anti-fraud velocity logs.</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0 w-full md:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
           <Link
             href="/admin/coupons/tasks"
-            className="px-5 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold tracking-wider transition-all flex items-center justify-center gap-2 border border-slate-700 shadow-md"
+            className="px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold tracking-wider transition-all flex items-center justify-center gap-2 border border-slate-700 shadow-md w-full sm:w-auto"
           >
             <Sparkles className="w-4 h-4 text-amber-400" /> Earn Membership Tasks
           </Link>
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-6 py-3.5 rounded-2xl bg-[#a20000] hover:bg-black text-white text-xs font-bold tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg"
+            className="px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#a20000] hover:bg-black text-white text-xs font-bold tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" /> Create Promo Code
           </button>
@@ -335,30 +345,32 @@ export default function AdminCouponsClient({
       </div>
 
       {/* Stats Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Coupons</p>
-          <p className="text-3xl font-black text-gray-900 mt-2">{coupons.length}</p>
+      <div className={`grid grid-cols-2 ${isSuperAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-3 sm:gap-4`}>
+        <div className="bg-white border border-gray-100 p-4 sm:p-6 rounded-2xl shadow-sm">
+          <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Total Coupons</p>
+          <p className="text-2xl sm:text-3xl font-black text-gray-900 mt-1 sm:mt-2">{coupons.length}</p>
         </div>
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Gift Vouchers</p>
-          <p className="text-3xl font-black text-emerald-600 mt-2">{coupons.filter((c) => c.is_gift).length}</p>
+        <div className="bg-white border border-gray-100 p-4 sm:p-6 rounded-2xl shadow-sm">
+          <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Gift Vouchers</p>
+          <p className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1 sm:mt-2">{coupons.filter((c) => c.is_gift).length}</p>
         </div>
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Active / Available</p>
-          <p className="text-3xl font-black text-amber-600 mt-2">{coupons.filter((c) => c.status === 'AVAILABLE').length}</p>
+        <div className="bg-white border border-gray-100 p-4 sm:p-6 rounded-2xl shadow-sm">
+          <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Active / Available</p>
+          <p className="text-2xl sm:text-3xl font-black text-amber-600 mt-1 sm:mt-2">{coupons.filter((c) => c.status === 'AVAILABLE').length}</p>
         </div>
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Security Log Entries</p>
-          <p className="text-3xl font-black text-rose-600 mt-2">{velocityLogs.length}</p>
-        </div>
+        {isSuperAdmin && (
+          <div className="bg-white border border-gray-100 p-4 sm:p-6 rounded-2xl shadow-sm">
+            <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest truncate">Security Logs</p>
+            <p className="text-2xl sm:text-3xl font-black text-rose-600 mt-1 sm:mt-2">{velocityLogs.length}</p>
+          </div>
+        )}
       </div>
 
       {/* Main Tabs Navigation */}
-      <div className="flex border-b border-gray-200">
+      <div className="flex border-b border-gray-200 overflow-x-auto custom-scrollbar">
         <button
           onClick={() => setActiveTab('MANAGEMENT')}
-          className={`px-6 py-4 font-bold text-xs tracking-wider transition-all border-b-2 flex items-center gap-2 ${
+          className={`px-4 sm:px-6 py-3 sm:py-4 font-bold text-xs tracking-wider transition-all border-b-2 flex items-center gap-2 whitespace-nowrap shrink-0 ${
             activeTab === 'MANAGEMENT'
               ? 'border-[#a20000] text-[#a20000]'
               : 'border-transparent text-gray-400 hover:text-gray-700'
@@ -367,16 +379,18 @@ export default function AdminCouponsClient({
           <Ticket className="w-4 h-4" /> Coupon Management
         </button>
 
-        <button
-          onClick={() => setActiveTab('SECURITY_LOGS')}
-          className={`px-6 py-4 font-bold text-xs tracking-wider transition-all border-b-2 flex items-center gap-2 ${
-            activeTab === 'SECURITY_LOGS'
-              ? 'border-[#a20000] text-[#a20000]'
-              : 'border-transparent text-gray-400 hover:text-gray-700'
-          }`}
-        >
-          <ShieldAlert className="w-4 h-4" /> Security & Audit Logs ({velocityLogs.length})
-        </button>
+        {isSuperAdmin && (
+          <button
+            onClick={() => setActiveTab('SECURITY_LOGS')}
+            className={`px-4 sm:px-6 py-3 sm:py-4 font-bold text-xs tracking-wider transition-all border-b-2 flex items-center gap-2 whitespace-nowrap shrink-0 ${
+              activeTab === 'SECURITY_LOGS'
+                ? 'border-[#a20000] text-[#a20000]'
+                : 'border-transparent text-gray-400 hover:text-gray-700'
+            }`}
+          >
+            <ShieldAlert className="w-4 h-4" /> Security & Audit Logs ({velocityLogs.length})
+          </button>
+        )}
       </div>
 
       {/* Tab 1: Coupon Management */}
@@ -399,14 +413,14 @@ export default function AdminCouponsClient({
             </div>
 
             <div className="flex items-center gap-2 w-full md:w-auto">
-              <Filter className="w-4 h-4 text-gray-400" />
+              <Filter className="w-4 h-4 text-gray-400 shrink-0" />
               <select
                 value={filterType}
                 onChange={(e) => {
                   setFilterType(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#a20000]"
+                className="w-full md:w-auto px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#a20000]"
               >
                 <option value="ALL">All Types</option>
                 <option value="GIFTS">Gift Vouchers Only</option>
@@ -417,9 +431,10 @@ export default function AdminCouponsClient({
             </div>
           </div>
 
-          {/* Coupons Table */}
+          {/* Coupons Container (Desktop Table + Mobile Cards) */}
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto min-w-full">
+            {/* Desktop Table View (lg screens and up) */}
+            <div className="hidden lg:block overflow-x-auto min-w-full">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-gray-50/80 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider">
@@ -447,9 +462,23 @@ export default function AdminCouponsClient({
                         <tr key={c.id} className="hover:bg-gray-50/60 transition-colors">
                           <td className="py-4 px-5">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-mono font-bold text-xs text-gray-900 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-md shrink-0 select-all">
-                                {c.code}
-                              </span>
+                              <div className="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-md shrink-0">
+                                <span className="font-mono font-bold text-xs text-gray-900 select-all">
+                                  {c.code}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => copyToClipboard(c.code)}
+                                  className="text-gray-400 hover:text-gray-900 transition-colors p-0.5"
+                                  title="Copy Code"
+                                >
+                                  {copiedCode === c.code ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </div>
                               {c.is_gift && (
                                 <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200/60 font-black text-[9px] uppercase tracking-wider shrink-0">
                                   GIFT
@@ -545,6 +574,126 @@ export default function AdminCouponsClient({
               </table>
             </div>
 
+            {/* Mobile / Tablet Card View (small & medium screens) */}
+            <div className="block lg:hidden divide-y divide-gray-100">
+              {paginatedCoupons.length === 0 ? (
+                <div className="py-12 text-center text-gray-400 font-semibold text-xs">
+                  No coupons found matching your query.
+                </div>
+              ) : (
+                paginatedCoupons.map((c) => {
+                  const recipientList = c.recipient_email
+                    ? c.recipient_email.split(',').map((e) => e.trim()).filter(Boolean)
+                    : [];
+
+                  return (
+                    <div key={c.id} className="p-4 sm:p-5 space-y-3 bg-white hover:bg-gray-50/50 transition-colors">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <div className="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-md">
+                              <span className="font-mono font-bold text-xs text-gray-900 select-all">
+                                {c.code}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(c.code)}
+                                className="text-gray-400 hover:text-gray-900 transition-colors p-0.5"
+                                title="Copy Code"
+                              >
+                                {copiedCode === c.code ? (
+                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                ) : (
+                                  <Copy className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            </div>
+                            {c.is_gift && (
+                              <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200/60 font-black text-[9px] uppercase tracking-wider">
+                                GIFT
+                              </span>
+                            )}
+                          </div>
+                          {!c.title.toLowerCase().startsWith('gift voucher for') && (
+                            <p className="text-gray-700 font-bold text-xs mt-1 leading-snug">{c.title}</p>
+                          )}
+                        </div>
+
+                        <span
+                          className={`px-2.5 py-1 rounded-full font-extrabold text-[9px] uppercase tracking-wider shrink-0 ${
+                            c.status === 'AVAILABLE'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : c.status === 'REDEEMED'
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                              : 'bg-rose-50 text-rose-700 border border-rose-200'
+                          }`}
+                        >
+                          {c.status}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100 text-xs">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-gray-900">
+                              {c.coupon_type === 'FULL_COVER'
+                                ? '100% Cover'
+                                : c.coupon_type === 'PERCENTAGE'
+                                ? `${c.discount_value}% Off`
+                                : `₦${c.discount_value.toLocaleString()} Off`}
+                            </span>
+                            <span className="font-black uppercase tracking-wider text-gray-700 text-[10px] bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                              {c.target_tier}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-gray-400 font-medium block">
+                            {c.duration_months} Months Access • Redemptions: <span className="font-bold text-gray-700">{c.redemption_count}/{c.max_redemptions}</span>
+                            {recipientList.length > 0 && (
+                              <span className="text-emerald-700 font-bold block sm:inline sm:ml-1.5">
+                                • {recipientList.length} Restricted {recipientList.length === 1 ? 'User' : 'Users'}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-start gap-2 pt-2">
+                        <button
+                          onClick={() => setViewingCoupon(c)}
+                          title="View Details"
+                          className="p-2 rounded-xl bg-gray-100 hover:bg-slate-900 text-gray-700 hover:text-white transition-all shadow-sm"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => openEditModal(c)}
+                          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-gray-100 hover:bg-slate-900 text-gray-700 hover:text-white transition-all flex items-center gap-1.5 shadow-sm"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" /> Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (c.status === 'AVAILABLE') {
+                              setConfirmRevokeTarget(c);
+                            } else {
+                              handleToggleStatus(c.id, c.status);
+                            }
+                          }}
+                          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                            c.status === 'AVAILABLE'
+                              ? 'bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200/60'
+                              : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200/60'
+                          }`}
+                        >
+                          {c.status === 'AVAILABLE' ? 'Revoke' : 'Enable'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
             {/* Pagination Controls */}
             {totalItems > 0 && (
               <div className="px-6 py-4 bg-gray-50/70 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-gray-600">
@@ -636,8 +785,8 @@ export default function AdminCouponsClient({
         </div>
       )}
 
-      {/* Tab 2: Security & Audit Logs */}
-      {activeTab === 'SECURITY_LOGS' && (
+      {/* Tab 2: Security & Audit Logs (Superadmin Only) */}
+      {isSuperAdmin && activeTab === 'SECURITY_LOGS' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Velocity Logs */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
@@ -1078,9 +1227,23 @@ export default function AdminCouponsClient({
               <div>
                 <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">{viewingCoupon.title}</h3>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="font-mono font-bold text-xs bg-slate-100 border border-slate-200 text-gray-900 px-2.5 py-0.5 rounded select-all">
-                    {viewingCoupon.code}
-                  </span>
+                  <div className="inline-flex items-center gap-1.5 bg-slate-100 border border-slate-200 text-gray-900 px-2.5 py-0.5 rounded">
+                    <span className="font-mono font-bold text-xs select-all">
+                      {viewingCoupon.code}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(viewingCoupon.code)}
+                      className="text-gray-400 hover:text-gray-900 transition-colors p-0.5"
+                      title="Copy Code"
+                    >
+                      {copiedCode === viewingCoupon.code ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
                   {viewingCoupon.is_gift && (
                     <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-bold text-[10px]">
                       GIFT VOUCHER

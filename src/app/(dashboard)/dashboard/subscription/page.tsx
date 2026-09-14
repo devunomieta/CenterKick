@@ -21,7 +21,8 @@ import {
   Hand,
   RefreshCcw,
   Gift,
-  Ticket
+  Ticket,
+  HelpCircle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { requestVerification, activateFreeSubscription, verifyPaystackPayment } from './actions';
@@ -406,7 +407,18 @@ export default function SubscriptionPage() {
                                       <div>
                                         <div className="flex items-center gap-2">
                                           <span className="text-xs font-extrabold uppercase tracking-wider text-red-400">Voucher Applied:</span>
-                                          <span className="text-xs font-bold font-mono text-white">{appliedCoupon.code}</span>
+                                          <span className="text-xs font-bold font-mono text-white select-all">{appliedCoupon.code}</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              navigator.clipboard.writeText(appliedCoupon.code);
+                                              showToast(`Copied voucher code: ${appliedCoupon.code}`, 'success');
+                                            }}
+                                            className="p-0.5 text-gray-400 hover:text-white transition-colors"
+                                            title="Copy Code"
+                                          >
+                                            <Copy className="w-3.5 h-3.5" />
+                                          </button>
                                           {appliedCoupon.coupon_type === 'PERCENTAGE' && (
                                             <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold border border-emerald-500/30">
                                               {appliedCoupon.discount_value}% OFF
