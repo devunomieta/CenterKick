@@ -39,11 +39,13 @@ export async function generateMetadata(): Promise<Metadata> {
       description: "Premium sports profile management and subscription platform.",
       icons: {
         icon: [
-          { url: faviconUrl },
+          { url: faviconUrl, type: 'image/png' },
+          { url: '/favicon.png', type: 'image/png' },
+          { url: '/icon.png', type: 'image/png' },
           { url: '/favicon.ico' },
         ],
-        shortcut: [faviconUrl],
-        apple: [faviconUrl],
+        shortcut: [{ url: faviconUrl, type: 'image/png' }, { url: '/favicon.ico' }],
+        apple: [{ url: faviconUrl, type: 'image/png' }, { url: '/icon.png', type: 'image/png' }],
       }
     };
   } catch (err) {
@@ -54,10 +56,12 @@ export async function generateMetadata(): Promise<Metadata> {
       description: "Premium sports profile management and subscription platform.",
       icons: {
         icon: [
+          { url: "/favicon.png", type: 'image/png' },
+          { url: "/icon.png", type: 'image/png' },
           { url: "/favicon.ico" },
         ],
         shortcut: ["/favicon.ico"],
-        apple: ["/favicon.ico"],
+        apple: ["/icon.png"],
       }
     };
   }
@@ -74,6 +78,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/icon.png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/icon.png" />
+      </head>
       <body className={`${inter.className} antialiased`} suppressHydrationWarning>
         <NextTopLoader
           color="#b50a0a"
