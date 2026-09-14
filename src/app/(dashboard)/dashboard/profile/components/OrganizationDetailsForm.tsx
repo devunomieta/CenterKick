@@ -89,8 +89,9 @@ export function OrganizationDetailsForm({ data, onChange, onUploadImage }: { dat
           </select>
         </div>
         <div className="space-y-3">
-           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Year Established</label>
+           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Year Established <span className="text-[#b50a0a]">*</span></label>
            <input 
+             required
              type="text"
              pattern="^[0-9]{4}$"
              maxLength={4}

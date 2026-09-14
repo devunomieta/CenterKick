@@ -558,7 +558,12 @@ export default function ProfileEditor() {
       }
     }
 
-    if (role === 'organization' && roleData?.year_established) {
+    if (role === 'organization') {
+      if (!roleData?.year_established) {
+        showToast('Year established is required for organization profiles.', 'error');
+        setIsSaving(false);
+        return;
+      }
       const year = Number(roleData.year_established);
       const currentYear = new Date().getFullYear();
       if (isNaN(year) || year < 1800 || year > currentYear) {
