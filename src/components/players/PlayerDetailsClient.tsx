@@ -328,6 +328,7 @@ export function PlayerDetailsClient({ athlete, careerStats = [], news = [] }: Pl
                                  </div>
                               ) : 'N/A' },
                               { label: 'Position', value: athlete.position || 'Attack' },
+                              ...(athlete.secondary_position ? [{ label: 'Secondary Position', value: athlete.secondary_position }] : []),
                               { label: 'Main Foot', value: athlete.foot || 'Right' },
                               { label: 'Height', value: athlete.height_cm ? `${athlete.height_cm}cm` : 'N/A' },
                               { label: 'Weight', value: athlete.weight_kg ? `${athlete.weight_kg}kg` : 'N/A' },

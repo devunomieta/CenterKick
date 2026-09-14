@@ -429,6 +429,7 @@ export default function ProfileEditor() {
       contact_email: formData.get('contact_email'),
       phone_number: formData.get('phone_number'),
       position: formData.get('position'),
+      secondary_position: formData.get('secondary_position') || null,
       foot: formData.get('foot'),
       jersey_number: formData.get('jersey_number') || null,
       height_cm: formData.get('height_cm') || null,
@@ -1286,14 +1287,38 @@ export default function ProfileEditor() {
                 {(role === 'athlete' || role === 'player') && (
                   <div className="pt-8 border-t border-gray-50">
                     <h3 className="text-sm font-bold tracking-wide text-gray-900 mb-6">Physical Attributes</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Primary Position</label>
                         <select disabled={!isEditing} name="position" defaultValue={profile?.position} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black disabled:opacity-70 disabled:bg-gray-100">
-                          <option value="Striker">Striker</option>
-                          <option value="Midfielder">Midfielder</option>
-                          <option value="Defender">Defender</option>
-                          <option value="Goalkeeper">Goalkeeper</option>
+                          <option value="Goalkeeper (GK)">Goalkeeper (GK)</option>
+                          <option value="Centre-Back (CB)">Centre-Back (CB)</option>
+                          <option value="Left-Back (LB)">Left-Back (LB)</option>
+                          <option value="Right-Back (RB)">Right-Back (RB)</option>
+                          <option value="Defensive Midfielder (DM)">Defensive Midfielder (DM)</option>
+                          <option value="Central Midfielder (CM)">Central Midfielder (CM)</option>
+                          <option value="Attacking Midfielder (AM)">Attacking Midfielder (AM)</option>
+                          <option value="Left Winger (LW)">Left Winger (LW)</option>
+                          <option value="Right Winger (RW)">Right Winger (RW)</option>
+                          <option value="Centre Forward (CF)">Centre Forward (CF)</option>
+                          <option value="Striker (ST)">Striker (ST)</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Secondary Position (Optional)</label>
+                        <select disabled={!isEditing} name="secondary_position" defaultValue={profile?.secondary_position || ''} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black disabled:opacity-70 disabled:bg-gray-100">
+                          <option value="">None</option>
+                          <option value="Goalkeeper (GK)">Goalkeeper (GK)</option>
+                          <option value="Centre-Back (CB)">Centre-Back (CB)</option>
+                          <option value="Left-Back (LB)">Left-Back (LB)</option>
+                          <option value="Right-Back (RB)">Right-Back (RB)</option>
+                          <option value="Defensive Midfielder (DM)">Defensive Midfielder (DM)</option>
+                          <option value="Central Midfielder (CM)">Central Midfielder (CM)</option>
+                          <option value="Attacking Midfielder (AM)">Attacking Midfielder (AM)</option>
+                          <option value="Left Winger (LW)">Left Winger (LW)</option>
+                          <option value="Right Winger (RW)">Right Winger (RW)</option>
+                          <option value="Centre Forward (CF)">Centre Forward (CF)</option>
+                          <option value="Striker (ST)">Striker (ST)</option>
                         </select>
                       </div>
                       <div className="space-y-1.5">
@@ -1312,19 +1337,16 @@ export default function ProfileEditor() {
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Weight (kg)</label>
                         <input disabled={!isEditing} name="weight_kg" type="number" min={30} max={160} placeholder="e.g. 75" defaultValue={profile?.weight_kg} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black disabled:opacity-70 disabled:bg-gray-100" />
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 md:gap-6 mt-6">
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Jersey #</label>
                         <input disabled={!isEditing} name="jersey_number" type="number" min={1} max={99} placeholder="e.g. 10" defaultValue={profile?.jersey_number} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black disabled:opacity-70 disabled:bg-gray-100" />
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Market Value ($)</label>
-                        <input disabled={!(['superadmin', 'admin', 'operations'].includes(role))} name="market_value" type="text" defaultValue={profile?.market_value} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black disabled:opacity-70 disabled:bg-gray-100" />
-                        {!['superadmin', 'admin', 'operations'].includes(role) && (
-                          <p className="text-xs font-bold text-gray-400 ml-1">Only admins can update market value.</p>
-                        )}
-                      </div>
+                      {['superadmin', 'admin', 'operations'].includes(role) && (
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Market Value ($)</label>
+                          <input disabled={!isEditing} name="market_value" type="text" defaultValue={profile?.market_value} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black disabled:opacity-70 disabled:bg-gray-100" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
