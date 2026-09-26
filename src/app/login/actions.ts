@@ -242,7 +242,10 @@ export async function verifyOtp(email: string, token: string) {
     const lastName = pendingData.last_name || '';
     
     // Update user role
-    await adminClient.from('users').update({ role }).eq('id', authUser.id);
+    const { error: roleUpdateError } = await adminClient.from('users').update({ role }).eq('id', authUser.id);
+    if (roleUpdateError) {
+      console.error(`[Signup] Failed to set role='${role}' for user ${authUser.id}:`, roleUpdateError.message);
+    }
     
     // Generate slug using the actual first and last name
     const { generateBaseSlug, generateRandomSuffix } = await import('@/lib/utils/slug');

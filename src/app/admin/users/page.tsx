@@ -164,13 +164,13 @@ export default async function AdminUsersPage({
               <Users className="w-5 h-5" />
             </div>
           </div>
-          <div className="flex justify-between items-center pt-4 border-t border-gray-50 mt-auto w-full">
-            <div><p className="text-[10px] font-bold text-gray-400 uppercase">Players</p><p className="text-sm font-bold text-gray-900">{playersCount || 0}</p></div>
-            <div><p className="text-[10px] font-bold text-gray-400 uppercase">Coaches</p><p className="text-sm font-bold text-gray-900">{coachesCount || 0}</p></div>
-            <div><p className="text-[10px] font-bold text-gray-400 uppercase">Agents</p><p className="text-sm font-bold text-gray-900">{agentsCount || 0}</p></div>
-            <div><p className="text-[10px] font-bold text-gray-400 uppercase">Scouts</p><p className="text-sm font-bold text-gray-900">{scoutsCount || 0}</p></div>
-            <div><p className="text-[10px] font-bold text-gray-400 uppercase">Orgs</p><p className="text-sm font-bold text-gray-900">{orgsCount || 0}</p></div>
-            <div><p className="text-[10px] font-bold text-gray-400 uppercase">Professionals</p><p className="text-sm font-bold text-gray-900">{professionalsCount || 0}</p></div>
+          <div className="grid grid-cols-3 gap-x-2 gap-y-4 pt-4 border-t border-gray-50 mt-auto w-full">
+            <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Players</p><p className="text-sm font-bold text-gray-900">{playersCount || 0}</p></div>
+            <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Coaches</p><p className="text-sm font-bold text-gray-900">{coachesCount || 0}</p></div>
+            <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Agents</p><p className="text-sm font-bold text-gray-900">{agentsCount || 0}</p></div>
+            <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Scouts</p><p className="text-sm font-bold text-gray-900">{scoutsCount || 0}</p></div>
+            <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Orgs</p><p className="text-sm font-bold text-gray-900">{orgsCount || 0}</p></div>
+            <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Pros</p><p className="text-sm font-bold text-gray-900">{professionalsCount || 0}</p></div>
           </div>
         </div>
 

@@ -109,6 +109,8 @@ export default async function DashboardPage() {
   const transferHistoryArray = safeParseArray(profile?.transfer_history);
   const achievementsArray = safeParseArray(profile?.achievements);
   const managerialHistoryArray = safeParseArray(profile?.managerial_history);
+  const workExperienceArray = safeParseArray(profile?.work_experience);
+  const qualificationsArray = safeParseArray(profile?.qualifications);
 
 
 
@@ -159,12 +161,25 @@ export default async function DashboardPage() {
   const coachTotalPoints = (coachWins * 3) + coachDraws;
   const coachWinRatio = coachTotalMatches > 0 ? Math.round((coachWins / coachTotalMatches) * 100) : 0;
 
+  // Professional Analytics Calculations
+  let professionalYearsExp = 0;
+  if (role === 'professional' && workExperienceArray.length > 0) {
+    let earliestYear = new Date().getFullYear();
+    workExperienceArray.forEach((stint: any) => {
+      const fromYear = parseInt((stint.start_date || '').split('-')[0], 10);
+      if (!isNaN(fromYear) && fromYear < earliestYear) earliestYear = fromYear;
+    });
+    professionalYearsExp = Math.max(0, new Date().getFullYear() - earliestYear);
+  }
+
   const formatMarketValue = (val: any, currency?: string) => {
     if (!val) return 'Pending';
     return formatCurrencyAmount(val, currency || 'EUR');
   };
 
-  const baseStats = [
+  const baseStats = role === 'professional' ? [
+    { label: 'Public Profile Views', value: publicViews.toString(), icon: Eye, trend: 'All Time', color: 'text-blue-600', bg: 'bg-blue-50' },
+  ] : [
     { label: 'Public Profile Views', value: publicViews.toString(), icon: Eye, trend: 'All Time', color: 'text-blue-600', bg: 'bg-blue-50' },
     { label: 'Scouting Views', value: scoutingViews.toString(), icon: Target, trend: 'Verified Orgs', color: 'text-green-600', bg: 'bg-green-50' },
     { label: 'Market Value', value: formatMarketValue(profile?.market_value, profile?.market_value_currency), icon: TrendingUp, trend: 'Current', color: 'text-[#b50a0a]', bg: 'bg-red-50' },
@@ -184,7 +199,14 @@ export default async function DashboardPage() {
     { label: 'Trophies', value: trophyCount.toString(), icon: Award, trend: 'Achievements', color: 'text-amber-600', bg: 'bg-amber-50' },
   ] : [];
 
-  const displayStats = [...baseStats, ...playerStats, ...coachStats];
+  const professionalStats = role === 'professional' ? [
+    { label: 'Years of Experience', value: professionalYearsExp.toString(), icon: TrendingUp, trend: 'Career Total', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Professional Roles', value: workExperienceArray.length.toString(), icon: Globe, trend: 'Work History', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Qualifications', value: qualificationsArray.length.toString(), icon: FileText, trend: 'Certifications', color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Trophies', value: trophyCount.toString(), icon: Award, trend: 'Achievements', color: 'text-amber-600', bg: 'bg-amber-50' },
+  ] : [];
+
+  const displayStats = [...baseStats, ...playerStats, ...coachStats, ...professionalStats];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
