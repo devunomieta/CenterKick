@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { activateUser, deactivateUser, changeUserRole, rejectUser, deleteUsers } from '@/app/admin/users/actions';
 import { startImpersonation } from '@/app/admin/users/impersonate-actions';
 import { DirectoryTable } from '@/components/admin/shared/DirectoryTable';
+import { ROLES } from '@/lib/roles';
 
 interface UsersClientProps {
   initialUsers: any[];
@@ -22,7 +23,7 @@ interface UsersClientProps {
   isSuperAdmin?: boolean;
 }
 
-const PARTICIPANT_ROLES = ['player', 'coach', 'agent', 'scout', 'organization', 'professional'];
+const PARTICIPANT_ROLES = ROLES.map(r => r.id);
 
 export function UsersClient({ initialUsers, totalCount, currentPage, pageSize, isSuperAdmin = false }: UsersClientProps) {
   const router = useRouter();
@@ -270,7 +271,7 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize, i
 
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="flex bg-white p-1 border border-gray-200 rounded-xl overflow-x-auto max-w-full [&::-webkit-scrollbar]:hidden">
-            {['all', 'player', 'coach', 'agent', 'scout', 'organization', 'professional'].map((r) => (
+            {['all', ...PARTICIPANT_ROLES].map((r) => (
               <button
                 key={r}
                 onClick={() => handleRoleFilter(r)}

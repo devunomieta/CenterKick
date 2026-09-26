@@ -71,17 +71,6 @@ export async function updateSectionContent(page: string, section: string, conten
 /**
  * Fetches all manageable pages and their layouts
  */
-export async function getManageablePages() {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('site_pages')
-    .select('*')
-    .order('name');
-
-  if (error) return [];
-  return data;
-}
-
 /**
  * Fetches global CMS data (Navbar, Footer, etc.)
  */

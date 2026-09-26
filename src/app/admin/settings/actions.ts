@@ -548,36 +548,3 @@ export async function bulkReassignClubs(clubIds: string[], targetLeagueId: strin
   revalidatePath('/admin/data-management');
   return { success: true };
 }
-
-export async function autoMapCountryFlags() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Unauthorized');
-
-  const { data: userRecord } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userRecord?.role !== 'superadmin') {
-    throw new Error('Unauthorized');
-  }
-
-  // Fetch all countries
-  const { data: countries, error: fetchError } = await supabase.from('countries').select('id, code');
-  if (fetchError) return { success: false, error: fetchError.message };
-
-  if (countries) {
-    for (const country of countries) {
-      if (country.code) {
-        const flagUrl = `https://flagcdn.com/w160/${country.code.toLowerCase()}.png`;
-        await supabase.from('countries').update({ flag_url: flagUrl }).eq('id', country.id);
-      }
-    }
-  }
-
-  revalidatePath('/admin/data-management');
-  return { success: true };
-}

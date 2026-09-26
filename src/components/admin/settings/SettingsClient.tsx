@@ -11,6 +11,7 @@ import {
 import { updateSystemSettings, clearSystemCache, uploadSiteAsset, sendTestEmail, updatePaymentSettings } from '@/app/admin/settings/actions';
 import { useToast } from '@/context/ToastContext';
 import Image from 'next/image';
+import { ROLES } from '@/lib/roles';
 
 function ImageUpload({ label, value, onUpload, path }: { label: string, value: string, onUpload: (url: string) => void, path: string }) {
   const [isUploading, setIsUploading] = useState(false);
@@ -357,7 +358,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
                          <p className="text-xs text-gray-500 font-bold ml-1 mb-2">Select roles that are currently NOT allowed to sign up.</p>
                       </div>
                       <div className="flex flex-wrap gap-3">
-                         {['player', 'coach', 'agent', 'scout', 'organization', 'professional'].map(role => {
+                         {ROLES.map(r => r.id).map(role => {
                             const disabledRoles = settings.disabledRoles || [];
                             const isDisabled = disabledRoles.includes(role);
                             return (

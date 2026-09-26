@@ -39,33 +39,6 @@ export async function markAllNotificationsRead() {
   return { success: true };
 }
 
-export async function createAdminNotification(data: {
-  userId: string;
-  title: string;
-  message: string;
-  type?: 'info' | 'success' | 'warning' | 'error';
-  link?: string;
-}) {
-  const supabase = await createClient();
-  
-  const { error } = await supabase
-    .from('notifications')
-    .insert([{
-      user_id: data.userId,
-      title: data.title,
-      message: data.message,
-      type: data.type || 'info',
-      link: data.link
-    }]);
-
-  if (error) {
-    console.error('Error creating notification:', error);
-    return { success: false, error: error.message };
-  }
-
-  return { success: true };
-}
-
 import { Resend } from 'resend';
 
 export async function sendEmailNotification(email: string, subject: string, body: string) {

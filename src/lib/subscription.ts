@@ -14,7 +14,7 @@
  * tackled, do it here so every call site picks it up at once.
  */
 
-export const SPONSORED_SUBSCRIPTION_STATUSES = ['ACTIVE', 'SPONSORED', 'GIFT_COVERED'] as const;
+const SPONSORED_SUBSCRIPTION_STATUSES = ['ACTIVE', 'SPONSORED', 'GIFT_COVERED'] as const;
 
 export interface SubscriptionSignals {
   /** `profiles.is_subscribed` flag */

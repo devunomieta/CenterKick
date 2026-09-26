@@ -249,19 +249,6 @@ export async function getUserTransactions() {
   return { transactions: combined };
 }
 
-export async function getPricingPlan(role: string) {
-  const supabase = await createClient();
-  const { data: plan, error } = await supabase
-    .from('pricing_plans')
-    .select('*')
-    .eq('role', role)
-    .eq('is_active', true)
-    .single();
-
-  if (error || !plan) return null;
-  return plan;
-}
-
 export async function activateFreeSubscription() {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();

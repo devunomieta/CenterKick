@@ -40,31 +40,6 @@ export async function getGlobalCMSData() {
 }
 
 /**
- * Fetches recent news posts with a shorter cache (5 minutes).
- */
-export async function getCachedRecentNews() {
-  return getCachedData('recent_news', async () => {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from('cms_posts')
-      .select('*')
-      .eq('is_draft', false)
-      .order('published_at', { ascending: false })
-      .limit(10);
-    
-    return data || [];
-  }, 300);
-}
-
-/**
- * Invalidate a specific cache key
- */
-export async function invalidateCache(key: string) {
-  const { redis } = await import('./redis');
-  await redis.del(key);
-}
-
-/**
  * Purges all news-related cache keys across L1 (Memory) and L2 (Upstash Redis)
  */
 export async function invalidateNewsCaches() {

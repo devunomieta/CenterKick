@@ -3,63 +3,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { sendEmailNotification } from '../admin/notifications/actions';
 
-export type AccountStatus = 'REGISTERED' | 'PROSPECT' | 'NONE';
-
-/**
- * Checks the status of an email in the system.
- * REGISTERED: Has a record in auth.users
- * PROSPECT: Has a record in public.profiles but no user_id (or unlinked)
- * NONE: No record found
- */
-export async function checkAccountStatus(email: string): Promise<{ status: AccountStatus; role?: string; id?: string }> {
-  const supabase = await createClient();
-
-  // 1. Check if user exists in public.profiles (our source of truth for all members)
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('id, user_id, role, email')
-    .eq('email', email)
-    .maybeSingle();
-
-  if (error || !profile) {
-    return { status: 'NONE' };
-  }
-
-  // 2. Check if linked to auth
-  if (profile.user_id) {
-    return { status: 'REGISTERED', role: profile.role, id: profile.id };
-  }
-
-  return { status: 'PROSPECT', role: profile.role, id: profile.id };
-}
-
-/**
- * Retrieves "prospect" profiles (those not yet linked to an auth user)
- * Supports optional filtering by role.
- */
-export async function getProspects(role?: string) {
-  const supabase = await createClient();
-
-  let query = supabase
-    .from('profiles')
-    .select('*, transactions(status)')
-    .is('user_id', null)
-    .not('email', 'is', null);
-
-  if (role) {
-    query = query.eq('role', role);
-  }
-
-  const { data, error } = await query.order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching prospects:', error);
-    return [];
-  }
-
-  return data;
-}
-
 /**
  * Resends the invitation/onboarding email or a subscription reminder
  */
@@ -121,36 +64,4 @@ The CenterKick Team`;
 
   const res = await sendEmailNotification(email, subject, message);
   return res;
-}
-
-/**
- * Allows a user with 'unassigned' role to request account verification
- */
-export async function requestVerification() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return { success: false, error: "Unauthorized" };
-
-  const { data: userRecord } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userRecord?.role !== 'unassigned') {
-    return { success: false, error: "Verification can only be requested by unassigned accounts." };
-  }
-
-  const { error } = await supabase
-    .from('users')
-    .update({ is_verification_requested: true })
-    .eq('id', user.id);
-
-  if (error) {
-    console.error('Error requesting verification:', error);
-    return { success: false, error: error.message };
-  }
-
-  return { success: true };
 }

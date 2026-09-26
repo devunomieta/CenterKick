@@ -25,7 +25,7 @@ export const ROLES: RoleConfig[] = [
   { id: 'professional', label: 'Professional', publicRouteSegment: 'professionals', order: 6 },
 ];
 
-export function getRoleConfig(role?: string | null): RoleConfig | undefined {
+function getRoleConfig(role?: string | null): RoleConfig | undefined {
   const normalized = (role || '').toLowerCase();
   return ROLES.find((r) => r.id === normalized);
 }
@@ -107,5 +107,3 @@ export const PROFESSIONAL_CATEGORY_GROUPS: { group: string; options: string[] }[
     options: ['Groundskeeper / Pitch Manager'],
   },
 ];
-
-export const PROFESSIONAL_CATEGORY_OPTIONS: string[] = PROFESSIONAL_CATEGORY_GROUPS.flatMap((g) => g.options);

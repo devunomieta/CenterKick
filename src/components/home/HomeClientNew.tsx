@@ -57,7 +57,7 @@ interface ProfileCarouselProps {
 }
 
 // Unified Native CSS Carousel
-export function ProfileCarousel({ items, renderItem, mobileLimit }: ProfileCarouselProps) {
+function ProfileCarousel({ items, renderItem, mobileLimit }: ProfileCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   if (!items || items.length === 0) {

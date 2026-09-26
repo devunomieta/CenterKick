@@ -5,7 +5,7 @@ import { redis } from './redis';
  * Public rate limiter instance for API endpoints and sensitive actions.
  * Limits users/IPs to 10 requests per 10 seconds.
  */
-export const publicRateLimiter = new Ratelimit({
+const publicRateLimiter = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(10, '10 s'),
   analytics: true,

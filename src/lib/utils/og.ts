@@ -18,7 +18,7 @@ export function getBaseSiteUrl(): string {
   return 'https://www.centerkick.com';
 }
 
-export function resolveOgImageUrl(rawUrl?: string | null): string | null {
+function resolveOgImageUrl(rawUrl?: string | null): string | null {
   if (!rawUrl || typeof rawUrl !== 'string') return null;
   const trimmed = rawUrl.trim();
   if (!trimmed) return null;
