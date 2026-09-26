@@ -60,13 +60,16 @@ export async function GET() {
     <CenterKickCvDocument cv={cv} qrDataUrl={qrDataUrl} profileFullUrl={profileFullUrl} />
   );
 
-  const fileNameSafe = (cv.name || 'CenterKick-Profile').replace(/[^a-z0-9]+/gi, '_');
+  const slugSafe = (profile.slug || cv.name || 'centerkick-profile').toString().replace(/[^a-zA-Z0-9-]+/g, '-');
+  const downloadFilename = `${slugSafe}-CV.pdf`;
 
   return new Response(new Uint8Array(buffer), {
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="${fileNameSafe}-CenterKick-CV.pdf"`,
+      'Content-Disposition': `inline; filename="${downloadFilename}"`,
+      'X-Filename': downloadFilename,
+      'Access-Control-Expose-Headers': 'X-Filename',
       'Cache-Control': 'no-store',
     },
   });

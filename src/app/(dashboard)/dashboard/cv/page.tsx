@@ -7,6 +7,7 @@ import Link from 'next/link';
 export default function CvPreviewPage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'subscription_required' | 'error'>('loading');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [downloadFilename, setDownloadFilename] = useState<string>('CenterKick-Profile-CV.pdf');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
@@ -29,6 +30,8 @@ export default function CvPreviewPage() {
           setStatus('error');
           return;
         }
+        const filenameHeader = res.headers.get('X-Filename');
+        if (filenameHeader) setDownloadFilename(filenameHeader);
         const blob = await res.blob();
         objectUrl = URL.createObjectURL(blob);
         setPdfUrl(objectUrl);
@@ -56,7 +59,7 @@ export default function CvPreviewPage() {
         {status === 'ready' && pdfUrl && (
           <a
             href={pdfUrl}
-            download="CenterKick-Profile-CV.pdf"
+            download={downloadFilename}
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#b50a0a] hover:bg-red-800 text-white rounded-xl text-xs font-bold tracking-wide transition-all shadow-md"
           >
             <Download className="w-4 h-4" /> Download CV
