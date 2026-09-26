@@ -173,7 +173,7 @@ export function CenterKickCvDocument({ cv, qrDataUrl, profileFullUrl }: { cv: Cv
 
         <View style={styles.footer} fixed>
           <View>
-            <Text style={styles.footerUrl}>Profile Available on CenterKick</Text>
+            <Text style={styles.footerUrl}>Medias and Full Profile Available on CenterKick</Text>
             <Text style={styles.footerUrl}><Link src={profileFullUrl} style={styles.link}>{profileFullUrl}</Link></Text>
             <Text style={styles.footerText}>
               CenterKick cannot be held liable for any false or inaccurate information on this CV — profile content is
