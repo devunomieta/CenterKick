@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Trash2, Trophy, Briefcase, GraduationCap } from 'lucide-react';
+import { Plus, Trash2, Trophy, Briefcase, GraduationCap, Calendar } from 'lucide-react';
 
 interface ProfessionalDetailsFormProps {
   data: any;
@@ -118,11 +118,17 @@ export function ProfessionalDetailsForm({ data, onChange, achievements, onAchiev
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs font-bold text-gray-400 uppercase block mb-1">Start Date</label>
-                    <input type="month" disabled={disabled} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:border-[#b50a0a] outline-none disabled:bg-gray-50 disabled:text-gray-500" value={record.start_date || ''} onChange={(e) => updateExperience(index, 'start_date', e.target.value)} />
+                    <div className="relative">
+                      <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                      <input type="date" disabled={disabled} className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:border-[#b50a0a] outline-none disabled:bg-gray-50 disabled:text-gray-500" value={record.start_date || ''} onChange={(e) => updateExperience(index, 'start_date', e.target.value)} />
+                    </div>
                   </div>
                   <div>
                     <label className="text-xs font-bold text-gray-400 uppercase block mb-1">End Date</label>
-                    <input type="month" disabled={disabled || record.is_current} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:border-[#b50a0a] outline-none disabled:bg-gray-50 disabled:text-gray-500" value={record.is_current ? '' : (record.end_date || '')} onChange={(e) => updateExperience(index, 'end_date', e.target.value)} />
+                    <div className="relative">
+                      <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                      <input type="date" disabled={disabled || record.is_current} className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:border-[#b50a0a] outline-none disabled:bg-gray-50 disabled:text-gray-500" value={record.is_current ? '' : (record.end_date || '')} onChange={(e) => updateExperience(index, 'end_date', e.target.value)} />
+                    </div>
                   </div>
                 </div>
                 <div className="md:col-span-2 flex items-center gap-2">
@@ -192,11 +198,17 @@ export function ProfessionalDetailsForm({ data, onChange, achievements, onAchiev
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-400 uppercase block mb-1">Date Obtained</label>
-                  <input type="month" disabled={disabled} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:border-[#b50a0a] outline-none disabled:bg-gray-50 disabled:text-gray-500" value={record.date_obtained || ''} onChange={(e) => updateQualification(index, 'date_obtained', e.target.value)} />
+                  <div className="relative">
+                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                    <input type="date" disabled={disabled} className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:border-[#b50a0a] outline-none disabled:bg-gray-50 disabled:text-gray-500" value={record.date_obtained || ''} onChange={(e) => updateQualification(index, 'date_obtained', e.target.value)} />
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-400 uppercase block mb-1">Expiry Date (Optional)</label>
-                  <input type="month" disabled={disabled} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:border-[#b50a0a] outline-none disabled:bg-gray-50 disabled:text-gray-500" value={record.expiry_date || ''} onChange={(e) => updateQualification(index, 'expiry_date', e.target.value)} />
+                  <div className="relative">
+                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                    <input type="date" disabled={disabled} className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:border-[#b50a0a] outline-none disabled:bg-gray-50 disabled:text-gray-500" value={record.expiry_date || ''} onChange={(e) => updateQualification(index, 'expiry_date', e.target.value)} />
+                  </div>
                 </div>
                 <div className="md:col-span-2">
                   <label className="text-xs font-bold text-gray-400 uppercase block mb-1">Credential ID (Optional)</label>

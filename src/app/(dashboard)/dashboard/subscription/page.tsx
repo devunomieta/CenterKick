@@ -243,10 +243,11 @@ export default function SubscriptionPage() {
     handler.openIframe();
   };
 
-  let durationMonths = 12; // default
+  let durationMonths = 6; // default: Biannually, matching the site-wide default in SubscriptionsClient
   if (rolePlan?.frequency === 'Monthly') durationMonths = 1;
   else if (rolePlan?.frequency === 'Quarterly') durationMonths = 3;
   else if (rolePlan?.frequency === 'Biannually') durationMonths = 6;
+  else if (rolePlan?.frequency === 'Yearly') durationMonths = 12;
   else if (rolePlan?.frequency === 'Lifetime Access') durationMonths = 0; // 0 means lifetime
 
   const planName = rolePlan?.name || `${userRole.charAt(0).toUpperCase() + userRole.slice(1)}`;

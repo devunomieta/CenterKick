@@ -1,5 +1,10 @@
-import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image, Link, StyleSheet } from '@react-pdf/renderer';
 import type { CvDocument } from './mapper';
+
+function formatAbsoluteUrl(url: string): string {
+  if (!url) return '';
+  return url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+}
 
 const styles = StyleSheet.create({
   page: {
@@ -29,6 +34,10 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     color: '#4b5563',
     marginBottom: 2,
+  },
+  link: {
+    color: '#b50a0a',
+    textDecoration: 'none',
   },
   summary: {
     fontSize: 10,
@@ -113,15 +122,23 @@ const styles = StyleSheet.create({
 
 export function CenterKickCvDocument({ cv, qrDataUrl, profileFullUrl }: { cv: CvDocument; qrDataUrl: string; profileFullUrl: string }) {
   const contactBits = [cv.email, cv.phone].filter(Boolean).join('  ·  ');
-  const socialsLine = cv.socials.map((s) => s.value).join('  ·  ');
 
   return (
     <Document title={`${cv.name} - CenterKick CV`}>
       <Page size="A4" style={styles.page} wrap>
         <View style={styles.header}>
-          <Text style={styles.name}>{cv.name}</Text>
+          <Text style={styles.name}>{cv.name.toUpperCase()}</Text>
           <Text style={styles.title}>{cv.title}</Text>
-          {socialsLine ? <Text style={styles.contactLine}>{socialsLine}</Text> : null}
+          {cv.socials.length > 0 ? (
+            <Text style={styles.contactLine}>
+              {cv.socials.map((s, i) => (
+                <Text key={i}>
+                  {i > 0 ? '  ·  ' : ''}
+                  <Link src={formatAbsoluteUrl(s.value)} style={styles.link}>{s.label}</Link>
+                </Text>
+              ))}
+            </Text>
+          ) : null}
           {contactBits ? <Text style={styles.contactLine}>{contactBits}</Text> : null}
         </View>
 
@@ -157,7 +174,7 @@ export function CenterKickCvDocument({ cv, qrDataUrl, profileFullUrl }: { cv: Cv
         <View style={styles.footer} fixed>
           <View>
             <Text style={styles.footerUrl}>Profile Available on CenterKick</Text>
-            <Text style={styles.footerUrl}>{profileFullUrl}</Text>
+            <Text style={styles.footerUrl}><Link src={profileFullUrl} style={styles.link}>{profileFullUrl}</Link></Text>
             <Text style={styles.footerText}>
               CenterKick cannot be held liable for any false or inaccurate information on this CV — profile content is
               self-reported and managed solely by the account holder.
