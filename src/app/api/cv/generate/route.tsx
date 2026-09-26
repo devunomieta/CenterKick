@@ -52,7 +52,22 @@ export async function GET() {
     return NextResponse.json({ error: 'An active subscription is required to download your CV.', code: 'SUBSCRIPTION_REQUIRED' }, { status: 403 });
   }
 
-  const cv = buildCvDocument({ ...profile, email: userRecord?.email }, role);
+  // career_stats stores each season's league as a leagues.id foreign key, not a name —
+  // resolve it here the same way public profile pages do, so the CV shows real league names.
+  let enrichedCareerStats = profile.career_stats;
+  if (Array.isArray(profile.career_stats) && profile.career_stats.length > 0) {
+    const leagueIds = Array.from(new Set(profile.career_stats.map((s: any) => s.league).filter(Boolean)));
+    if (leagueIds.length > 0) {
+      const { data: leagues } = await supabase.from('leagues').select('id, name').in('id', leagueIds);
+      const leagueNameById = new Map((leagues || []).map((l: any) => [l.id, l.name]));
+      enrichedCareerStats = profile.career_stats.map((s: any) => ({
+        ...s,
+        league_name: s.league_name || leagueNameById.get(s.league) || s.league,
+      }));
+    }
+  }
+
+  const cv = buildCvDocument({ ...profile, career_stats: enrichedCareerStats, email: userRecord?.email }, role);
   const profileFullUrl = `${getBaseSiteUrl()}${cv.profileUrl}`;
   const qrDataUrl = await QRCode.toDataURL(profileFullUrl, { margin: 1, width: 200 });
 

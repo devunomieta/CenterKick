@@ -72,7 +72,8 @@ function playerSections(profile: any): CvSection[] {
     ],
   }));
   const transferBlocks: CvBlock[] = (profile.transfer_history || []).map((t: any) => ({
-    heading: `${t.from_club || t.club || 'Unknown'} → ${t.to_club || 'Unknown'}`,
+    heading: t.to_club || 'Unknown',
+    subheading: `Transferred from ${t.from_club || t.club || 'Unknown'}`,
     meta: t.date || '',
   }));
   return [
