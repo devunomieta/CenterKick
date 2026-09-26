@@ -40,7 +40,8 @@ export function AdminSidebar({ role }: { role: string }) {
         { label: 'Coaches', href: '/admin/users?role=coach', icon: UserCheck },
         { label: 'Agents', href: '/admin/users?role=agent', icon: Briefcase },
         { label: 'Scouts', href: '/admin/users?role=scout', icon: Search },
-        { label: 'Organizations', href: '/admin/users?role=organization', icon: Trophy }
+        { label: 'Organizations', href: '/admin/users?role=organization', icon: Trophy },
+        { label: 'Professionals', href: '/admin/users?role=professional', icon: User }
       ]
     }] : []),
     ...(isOperations || isSuperOrAdmin ? [{

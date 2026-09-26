@@ -139,6 +139,25 @@ export default async function PricingPage() {
         'Official Links & Social Channels',
         'Direct Recruitment & Scouting Exposure'
       ]
+    },
+    {
+      id: 'professional',
+      name: 'Professional',
+      tagline: 'A CV-style profile for any sports industry role',
+      icon: Zap,
+      badgeColor: 'bg-teal-50 text-teal-800 border-teal-100',
+      buttonBg: 'bg-gray-900 hover:bg-black text-white',
+      defaultAmount: 75000,
+      currency: 'NGN',
+      duration: '6 Months',
+      features: [
+        'Verified Professional Profile & Custom URL',
+        'Professional Experience, Qualifications & Achievements',
+        'Downloadable ATS-Formatted CV with QR Code',
+        'Media Center for Photos & Highlight Videos',
+        'Open Profession Field for Any Sports Industry Role',
+        'Direct Networking with Clubs, Academies & Agencies'
+      ]
     }
   ];
 

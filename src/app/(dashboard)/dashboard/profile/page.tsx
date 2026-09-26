@@ -36,8 +36,10 @@ import { PlayerCareerForm } from './components/PlayerCareerForm';
 import { AgentPortfolioForm } from './components/AgentPortfolioForm';
 import { ScoutDiscoveriesForm } from './components/ScoutDiscoveriesForm';
 import { OrganizationDetailsForm } from './components/OrganizationDetailsForm';
+import { ProfessionalDetailsForm } from './components/ProfessionalDetailsForm';
 import { SearchableCombobox } from '@/components/common/SearchableCombobox';
 import { resolveIsSubscribed } from '@/lib/subscription';
+import { getPublicProfileRoute, PROFESSIONAL_CATEGORY_GROUPS, PROFESSIONAL_CATEGORY_OTHER } from '@/lib/roles';
 
 const calculateAge = (dob: string) => {
   if (!dob) return '';
@@ -84,6 +86,7 @@ export default function ProfileEditor() {
   
   const [isUploadingIdProof, setIsUploadingIdProof] = useState(false);
   const [isUploadingRoleProof, setIsUploadingRoleProof] = useState(false);
+  const [roleProofDescription, setRoleProofDescription] = useState('');
 
   // Data tables
   const [countriesList, setCountriesList] = useState<any[]>([]);
@@ -178,6 +181,11 @@ export default function ProfileEditor() {
           organization_honors: profileRecord?.organization_honors || [],
           official_links: profileRecord?.official_links || {},
           transfer_history: profileRecord?.transfer_history || [],
+          profession_title: profileRecord?.profession_title || '',
+          profession_category: profileRecord?.profession_category || '',
+          profession_category_other: profileRecord?.profession_category_other || '',
+          work_experience: profileRecord?.work_experience || [],
+          qualifications: profileRecord?.qualifications || [],
         });
 
         const { data: countries } = await supabase.from('countries').select('id, name, code').order('name');
@@ -313,12 +321,17 @@ export default function ProfileEditor() {
         if (role === 'player') certLabel = 'Birth Certificate Verification';
         if (role === 'coach' || role === 'scout') certLabel = 'License Verification';
         if (role === 'organization') certLabel = 'FA Affiliation Verification';
+        if (role === 'professional') certLabel = 'Professional Certification / Employment Verification';
       }
       
+      const description = type === 'role_proof' && role === 'professional' && roleProofDescription.trim()
+        ? `Uploaded Document — ${roleProofDescription.trim()}`
+        : 'Uploaded Document';
+
       await requestProfileEdit(profile.id, {
-        [certLabel]: { old: null, new: 'Uploaded Document', document_url: url }
+        [certLabel]: { old: null, new: description, document_url: url }
       });
-      
+
       setProfile({ ...profile, ...updateData });
       showToast('Document uploaded successfully!', 'success');
       await invalidateProfileCache();
@@ -414,9 +427,9 @@ export default function ProfileEditor() {
           setIsSaving(false);
           return;
         }
-      } else if (role === 'coach' || role === 'scout' || role === 'agent') {
+      } else if (role === 'coach' || role === 'scout' || role === 'agent' || role === 'professional') {
         if (age < 18 || age > 90) {
-          showToast('Coaches, Scouts, and Agents must be at least 18 years old.', 'error');
+          showToast('Coaches, Scouts, Agents, and Professionals must be at least 18 years old.', 'error');
           setIsSaving(false);
           return;
         }
@@ -441,6 +454,10 @@ export default function ProfileEditor() {
       license: formData.get('license'),
       agency_name: formData.get('agency_name'),
       license_code: formData.get('license_code'),
+      ...(role === 'professional' ? {
+        profession_category: formData.get('profession_category') || null,
+        profession_title: formData.get('profession_title') || null,
+      } : {}),
       updated_at: new Date().toISOString()
     };
 
@@ -461,6 +478,9 @@ export default function ProfileEditor() {
     trackChange('last_name', 'last_name', 'Last Name');
     trackChange('date_of_birth', 'date_of_birth', 'Date of Birth');
     trackChange('id_number', 'id_number', 'ID Number');
+    if (role === 'professional') {
+      trackChange('profession_category_other', 'profession_category_other', 'Professional Sub-Profession (Other)');
+    }
 
     if (Object.keys(sensitiveChanges).length > 0) {
        const res = await requestProfileEdit(profile?.id, sensitiveChanges);
@@ -663,6 +683,9 @@ export default function ProfileEditor() {
       profileData.facilities_infrastructure = roleData.facilities_infrastructure;
       profileData.key_personnel = roleData.key_personnel;
       profileData.organization_honors = roleData.organization_honors;
+    } else if (role === 'professional') {
+      profileData.work_experience = roleData.work_experience;
+      profileData.qualifications = roleData.qualifications;
     }
 
     const { error } = await supabase.from('profiles').update(profileData).eq('id', profile?.id);
@@ -1103,6 +1126,83 @@ export default function ProfileEditor() {
                   </div>
                 </div>
 
+                {role === 'professional' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:p-2">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Profession / Role</label>
+                      <select
+                        disabled={!isEditing}
+                        name="profession_category"
+                        value={profile?.profession_category || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setProfile({
+                            ...profile,
+                            profession_category: value,
+                            profession_title: value === PROFESSIONAL_CATEGORY_OTHER ? (profile?.profession_title || '') : value,
+                          });
+                        }}
+                        className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none appearance-none cursor-pointer text-black disabled:opacity-70 disabled:bg-gray-100"
+                      >
+                        <option value="">Select Profession</option>
+                        {PROFESSIONAL_CATEGORY_GROUPS.map((g) => (
+                          <optgroup key={g.group} label={g.group}>
+                            {g.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                          </optgroup>
+                        ))}
+                        <option value={PROFESSIONAL_CATEGORY_OTHER}>Other (specify below)</option>
+                      </select>
+                    </div>
+                    {profile?.profession_category === PROFESSIONAL_CATEGORY_OTHER ? (
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Specify Your Profession</label>
+                        <input
+                          disabled={!isEditing}
+                          name="profession_category_other"
+                          type="text"
+                          maxLength={60}
+                          value={profile?.profession_category_other || ''}
+                          onChange={(e) => setProfile({ ...profile, profession_category_other: e.target.value, profession_title: profile?.profession_title || e.target.value })}
+                          placeholder="e.g. Sports Lawyer"
+                          className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-400 disabled:opacity-70 disabled:bg-gray-100"
+                        />
+                        <p className="text-xs text-gray-500 font-medium ml-1">Submitted for Admin review before it appears publicly.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Title Shown on Profile</label>
+                        <input
+                          disabled={!isEditing}
+                          name="profession_title"
+                          type="text"
+                          maxLength={80}
+                          value={profile?.profession_title || ''}
+                          onChange={(e) => setProfile({ ...profile, profession_title: e.target.value })}
+                          placeholder="Auto-filled from your profession above — editable"
+                          className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-400 disabled:opacity-70 disabled:bg-gray-100"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+                {role === 'professional' && profile?.profession_category === PROFESSIONAL_CATEGORY_OTHER && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:p-2">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">Title Shown on Profile</label>
+                      <input
+                        disabled={!isEditing}
+                        name="profession_title"
+                        type="text"
+                        maxLength={80}
+                        value={profile?.profession_title || ''}
+                        onChange={(e) => setProfile({ ...profile, profession_title: e.target.value })}
+                        placeholder="Auto-filled from your profession above — editable"
+                        className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] focus:bg-white transition-all outline-none text-black placeholder:text-gray-400 disabled:opacity-70 disabled:bg-gray-100"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {role !== 'organization' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:p-2">
                     <div className="space-y-1.5">
@@ -1219,6 +1319,7 @@ export default function ProfileEditor() {
                           {role === 'player' && 'Birth Certificate Verification'}
                           {(role === 'coach' || role === 'scout') && 'License Certificate Verification'}
                           {role === 'organization' && 'FA Affiliation Verification'}
+                          {role === 'professional' && 'Professional Certification / Employment Verification'}
                         </h4>
                         <p className="text-xs text-gray-500 font-bold mt-0.5">Required by Admin to verify your role credentials</p>
                       </div>
@@ -1226,6 +1327,21 @@ export default function ProfileEditor() {
                         {profile?.license_proof_url ? 'Pending Verification' : 'Proof Required'}
                       </span>
                     </div>
+                    {role === 'professional' && (
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-900 tracking-wide ml-1">What is this document?</label>
+                        <input
+                          disabled={!isEditing}
+                          type="text"
+                          value={roleProofDescription}
+                          onChange={(e) => setRoleProofDescription(e.target.value)}
+                          placeholder="e.g. Medical practicing license, FA referee badge, Club employment letter"
+                          maxLength={120}
+                          className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#b50a0a] transition-all outline-none text-black placeholder:text-gray-400 disabled:opacity-70 disabled:bg-gray-100"
+                        />
+                        <p className="text-xs text-gray-500 font-medium ml-1">Since Professional spans many roles, tell the reviewing admin what the uploaded file is.</p>
+                      </div>
+                    )}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-2">
                       <input
                         disabled={!isEditing}
@@ -1367,7 +1483,7 @@ export default function ProfileEditor() {
             )}
             {activeTab === 'Career Data' && (
               <form onSubmit={saveCareerData} onChange={() => setIsDirty(true)} className="space-y-8 animate-in fade-in duration-500">
-                {role !== 'organization' && role !== 'agent' && role !== 'scout' && (
+                {role !== 'organization' && role !== 'agent' && role !== 'scout' && role !== 'professional' && (
                   <>
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-2 h-10 bg-[#b50a0a] rounded-full"></div>
@@ -1540,6 +1656,7 @@ export default function ProfileEditor() {
                    {role === 'agent' && <AgentPortfolioForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} isSigned={profile?.is_signed} />}
                    {role === 'scout' && <ScoutDiscoveriesForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} />}
                    {role === 'organization' && <OrganizationDetailsForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} disabled={!isEditing} onUploadImage={uploadPersonnelImage} />}
+                   {role === 'professional' && <ProfessionalDetailsForm data={roleData} onChange={(data) => {setRoleData(data); setIsDirty(true);}} achievements={achievements} onAchievementsChange={(val) => {setAchievements(val); setIsDirty(true);}} disabled={!isEditing} />}
                 </div>
 
                 <div className="pt-6 border-t border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -1858,8 +1975,7 @@ export default function ProfileEditor() {
                       <button
                         type="button"
                         onClick={() => {
-                          const targetRoute = role === 'agent' ? `/agents/${profile.slug || profile.id}` : role === 'organization' ? `/organizations/${profile.slug || profile.id}` : role === 'coach' ? `/coaches/${profile.slug || profile.id}` : `/players/${profile.slug || profile.id}`;
-                          router.push(targetRoute);
+                          router.push(getPublicProfileRoute(role, profile.slug || profile.id));
                         }}
                         className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold tracking-wide transition-all shadow-sm"
                       >

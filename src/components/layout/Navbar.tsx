@@ -43,7 +43,8 @@ export function Navbar({ content, settings }: { content?: Record<string, unknown
            { label: "Coaches", href: "/coaches" },
            { label: "Agents", href: "/agents" },
            { label: "Scouts", href: "/scouts" },
-           { label: "Organizations", href: "/organizations" }
+           { label: "Organizations", href: "/organizations" },
+           { label: "Professionals", href: "/professionals" }
         ]},
         { label: "Updates", dropdown: [
            { label: "News", href: "/news" },

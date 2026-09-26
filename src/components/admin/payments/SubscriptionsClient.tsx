@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import {
    CreditCard, ExternalLink, Shield, Save,
    Zap, DollarSign, UserCheck, Search, Users,
-   Eye, EyeOff
+   Eye, EyeOff, Briefcase
 } from 'lucide-react';
 import { updatePaymentSettings } from '@/app/admin/payments/subscriptions/actions';
 import { useToast } from '@/context/ToastContext';
@@ -96,7 +96,7 @@ export function SubscriptionsClient({
       }
 
       // 6. Role-Based Plans Validation
-      const rolesToValidate = ['player', 'coach', 'agent', 'scout', 'organization'];
+      const rolesToValidate = ['player', 'coach', 'agent', 'scout', 'organization', 'professional'];
       rolesToValidate.forEach(roleId => {
          const plan = settings.plans?.[roleId] || {};
          const amountStr = String(plan.amount || '');
@@ -137,6 +137,7 @@ export function SubscriptionsClient({
       { id: 'agent', label: 'Agent Accounts', color: 'from-purple-600/20', icon: Shield },
       { id: 'scout', label: 'Scout Accounts', color: 'from-teal-600/20', icon: Search },
       { id: 'organization', label: 'Organization Accounts', color: 'from-rose-600/20', icon: Users },
+      { id: 'professional', label: 'Professional Accounts', color: 'from-teal-600/20', icon: Briefcase },
    ];
 
    const updatePlan = (roleId: string, field: string, value: string) => {

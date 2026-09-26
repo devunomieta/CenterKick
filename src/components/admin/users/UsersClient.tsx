@@ -22,7 +22,7 @@ interface UsersClientProps {
   isSuperAdmin?: boolean;
 }
 
-const PARTICIPANT_ROLES = ['player', 'coach', 'agent', 'scout', 'organization'];
+const PARTICIPANT_ROLES = ['player', 'coach', 'agent', 'scout', 'organization', 'professional'];
 
 export function UsersClient({ initialUsers, totalCount, currentPage, pageSize, isSuperAdmin = false }: UsersClientProps) {
   const router = useRouter();
@@ -176,6 +176,7 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize, i
       case 'agent': return <Briefcase className="w-3.5 h-3.5" />;
       case 'scout': return <Search className="w-3.5 h-3.5" />;
       case 'organization': return <Users className="w-3.5 h-3.5" />;
+      case 'professional': return <User className="w-3.5 h-3.5" />;
       case 'superadmin': case 'admin': return <ShieldCheck className="w-3.5 h-3.5" />;
       default: return <Shield className="w-3.5 h-3.5" />;
     }
@@ -269,7 +270,7 @@ export function UsersClient({ initialUsers, totalCount, currentPage, pageSize, i
 
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="flex bg-white p-1 border border-gray-200 rounded-xl overflow-x-auto max-w-full [&::-webkit-scrollbar]:hidden">
-            {['all', 'player', 'coach', 'agent', 'scout', 'organization'].map((r) => (
+            {['all', 'player', 'coach', 'agent', 'scout', 'organization', 'professional'].map((r) => (
               <button
                 key={r}
                 onClick={() => handleRoleFilter(r)}

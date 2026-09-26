@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   CheckCircle, XCircle, UserX, ShieldCheck, RefreshCw,
   AlertTriangle, Shield, Trophy, UserCheck, Briefcase,
-  Search, Users, ChevronDown
+  Search, Users, ChevronDown, User
 } from 'lucide-react';
 import { activateUser, deactivateUser, changeUserRole, rejectUser } from '@/app/admin/users/actions';
 
@@ -22,13 +22,14 @@ const ALL_ROLES = [
   { value: 'agent', label: 'Licensed Agent', icon: Briefcase },
   { value: 'scout', label: 'Professional Scout', icon: Search },
   { value: 'organization', label: 'Organization / Club', icon: Users },
+  { value: 'professional', label: 'Sports Professional', icon: User },
   { value: 'admin', label: 'Admin (Staff)', icon: Shield },
   { value: 'operations', label: 'Operations (Staff)', icon: Shield },
   { value: 'finance', label: 'Finance (Staff)', icon: Shield },
   { value: 'blogger', label: 'Blogger (Staff)', icon: Shield },
 ];
 
-const PARTICIPANT_ROLES = ['player', 'coach', 'agent', 'scout', 'organization'];
+const PARTICIPANT_ROLES = ['player', 'coach', 'agent', 'scout', 'organization', 'professional'];
 
 export function UserDetailActions({ userId, currentRole, isActive, profileStatus }: UserDetailActionsProps) {
   const router = useRouter();

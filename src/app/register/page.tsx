@@ -231,6 +231,7 @@ function RegisterForm() {
                                  {!disabledRoles.includes('agent') && <option value="agent">Agent</option>}
                                  {!disabledRoles.includes('scout') && <option value="scout">Scout</option>}
                                  {!disabledRoles.includes('organization') && <option value="organization">Organization</option>}
+                                 {!disabledRoles.includes('professional') && <option value="professional">Professional</option>}
                               </select>
                            </div>
                         </div>

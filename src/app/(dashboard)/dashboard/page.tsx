@@ -13,6 +13,7 @@ import { FlagIcon } from '@/components/common/FlagIcon';
 import { CopyableProfileLink } from '@/components/dashboard/CopyableProfileLink';
 import { isProfileComplete } from '@/lib/utils/profile';
 import { formatCurrencyAmount } from '@/lib/utils/currency';
+import { getPublicProfileRoute } from '@/lib/roles';
 
 export default async function DashboardPage() {
   const session = await getEffectiveUserSession();
@@ -216,8 +217,8 @@ export default async function DashboardPage() {
             <CopyableProfileLink slugOrId={profile.slug || profile.id} role={role} />
           )}
           {(profile?.slug || profile?.id) && (
-            <Link 
-              href={`/${role === 'player' ? 'players' : role === 'coach' ? 'coaches' : role === 'agent' ? 'agents' : role === 'scout' ? 'scouts' : role === 'organization' ? 'organizations' : `${role}s`}/${profile?.slug || profile?.id}`} 
+            <Link
+              href={getPublicProfileRoute(role, profile?.slug || profile?.id)}
               title="View Public Profile"
               className="px-3.5 sm:px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-bold tracking-wide hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm shrink-0"
             >

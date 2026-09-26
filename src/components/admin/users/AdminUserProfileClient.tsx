@@ -15,6 +15,7 @@ import { PlayerCareerForm } from '@/app/(dashboard)/dashboard/profile/components
 import { AgentPortfolioForm } from '@/app/(dashboard)/dashboard/profile/components/AgentPortfolioForm';
 import { ScoutDiscoveriesForm } from '@/app/(dashboard)/dashboard/profile/components/ScoutDiscoveriesForm';
 import { OrganizationDetailsForm } from '@/app/(dashboard)/dashboard/profile/components/OrganizationDetailsForm';
+import { ProfessionalDetailsForm } from '@/app/(dashboard)/dashboard/profile/components/ProfessionalDetailsForm';
 
 import { useRouter } from 'next/navigation';
 
@@ -266,6 +267,7 @@ export default function AdminUserProfileClient({
             {role === 'agent' && <AgentPortfolioForm data={profile} onChange={() => {}} disabled={true} />}
             {role === 'scout' && <ScoutDiscoveriesForm data={profile} onChange={() => {}} disabled={true} />}
             {role === 'organization' && <OrganizationDetailsForm data={profile} onChange={() => {}} disabled={true} />}
+            {role === 'professional' && <ProfessionalDetailsForm data={profile} onChange={() => {}} disabled={true} />}
           </div>
         </div>
 

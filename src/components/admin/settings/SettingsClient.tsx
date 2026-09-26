@@ -357,7 +357,7 @@ export function SettingsClient({ initialSettings }: { initialSettings: Record<st
                          <p className="text-xs text-gray-500 font-bold ml-1 mb-2">Select roles that are currently NOT allowed to sign up.</p>
                       </div>
                       <div className="flex flex-wrap gap-3">
-                         {['player', 'coach', 'agent', 'scout', 'organization'].map(role => {
+                         {['player', 'coach', 'agent', 'scout', 'organization', 'professional'].map(role => {
                             const disabledRoles = settings.disabledRoles || [];
                             const isDisabled = disabledRoles.includes(role);
                             return (

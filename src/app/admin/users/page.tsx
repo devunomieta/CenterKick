@@ -32,6 +32,7 @@ export default async function AdminUsersPage({
     { count: agentsCount },
     { count: scoutsCount },
     { count: orgsCount },
+    { count: professionalsCount },
     { data: countryData }
   ] = await Promise.all([
     adminClient
@@ -48,6 +49,7 @@ export default async function AdminUsersPage({
     adminClient.from('users').select('*', { count: 'exact', head: true }).eq('role', 'agent'),
     adminClient.from('users').select('*', { count: 'exact', head: true }).eq('role', 'scout'),
     adminClient.from('users').select('*', { count: 'exact', head: true }).eq('role', 'organization'),
+    adminClient.from('users').select('*', { count: 'exact', head: true }).eq('role', 'professional'),
     adminClient
       .from('profiles')
       .select('country')
@@ -168,6 +170,7 @@ export default async function AdminUsersPage({
             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Agents</p><p className="text-sm font-bold text-gray-900">{agentsCount || 0}</p></div>
             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Scouts</p><p className="text-sm font-bold text-gray-900">{scoutsCount || 0}</p></div>
             <div><p className="text-[10px] font-bold text-gray-400 uppercase">Orgs</p><p className="text-sm font-bold text-gray-900">{orgsCount || 0}</p></div>
+            <div><p className="text-[10px] font-bold text-gray-400 uppercase">Professionals</p><p className="text-sm font-bold text-gray-900">{professionalsCount || 0}</p></div>
           </div>
         </div>
 

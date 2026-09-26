@@ -56,6 +56,16 @@ export function isProfileComplete(profile: any): boolean {
     return checks.filter(Boolean).length === checks.length;
   }
 
+  if (role === 'professional') {
+    const checks = [
+      ...baseChecks,
+      Boolean(profile.first_name),
+      Boolean(profile.last_name),
+      Boolean(profile.profession_title),
+    ];
+    return checks.filter(Boolean).length === checks.length;
+  }
+
   // Fallback for unknown roles (require full base)
   return baseChecks.filter(Boolean).length === baseChecks.length;
 }

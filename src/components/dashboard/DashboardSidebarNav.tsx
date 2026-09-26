@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Shield, Settings, Newspaper, Headphones } from 'lucide-react';
+import { Home, Users, Shield, Settings, Newspaper, Headphones, FileText } from 'lucide-react';
 
 interface DashboardSidebarNavProps {
   role: string;
@@ -42,6 +42,11 @@ export function DashboardSidebarNav({ role, isSubscribed = false, isCollapsed = 
       <Link href="/dashboard/profile" className={`${getLinkClasses('/dashboard/profile')} group`} title={isCollapsed ? "My Profile" : undefined}>
         <Users className={getIconClasses('/dashboard/profile')} />
         {!isCollapsed && <span className="text-base tracking-wide">My Profile</span>}
+      </Link>
+
+      <Link href="/dashboard/cv" className={`${getLinkClasses('/dashboard/cv')} group`} title={isCollapsed ? "My CV" : undefined}>
+        <FileText className={getIconClasses('/dashboard/cv')} />
+        {!isCollapsed && <span className="text-base tracking-wide">My CV</span>}
       </Link>
 
       {false && (
